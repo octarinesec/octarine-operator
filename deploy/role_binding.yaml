@@ -1,0 +1,11 @@
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: octarine-operator
+subjects:
+- kind: ServiceAccount
+  name: octarine-operator
+roleRef:
+  kind: Role
+  name: octarine-operator
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "guardrails.service.name" . }}
+  labels:
+{{ include "guardrails.labels" . | indent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - name: https
+    port: {{ .Values.service.port }}
+    targetPort: https
+  selector:
+    app.kubernetes.io/name: {{ include "guardrails.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

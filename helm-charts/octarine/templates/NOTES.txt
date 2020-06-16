@@ -1,0 +1,12 @@
+Octarine dataplane successfully installed.
+
+Login to your account:
+https://{{ .Values.global.octarine.api.host }}/login?account={{ .Values.global.octarine.account }}
+{{ if .Values.guardrails.enabled }}
+Checkout your Guardrails risk info:
+https://{{ .Values.global.octarine.api.host }}/kubernetes/risk
+{{- end }}
+{{ if .Values.nodeguard.enabled }}
+Checkout your Nodeguard activity map:
+https://{{ .Values.global.octarine.api.host }}/network/activity
+{{- end }}

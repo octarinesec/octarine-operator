@@ -1,0 +1,9 @@
+apiVersion: {{ include "octarine.priorityClass.apiVersion" . }}
+kind: PriorityClass
+metadata:
+  name: {{ include "octarine.priorityClass.name" . }}
+  labels:
+{{ include "octarine.labels" . | indent 4 }}
+value: 999999999
+globalDefault: false
+description: "This priority class should be used for Octarine pods only."

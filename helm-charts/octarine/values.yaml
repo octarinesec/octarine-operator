@@ -1,0 +1,28 @@
+# Default values for octarine.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  imagePullSecret: # name of an EXISTING imagePullSecret to use (if not provided, imagePullSecret will be created)
+
+  octarine:
+    version: # Octarine version
+
+    account: # Octarine account name
+    domain: # cluster name in the format of 'group:member'
+    accessToken: # Octarine access token to use if accessTokenSecret isn't specified
+    accessTokenSecret: # name of an EXISTING secret which contains Octarine access token ('accessToken' key)
+
+    api:
+      host: main.octarinesec.com
+      port: 443
+
+    messageproxy:
+      host: messages.main.octarinesec.com
+      port: 50051
+
+# parameters for creating an imagePullSecret, in case global.imagePullSecret wasn't provided
+imageCredentials:
+  registry: "index.docker.io/v1/"
+  username:
+  password:

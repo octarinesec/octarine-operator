@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nodeguard.worker.configmap.env.fullname" . }}
+  labels:
+{{ include "nodeguard.worker.labels" . | indent 4 }}
+data:
+{{ include "nodeguard.worker.env" . | indent 2 }}

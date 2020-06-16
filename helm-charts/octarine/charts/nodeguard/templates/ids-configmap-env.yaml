@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nodeguard.ids.configmap.env.fullname" . }}
+  labels:
+{{ include "nodeguard.ids.labels" . | indent 4 }}
+data:
+{{ include "nodeguard.ids.env" . | indent 2 }}

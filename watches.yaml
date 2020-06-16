@@ -1,0 +1,12 @@
+---
+- group: operator.octarinesec.com
+  version: v1alpha1
+  kind: Octarine
+  chart: helm-charts/octarine
+  overrideValues:
+    # NOTE: values are parsed as strings, pay attention when using boolean/int
+    global.octarine.accessTokenSecret: ${ACCESS_TOKEN_SECRET}
+    global.imagePullSecret: octarine-registry-secret
+    guardrails.service.name: octarine-guardrails
+    guardrails.admissionController.name: octarine-guardrails
+    guardrails.admissionController.secret.name: octarine-guardrails-tls

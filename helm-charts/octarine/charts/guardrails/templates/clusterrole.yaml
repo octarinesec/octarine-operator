@@ -1,0 +1,37 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "guardrails.fullname" . }}
+  labels:
+{{ include "guardrails.labels" . | indent 4 }}
+rules:
+  - apiGroups:
+      - rbac.authorization.k8s.io
+      - networking.k8s.io
+      - extensions
+      - rbac
+      - batch
+      - apps
+      - ""
+    resources:
+      - namespaces
+      - clusterrolebindings
+      - services
+      - networkpolicies
+      - ingresses
+      - rolebindings
+      - cronjobs
+      - jobs
+      - replicationcontrollers
+      - statefulsets
+      - daemonsets
+      - deployments
+      - replicasets
+      - pods
+      - nodes
+    verbs:
+      - get
+      - watch
+      - list
+{{- end -}}

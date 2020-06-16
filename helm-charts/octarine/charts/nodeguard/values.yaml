@@ -1,0 +1,135 @@
+# Default values for nodeguard.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+enabled: true
+
+nameOverride: ""
+fullnameOverride: ""
+
+controller:
+  replicaCount: 1
+
+  image:
+    repository: octarinesec/nodeguard-controller
+    tag:
+    pullPolicy: Always
+
+  # Static env vars. Additional env vars are generated in the helpers.
+  env:
+    OCTARINE_NODEGUARD_NAME: "nodeguard"
+    GIN_MODE: "release"
+    OCTARINE_NODEGUARD_CREATE_CLIENT_AND_SERVER_TIMEOUT_MINUTES: "5"
+
+  service:
+    type: ClusterIP
+    port: 50051
+
+  probes:
+    port: 8181
+
+  prometheus:
+    port: 7071
+    scrape: false
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    capabilities:
+      drop:
+      - ALL
+
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "30m"
+    limits:
+      memory: "128Mi"
+      cpu: "200m"
+
+  terminationGracePeriod: 30
+
+worker:
+  image:
+    repository: octarinesec/nodeguard-worker
+    tag:
+    pullPolicy: Always
+
+  interfacePrefixes:
+    container: "NO_PREFIX"
+    external: "NO_PREFIX"
+
+  # Static env vars. Additional env vars are generated in the helpers.
+  env:
+    OCTARINE_NODEGUARD_WORKER_GRPC_CLIENT_CONNECTION_TIMEOUT_SECONDS: "100"
+    OCTARINE_NODEGUARD_WORKER_NET_INTERFACE_HANDLER_TIMEOUT_MINUTES: "5"
+    OCTARINE_NODEGUARD_WORKER_HANDLE_SOCKET_DATA_TIMEOUT_MINUTES: "5"
+    OCTARINE_NODEGUARD_WORKER_UNIX_SOCKET_PATH: "/ids_socket/ids.sock"
+    GIN_MODE: "release"
+
+  probes:
+    readinessPath: /tmp/worker_ready
+    livenessPath: /tmp/worker_healthy
+
+  securityContext:
+    runAsUser: 0
+    privileged: true
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "100m"
+    limits:
+      memory: "1Gi"
+      cpu: "900m"
+
+  terminationGracePeriod: 30
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+ids:
+  image:
+    repository: octarinesec/octarine_ids
+    tag:
+    pullPolicy: Always
+
+  # Static env vars. Additional env vars are generated in the helpers.
+  env:
+    OCTARINE_IDS_NAME: "octarine-ids"
+    OCTARINE_IDS_UNIX_SOCKET_PATH: "/ids_socket/ids.sock"
+    OCTARINE_IDS_UNIX_SOCKET_USER: "1500"
+    OCTARINE_IDS_NODEGUARD_MODE: "true"
+
+  probes:
+    readinessPath: /tmp/ids_ready
+    livenessPath: /tmp/ids_healthy
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    capabilities:
+      drop:
+        - ALL
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "100m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+rbac:
+  # Create and use rbac resources
+  create: true

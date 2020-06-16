@@ -1,0 +1,15 @@
+{{- if .Values.rbac.create -}}
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "octarine-operator.fullname" . }}
+  labels:
+{{ include "octarine-operator.labels" . | indent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ template "octarine-operator.serviceAccountName" . }}
+roleRef:
+  kind: Role
+  name: {{ include "octarine-operator.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
+{{- end -}}

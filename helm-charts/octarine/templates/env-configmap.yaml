@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "octarine.configmap.env.fullname" . }}
+  labels:
+{{ include "octarine.labels" . | indent 4 }}
+data:
+{{ include "octarine.env" . | indent 2 }}

@@ -1,0 +1,16 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "guardrails.fullname" . }}
+  labels:
+{{ include "guardrails.labels" . | indent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "guardrails.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "guardrails.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
+{{- end -}}

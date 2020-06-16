@@ -1,0 +1,39 @@
+{{/*
+Create nodeguard ids name
+*/}}
+{{- define "nodeguard.ids.name" -}}
+{{- printf "%s-ids" (include "nodeguard.name" .) -}}
+{{- end -}}
+
+{{/*
+Create nodeguard ids fullname
+*/}}
+{{- define "nodeguard.ids.fullname" -}}
+{{- printf "%s-ids" (include "nodeguard.fullname" .) -}}
+{{- end -}}
+
+{{/*
+ids labels
+*/}}
+{{- define "nodeguard.ids.labels" -}}
+{{- template "nodeguard.labels.tpl" (list . (include "nodeguard.ids.name" .)) -}}
+{{- end -}}
+
+{{/*
+Create configmap name for nodeguard ids env vars.
+*/}}
+{{- define "nodeguard.ids.configmap.env.fullname" -}}
+{{-  printf "%s-env" (include "nodeguard.ids.fullname" .) -}}
+{{- end -}}
+
+  {{/*
+Generate env vars for nodeguard ids.
+Const env vars are taken from the values, dynamic env vars are generated here.
+*/}}
+{{- define "nodeguard.ids.env" -}}
+{{ toYaml .Values.ids.env }}
+OCTARINE_IDS_PROBES_READINESS_PATH: {{ .Values.ids.probes.readinessPath }}
+OCTARINE_IDS_PROBES_LIVENESS_PATH: {{ .Values.ids.probes.livenessPath }}
+OCTARINE_IDS_SERVER_ADDRESS: {{ include "nodeguard.controller.service.address" . | quote }}
+OCTARINE_IDS_SERVER_PORT: {{ .Values.controller.service.port | quote }}
+{{- end -}}

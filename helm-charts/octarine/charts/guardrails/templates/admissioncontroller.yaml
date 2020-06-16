@@ -1,0 +1,88 @@
+{{- if .Values.admissionController.enabled }}
+{{- $tls := fromYaml ( include "guardrails.gen-certs" . ) -}}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "guardrails.tls.secret.name" . }}
+  labels:
+{{ include "guardrails.labels" . | indent 4 }}
+type: Opaque
+data:
+  key: {{ $tls.clientKey }}
+  signed_cert: {{ $tls.clientCert }}
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ include "guardrails.validatingwebhook.name" . }}
+  labels:
+{{ include "guardrails.labels" . | indent 4 }}
+webhooks:
+  - name: {{ include "guardrails.service.fullname" . }}
+    failurePolicy: Ignore
+    sideEffects: NoneOnDryRun
+    namespaceSelector:
+      matchExpressions:
+        - key: octarine
+          operator: NotIn
+          values:
+            - ignore
+        - key: name
+          operator: NotIn
+          values:
+            - {{ .Release.Namespace }}
+    rules:
+      - apiGroups:
+          - '*'
+        apiVersions:
+          - '*'
+        operations:
+          - '*'
+        resources:
+          - pods/portforward
+          - pods/exec
+          - namespaces
+          - pods
+          - replicasets
+          - services
+          - roles
+          - rolebindings
+          - clusterroles
+          - clusterrolebindings
+          - networkpolicies
+          - deployments
+          - replicationcontrollers
+          - daemonsets
+          - statefulsets
+          - jobs
+          - cronjobs
+          - ingresses
+    {{ include "guardrails.webhook.timeout" . }}
+    clientConfig:
+      caBundle: {{ $tls.caCert }}
+      service:
+        name: {{ include "guardrails.service.name" . }}
+        namespace: {{ .Release.Namespace }}
+        path: /validate
+  - name: {{ template "guardrails-namespaces.webhook.fullname" . }}
+    failurePolicy: Ignore
+    sideEffects: None
+    rules:
+      - apiGroups:
+          - '*'
+        apiVersions:
+          - '*'
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - namespaces
+    {{ include "guardrails.webhook.timeout" . }}
+    clientConfig:
+      caBundle: {{ $tls.caCert }}
+      service:
+        name: {{ include "guardrails.service.name" . }}
+        namespace: {{ .Release.Namespace }}
+        path: /validate
+{{- end -}}
