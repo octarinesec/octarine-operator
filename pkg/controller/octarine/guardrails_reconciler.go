@@ -56,7 +56,7 @@ func (r *ReconcileOctarine) reconcileGuardrails(reqLogger logr.Logger, octarine 
 	} else {
 		reqLogger.V(1).Info("Guardrails deployment not available")
 
-		if err := r.deleteGuardrailsWebhook(reqLogger); err != nil {
+		if err := r.deleteGuardrailsWebhook(reqLogger, octarine); err != nil {
 			reqLogger.Error(err, "error deleting guardrails webhook")
 			return err
 		}
@@ -99,8 +99,8 @@ func (r *ReconcileOctarine) guardrailsDeploymentAvailable(reqLogger logr.Logger,
 }
 
 // Deletes guardrails webhook config
-func (r *ReconcileOctarine) deleteGuardrailsWebhook(reqLogger logr.Logger) error {
-	webhookName := guardrailsWebhookName()
+func (r *ReconcileOctarine) deleteGuardrailsWebhook(reqLogger logr.Logger, octarine *unstructured.Unstructured) error {
+	webhookName := guardrailsWebhookName(octarine)
 	found := &admissionregistrationv1beta1.ValidatingWebhookConfiguration{}
 	err := r.GetClient().Get(context.TODO(), k8stypes.NamespacedName{Name: webhookName, Namespace: ""}, found)
 	if err != nil && !k8serr.IsNotFound(err) {
@@ -160,7 +160,7 @@ func (r *ReconcileOctarine) reconcileGuardrailsSecret(reqLogger logr.Logger, oct
 		secret.Data["key"] = key
 
 		// Create secret in k8s
-		reqLogger.V(1).Info("creating guardrails webhook tls secret")
+		reqLogger.V(1).Info("creating/updating guardrails webhook tls secret")
 		if err := r.CreateOrUpdateResource(octarine, "", secret); err != nil {
 			return err
 		}
@@ -181,7 +181,7 @@ func (r *ReconcileOctarine) reconcileGuardrailsWebhook(reqLogger logr.Logger, oc
 	if err != nil {
 		return err
 	}
-	webhookName := guardrailsWebhookName()
+	webhookName := guardrailsWebhookName(octarine)
 	policy := admissionregistrationv1beta1.Ignore
 	sideEffectsNoneOnDryRun := admissionregistrationv1beta1.SideEffectClassNoneOnDryRun
 	sideEffectsNone := admissionregistrationv1beta1.SideEffectClassNone
@@ -195,6 +195,29 @@ func (r *ReconcileOctarine) reconcileGuardrailsWebhook(reqLogger logr.Logger, oc
 		return err
 	}
 
+	// Create namespace selectors
+	var resourcesWebhookSelector, nsWebhookSelector *metav1.LabelSelector
+	userSelector := octarineSpec.Guardrails.AdmissionController.NamespaceSelector
+	if userSelector != nil {
+		resourcesWebhookSelector = userSelector
+		nsWebhookSelector = userSelector
+	} else {
+		resourcesWebhookSelector = &metav1.LabelSelector{
+			MatchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Key:      "octarine",
+					Operator: metav1.LabelSelectorOpNotIn,
+					Values:   []string{"ignore"},
+				},
+				{
+					Key:      "name",
+					Operator: metav1.LabelSelectorOpNotIn,
+					Values:   []string{serviceName.Namespace},
+				},
+			},
+		}
+	}
+
 	// Create the validating webhook config
 	webhookConfig := &admissionregistrationv1beta1.ValidatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
@@ -202,23 +225,10 @@ func (r *ReconcileOctarine) reconcileGuardrailsWebhook(reqLogger logr.Logger, oc
 		},
 		Webhooks: []admissionregistrationv1beta1.ValidatingWebhook{
 			{
-				Name:          "resources.validating-webhook.octarine",
-				FailurePolicy: &policy,
-				SideEffects:   &sideEffectsNoneOnDryRun,
-				NamespaceSelector: &metav1.LabelSelector{
-					MatchExpressions: []metav1.LabelSelectorRequirement{
-						{
-							Key:      "octarine",
-							Operator: metav1.LabelSelectorOpNotIn,
-							Values:   []string{"ignore"},
-						},
-						{
-							Key:      "name",
-							Operator: metav1.LabelSelectorOpNotIn,
-							Values:   []string{serviceName.Namespace},
-						},
-					},
-				},
+				Name:              "resources.validating-webhook.octarine",
+				FailurePolicy:     &policy,
+				SideEffects:       &sideEffectsNoneOnDryRun,
+				NamespaceSelector: resourcesWebhookSelector,
 				Rules: []admissionregistrationv1beta1.RuleWithOperations{
 					{
 						Operations: []admissionregistrationv1beta1.OperationType{admissionregistrationv1beta1.OperationAll},
@@ -257,9 +267,10 @@ func (r *ReconcileOctarine) reconcileGuardrailsWebhook(reqLogger logr.Logger, oc
 				},
 			},
 			{
-				Name:          "namespaces.validating-webhook.octarine",
-				FailurePolicy: &policy,
-				SideEffects:   &sideEffectsNone,
+				Name:              "namespaces.validating-webhook.octarine",
+				FailurePolicy:     &policy,
+				SideEffects:       &sideEffectsNone,
+				NamespaceSelector: nsWebhookSelector,
 				Rules: []admissionregistrationv1beta1.RuleWithOperations{
 					{
 						Operations: []admissionregistrationv1beta1.OperationType{admissionregistrationv1beta1.Create, admissionregistrationv1beta1.Update},
@@ -283,8 +294,8 @@ func (r *ReconcileOctarine) reconcileGuardrailsWebhook(reqLogger logr.Logger, oc
 		},
 	}
 
-	reqLogger.V(1).Info("creating guardrails webhook if it doesn't exist")
-	if err := r.CreateResourceIfNotExists(octarine, "", webhookConfig); err != nil {
+	reqLogger.V(1).Info("creating/updating guardrails webhook")
+	if err := r.CreateOrUpdateResource(octarine, "", webhookConfig); err != nil {
 		return err
 	}
 

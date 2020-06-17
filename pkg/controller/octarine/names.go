@@ -1,7 +1,9 @@
 package octarine
 
 import (
+	"fmt"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -41,6 +43,6 @@ func guardrailsServiceName() (types.NamespacedName, error) {
 	}, nil
 }
 
-func guardrailsWebhookName() string {
-	return "octarine-guardrails"
+func guardrailsWebhookName(octarine *unstructured.Unstructured) string {
+	return fmt.Sprintf("%s-octarine-guardrails", octarine.GetName())
 }

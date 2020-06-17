@@ -1,5 +1,7 @@
 package types
 
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 type octarine struct {
 	Account           string
 	Domain            string
@@ -14,8 +16,9 @@ type global struct {
 }
 
 type admissionController struct {
-	TimeoutSeconds int
-	AutoManage     bool
+	TimeoutSeconds    int
+	AutoManage        bool
+	NamespaceSelector *metav1.LabelSelector
 }
 
 type guardrailsSpec struct {
