@@ -17,24 +17,13 @@ The helm controller within the operator is responsible for managing the Octarine
 ## Prerequisites
 - Kubernetes 1.3+
 - Helm installed, Tiller pod is running
-- Octarine access token for a `dataplane` role ([see how to obtain](#obtain-an-octarine-access-token))
 
 ## Deployment
 Install the chart with the release name `octarine` in the `octarine-dataplane` namespace:
 ```shell script
-helm upgrade --install --namespace octarine-dataplane octarine ./helm-charts/octarine-operator/ --set octarine.accessToken=<your access token>
+helm upgrade --install --namespace octarine-dataplane octarine ./helm-charts/octarine-operator/
 ```
-> By default, you should provide the access token as a value to the chart, which will create a secret with it.  
-> You can manually create the access token secret instead (see [Customize the configuration](#customize-the-configuration)).
-
 After deploying the `octarine-operator`, please refer to the Octarine [Custom Resource documentation](docs/octarine_cr.md) in order to deploy Octarine dataplane components.
-
-## Obtain an Octarine Access Token
-In order to obtain an Octarine access token:
-1. Login to your account on [Octarine dashboard](https://main.octarinesec.com)
-2. Go to *Access keys* under *Administration*
-3. Create a token with the `dataplane` role
-4. Copy the `accessjwt` - this is the access token you'll use 
 
 ## Rolling upgrade
 Upgrade the `octarine` release to the desired version:
@@ -59,9 +48,6 @@ The following table lists the configurable parameters of the octarine operator c
 
 Parameter | Description | Default
 --------- | ----------- | -------
-`octarine.accessToken` | Octarine access token to use | 
-`octarine.accessTokenSecret.create` | Whether a secret should be created with the given `octarine.accessToken` | `true`
-`octarine.accessTokenSecret.name` | The name of the secret containing the access token | `octarine-access-token`
 `replicaCount` | The number of the operator replicas to run | `1`
 
 ## Logs

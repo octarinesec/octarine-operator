@@ -20,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	k8serr "k8s.io/kubernetes/staging/src/k8s.io/apimachinery/pkg/api/errors"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"strconv"
@@ -362,25 +361,27 @@ func (r *ReconcileOctarine) parseSpec(o *unstructured.Unstructured) (*OctarineSp
 
 // Populates the access token from the Octarine spec - if it wasn't explicitly set, read it from the secret
 func (r *ReconcileOctarine) populateAccessToken(spec *OctarineSpec, namespace string) error {
-	accessTokenSecret := os.Getenv("ACCESS_TOKEN_SECRET")
-	if accessTokenSecret == "" {
-		return errors.New("ACCESS_TOKEN_SECRET env not set")
-	}
+	if spec.Global.Octarine.AccessToken == "" {
+		accessTokenSecret := spec.Global.Octarine.AccessTokenSecret
+		if accessTokenSecret == "" {
+			return errors.New("either global.octarine.accessToken or global.octarine.accessTokenSecret must be specified")
+		}
 
-	// Get the secret which contains the access token
-	secret := &corev1.Secret{}
-	if err := r.GetClient().Get(context.TODO(), types.NamespacedName{Name: accessTokenSecret, Namespace: namespace}, secret); err != nil {
-		return fmt.Errorf("failed to get secret %s: %v", accessTokenSecret, err)
-	}
+		// Get the secret which contains the access token
+		secret := &corev1.Secret{}
+		if err := r.GetClient().Get(context.TODO(), types.NamespacedName{Name: accessTokenSecret, Namespace: namespace}, secret); err != nil {
+			return fmt.Errorf("failed to get secret %s: %v", accessTokenSecret, err)
+		}
 
-	// Get the access token from the secret
-	accessToken := string(secret.Data["accessToken"])
-	if accessToken == "" {
-		return fmt.Errorf("access token wasn't found in secret %s", accessTokenSecret)
-	}
+		// Get the access token from the secret
+		accessToken := string(secret.Data["accessToken"])
+		if accessToken == "" {
+			return fmt.Errorf("access token wasn't found in secret %s", accessTokenSecret)
+		}
 
-	// Set the token in Octarine spec
-	spec.Global.Octarine.AccessToken = accessToken
+		// Set the token in Octarine spec
+		spec.Global.Octarine.AccessToken = accessToken
+	}
 
 	return nil
 }

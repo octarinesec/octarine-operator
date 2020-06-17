@@ -38,8 +38,6 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: {{ include "octarine-operator.name" . }}
-            - name: ACCESS_TOKEN_SECRET
-              value: {{ .Values.octarine.accessTokenSecret.name }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

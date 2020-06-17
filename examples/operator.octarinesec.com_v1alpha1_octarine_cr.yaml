@@ -8,3 +8,4 @@ spec:
       version: 20.6
       account: test
       domain: stg:us-east-1
+      accessTokenSecret: octarine-access-token

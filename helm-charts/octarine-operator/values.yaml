@@ -4,12 +4,6 @@
 
 replicaCount: 1
 
-octarine:
-  accessToken: # Octarine access token
-  accessTokenSecret:
-    create: true
-    name: octarine-access-token
-
 image:
   repository: octarinesec/octarine-operator
   tag: 1.0.0
