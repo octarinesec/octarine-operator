@@ -14,7 +14,7 @@ The Octarine custom resource defines the parameters for the Octarine components.
 > Replace `<accessjwt>` with the accessjwt you copied in the previous step
 
 ```shell script
-kubectl create secret generic octarine-access-token  --namespace octarine-dataplane --from-literal=accessToken=<accessjwt>
+kubectl create secret generic octarine-access-token --namespace octarine-dataplane --from-literal=accessToken=<accessjwt>
 ```
 
 3. Create the Octarine CR in the namespace in which the operator is running:
