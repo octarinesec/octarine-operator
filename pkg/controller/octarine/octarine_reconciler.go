@@ -15,7 +15,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
@@ -162,16 +161,29 @@ func (r *ReconcileOctarine) initialize(reqLogger logr.Logger, octarine *unstruct
 		return err
 	}
 
-	// Add this controller as a finalizer to the octarine CR instance
-	util.AddFinalizer(octarine, controllerName)
+	// Update the octarine CR instance to set the finalizer and the annotation
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		// Get latest instance in case it has changed
+		err := r.GetClient().Get(context.TODO(), types.NamespacedName{
+			Namespace: octarine.GetNamespace(),
+			Name:      octarine.GetName(),
+		}, octarine)
+		if err != nil {
+			reqLogger.Error(err, "Failed getting latest CR instance")
+			return err
+		}
 
-	// Set the octarine CR instance as initialized
-	annotations := octarine.GetAnnotations()
-	annotations[annotationInitialized] = strconv.FormatBool(true)
-	octarine.SetAnnotations(annotations)
+		// Add this controller as a finalizer to the octarine CR instance
+		util.AddFinalizer(octarine, controllerName)
 
-	// Update the octarine CR instance to set the finalizer
-	err := r.updateResource(octarine)
+		// Set the octarine CR instance as initialized
+		annotations := octarine.GetAnnotations()
+		annotations[annotationInitialized] = strconv.FormatBool(true)
+		octarine.SetAnnotations(annotations)
+
+		// Update object
+		return r.GetClient().Update(context.TODO(), octarine)
+	})
 	if err != nil {
 		reqLogger.Error(err, "Failed updating Octarine CR instance")
 		return err
@@ -196,10 +208,22 @@ func (r *ReconcileOctarine) cleanup(reqLogger logr.Logger, octarine *unstructure
 	// add cleanup logic here
 
 	// Cleanup done - remove finalizer
-	util.RemoveFinalizer(octarine, controllerName)
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		// Get latest instance in case it has changed
+		err := r.GetClient().Get(context.TODO(), types.NamespacedName{
+			Namespace: octarine.GetNamespace(),
+			Name:      octarine.GetName(),
+		}, octarine)
+		if err != nil {
+			reqLogger.Error(err, "Failed getting latest CR instance")
+			return err
+		}
 
-	// Update the octarine CR instance to remove the finalizer
-	err := r.updateResource(octarine)
+		util.RemoveFinalizer(octarine, controllerName)
+
+		// Update object
+		return r.GetClient().Update(context.TODO(), octarine)
+	})
 	if err != nil {
 		reqLogger.Error(err, "Failed updating Octarine CR instance")
 		return err
@@ -208,12 +232,6 @@ func (r *ReconcileOctarine) cleanup(reqLogger logr.Logger, octarine *unstructure
 	reqLogger.V(1).Info("Finished cleaning up")
 
 	return nil
-}
-
-func (r *ReconcileOctarine) updateResource(o runtime.Object) error {
-	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		return r.GetClient().Update(context.TODO(), o)
-	})
 }
 
 // Labels the octarine namespace, which is important for Guardrails' webhook namespace selector
