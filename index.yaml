@@ -1,0 +1,13 @@
+apiVersion: v1
+entries:
+  octarine-operator:
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2020-06-21T19:28:40.54952+03:00"
+    description: A Helm chart for Octarine operator
+    digest: 652a3e3dbcb0038e818ab5cf45fcd29f85174a97b029b60b964f85250624c32f
+    name: octarine-operator
+    urls:
+    - https://octarinesec.github.io/octarine-operator/helm-repo/octarine-operator-0.1.0.tgz
+    version: 0.1.0
+generated: "2020-06-21T19:28:40.548244+03:00"
