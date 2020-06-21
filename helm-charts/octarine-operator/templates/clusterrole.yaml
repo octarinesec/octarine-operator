@@ -16,13 +16,6 @@ rules:
   - watch
   - update
 - apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterrolebindings
-  - clusterroles
-  verbs:
-  - '*'
-- apiGroups:
   - admissionregistration.k8s.io
   resources:
   - validatingwebhookconfigurations
@@ -34,4 +27,51 @@ rules:
   - priorityclasses
   verbs:
   - '*'
+
+# Guardrails cluster role
+- apiGroups:
+    - rbac.authorization.k8s.io
+    - networking.k8s.io
+    - extensions
+    - rbac
+    - batch
+    - apps
+    - ""
+  resources:
+    - namespaces
+    - clusterrolebindings
+    - services
+    - networkpolicies
+    - ingresses
+    - rolebindings
+    - cronjobs
+    - jobs
+    - replicationcontrollers
+    - statefulsets
+    - daemonsets
+    - deployments
+    - replicasets
+    - pods
+    - nodes
+  verbs:
+    - get
+    - watch
+    - list
+
+# Nodeguard cluster role
+- apiGroups:
+    - batch
+    - apps
+    - ""
+  resources:
+    - services
+    - jobs
+    - deployments
+    - replicasets
+    - nodes
+    - pods
+  verbs:
+    - get
+    - watch
+    - list
 {{- end -}}

@@ -119,11 +119,11 @@ func (r *ReconcileOctarine) deleteGuardrailsWebhook(reqLogger logr.Logger, octar
 func (r *ReconcileOctarine) reconcileGuardrailsSecret(reqLogger logr.Logger, octarine *unstructured.Unstructured) error {
 	reqLogger.V(1).Info("reconciling guardrails secret")
 
-	secretName, err := guardrailsSecretName()
+	secretName, err := guardrailsSecretName(octarine)
 	if err != nil {
 		return err
 	}
-	serviceName, err := guardrailsServiceName()
+	serviceName, err := guardrailsServiceName(octarine)
 	if err != nil {
 		return err
 	}
@@ -173,11 +173,11 @@ func (r *ReconcileOctarine) reconcileGuardrailsSecret(reqLogger logr.Logger, oct
 func (r *ReconcileOctarine) reconcileGuardrailsWebhook(reqLogger logr.Logger, octarine *unstructured.Unstructured, octarineSpec *types.OctarineSpec) error {
 	reqLogger.V(1).Info("reconciling guardrails validating webhook")
 
-	secretName, err := guardrailsSecretName()
+	secretName, err := guardrailsSecretName(octarine)
 	if err != nil {
 		return err
 	}
-	serviceName, err := guardrailsServiceName()
+	serviceName, err := guardrailsServiceName(octarine)
 	if err != nil {
 		return err
 	}

@@ -54,3 +54,10 @@ Create the name of the service account to use
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Image pull secret name
+*/}}
+{{- define "octarine-operator.imagePullSecret.name" -}}
+{{- printf "%s-registry-secret" (include "octarine-operator.fullname" .) -}}
+{{- end -}}

@@ -38,6 +38,10 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: {{ include "octarine-operator.name" . }}
+            - name: IMAGE_PULL_SECRET_NAME
+              value: {{ include "octarine-operator.imagePullSecret.name" . }}
+            - name: SERVICE_ACCOUNT_NAME
+              value: {{ include "octarine-operator.serviceAccountName" . }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

@@ -59,7 +59,7 @@ Create the name of the service account to use
 Create service name for guardrails service.
 */}}
 {{- define "guardrails.service.name" -}}
-{{- default (include "guardrails.fullname" .) .Values.service.name -}}
+{{- include "guardrails.fullname" . -}}
 {{- end -}}
 
 {{/*
