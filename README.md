@@ -21,7 +21,8 @@ The helm controller within the operator is responsible for managing the Octarine
 ## Deployment
 Install the chart with the release name `octarine` in the `octarine-dataplane` namespace:
 ```shell script
-helm upgrade --install --namespace octarine-dataplane octarine ./helm-charts/octarine-operator/
+helm repo add octarine-operator https://octarinesec.github.io/octarine-operator
+helm upgrade --install --namespace octarine-dataplane octarine octarine-operator/octarine-operator
 ```
 After deploying the `octarine-operator`, please refer to the Octarine [Custom Resource documentation](docs/octarine_cr.md) in order to deploy Octarine dataplane components.
 

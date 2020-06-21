@@ -13,7 +13,7 @@ operator-sdk run local --watch-namespace "octarine-dataplane" --operator-flags='
 ```
 
 ## Build & Release
-1. Update the version in `version/version.go`
+1. Update the version in `version/version.go` and in `helm-charts/octarine-operator/Chart.yaml`
 2. Build the operator:
 ```shell script
 operator-sdk build octarinesec/octarine-operator:<version>
@@ -22,3 +22,12 @@ operator-sdk build octarinesec/octarine-operator:<version>
 ```shell script
 docker push octarinesec/octarine-operator:<version>
 ```
+4. Create helm chart package:
+```shell script
+helm package helm-charts/octarine-operator -d helm-repo
+```
+5. Update helm repo index:
+```shell script
+helm repo index --url https://octarinesec.github.io/octarine-operator .
+```
+6. Push the chart package and the updated `index.yaml` to GitHub (`master` branch)
