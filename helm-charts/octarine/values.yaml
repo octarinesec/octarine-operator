@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 global:
-  imagePullSecret: # name of an EXISTING imagePullSecret to use (if not provided, imagePullSecret will be created)
+  imagePullSecret: # name of an imagePullSecret to use
 
   octarine:
     version: # Octarine version
@@ -21,8 +21,9 @@ global:
       host: messages.main.octarinesec.com
       port: 50051
 
-# parameters for creating an imagePullSecret, in case global.imagePullSecret wasn't provided
+# parameters for creating an imagePullSecret
 imageCredentials:
+  create: false # whether an imagePullSecret with the credentials below should be created
   registry: "index.docker.io/v1/"
   username:
   password:

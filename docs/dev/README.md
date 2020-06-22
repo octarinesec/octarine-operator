@@ -8,8 +8,12 @@ Please make sure to install the following in order to develop & run the operator
 - golang v1.14
 
 ## Run locally
+> Before running the operator locally on your cluster for the first time, you'll need to deploy the operator resources:
+> ```shell script
+> kubectl apply -Rf deploy/
+> ```
 ```shell script
-operator-sdk run local --watch-namespace "octarine-dataplane" --operator-flags='--zap-level=3'
+OPERATOR_NAME=octarine-operator SERVICE_ACCOUNT_NAME=octarine-operator IMAGE_PULL_SECRET_NAME=octarine-operator-registry-secret operator-sdk run local --watch-namespace "octarine-dataplane" --operator-flags='--zap-level=3'
 ```
 
 ## Build & Release

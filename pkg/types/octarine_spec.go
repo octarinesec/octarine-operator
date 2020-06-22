@@ -17,7 +17,7 @@ type global struct {
 
 type admissionController struct {
 	TimeoutSeconds    int
-	AutoManage        bool
+	AutoManage        bool // operator flag only (not from the chart) - default value should be set
 	NamespaceSelector *metav1.LabelSelector
 }
 
@@ -32,6 +32,7 @@ type nodeguardSpec struct {
 
 // The spec of the Octarine CR. This is used by the helm operator as well, thus the spec corresponds to the helm
 // chart's values.yaml.
+// Default values are loaded from the chart's values.yaml.
 type OctarineSpec struct {
 	Global     global
 	Guardrails guardrailsSpec
@@ -41,7 +42,7 @@ type OctarineSpec struct {
 func NewOctarineSpec() *OctarineSpec {
 	spec := new(OctarineSpec)
 
-	// Set default values
+	// Set default values for parameters not loaded from the chart
 	spec.Guardrails.AdmissionController.AutoManage = true
 
 	return spec

@@ -5,6 +5,5 @@
   chart: helm-charts/octarine
   overrideValues:
     # NOTE: values are parsed as strings, pay attention when using boolean/int
-    global.imagePullSecret: ${IMAGE_PULL_SECRET_NAME}
     guardrails.serviceAccount.name: ${SERVICE_ACCOUNT_NAME}
     nodeguard.serviceAccount.name: ${SERVICE_ACCOUNT_NAME}
