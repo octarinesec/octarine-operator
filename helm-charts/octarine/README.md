@@ -2,7 +2,7 @@
 This repo contains helm chart for installing Octarine dataplane.
 
 ## Prerequisites
-- Kubernetes 1.3+
+- Kubernetes 1.13+
 
 - Helm installed, Tiller pod is running
 

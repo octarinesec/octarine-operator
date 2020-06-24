@@ -6,6 +6,7 @@ Please make sure to install the following in order to develop & run the operator
 - operator-sdk (https://sdk.operatorframework.io/docs/install-operator-sdk/)
 - Docker
 - golang v1.14
+- Helm 2 or 3
 
 ## Run locally
 > Before running the operator locally on your cluster for the first time, you'll need to deploy the operator resources:

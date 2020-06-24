@@ -30,3 +30,7 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "octarine-operator"
+            - name: IMAGE_PULL_SECRET_NAME
+              value: "octarine-operator-registry-secret"
+            - name: SERVICE_ACCOUNT_NAME
+              value: "octarine-operator"
