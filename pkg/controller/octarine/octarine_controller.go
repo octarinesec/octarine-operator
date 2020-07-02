@@ -14,6 +14,7 @@ import (
 	crthandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
@@ -99,6 +100,16 @@ func addOctarineController(mgr manager.Manager, helmWatches []watches.Watch) err
 		err = c.Watch(&source.Kind{Type: &admissionregistrationv1beta1.ValidatingWebhookConfiguration{}}, &crthandler.EnqueueRequestForOwner{
 			IsController: true,
 			OwnerType:    o,
+		})
+		if err != nil {
+			return err
+		}
+
+		// Watch for changes to namespaces (required in order to be able to label the ns)
+		err = c.Watch(&source.Kind{Type: &v1.Namespace{}}, &crthandler.EnqueueRequestsFromMapFunc{
+			ToRequests: crthandler.ToRequestsFunc(func(object crthandler.MapObject) []reconcile.Request {
+				return []reconcile.Request{}
+			}),
 		})
 		if err != nil {
 			return err
