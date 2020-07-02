@@ -241,31 +241,37 @@ func (r *ReconcileOctarine) labelNs(reqLogger logr.Logger, namespace string) err
 		"name":     namespace,
 		"octarine": "ignore",
 	}
-	updated := false
-	ns := &corev1.Namespace{}
 
-	// Fetch current namespace labels
-	if err := r.GetClient().Get(context.TODO(), types.NamespacedName{Name: namespace, Namespace: ""}, ns); err != nil {
-		return err
-	}
-	nsLabels := ns.GetLabels()
-	if nsLabels == nil {
-		nsLabels = make(map[string]string)
-	}
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		updated := false
+		ns := &corev1.Namespace{}
 
-	// For each label, if it doesn't exist or it has a different value - set it's new value
-	for key, val := range labels {
-		if actualVal, ok := nsLabels[key]; !ok || actualVal != val {
-			nsLabels[key] = val
-			updated = true
-		}
-	}
-
-	if updated {
-		reqLogger.V(1).Info("Labeling namespace")
-		if err := r.GetClient().Update(context.TODO(), ns); err != nil {
+		// Fetch current namespace labels
+		if err := r.GetClient().Get(context.TODO(), types.NamespacedName{Name: namespace, Namespace: ""}, ns); err != nil {
 			return err
 		}
+		nsLabels := ns.GetLabels()
+		if nsLabels == nil {
+			nsLabels = make(map[string]string)
+		}
+
+		// For each label, if it doesn't exist or it has a different value - set it's new value
+		for key, val := range labels {
+			if actualVal, ok := nsLabels[key]; !ok || actualVal != val {
+				nsLabels[key] = val
+				updated = true
+			}
+		}
+
+		if updated {
+			reqLogger.V(1).Info("Labeling namespace")
+			return r.GetClient().Update(context.TODO(), ns)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil
