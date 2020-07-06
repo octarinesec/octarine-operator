@@ -42,10 +42,10 @@ controller:
   resources:
     requests:
       memory: "64Mi"
-      cpu: "30m"
+      cpu: "200m"
     limits:
       memory: "128Mi"
-      cpu: "200m"
+      cpu: "600m"
 
   terminationGracePeriod: 30
 
@@ -64,7 +64,6 @@ worker:
     OCTARINE_NODEGUARD_WORKER_GRPC_CLIENT_CONNECTION_TIMEOUT_SECONDS: "100"
     OCTARINE_NODEGUARD_WORKER_NET_INTERFACE_HANDLER_TIMEOUT_MINUTES: "5"
     OCTARINE_NODEGUARD_WORKER_HANDLE_SOCKET_DATA_TIMEOUT_MINUTES: "5"
-    OCTARINE_NODEGUARD_WORKER_UNIX_SOCKET_PATH: "/ids_socket/ids.sock"
     GIN_MODE: "release"
 
   probes:
@@ -78,10 +77,10 @@ worker:
   resources:
     requests:
       memory: "512Mi"
-      cpu: "100m"
+      cpu: "1024m"
     limits:
-      memory: "1Gi"
-      cpu: "900m"
+      memory: "2048Mi"
+      cpu: "2048m"
 
   terminationGracePeriod: 30
 
@@ -90,38 +89,6 @@ worker:
   tolerations: []
 
   affinity: {}
-
-ids:
-  image:
-    repository: octarinesec/octarine_ids
-    tag:
-    pullPolicy: Always
-
-  # Static env vars. Additional env vars are generated in the helpers.
-  env:
-    OCTARINE_IDS_NAME: "octarine-ids"
-    OCTARINE_IDS_UNIX_SOCKET_PATH: "/ids_socket/ids.sock"
-    OCTARINE_IDS_UNIX_SOCKET_USER: "1500"
-    OCTARINE_IDS_NODEGUARD_MODE: "true"
-
-  probes:
-    readinessPath: /tmp/ids_ready
-    livenessPath: /tmp/ids_healthy
-
-  securityContext:
-    allowPrivilegeEscalation: false
-    runAsNonRoot: true
-    capabilities:
-      drop:
-        - ALL
-
-  resources:
-    requests:
-      memory: "512Mi"
-      cpu: "100m"
-    limits:
-      memory: "1Gi"
-      cpu: "500m"
 
 serviceAccount:
   # Specifies whether a service account should be created

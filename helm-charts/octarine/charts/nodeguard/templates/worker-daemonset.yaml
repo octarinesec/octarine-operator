@@ -1,5 +1,4 @@
 {{- $workerImageTag := default .Values.global.octarine.version .Values.worker.image.tag -}}
-{{- $idsImageTag := default .Values.global.octarine.version .Values.ids.image.tag -}}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -38,8 +37,6 @@ spec:
         - name: host-docker-sock
           hostPath:
             path: /var/run/docker.sock
-        - name: octarine-ids-socket
-          emptyDir: {}
       priorityClassName: {{ include "octarine.priorityClass.name" . }}
       containers:
         - name: {{ include "nodeguard.worker.name" . }}
@@ -65,45 +62,14 @@ spec:
           volumeMounts:
             - name: host-docker-sock
               mountPath: /var/run/docker.sock
-            - name: octarine-ids-socket
-              mountPath: /ids_socket
           command:
             - "/run_worker.sh"
           args:
             - "-v"
             - "2"
-          envFrom:
-            - configMapRef:
-                name: {{ include "nodeguard.worker.configmap.env.fullname" . }}
-        - name: {{ include "nodeguard.ids.name" . }}
-          image: "{{ .Values.ids.image.repository }}:{{ $idsImageTag }}"
-          imagePullPolicy: {{ .Values.ids.image.pullPolicy }}
-          securityContext:
-            {{- toYaml .Values.ids.securityContext | nindent 12 }}
-          resources:
-            {{- toYaml .Values.ids.resources | nindent 12 }}
-          readinessProbe:
-            periodSeconds: 30
-            exec:
-              command:
-                - cat
-                - {{ .Values.ids.probes.readinessPath }}
-          livenessProbe:
-            periodSeconds: 30
-            initialDelaySeconds: 5
-            exec:
-              command:
-                - cat
-                - {{ .Values.ids.probes.livenessPath }}
-          volumeMounts:
-            - name: octarine-ids-socket
-              mountPath: /ids_socket
-          command:
-            - "/octarine_ids"
-            - "-logtostderr=true"
           env:
             {{ include "octarine.common.env" . | nindent 12 }}
           envFrom:
             - configMapRef:
-                name: {{ include "nodeguard.ids.configmap.env.fullname" . }}
-              {{ include "octarine.common.envFrom" . | nindent 12 }}
+                name: {{ include "nodeguard.worker.configmap.env.fullname" . }}
+            {{ include "octarine.common.envFrom" . | nindent 12 }}
