@@ -12,7 +12,12 @@ Please make sure to install the following in order to develop & run the operator
 > Before running the operator locally on your cluster for the first time, you'll need to deploy the operator resources:
 > ```shell script
 > kubectl create ns octarine-dataplane
-> kubectl apply -n octarine-dataplane -Rf deploy/
+> kubectl apply -n octarine-dataplane -f deploy/crds/operator.octarinesec.com_octarines_crd.yaml
+> kubectl apply -n octarine-dataplane -f deploy/cluster_role.yaml
+> kubectl apply -n octarine-dataplane -f deploy/cluster_role_binding.yaml
+> kubectl apply -n octarine-dataplane -f deploy/role.yaml
+> kubectl apply -n octarine-dataplane -f deploy/role_binding.yaml
+> kubectl apply -n octarine-dataplane -f deploy/service_account.yaml
 > ```
 ```shell script
 OPERATOR_NAME=octarine-operator SERVICE_ACCOUNT_NAME=octarine-operator IMAGE_PULL_SECRET_NAME=octarine-operator-registry-secret operator-sdk run local --watch-namespace "octarine-dataplane" --operator-flags='--zap-level=3'
