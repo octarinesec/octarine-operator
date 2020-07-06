@@ -18,6 +18,31 @@ Please make sure to install the following in order to develop & run the operator
 OPERATOR_NAME=octarine-operator SERVICE_ACCOUNT_NAME=octarine-operator IMAGE_PULL_SECRET_NAME=octarine-operator-registry-secret operator-sdk run local --watch-namespace "octarine-dataplane" --operator-flags='--zap-level=3'
 ```
 
+## Modify the backend (CP) address
+By default, the DP will work with `main.octarinesec.com`.  
+In order to work with your backend, add the `api` and `messageproxy` params to the Octarine CR:
+```yaml
+cat <<EOF | kubectl apply --namespace octarine-dataplane -f -
+apiVersion: operator.octarinesec.com/v1alpha1
+kind: Octarine
+metadata:
+  name: octarine
+spec:
+  global:
+    octarine:
+      version: <octarine version>
+      account: <account>
+      domain: <domain, group:member>
+      accessTokenSecret: octarine-access-token
+      api:
+        host: <api address>
+        port: 443
+      messageproxy:
+        host: <messageproxy address>
+        port: 50051
+EOF
+```
+
 ## Build & Release
 1. Update the version in `version/version.go` and in `helm-charts/octarine-operator/Chart.yaml`
 2. Build the operator:
