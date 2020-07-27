@@ -24,7 +24,8 @@ The operator Helm chart support Helm 3 and Helm 2 (if you're using Helm 2, make 
 Install the chart with the release name `octarine` in the `octarine-dataplane` namespace:
 ```shell script
 helm repo add octarine-operator https://octarinesec.github.io/octarine-operator
-helm upgrade --install --namespace octarine-dataplane octarine octarine-operator/octarine-operator
+helm repo update
+helm upgrade --install --namespace octarine-dataplane octarine-operator octarine-operator/octarine-operator
 ```
 
 ### Deploy plain K8s resources
@@ -39,9 +40,10 @@ kubectl apply -n octarine-dataplane -Rf deploy
 *After deploying the `octarine-operator`, please refer to the Octarine [Custom Resource documentation](docs/octarine_cr.md) in order to deploy Octarine dataplane components.*
 
 ## Rolling upgrade
-Upgrade the `octarine` release to the desired version:
+The deployment command can be used for upgrading as well. Make sure to update the helm repo before.
 ```shell script
-helm upgrade octarine ./helm-charts/octarine-operator/ --reuse-values
+helm repo update
+helm upgrade --install --namespace octarine-dataplane octarine-operator octarine-operator/octarine-operator
 ```
 
 ## Uninstalling the Octarine operator
@@ -51,7 +53,7 @@ helm upgrade octarine ./helm-charts/octarine-operator/ --reuse-values
 If you deployed the operator using Helm:
 1. Uninstall the `octarine` release:
 ```shell script
-helm delete octarine
+helm delete octarine-operator
 ```
 2. Delete the Octarine CRD which was created by helm:
 ```shell script
