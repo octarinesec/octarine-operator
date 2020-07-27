@@ -23,6 +23,8 @@ Please make sure to install the following in order to develop & run the operator
 OPERATOR_NAME=octarine-operator SERVICE_ACCOUNT_NAME=octarine-operator IMAGE_PULL_SECRET_NAME=octarine-operator-registry-secret operator-sdk run local --watch-namespace "octarine-dataplane" --operator-flags='--zap-level=3'
 ```
 
+*After running the operator, refer to the [Custom Resource documentation](docs/octarine_cr.md) in order to deploy Octarine CR.*
+
 ## Modify the backend (CP) address
 By default, the DP will work with `main.octarinesec.com`.  
 In order to work with your backend, add the `api` and `messageproxy` params to the Octarine CR:
@@ -49,7 +51,7 @@ EOF
 ```
 
 ## Build & Release
-1. Update the version in `version/version.go` and in `helm-charts/octarine-operator/Chart.yaml`
+1. Update the version in `version/version.go`, `helm-charts/octarine-operator/Chart.yaml` & `helm-charts/octarine-operator/values.yaml` (`image.tag`)
 2. Build the operator:
 ```shell script
 operator-sdk build octarinesec/octarine-operator:<version>
@@ -66,4 +68,4 @@ helm package helm-charts/octarine-operator -d helm-repo
 ```shell script
 helm repo index --url https://octarinesec.github.io/octarine-operator .
 ```
-6. Push the chart package and the updated `index.yaml` to GitHub (`master` branch)
+6. Push the chart package and the updated resources to GitHub (`master` branch)
