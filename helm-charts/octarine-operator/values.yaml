@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: octarinesec/octarine-operator
-  tag: 1.0.0
+  tag: 1.0.1
   pullPolicy: Always
 
 args:
