@@ -1,12 +1,12 @@
-{{- if .Values.admissionController.enabled }}
-{{- $tls := fromYaml ( include "guardrails.gen-certs" . ) -}}
+{{- if .Values.enforcer.admissionController.enabled }}
+{{- $tls := fromYaml ( include "guardrails.enforcer.gen-certs" . ) -}}
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ include "guardrails.tls.secret.name" . }}
+  name: {{ include "guardrails.enforcer.tls.secret.name" . }}
   labels:
-{{ include "guardrails.labels" . | indent 4 }}
+{{ include "guardrails.enforcer.labels" . | indent 4 }}
 type: Opaque
 data:
   key: {{ $tls.clientKey }}
@@ -15,11 +15,11 @@ data:
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: {{ include "guardrails.validatingwebhook.name" . }}
+  name: {{ include "guardrails.enforcer.validatingwebhook.name" . }}
   labels:
-{{ include "guardrails.labels" . | indent 4 }}
+{{ include "guardrails.enforcer.labels" . | indent 4 }}
 webhooks:
-  - name: {{ include "guardrails.service.fullname" . }}
+  - name: {{ include "guardrails.enforcer.service.fullname" . }}
     failurePolicy: Ignore
     sideEffects: NoneOnDryRun
     namespaceSelector:
@@ -58,14 +58,14 @@ webhooks:
           - jobs
           - cronjobs
           - ingresses
-    {{ include "guardrails.webhook.timeout" . }}
+    {{ include "guardrails.enforcer.webhook.timeout" . }}
     clientConfig:
       caBundle: {{ $tls.caCert }}
       service:
-        name: {{ include "guardrails.service.name" . }}
+        name: {{ include "guardrails.enforcer.service.name" . }}
         namespace: {{ .Release.Namespace }}
         path: /validate
-  - name: {{ template "guardrails-namespaces.webhook.fullname" . }}
+  - name: {{ template "guardrails.enforcer.namespaces.webhook.fullname" . }}
     failurePolicy: Ignore
     sideEffects: None
     rules:
@@ -78,11 +78,11 @@ webhooks:
           - UPDATE
         resources:
           - namespaces
-    {{ include "guardrails.webhook.timeout" . }}
+    {{ include "guardrails.enforcer.webhook.timeout" . }}
     clientConfig:
       caBundle: {{ $tls.caCert }}
       service:
-        name: {{ include "guardrails.service.name" . }}
+        name: {{ include "guardrails.enforcer.service.name" . }}
         namespace: {{ .Release.Namespace }}
         path: /validate
 {{- end -}}
