@@ -1,0 +1,56 @@
+{{- $imageTag := default .Values.global.octarine.version .Values.reporter.image.tag -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "guardrails.reporter.fullname" . }}
+  labels:
+{{ include "guardrails.reporter.labels" . | indent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "guardrails.state-reporter.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: {{ .Values.reporter.prometheus.scrape | quote }}
+        prometheus.io/port: {{ .Values.reporter.prometheus.port | quote }}
+      labels:
+        app.kubernetes.io/name: {{ include "guardrails.state-reporter.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "guardrails.serviceAccountName" . }}
+      priorityClassName: {{ include "octarine.priorityClass.name" . }}
+      containers:
+        - name: {{ include "guardrails.state-reporter.name" . }}
+          command:
+            - "/state-reporter"
+          env:
+            {{ include "octarine.common.env" . | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "guardrails.reporter.configmap.env.fullname" . }}
+            {{ include "octarine.common.envFrom" . | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.reporter.securityContext | nindent 12 }}
+          image: "{{ .Values.reporter.image.repository }}:{{ $imageTag }}"
+          imagePullPolicy: {{ .Values.reporter.image.pullPolicy }}
+          ports:
+            - name: probes-port
+              containerPort: {{ .Values.reporter.probes.port }}
+            - name: prometheus
+              containerPort: {{ .Values.reporter.prometheus.port }}
+          livenessProbe:
+            periodSeconds: 30
+            initialDelaySeconds: 5
+            httpGet:
+              path: /alive
+              port: probes-port
+          readinessProbe:
+            periodSeconds: 30
+            httpGet:
+              path: /ready
+              port: probes-port
+          resources:
+            {{- toYaml .Values.reporter.resources | nindent 12 }}

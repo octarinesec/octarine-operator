@@ -21,9 +21,13 @@ type admissionController struct {
 	NamespaceSelector *metav1.LabelSelector
 }
 
-type guardrailsSpec struct {
-	Enabled             bool
+type enforcer struct {
 	AdmissionController admissionController
+}
+
+type guardrailsSpec struct {
+	Enabled  bool
+	Enforcer enforcer
 }
 
 type nodeguardSpec struct {
@@ -43,7 +47,7 @@ func NewOctarineSpec() *OctarineSpec {
 	spec := new(OctarineSpec)
 
 	// Set default values for parameters not loaded from the chart
-	spec.Guardrails.AdmissionController.AutoManage = true
+	spec.Guardrails.Enforcer.AdmissionController.AutoManage = true
 
 	return spec
 }
