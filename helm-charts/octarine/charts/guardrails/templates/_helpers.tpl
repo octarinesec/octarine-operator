@@ -178,28 +178,28 @@ Create guardrails state-reporter name
 {{/*
 Create guardrails reporter fullname
 */}}
-{{- define "guardrails.reporter.fullname" -}}
-{{- printf "%s-reporter" (include "guardrails.fullname" .) -}}
+{{- define "guardrails.state-reporter.fullname" -}}
+{{- printf "%s-state-reporter" (include "guardrails.fullname" .) -}}
 {{- end -}}
 
 {{/*
 reporter labels
 */}}
-{{- define "guardrails.reporter.labels" -}}
+{{- define "guardrails.state-reporter.labels" -}}
 {{- template "guardrails.labels.tpl" (list . (include "guardrails.state-reporter.name" .)) -}}
 {{- end -}}
 
 {{/*
-Create configmap name for guardrails reporter env vars.
+Create configmap name for guardrails.state-reporter.env vars.
 */}}
-{{- define "guardrails.reporter.configmap.env.fullname" -}}
-{{-  printf "%s-env" (include "guardrails.reporter.fullname" .) -}}
+{{- define "guardrails.state-reporter.configmap.env.fullname" -}}
+{{-  printf "%s-env" (include "guardrails.state-reporter.fullname" .) -}}
 {{- end -}}
 
 {{/*
 Generate env vars for reporter.
 Const env vars are taken from the values, dynamic env vars are generated here.
 */}}
-{{- define "guardrails.reporter.env" -}}
-{{ toYaml .Values.reporter.env }}
+{{- define "guardrails.state-reporter.env" -}}
+{{ toYaml .Values.stateReporter.env }}
 {{- end -}}
