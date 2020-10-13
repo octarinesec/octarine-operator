@@ -75,7 +75,7 @@ enforcer:
       # override via --set-file
       key:
 
-reporter:
+stateReporter:
   # Static env vars. Additional env vars are generated in the helpers.
   env:
     GUARDRAILS_ENFORCER_KEY_FILE_PATH: "/etc/octarine-certificates/key"
