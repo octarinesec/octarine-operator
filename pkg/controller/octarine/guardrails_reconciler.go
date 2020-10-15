@@ -73,7 +73,7 @@ func (r *ReconcileOctarine) reconcileSecretAndWebhook(reqLogger logr.Logger, oct
 func (r *ReconcileOctarine) guardrailsDeploymentAvailable(reqLogger logr.Logger, octarine *unstructured.Unstructured) (bool, error) {
 	// Matchers for listing the guardrails deployment(s) - matching by app name label (set by helm) and the namespace
 	matchers := []client.ListOption{
-		client.MatchingLabels{"app.kubernetes.io/name": "guardrails"},
+		client.MatchingLabels{"app.kubernetes.io/name": "guardrails-enforcer"},
 		client.InNamespace(octarine.GetNamespace()),
 	}
 
