@@ -11,11 +11,12 @@ global:
     account: # Octarine account name
     domain: # cluster name in the format of 'group:member'
     accessToken: # Octarine access token to use if accessTokenSecret isn't specified
-    accessTokenSecret: # name of an EXISTING secret which contains Octarine access token ('accessToken' key)
+    accessTokenSecret: # name of an EXISTING secret which contains CB access token ('accessToken' key)
 
     api:
       host: main.octarinesec.com
       port: 443
+      adapterName: octarine
 
     messageproxy:
       host: messages.main.octarinesec.com
