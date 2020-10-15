@@ -39,21 +39,6 @@ spec:
           ports:
             - name: https
               containerPort: 443
-            - name: probes-port
-              containerPort: {{ .Values.enforcer.probes.port }}
-            - name: prometheus
-              containerPort: {{ .Values.enforcer.prometheus.port }}
-          livenessProbe:
-            periodSeconds: 30
-            initialDelaySeconds: 5
-            httpGet:
-              path: /alive
-              port: probes-port
-          readinessProbe:
-            periodSeconds: 30
-            httpGet:
-              path: /ready
-              port: probes-port
           resources:
             {{- toYaml .Values.enforcer.resources | nindent 12 }}
           volumeMounts:

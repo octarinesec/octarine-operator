@@ -25,7 +25,7 @@ spec:
       containers:
         - name: {{ include "guardrails.state-reporter.name" . }}
           command:
-            - "/state-reporter"
+            - "/state_reporter"
           env:
             {{ include "octarine.common.env" . | nindent 12 }}
           envFrom:
@@ -36,21 +36,5 @@ spec:
             {{- toYaml .Values.stateReporter.securityContext | nindent 12 }}
           image: "{{ .Values.stateReporter.image.repository }}:{{ $imageTag }}"
           imagePullPolicy: {{ .Values.stateReporter.image.pullPolicy }}
-          ports:
-            - name: probes-port
-              containerPort: {{ .Values.stateReporter.probes.port }}
-            - name: prometheus
-              containerPort: {{ .Values.stateReporter.prometheus.port }}
-          livenessProbe:
-            periodSeconds: 30
-            initialDelaySeconds: 5
-            httpGet:
-              path: /alive
-              port: probes-port
-          readinessProbe:
-            periodSeconds: 30
-            httpGet:
-              path: /ready
-              port: probes-port
           resources:
             {{- toYaml .Values.stateReporter.resources | nindent 12 }}
