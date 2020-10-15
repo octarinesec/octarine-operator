@@ -33,7 +33,7 @@ func guardrailsSecretName(octarine *unstructured.Unstructured) (types.Namespaced
 	}
 
 	return types.NamespacedName{
-		Name:      fmt.Sprintf("%s-guardrails-tls", octarine.GetName()),
+		Name:      fmt.Sprintf("%s-guardrails-enforcer-tls", octarine.GetName()),
 		Namespace: ns,
 	}, nil
 }
@@ -45,7 +45,7 @@ func guardrailsServiceName(octarine *unstructured.Unstructured) (types.Namespace
 	}
 
 	return types.NamespacedName{
-		Name:      fmt.Sprintf("%s-guardrails", octarine.GetName()),
+		Name:      fmt.Sprintf("%s-guardrails-enforcer", octarine.GetName()),
 		Namespace: ns,
 	}, nil
 }
