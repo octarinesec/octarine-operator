@@ -9,25 +9,25 @@ import (
 )
 
 type OctarineApiClient struct {
-	account     string
-	accessToken string
-	api         HostPort
-	client      *resty.Client
+	account     	string
+	accessToken 	string
+	api         	ApiSpec
+	client      	*resty.Client
 }
 
-func NewOctarineApiClient(account, accessToken string, api HostPort) *OctarineApiClient {
+func NewOctarineApiClient(account, accessToken string, api ApiSpec) *OctarineApiClient {
 	client := resty.New()
 	client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
-	return &OctarineApiClient{account, accessToken, api, client}
+	return &OctarineApiClient{account, accessToken, api,client}
 }
 
 func (o *OctarineApiClient) baseUrl() string {
-	return fmt.Sprintf("https://%s:%d", o.api.Host, o.api.Port)
+	return fmt.Sprintf("https://%s:%d/%v/v1/orgs/%v", o.api.Host, o.api.Port, o.api.AdapterName, o.account)
 }
 
 func (o *OctarineApiClient) baseRequest() *resty.Request {
 	r := o.client.R()
-	r.SetAuthToken(o.accessToken)
+	r.SetHeader("X-Auth-Token", o.accessToken)
 	return r
 }
 
@@ -36,7 +36,7 @@ func (o *OctarineApiClient) baseRequestWithRetries() *resty.Request {
 		SetRetryCount(3).
 		SetRetryWaitTime(5).
 		R()
-	r.SetAuthToken(o.accessToken)
+	r.SetHeader("X-Auth-Token", o.accessToken)
 	return r
 }
 

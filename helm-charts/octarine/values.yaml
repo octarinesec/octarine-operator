@@ -14,7 +14,7 @@ global:
     accessTokenSecret: # name of an EXISTING secret which contains CB access token ('accessToken' key)
 
     api:
-      host: main.octarinesec.com
+      host: dashboard.confer.net
       port: 443
       adapterName: octarine
 

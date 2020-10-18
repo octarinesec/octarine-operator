@@ -66,6 +66,7 @@ Generate global env vars for octarine dataplane components.
 {{- define "octarine.env" -}}
 OCTARINE_ACCOUNT: {{ required "A valid .Values.global.octarine.account is required" .Values.global.octarine.account | quote }}
 OCTARINE_DOMAIN: {{ required "A valid .Values.global.octarine.domain is required" .Values.global.octarine.domain | quote }}
+OCTARINE_API_ADAPTER_NAME: {{ required "A valid .Values.global.octarine.api.adapterName is required" .Values.global.octarine.api.adapterName | quote }}
 OCTARINE_API_HOST: {{ required "A valid .Values.global.octarine.api.host is required" .Values.global.octarine.api.host | quote }}
 OCTARINE_API_PORT: {{ required "A valid .Values.global.octarine.api.port is required" .Values.global.octarine.api.port | quote }}
 OCTARINE_MESSAGEPROXY_HOST: {{ required "A valid .Values.global.octarine.messageproxy.host is required" .Values.global.octarine.messageproxy.host | quote }}
