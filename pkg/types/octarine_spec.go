@@ -7,7 +7,6 @@ type octarine struct {
 	Domain            string
 	AccessToken       string
 	AccessTokenSecret string
-	ApiAdapterName    string
 	Api               ApiSpec
 	Messageproxy      ApiSpec
 	Version           interface{}
