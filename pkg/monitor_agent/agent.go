@@ -132,58 +132,38 @@ func (agent *MonitorAgent) buildHealthMessage() (*pb.HealthReport, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	repSets, err := agent.healthChecker.GetReplicaSets()
+	replicasSets, err := agent.healthChecker.GetReplicaSets()
 	if err != nil {
 		return nil, err
 	}
-
-	deps, err := agent.healthChecker.GetDeployments()
+	deployments, err := agent.healthChecker.GetDeployments()
 	if err != nil {
 		return nil, err
 	}
-
-	daemons, err := agent.healthChecker.GetDaemonSets()
+	daemonSets, err := agent.healthChecker.GetDaemonSets()
 	if err != nil {
 		return nil, err
 	}
 
 	services := make(map[string]*pb.ServiceHealthReport)
+	agent.addDeploymentsServices(deployments, services)
+	agent.addDaemonSetsServices(daemonSets, services)
+	agent.updateServicesReplicasByPodsAndReplicaSets(pods, replicasSets, services)
 
-	for depName, dep := range deps {
-		serviceMsg, err := agent.buildDeploymentMessage(dep)
-		if err != nil {
-			logger.Error(err, "error building Deployment message")
-			continue
-		}
+	return &pb.HealthReport{
+		Account:  agent.OctarineSpec.Global.Octarine.Account,
+		Domain:   agent.OctarineSpec.Global.Octarine.Domain,
+		Services: services,
+	}, nil
+}
 
-		if _, ok := services[depName]; ok {
-			logger.Info("duplicate service name", "service", depName)
-		}
-
-		services[depName] = serviceMsg
-	}
-
-	for daemonName, daemon := range daemons {
-		serviceMsg, err := agent.buildDaemonSetMessage(daemon)
-		if err != nil {
-			logger.Error(err, "error building DaemonSet message")
-			continue
-		}
-
-		if _, ok := services[daemonName]; ok {
-			logger.Info("duplicate service name", "service", daemonName)
-		}
-
-		services[daemonName] = serviceMsg
-	}
-
+// Update the services replicas attribute by the pods and replica sets data.
+func (agent *MonitorAgent) updateServicesReplicasByPodsAndReplicaSets(pods map[string]corev1.Pod, repSets map[string]appsv1.ReplicaSet, services map[string]*pb.ServiceHealthReport) {
 	for podName, pod := range pods {
 		if len(pod.OwnerReferences) < 1 {
 			logger.Info("found pod with no parent", "pod", podName)
 			continue
 		}
-
 		owner := pod.OwnerReferences[0]
 		ownerName := owner.Name
 		if owner.Kind == "ReplicaSet" {
@@ -205,12 +185,40 @@ func (agent *MonitorAgent) buildHealthMessage() (*pb.HealthReport, error) {
 			serviceMsg.Replicas[podName] = replicaMsg
 		}
 	}
+}
 
-	return &pb.HealthReport{
-		Account:  agent.OctarineSpec.Global.Octarine.Account,
-		Domain:   agent.OctarineSpec.Global.Octarine.Domain,
-		Services: services,
-	}, nil
+// Update the services map with the found daemon sets.
+// If the daemon set message could not have been created successfully, logs an error and skip this daemon
+func (agent *MonitorAgent) addDaemonSetsServices(daemons map[string]appsv1.DaemonSet, services map[string]*pb.ServiceHealthReport) {
+	for daemonName, daemon := range daemons {
+		serviceMsg, err := agent.buildDaemonSetMessage(daemon)
+		if err != nil {
+			logger.Error(err, "error building DaemonSet message")
+			continue
+		}
+
+		if _, ok := services[daemonName]; ok {
+			logger.Info("duplicate service name", "service", daemonName)
+		}
+
+		services[daemonName] = serviceMsg
+	}
+}
+
+// Update the services map with the found deployments.
+// If the deployment message could not have been created successfully, logs an error and skip this deployment.
+func (agent *MonitorAgent) addDeploymentsServices(deps map[string]appsv1.Deployment, services map[string]*pb.ServiceHealthReport) {
+	for depName, dep := range deps {
+		serviceMsg, err := agent.buildDeploymentMessage(dep)
+		if err != nil {
+			logger.Error(err, "error building Deployment message")
+			continue
+		}
+		if _, ok := services[depName]; ok {
+			logger.Info("duplicate service name", "service", depName)
+		}
+		services[depName] = serviceMsg
+	}
 }
 
 func (agent *MonitorAgent) run() {
@@ -221,7 +229,6 @@ func (agent *MonitorAgent) run() {
 			if err != nil {
 				logger.Error(err, "error building health message")
 			}
-
 			err = agent.grpcClient.SendMonitorMessage(message)
 			if err != nil {
 				logger.Error(err, "error reporting message to backend")
