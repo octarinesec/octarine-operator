@@ -4,9 +4,10 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-type HostPort struct {
-	Host string
-	Port int
+type ApiSpec struct {
+	Host 		string
+	Port 		int
+	AdapterName string
 }
 
 // Octarine account features to indicate which features are installed on the cluster

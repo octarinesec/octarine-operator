@@ -7,8 +7,8 @@ type octarine struct {
 	Domain            string
 	AccessToken       string
 	AccessTokenSecret string
-	Api               HostPort
-	Messageproxy      HostPort
+	Api               ApiSpec
+	Messageproxy      ApiSpec
 }
 
 type global struct {
