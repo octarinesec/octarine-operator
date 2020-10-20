@@ -138,6 +138,43 @@ func (agent *MonitorAgent) buildReplicaMessage(pod corev1.Pod) (*pb.ReplicaHealt
 }
 
 func (agent *MonitorAgent) buildHealthMessage() (*pb.HealthReport, error) {
+	services, err := agent.createHealthReportServices()
+	if err != nil {
+		return nil, err
+	}
+	webhooks, err := agent.createHealthReportWebhooks(err)
+	if err != nil {
+		return nil, err
+	}
+	enableComponents := map[string]bool{"nodeguard": bool(agent.OctarineSpec.Nodeguard.Enabled),
+		"guardrails": bool(agent.OctarineSpec.Guardrails.Enabled)}
+	return &pb.HealthReport{
+		Account:          agent.OctarineSpec.Global.Octarine.Account,
+		Domain:           agent.OctarineSpec.Global.Octarine.Domain,
+		Services:         services,
+		Webhooks:         webhooks,
+		EnableComponents: enableComponents,
+		Version:          fmt.Sprintf("%v", agent.OctarineSpec.Global.Octarine.Version),
+	}, nil
+}
+
+// Create the webhooks map for the HealthReport.
+// If could not create a part of the health report, returns the error.
+func (agent *MonitorAgent) createHealthReportWebhooks(err error) (map[string]*pb.WebhookHealthReport, error) {
+	webhooks := make(map[string]*pb.WebhookHealthReport)
+	validatingWebhooks, err := agent.healthChecker.GetValidatingWebhookConfigurations()
+	if err != nil {
+		return nil, err
+	}
+	agent.addValidatingWebhooks(validatingWebhooks, webhooks)
+	return webhooks, nil
+}
+
+// Create the services map for the HealthReport.
+// If could not create a part of the health report, returns the error.
+func (agent *MonitorAgent) createHealthReportServices() (map[string]*pb.ServiceHealthReport, error) {
+	services := make(map[string]*pb.ServiceHealthReport)
+
 	pods, err := agent.healthChecker.GetPods()
 	if err != nil {
 		return nil, err
@@ -154,28 +191,10 @@ func (agent *MonitorAgent) buildHealthMessage() (*pb.HealthReport, error) {
 	if err != nil {
 		return nil, err
 	}
-	validatingWebhooks, err := agent.healthChecker.GetValidatingWebhookConfigurations()
-	if err != nil {
-		return nil, err
-	}
-
-	enableComponents := map[string]bool{"nodeguard": bool(agent.OctarineSpec.Nodeguard.Enabled),
-		"guardrails": bool(agent.OctarineSpec.Guardrails.Enabled)}
-	services := make(map[string]*pb.ServiceHealthReport)
-	webhooks := make(map[string]*pb.WebhookHealthReport)
 	agent.addDeploymentsServices(deployments, services)
 	agent.addDaemonSetsServices(daemonSets, services)
 	agent.updateServicesReplicasByPodsAndReplicaSets(pods, replicasSets, services)
-	agent.addValidatingWebhooks(validatingWebhooks, webhooks)
-
-	return &pb.HealthReport{
-		Account:          agent.OctarineSpec.Global.Octarine.Account,
-		Domain:           agent.OctarineSpec.Global.Octarine.Domain,
-		Services:         services,
-		Webhooks:         webhooks,
-		EnableComponents: enableComponents,
-		Version:          fmt.Sprintf("%v", agent.OctarineSpec.Global.Octarine.Version),
-	}, nil
+	return services, nil
 }
 
 // Update the services replicas attribute by the pods and replica sets data.
