@@ -9,7 +9,7 @@ type octarine struct {
 	AccessTokenSecret string
 	Api               HostPort
 	Messageproxy      HostPort
-	Version           float64
+	Version           interface{}
 }
 
 type global struct {

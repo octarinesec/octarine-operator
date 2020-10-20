@@ -8,6 +8,7 @@ import (
 	pb "github.com/octarinesec/octarine-operator/pkg/monitor_agent/protobuf"
 	"github.com/octarinesec/octarine-operator/pkg/octarine_api"
 	"github.com/octarinesec/octarine-operator/pkg/types"
+	admissions "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -16,7 +17,8 @@ import (
 )
 
 var (
-	logger = logf.Log.WithName("monitor_agent")
+	logger                     = logf.Log.WithName("monitor_agent")
+	octarineValidatingWebhooks = map[string]string{"octarine-guardrails": "octarine-guardrails"}
 )
 
 // Monitoring agent - monitors the installed Octarine components and sends health reports to Octarine backend
@@ -63,6 +65,14 @@ func (agent *MonitorAgent) Start() {
 
 func (agent *MonitorAgent) Stop() {
 	close(agent.stopChan)
+}
+
+func (agent *MonitorAgent) buildValidatingWebhookMessage(webhook admissions.ValidatingWebhookConfiguration) *pb.WebhookHealthReport {
+	return &pb.WebhookHealthReport{
+		WebhookType: pb.WebhookHealthReport_VALIDATING,
+		Uid:         string(webhook.UID),
+	}
+
 }
 
 func (agent *MonitorAgent) buildServiceMessage(kind pb.ServiceHealthReport_Kind, name string, replicas *int32,
@@ -144,16 +154,27 @@ func (agent *MonitorAgent) buildHealthMessage() (*pb.HealthReport, error) {
 	if err != nil {
 		return nil, err
 	}
+	validatingWebhooks, err := agent.healthChecker.GetValidatingWebhookConfigurations()
+	if err != nil {
+		return nil, err
+	}
 
+	enableComponents := map[string]bool{"nodeguard": bool(agent.OctarineSpec.Nodeguard.Enabled),
+		"guardrails": bool(agent.OctarineSpec.Guardrails.Enabled)}
 	services := make(map[string]*pb.ServiceHealthReport)
+	webhooks := make(map[string]*pb.WebhookHealthReport)
 	agent.addDeploymentsServices(deployments, services)
 	agent.addDaemonSetsServices(daemonSets, services)
 	agent.updateServicesReplicasByPodsAndReplicaSets(pods, replicasSets, services)
+	agent.addValidatingWebhooks(validatingWebhooks, webhooks)
 
 	return &pb.HealthReport{
-		Account:  agent.OctarineSpec.Global.Octarine.Account,
-		Domain:   agent.OctarineSpec.Global.Octarine.Domain,
-		Services: services,
+		Account:          agent.OctarineSpec.Global.Octarine.Account,
+		Domain:           agent.OctarineSpec.Global.Octarine.Domain,
+		Services:         services,
+		Webhooks:         webhooks,
+		EnableComponents: enableComponents,
+		Version:          fmt.Sprintf("%v", agent.OctarineSpec.Global.Octarine.Version),
 	}, nil
 }
 
@@ -218,6 +239,23 @@ func (agent *MonitorAgent) addDeploymentsServices(deps map[string]appsv1.Deploym
 			logger.Info("duplicate service name", "service", depName)
 		}
 		services[depName] = serviceMsg
+	}
+}
+
+// Update the webhooks map with the octarine validating webhooks.
+// If an octarine validating webhook was not found, logs an error and skip this validating webhook.
+func (agent *MonitorAgent) addValidatingWebhooks(foundWebhooks map[string]admissions.ValidatingWebhookConfiguration, webhooks map[string]*pb.WebhookHealthReport) {
+	for webhookName, _ := range octarineValidatingWebhooks {
+		if webhook, ok := foundWebhooks[webhookName]; ok {
+			webhookMsg := agent.buildValidatingWebhookMessage(webhook)
+			if _, ok := webhooks[webhookName]; ok {
+				logger.Info("duplicate webhook name", "webhook", webhookName)
+			}
+			webhooks[webhookName] = webhookMsg
+		} else {
+			logger.Error(fmt.Errorf("octarine validating webhook not found. Validating webhook: %s", webhookName),
+				"Not found validating webhook", "validating_webhook", webhookName)
+		}
 	}
 }
 
