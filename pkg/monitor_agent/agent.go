@@ -76,7 +76,7 @@ func (agent *MonitorAgent) buildValidatingWebhookMessage(webhook admissions.Vali
 }
 
 func (agent *MonitorAgent) buildServiceMessage(kind pb.ServiceHealthReport_Kind, name string, replicas *int32,
-	containers []corev1.Container, statusObj interface{}) (*pb.ServiceHealthReport, error) {
+	containers []corev1.Container, statusObj interface{}, lables map[string]string) (*pb.ServiceHealthReport, error) {
 
 	specContainers := make(map[string]*pb.ContainerSpec)
 	for _, container := range containers {
@@ -102,15 +102,16 @@ func (agent *MonitorAgent) buildServiceMessage(kind pb.ServiceHealthReport_Kind,
 		Spec:     spec,
 		Status:   status,
 		Replicas: make(map[string]*pb.ReplicaHealth),
+		Labels:   lables,
 	}, nil
 }
 
 func (agent *MonitorAgent) buildDeploymentMessage(dep appsv1.Deployment) (*pb.ServiceHealthReport, error) {
-	return agent.buildServiceMessage(pb.ServiceHealthReport_DEPLOYMENT, dep.Name, dep.Spec.Replicas, dep.Spec.Template.Spec.Containers, dep.Status)
+	return agent.buildServiceMessage(pb.ServiceHealthReport_DEPLOYMENT, dep.Name, dep.Spec.Replicas, dep.Spec.Template.Spec.Containers, dep.Status, dep.Labels)
 }
 
 func (agent *MonitorAgent) buildDaemonSetMessage(daemon appsv1.DaemonSet) (*pb.ServiceHealthReport, error) {
-	return agent.buildServiceMessage(pb.ServiceHealthReport_DAEMONSET, daemon.Name, nil, daemon.Spec.Template.Spec.Containers, daemon.Status)
+	return agent.buildServiceMessage(pb.ServiceHealthReport_DAEMONSET, daemon.Name, nil, daemon.Spec.Template.Spec.Containers, daemon.Status, daemon.Labels)
 }
 
 func (agent *MonitorAgent) buildReplicaMessage(pod corev1.Pod) (*pb.ReplicaHealth, error) {

@@ -34,6 +34,7 @@ message ServiceHealthReport {
     ServiceSpec spec = 2;
     bytes status = 3;
     map<string, ReplicaHealth> replicas = 4;
+    map<string,string> labels = 5;
 }
 
 message WebhookHealthReport {
