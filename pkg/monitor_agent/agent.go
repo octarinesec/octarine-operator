@@ -273,8 +273,7 @@ func (agent *MonitorAgent) addValidatingWebhooks(foundWebhooks map[string]admiss
 			}
 			webhooks[webhookName] = webhookMsg
 		} else {
-			logger.Error(fmt.Errorf("octarine validating webhook not found. Validating webhook: %s", webhookName),
-				"Not found validating webhook", "validating_webhook", webhookName)
+			logger.Info("octarine validating webhook %s not found.", "webhook", webhookName)
 		}
 	}
 }
