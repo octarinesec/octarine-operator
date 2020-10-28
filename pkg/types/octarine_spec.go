@@ -16,6 +16,10 @@ type global struct {
 	Octarine octarine
 }
 
+type metadata struct {
+	Name string
+}
+
 type admissionController struct {
 	TimeoutSeconds    int
 	AutoManage        bool // operator flag only (not from the chart) - default value should be set
@@ -36,6 +40,7 @@ type nodeguardSpec struct {
 // Default values are loaded from the chart's values.yaml.
 type OctarineSpec struct {
 	Global     global
+	Metadata   metadata
 	Guardrails guardrailsSpec
 	Nodeguard  nodeguardSpec
 }

@@ -17,8 +17,7 @@ import (
 )
 
 var (
-	logger                     = logf.Log.WithName("monitor_agent")
-	octarineValidatingWebhooks = map[string]string{"octarine-guardrails": "octarine-guardrails"}
+	logger = logf.Log.WithName("monitor_agent")
 )
 
 // Monitoring agent - monitors the installed Octarine components and sends health reports to Octarine backend
@@ -150,12 +149,12 @@ func (agent *MonitorAgent) buildHealthMessage() (*pb.HealthReport, error) {
 	enabledComponents := map[string]bool{"nodeguard": bool(agent.OctarineSpec.Nodeguard.Enabled),
 		"guardrails": bool(agent.OctarineSpec.Guardrails.Enabled)}
 	return &pb.HealthReport{
-		Account:          agent.OctarineSpec.Global.Octarine.Account,
-		Domain:           agent.OctarineSpec.Global.Octarine.Domain,
-		Services:         services,
-		Webhooks:         webhooks,
+		Account:           agent.OctarineSpec.Global.Octarine.Account,
+		Domain:            agent.OctarineSpec.Global.Octarine.Domain,
+		Services:          services,
+		Webhooks:          webhooks,
 		EnabledComponents: enabledComponents,
-		Version:          fmt.Sprintf("%v", agent.OctarineSpec.Global.Octarine.Version),
+		Version:           fmt.Sprintf("%v", agent.OctarineSpec.Global.Octarine.Version),
 	}, nil
 }
 
@@ -262,10 +261,16 @@ func (agent *MonitorAgent) addDeploymentsServices(deps map[string]appsv1.Deploym
 	}
 }
 
+func (agent *MonitorAgent) getOctarineValidatingWebhooks() []string {
+	guardrailsValidatingWebhook := fmt.Sprintf("%s-guardrails", agent.OctarineSpec.Metadata.Name)
+	return []string{guardrailsValidatingWebhook}
+
+}
+
 // Update the webhooks map with the octarine validating webhooks.
 // If an octarine validating webhook was not found, logs an error and skip this validating webhook.
 func (agent *MonitorAgent) addValidatingWebhooks(foundWebhooks map[string]admissions.ValidatingWebhookConfiguration, webhooks map[string]*pb.WebhookHealthReport) {
-	for webhookName, _ := range octarineValidatingWebhooks {
+	for _, webhookName := range agent.getOctarineValidatingWebhooks() {
 		if webhook, ok := foundWebhooks[webhookName]; ok {
 			webhookMsg := agent.buildValidatingWebhookMessage(webhook)
 			if _, ok := webhooks[webhookName]; ok {
@@ -273,7 +278,7 @@ func (agent *MonitorAgent) addValidatingWebhooks(foundWebhooks map[string]admiss
 			}
 			webhooks[webhookName] = webhookMsg
 		} else {
-			logger.Info("octarine validating webhook %s not found.", "webhook", webhookName)
+			logger.Info("octarine validating webhook not found.", "webhook", webhookName)
 		}
 	}
 }
