@@ -51,7 +51,7 @@ message HealthReport {
     string domain = 2;
     map<string, WebhookHealthReport> webhooks = 3;
     map<string, ServiceHealthReport> services = 4;
-    map<string,bool> enableComponents = 5;
+    map<string,bool> enabledComponents = 5;
     string version = 6;
 }
 

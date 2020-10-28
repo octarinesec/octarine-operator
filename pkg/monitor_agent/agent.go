@@ -147,14 +147,14 @@ func (agent *MonitorAgent) buildHealthMessage() (*pb.HealthReport, error) {
 	if err != nil {
 		return nil, err
 	}
-	enableComponents := map[string]bool{"nodeguard": bool(agent.OctarineSpec.Nodeguard.Enabled),
+	enabledComponents := map[string]bool{"nodeguard": bool(agent.OctarineSpec.Nodeguard.Enabled),
 		"guardrails": bool(agent.OctarineSpec.Guardrails.Enabled)}
 	return &pb.HealthReport{
 		Account:          agent.OctarineSpec.Global.Octarine.Account,
 		Domain:           agent.OctarineSpec.Global.Octarine.Domain,
 		Services:         services,
 		Webhooks:         webhooks,
-		EnableComponents: enableComponents,
+		EnabledComponents: enabledComponents,
 		Version:          fmt.Sprintf("%v", agent.OctarineSpec.Global.Octarine.Version),
 	}, nil
 }
