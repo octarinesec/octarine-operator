@@ -1,6 +1,8 @@
 package octarine
 
 import (
+	"github.com/octarinesec/octarine-operator/pkg/predicates"
+	"github.com/operator-framework/operator-sdk/pkg/handler"
 	hcontroller "github.com/operator-framework/operator-sdk/pkg/helm/controller"
 	"github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
@@ -14,7 +16,6 @@ import (
 	crthandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
@@ -51,6 +52,9 @@ func addOctarineController(mgr manager.Manager, helmWatches []watches.Watch) err
 			return err
 		}
 
+		// using predefined functions for filtering events
+		dependentPredicate := predicates.DependentPredicateFuncs()
+
 		// Object to watch - unstructured as it's a helm operator spec
 		o := &unstructured.Unstructured{}
 		o.SetGroupVersionKind(watch.GroupVersionKind)
@@ -60,57 +64,27 @@ func addOctarineController(mgr manager.Manager, helmWatches []watches.Watch) err
 			return err
 		}
 
-		// Watch for changes to secondary resource Deployments and requeue the owner Octarine
+		// Watch for changes to secondary resource Deployments and requeue the owner Octarine (for Guardrails webhook reconcilement according to deployment status)
 		err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &crthandler.EnqueueRequestForOwner{
 			IsController: true,
 			OwnerType:    o,
-		})
+		}, dependentPredicate)
 		if err != nil {
 			return err
 		}
 
-		// Watch for changes to secondary resource ReplicaSet and requeue the owner Octarine (watching it for the monitor)
-		err = c.Watch(&source.Kind{Type: &appsv1.ReplicaSet{}}, &crthandler.EnqueueRequestForOwner{
+		// Watch for changes to secondary resource validating webhook and requeue the owner Octarine (for Guardrails webhook)
+		err = c.Watch(&source.Kind{Type: &admissionregistrationv1beta1.ValidatingWebhookConfiguration{}},
+			&handler.EnqueueRequestForAnnotation{Type: watch.GroupKind().String()}, dependentPredicate)
+		if err != nil {
+			return err
+		}
+
+		// Watch for changes to secondary resource secret and requeue the owner Octarine (for Guardrails tls secret)
+		err = c.Watch(&source.Kind{Type: &v1.Secret{}}, &crthandler.EnqueueRequestForOwner{
 			IsController: true,
 			OwnerType:    o,
-		})
-		if err != nil {
-			return err
-		}
-
-		// Watch for changes to secondary resource DaemonSet and requeue the owner Octarine (watching it for the monitor)
-		err = c.Watch(&source.Kind{Type: &appsv1.DaemonSet{}}, &crthandler.EnqueueRequestForOwner{
-			IsController: true,
-			OwnerType:    o,
-		})
-		if err != nil {
-			return err
-		}
-
-		// Watch for changes to secondary resource Pod and requeue the owner Octarine (watching it for the monitor)
-		err = c.Watch(&source.Kind{Type: &v1.Pod{}}, &crthandler.EnqueueRequestForOwner{
-			IsController: true,
-			OwnerType:    o,
-		})
-		if err != nil {
-			return err
-		}
-
-		// Watch for changes to secondary resource validating webhook and requeue the owner Octarine
-		err = c.Watch(&source.Kind{Type: &admissionregistrationv1beta1.ValidatingWebhookConfiguration{}}, &crthandler.EnqueueRequestForOwner{
-			IsController: true,
-			OwnerType:    o,
-		})
-		if err != nil {
-			return err
-		}
-
-		// Watch for changes to namespaces (required in order to be able to label the ns)
-		err = c.Watch(&source.Kind{Type: &v1.Namespace{}}, &crthandler.EnqueueRequestsFromMapFunc{
-			ToRequests: crthandler.ToRequestsFunc(func(object crthandler.MapObject) []reconcile.Request {
-				return []reconcile.Request{}
-			}),
-		})
+		}, dependentPredicate)
 		if err != nil {
 			return err
 		}

@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	k8serr "k8s.io/kubernetes/staging/src/k8s.io/apimachinery/pkg/api/errors"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"strconv"
@@ -265,7 +266,12 @@ func (r *ReconcileOctarine) labelNs(reqLogger logr.Logger, namespace string) err
 
 		if updated {
 			reqLogger.V(1).Info("Labeling namespace")
-			return r.GetClient().Update(context.TODO(), ns)
+			ns.SetLabels(nsLabels)
+			if err := r.GetClient().Update(context.TODO(), ns); err != nil {
+				reqLogger.Error(err, "error labeling namespace, retrying")
+				return err
+			}
+			return nil
 		}
 
 		return nil
@@ -328,6 +334,11 @@ func (r *ReconcileOctarine) createRegistrySecret(reqLogger logr.Logger, apiClien
 			},
 			Type: registrySecret.Type,
 			Data: registrySecret.Data,
+		}
+
+		// Set Octarine instance as the owner and controller
+		if err := ctrl.SetControllerReference(octarine, secret, r.GetScheme()); err != nil {
+			reqLogger.Error(err, "error setting Octarine CR as the owner of the registry secret")
 		}
 
 		// Create secret in k8s
