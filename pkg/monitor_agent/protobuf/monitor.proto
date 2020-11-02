@@ -34,13 +34,25 @@ message ServiceHealthReport {
     ServiceSpec spec = 2;
     bytes status = 3;
     map<string, ReplicaHealth> replicas = 4;
+    map<string,string> labels = 5;
+}
+
+message WebhookHealthReport {
+    enum WebhookType {
+        VALIDATING = 0;
+        MUTATING = 1;
+    }
+    WebhookType webhookType = 1;
+    string uid = 2;
 }
 
 message HealthReport {
     string account = 1;
     string domain = 2;
-
+    map<string, WebhookHealthReport> webhooks = 3;
     map<string, ServiceHealthReport> services = 4;
+    map<string,bool> enabledComponents = 5;
+    string version = 6;
 }
 
 message HealthReportReply {

@@ -9,10 +9,15 @@ type octarine struct {
 	AccessTokenSecret string
 	Api               HostPort
 	Messageproxy      HostPort
+	Version           interface{}
 }
 
 type global struct {
 	Octarine octarine
+}
+
+type metadata struct {
+	Name string
 }
 
 type admissionController struct {
@@ -35,6 +40,7 @@ type nodeguardSpec struct {
 // Default values are loaded from the chart's values.yaml.
 type OctarineSpec struct {
 	Global     global
+	Metadata   metadata
 	Guardrails guardrailsSpec
 	Nodeguard  nodeguardSpec
 }
