@@ -391,6 +391,17 @@ func (r *ReconcileOctarine) parseSpec(o *unstructured.Unstructured) (*OctarineSp
 		return nil, fmt.Errorf("failed decoding CR spec into OctarineSpec")
 	}
 
+	metadata, ok := o.Object["metadata"].(map[string]interface{})
+	if !ok {
+		return nil, errors.New("failed to get metadata: expected map[string]interface{}")
+	}
+	octarineMetadata := map[string]map[string]interface{}{"metadata":metadata}
+
+	// Load metadata fields from the cr
+	if err := mapstructure.Decode(octarineMetadata, octarineSpec); err != nil {
+		return nil, fmt.Errorf("failed decoding CR metadata into OctarineSpec")
+	}
+
 	return octarineSpec, nil
 }
 
