@@ -223,6 +223,10 @@ func (r *ReconcileOctarine) reconcileGuardrailsWebhook(reqLogger logr.Logger, oc
 	webhookConfig := &admissionregistrationv1beta1.ValidatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: webhookName,
+
+			// Owner annotations - to set the Octarine CR as the webhook's owner (webhook is a cluster scoped resource,
+			// so the Octarine CR can't actually be its owner, thus we use annotations to mark that).
+			// The octarine controller watched the webhooks and enqueues requests based on these annotations.
 			Annotations: map[string]string{
 				handler.NamespacedNameAnnotation: k8stypes.NamespacedName{Namespace: octarine.GetNamespace(), Name: octarine.GetName()}.String(),
 				handler.TypeAnnotation:           octarine.GetObjectKind().GroupVersionKind().GroupKind().String(),
