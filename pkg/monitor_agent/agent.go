@@ -8,7 +8,7 @@ import (
 	pb "github.com/octarinesec/octarine-operator/pkg/monitor_agent/protobuf"
 	"github.com/octarinesec/octarine-operator/pkg/octarine_api"
 	"github.com/octarinesec/octarine-operator/pkg/types"
-	admissions "k8s.io/api/admissionregistration/v1"
+	admissions "k8s.io/api/admissionregistration/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"

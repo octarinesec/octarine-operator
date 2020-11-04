@@ -3,7 +3,7 @@ package health_checker
 import (
 	"context"
 	"github.com/go-logr/logr"
-	admissions "k8s.io/api/admissionregistration/v1"
+	admissions "k8s.io/api/admissionregistration/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -90,15 +90,17 @@ func (hc *HealthChecker) GetDaemonSets() (map[string]appsv1.DaemonSet, error) {
 
 func (hc *HealthChecker) GetValidatingWebhookConfigurations() (map[string]admissions.ValidatingWebhookConfiguration, error) {
 	results := make(map[string]admissions.ValidatingWebhookConfiguration)
-	foundWenhooks := &admissions.ValidatingWebhookConfigurationList{}
-	if err := hc.k8sClient.List(context.TODO(), foundWenhooks); err != nil && !k8serr.IsNotFound(err) {
+
+	webhooks, err := hc.k8sClientset.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
 		hc.logger.Error(err, "Error getting ValidatingWebhookConfiguration")
 		return nil, err
-	} else if err == nil {
-		for _, webhook := range foundWenhooks.Items {
-			results[webhook.Name] = webhook
-		}
 	}
+
+	for _, webhook := range webhooks.Items {
+		results[webhook.Name] = webhook
+	}
+
 	return results, nil
 }
 
