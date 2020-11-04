@@ -5,7 +5,7 @@ metadata:
 spec:
   global:
     octarine:
-      version: 20.6
+      version: 20.7
       account: test
       domain: stg:us-east-1
       accessTokenSecret: octarine-access-token

@@ -8,10 +8,10 @@ import (
 	pb "github.com/octarinesec/octarine-operator/pkg/monitor_agent/protobuf"
 	"github.com/octarinesec/octarine-operator/pkg/octarine_api"
 	"github.com/octarinesec/octarine-operator/pkg/types"
-	admissions "k8s.io/api/admissionregistration/v1"
+	admissions "k8s.io/api/admissionregistration/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/client-go/kubernetes"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"time"
 )
@@ -38,8 +38,8 @@ type MonitorAgent struct {
 	stopChan chan struct{}
 }
 
-func NewAgent(namespace string, octarineSpec *types.OctarineSpec, k8sClient k8sclient.Client) (*MonitorAgent, error) {
-	healthChecker := health_checker.NewHealthChecker(logger, namespace, k8sClient)
+func NewAgent(namespace string, octarineSpec *types.OctarineSpec, k8sClientset *kubernetes.Clientset) (*MonitorAgent, error) {
+	healthChecker := health_checker.NewHealthChecker(logger, namespace, k8sClientset)
 	apiClient := octarine_api.NewOctarineApiClient(octarineSpec.Global.Octarine.Account,
 		octarineSpec.Global.Octarine.AccessToken, octarineSpec.Global.Octarine.Api)
 

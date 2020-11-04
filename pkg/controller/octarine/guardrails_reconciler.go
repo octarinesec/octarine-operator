@@ -5,6 +5,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/octarinesec/octarine-operator/pkg/tls_utils"
 	"github.com/octarinesec/octarine-operator/pkg/types"
+	"github.com/operator-framework/operator-sdk/pkg/handler"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	k8serr "k8s.io/kubernetes/staging/src/k8s.io/apimachinery/pkg/api/errors"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -21,13 +23,8 @@ func (r *ReconcileOctarine) reconcileGuardrails(reqLogger logr.Logger, octarine 
 	reqLogger.V(1).Info("reconciling guardrails webhook")
 	if !octarineSpec.Guardrails.AdmissionController.AutoManage {
 		reqLogger.V(2).Info("Guardrails.AdmissionController.AutoManage is disabled")
-		if err := r.reconcileGuardrailsSecret(reqLogger, octarine); err != nil {
-			reqLogger.Error(err, "error reconciling guardrails secret")
-			return err
-		}
-
-		if err := r.reconcileGuardrailsWebhook(reqLogger, octarine, octarineSpec); err != nil {
-			reqLogger.Error(err, "error reconciling guardrails webhook")
+		err := r.reconcileSecretAndWebhook(reqLogger, octarine, octarineSpec)
+		if err != nil {
 			return err
 		}
 
@@ -43,25 +40,32 @@ func (r *ReconcileOctarine) reconcileGuardrails(reqLogger logr.Logger, octarine 
 
 	if available {
 		reqLogger.V(1).Info("Guardrails deployment available")
-
-		if err := r.reconcileGuardrailsSecret(reqLogger, octarine); err != nil {
-			reqLogger.Error(err, "error reconciling guardrails secret")
-			return err
-		}
-
-		if err := r.reconcileGuardrailsWebhook(reqLogger, octarine, octarineSpec); err != nil {
-			reqLogger.Error(err, "error reconciling guardrails webhook")
+		err := r.reconcileSecretAndWebhook(reqLogger, octarine, octarineSpec)
+		if err != nil {
 			return err
 		}
 	} else {
 		reqLogger.V(1).Info("Guardrails deployment not available")
-
 		if err := r.deleteGuardrailsWebhook(reqLogger, octarine); err != nil {
 			reqLogger.Error(err, "error deleting guardrails webhook")
 			return err
 		}
 	}
 
+	return nil
+}
+
+func (r *ReconcileOctarine) reconcileSecretAndWebhook(reqLogger logr.Logger, octarine *unstructured.Unstructured, octarineSpec *types.OctarineSpec) error {
+	secret, err := r.reconcileGuardrailsSecret(reqLogger, octarine)
+	if err != nil {
+		reqLogger.Error(err, "error reconciling guardrails secret")
+		return err
+	}
+
+	if err := r.reconcileGuardrailsWebhook(reqLogger, octarine, octarineSpec, secret); err != nil {
+		reqLogger.Error(err, "error reconciling guardrails webhook")
+		return err
+	}
 	return nil
 }
 
@@ -115,25 +119,28 @@ func (r *ReconcileOctarine) deleteGuardrailsWebhook(reqLogger logr.Logger, octar
 	return nil
 }
 
-// Reconciles guardrails webhook TLS secret
-func (r *ReconcileOctarine) reconcileGuardrailsSecret(reqLogger logr.Logger, octarine *unstructured.Unstructured) error {
+// Reconciles guardrails webhook TLS secret - creates it if it doesn't exist.
+// Returns the secret.
+func (r *ReconcileOctarine) reconcileGuardrailsSecret(reqLogger logr.Logger, octarine *unstructured.Unstructured) (*corev1.Secret, error) {
 	reqLogger.V(1).Info("reconciling guardrails secret")
 
 	secretName, err := guardrailsSecretName(octarine)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	serviceName, err := guardrailsServiceName(octarine)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Find secret
 	found := &corev1.Secret{}
 	err = r.GetClient().Get(context.TODO(), secretName, found)
-	if err != nil && !k8serr.IsNotFound(err) {
-		return err
-	} else if err != nil {
+	if err == nil {
+		return found, nil
+	} else if !k8serr.IsNotFound(err) {
+		return nil, err
+	} else {
 		// Secret doesn't exist - create it
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -146,7 +153,7 @@ func (r *ReconcileOctarine) reconcileGuardrailsSecret(reqLogger logr.Logger, oct
 		// Create CA
 		caCert, caKey, err := tls_utils.CreateCertificateAuthority(reqLogger)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		secret.Data["ca.crt"] = caCert
 		secret.Data["ca.key"] = caKey
@@ -154,29 +161,30 @@ func (r *ReconcileOctarine) reconcileGuardrailsSecret(reqLogger logr.Logger, oct
 		// Create Cert
 		cert, key, err := tls_utils.CreateCertFromCA(reqLogger, serviceName, caCert, caKey)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		secret.Data["signed_cert"] = cert
 		secret.Data["key"] = key
 
+		// Set Octarine instance as the owner and controller
+		if err := ctrl.SetControllerReference(octarine, secret, r.GetScheme()); err != nil {
+			reqLogger.Error(err, "error setting Octarine CR as the owner of Guardrails webhook tls secret")
+		}
+
 		// Create secret in k8s
 		reqLogger.V(1).Info("creating/updating guardrails webhook tls secret")
 		if err := r.CreateOrUpdateResource(octarine, "", secret); err != nil {
-			return err
+			return nil, err
 		}
-	}
 
-	return nil
+		return secret, nil
+	}
 }
 
 // Reconciles guardrails webhook
-func (r *ReconcileOctarine) reconcileGuardrailsWebhook(reqLogger logr.Logger, octarine *unstructured.Unstructured, octarineSpec *types.OctarineSpec) error {
+func (r *ReconcileOctarine) reconcileGuardrailsWebhook(reqLogger logr.Logger, octarine *unstructured.Unstructured, octarineSpec *types.OctarineSpec, tlsSecret *corev1.Secret) error {
 	reqLogger.V(1).Info("reconciling guardrails validating webhook")
 
-	secretName, err := guardrailsSecretName(octarine)
-	if err != nil {
-		return err
-	}
 	serviceName, err := guardrailsServiceName(octarine)
 	if err != nil {
 		return err
@@ -187,13 +195,6 @@ func (r *ReconcileOctarine) reconcileGuardrailsWebhook(reqLogger logr.Logger, oc
 	sideEffectsNone := admissionregistrationv1beta1.SideEffectClassNone
 	timeoutSeconds := int32(octarineSpec.Guardrails.AdmissionController.TimeoutSeconds)
 	path := "/validate"
-
-	// Read the CA bundle from the secret
-	tlsSecret := &corev1.Secret{}
-	err = r.GetClient().Get(context.TODO(), secretName, tlsSecret)
-	if err != nil {
-		return err
-	}
 
 	// Create namespace selectors
 	var resourcesWebhookSelector, nsWebhookSelector *metav1.LabelSelector
@@ -222,6 +223,14 @@ func (r *ReconcileOctarine) reconcileGuardrailsWebhook(reqLogger logr.Logger, oc
 	webhookConfig := &admissionregistrationv1beta1.ValidatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: webhookName,
+
+			// Owner annotations - to set the Octarine CR as the webhook's owner (webhook is a cluster scoped resource,
+			// so the Octarine CR can't actually be its owner, thus we use annotations to mark that).
+			// The octarine controller watched the webhooks and enqueues requests based on these annotations.
+			Annotations: map[string]string{
+				handler.NamespacedNameAnnotation: k8stypes.NamespacedName{Namespace: octarine.GetNamespace(), Name: octarine.GetName()}.String(),
+				handler.TypeAnnotation:           octarine.GetObjectKind().GroupVersionKind().GroupKind().String(),
+			},
 		},
 		Webhooks: []admissionregistrationv1beta1.ValidatingWebhook{
 			{
