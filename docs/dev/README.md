@@ -51,7 +51,7 @@ EOF
 ```
 
 ## Build & Release
-1. Update the version in `version/version.go`, `helm-charts/octarine-operator/Chart.yaml` & `helm-charts/octarine-operator/values.yaml` (`image.tag`)
+1. Update the version in `version/version.go`, `helm-charts/octarine-operator/Chart.yaml` & `helm-charts/octarine-operator/values.yaml` (`image.tag`) & `deploy/operator.yaml` (`spec.spec.containers.image`) 
 2. Build the operator:
 ```shell script
 operator-sdk build octarinesec/octarine-operator:<version>
