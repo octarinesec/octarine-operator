@@ -3,30 +3,109 @@
 # Declare variables to be passed into your templates.
 
 enabled: true
-replicaCount: 1
-
-image:
-  repository: octarinesec/guardrail
-  tag:
-  pullPolicy: Always
 
 nameOverride: ""
 fullnameOverride: ""
 
-# Static env vars. Additional env vars are generated in the helpers.
-env:
-  OCTARINE_GUARDRAIL_SERVICE_NAME: "guardrails"
-  OCTARINE_GUARDRAIL_REFRESH_STATE_TIMEOUT_MINUTES: "5"
-  OCTARINE_GUARDRAIL_REPORT_STATE_TIMEOUT_MINUTES: "3"
-  OCTARINE_GUARDRAIL_SERVICE_KEY_FILE: "/etc/octarine-certificates/key"
-  OCTARINE_GUARDRAIL_SERVICE_CERT_FILE: "/etc/octarine-certificates/signed_cert"
-  OCTARINE_GUARDRAIL_SEND_STATE_INTERVAL_MINUTES: "1"
-  OCTARINE_GUARDRAIL_REFRESH_STATE_INTERVAL_HOURS: "6"
-  OCTARINE_GUARDRAIL_STATE_TIMEOUT_SECONDS: "5"
+enforcer:
+  replicaCount: 1
 
-service:
-  port: 443
-  type: ClusterIP
+  image:
+    repository: octarinesec/guardrails-enforcer
+    tag:
+    pullPolicy: Always
+
+  # Static env vars. Additional env vars are generated in the helpers.
+  env:
+    GUARDRAILS_ENFORCER_KEY_FILE_PATH: "/etc/octarine-certificates/key"
+    GUARDRAILS_ENFORCER_CERT_FILE_PATH: "/etc/octarine-certificates/signed_cert"
+
+  service:
+    port: 443
+    type: ClusterIP
+
+  probes:
+    port: 8181
+
+  prometheus:
+    port: 7071
+    scrape: false
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsUser: 0
+    capabilities:
+      add:
+        - NET_BIND_SERVICE
+      drop:
+        - ALL
+
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "30m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+  admissionController:
+    enabled: false
+    timeoutSeconds: 5
+    name:
+
+    # admissionCA can be used to override the Certs that will be used
+    # to sign the keys used by the admission controller.
+    CA:
+      # A base64 encoded PEM format certificate
+      cert:
+      # A base64 encoded PEM format private key
+      key:
+      # Expiry time of CA in days for generated certs
+      expiration: 3650
+
+    # secret with client certs mounted within the admission controller.
+    secret:
+      # name of the secret (auto-generated)
+      name:
+      # PEM format certificate (auto-generated)
+      # override via --set-file
+      cert:
+      # PEM format certificate (auto-generated)
+      # override via --set-file
+      key:
+
+stateReporter:
+  # Static env vars. Additional env vars are generated in the helpers.
+  env:
+    GUARDRAILS_ENFORCER_KEY_FILE_PATH: "/etc/octarine-certificates/key"
+    GUARDRAILS_ENFORCER_CERT_FILE_PATH: "/etc/octarine-certificates/signed_cert"
+  image:
+    repository: octarinesec/guardrails-state-reporter
+    tag:
+    pullPolicy: Always
+  probes:
+    port: 8181
+
+  prometheus:
+    port: 7071
+    scrape: false
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsUser: 1500
+    capabilities:
+      drop:
+        - ALL
+
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "30m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -38,54 +117,3 @@ serviceAccount:
 rbac:
   # Create and use rbac resources
   create: false
-
-probes:
-  port: 8181
-
-prometheus:
-  port: 7071
-  scrape: false
-
-securityContext:
-  allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
-  runAsUser: 0
-  capabilities:
-    add:
-      - NET_BIND_SERVICE
-    drop:
-      - ALL
-
-resources:
-  requests:
-    memory: "64Mi"
-    cpu: "30m"
-  limits:
-    memory: "256Mi"
-    cpu: "200m"
-
-admissionController:
-  enabled: false
-  timeoutSeconds: 5
-  name:
-
-  # admissionCA can be used to override the Certs that will be used
-  # to sign the keys used by the admission controller.
-  CA:
-    # A base64 encoded PEM format certificate
-    cert:
-    # A base64 encoded PEM format private key
-    key:
-    # Expiry time of CA in days for generated certs
-    expiration: 3650
-
-  # secret with client certs mounted within the admission controller.
-  secret:
-    # name of the secret (auto-generated)
-    name:
-    # PEM format certificate (auto-generated)
-    # override via --set-file
-    cert:
-    # PEM format certificate (auto-generated)
-    # override via --set-file
-    key:

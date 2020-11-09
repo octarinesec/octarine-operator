@@ -1,0 +1,40 @@
+{{- $imageTag := default .Values.global.octarine.version .Values.stateReporter.image.tag -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "guardrails.state-reporter.fullname" . }}
+  labels:
+{{ include "guardrails.state-reporter.labels" . | indent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "guardrails.state-reporter.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: {{ .Values.stateReporter.prometheus.scrape | quote }}
+        prometheus.io/port: {{ .Values.stateReporter.prometheus.port | quote }}
+      labels:
+        app.kubernetes.io/name: {{ include "guardrails.state-reporter.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "guardrails.serviceAccountName" . }}
+      priorityClassName: {{ include "octarine.priorityClass.name" . }}
+      containers:
+        - name: {{ include "guardrails.state-reporter.name" . }}
+          command:
+            - "/state_reporter"
+          env:
+            {{ include "octarine.common.env" . | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "guardrails.state-reporter.configmap.env.fullname" . }}
+            {{ include "octarine.common.envFrom" . | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.stateReporter.securityContext | nindent 12 }}
+          image: "{{ .Values.stateReporter.image.repository }}:{{ $imageTag }}"
+          imagePullPolicy: {{ .Values.stateReporter.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.stateReporter.resources | nindent 12 }}

@@ -32,16 +32,24 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
-Common labels
+Guardrails labels template, to be used by Guardrails components.
+
+This takes an array of two values:
+- the top context
+- the name of the component
 */}}
-{{- define "guardrails.labels" -}}
-app.kubernetes.io/name: {{ include "guardrails.name" . }}
+{{- define "guardrails.labels.tpl" -}}
+{{- $context := first . | default . -}}
+{{- $name := index . 1 | default (include "guardrails.name" $context) -}}
+{{- with $context -}}
+app.kubernetes.io/name: {{ $name }}
 helm.sh/chart: {{ include "guardrails.chart" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -56,56 +64,74 @@ Create the name of the service account to use
 {{- end -}}
 
 {{/*
-Create service name for guardrails service.
+Create guardrails enforcer name
 */}}
-{{- define "guardrails.service.name" -}}
-{{- include "guardrails.fullname" . -}}
+{{- define "guardrails.enforcer.name" -}}
+{{- printf "%s-enforcer" (include "guardrails.name" .) -}}
 {{- end -}}
 
 {{/*
-Create service fullname for guardrails service. Used also as the webhook name.
+Create guardrails enforcer fullname
 */}}
-{{- define "guardrails.service.fullname" -}}
-{{- default ( printf "%s.%s.svc" (include "guardrails.service.name" .) .Release.Namespace ) -}}
+{{- define "guardrails.enforcer.fullname" -}}
+{{- printf "%s-enforcer" (include "guardrails.fullname" .) -}}
 {{- end -}}
 
 {{/*
-Create name for guardrails validating webhook.
+Enforcer labels
 */}}
-{{- define "guardrails.validatingwebhook.name" -}}
-{{- default (include "guardrails.fullname" .) .Values.admissionController.name -}}
+{{- define "guardrails.enforcer.labels" -}}
+{{- template "guardrails.labels.tpl" (list . (include "guardrails.enforcer.name" .)) -}}
 {{- end -}}
 
 {{/*
-Create name for guardrails TLS secret.
+Create configmap name for guardrails enforcer env vars.
 */}}
-{{- define "guardrails.tls.secret.name" -}}
-{{- default ( printf "%s-tls" (include "guardrails.fullname" .) ) .Values.admissionController.secret.name -}}
+{{- define "guardrails.enforcer.configmap.env.fullname" -}}
+{{-  printf "%s-env" (include "guardrails.enforcer.fullname" .) -}}
+{{- end -}}
+
+{{/*
+Generate env vars for enforcer.
+Const env vars are taken from the values, dynamic env vars are generated here.
+*/}}
+{{- define "guardrails.enforcer.env" -}}
+{{ toYaml .Values.enforcer.env }}
+{{- end -}}
+
+{{/*
+Create service name for guardrails enforcer service.
+*/}}
+{{- define "guardrails.enforcer.service.name" -}}
+{{- include "guardrails.enforcer.fullname" . -}}
+{{- end -}}
+
+{{/*
+Create service fullname for guardrails enforcer service. Used also as the webhook name.
+*/}}
+{{- define "guardrails.enforcer.service.fullname" -}}
+{{- default ( printf "%s.%s.svc" (include "guardrails.enforcer.service.name" .) .Release.Namespace ) -}}
+{{- end -}}
+
+{{/*
+Create name for guardrails enforcer validating webhook.
+*/}}
+{{- define "guardrails.enforcer.validatingwebhook.name" -}}
+{{- default (include "guardrails.enforcer.fullname" .) .Values.enforcer.admissionController.name -}}
 {{- end -}}
 
 {{/*
 Create webhook fullname for guardrails namespaces webhook.
 */}}
-{{- define "guardrails-namespaces.webhook.fullname" -}}
-{{- default ( printf "%s-namespaces.%s.svc" (include "guardrails.fullname" .) .Release.Namespace ) -}}
+{{- define "guardrails.enforcer.namespaces.webhook.fullname" -}}
+{{- default ( printf "%s-namespaces.%s.svc" (include "guardrails.enforcer.fullname" .) .Release.Namespace ) -}}
 {{- end -}}
 
 {{/*
-Create configmap name for guardrails env vars.
+Create name for guardrails enforcer TLS secret.
 */}}
-{{- define "guardrails.configmap.env.fullname" -}}
-{{-  printf "%s-env" (include "guardrails.fullname" .) -}}
-{{- end -}}
-
-{{/*
-Generate env vars for guardrails.
-Const env vars are taken from the values, dynamic env vars are generated here.
-*/}}
-{{- define "guardrails.env" -}}
-{{ toYaml .Values.env }}
-OCTARINE_GUARDRAIL_SERVICE_PORT: {{ .Values.service.port | quote }}
-OCTARINE_GUARDRAIL_SERVICE_PROMETHEUS_PORT: {{ .Values.prometheus.port | quote }}
-OCTARINE_GUARDRAIL_SERVICE_PROBES_PORT: {{ .Values.probes.port | quote }}
+{{- define "guardrails.enforcer.tls.secret.name" -}}
+{{- default ( printf "%s-tls" (include "guardrails.enforcer.fullname" .) ) .Values.enforcer.admissionController.secret.name -}}
 {{- end -}}
 
 {{- define "guardrails.webhook.timeout" -}}
@@ -117,27 +143,63 @@ timeoutSeconds: {{ .Values.admissionController.timeoutSeconds }}
 {{/*
 Generate certificates for admission-controller webhooks
 */}}
-{{- define "guardrails.gen-certs" -}}
-{{- $expiration := (.Values.admissionController.CA.expiration | int) -}}
-{{- if (or (empty .Values.admissionController.CA.cert) (empty .Values.admissionController.CA.key)) -}}
-{{- $ca :=  genCA "guardrails-ca" $expiration -}}
-{{- template "guardrails.gen-client-tls" (dict "RootScope" . "CA" $ca) -}}
+{{- define "guardrails.enforcer.gen-certs" -}}
+{{- $expiration := (.Values.enforcer.admissionController.CA.expiration | int) -}}
+{{- if (or (empty .Values.enforcer.admissionController.CA.cert) (empty .Values.enforcer.admissionController.CA.key)) -}}
+{{- $ca :=  genCA "guardrails-enforcer-ca" $expiration -}}
+{{- template "guardrails.enforcer.gen-client-tls" (dict "RootScope" . "CA" $ca) -}}
 {{- else -}}
-{{- $ca :=  buildCustomCert (.Values.admissionController.CA.cert | b64enc) (.Values.admissionController.CA.key | b64enc) -}}
-{{- template "guardrails.gen-client-tls" (dict "RootScope" . "CA" $ca) -}}
+{{- $ca :=  buildCustomCert (.Values.enforcer.admissionController.CA.cert | b64enc) (.Values.enforcer.admissionController.CA.key | b64enc) -}}
+{{- template "guardrails.enforcer.gen-client-tls" (dict "RootScope" . "CA" $ca) -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
 Generate client key and cert from CA
 */}}
-{{- define "guardrails.gen-client-tls" -}}
-{{- $altNames := list ( include "guardrails.service.fullname" .RootScope) -}}
-{{- $expiration := (.RootScope.Values.admissionController.CA.expiration | int) -}}
-{{- $cert := genSignedCert ( include "guardrails.fullname" .RootScope) nil $altNames $expiration .CA -}}
-{{- $clientCert := default $cert.Cert .RootScope.Values.admissionController.secret.cert | b64enc -}}
-{{- $clientKey := default $cert.Key .RootScope.Values.admissionController.secret.key | b64enc -}}
+{{- define "guardrails.enforcer.gen-client-tls" -}}
+{{- $altNames := list ( include "guardrails.enforcer.service.fullname" .RootScope) -}}
+{{- $expiration := (.RootScope.Values.enforcer.admissionController.CA.expiration | int) -}}
+{{- $cert := genSignedCert ( include "guardrails.enforcer.fullname" .RootScope) nil $altNames $expiration .CA -}}
+{{- $clientCert := default $cert.Cert .RootScope.Values.enforcer.admissionController.secret.cert | b64enc -}}
+{{- $clientKey := default $cert.Key .RootScope.Values.enforcer.admissionController.secret.key | b64enc -}}
 caCert: {{ .CA.Cert | b64enc }}
 clientCert: {{ $clientCert }}
 clientKey: {{ $clientKey }}
+{{- end -}}
+
+{{/*
+Create guardrails state-reporter name
+*/}}
+{{- define "guardrails.state-reporter.name" -}}
+{{- printf "%s-reporter" (include "guardrails.name" .) -}}
+{{- end -}}
+
+{{/*
+Create guardrails reporter fullname
+*/}}
+{{- define "guardrails.state-reporter.fullname" -}}
+{{- printf "%s-state-reporter" (include "guardrails.fullname" .) -}}
+{{- end -}}
+
+{{/*
+reporter labels
+*/}}
+{{- define "guardrails.state-reporter.labels" -}}
+{{- template "guardrails.labels.tpl" (list . (include "guardrails.state-reporter.name" .)) -}}
+{{- end -}}
+
+{{/*
+Create configmap name for guardrails.state-reporter.env vars.
+*/}}
+{{- define "guardrails.state-reporter.configmap.env.fullname" -}}
+{{-  printf "%s-env" (include "guardrails.state-reporter.fullname" .) -}}
+{{- end -}}
+
+{{/*
+Generate env vars for reporter.
+Const env vars are taken from the values, dynamic env vars are generated here.
+*/}}
+{{- define "guardrails.state-reporter.env" -}}
+{{ toYaml .Values.stateReporter.env }}
 {{- end -}}

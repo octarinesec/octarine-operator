@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include "guardrails.configmap.env.fullname" . }}
-  labels:
-{{ include "guardrails.labels" . | indent 4 }}
-data:
-{{ include "guardrails.env" . | indent 2 }}

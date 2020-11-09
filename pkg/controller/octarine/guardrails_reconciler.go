@@ -21,8 +21,8 @@ import (
 // deleted (if it's configured)
 func (r *ReconcileOctarine) reconcileGuardrails(reqLogger logr.Logger, octarine *unstructured.Unstructured, octarineSpec *types.OctarineSpec) error {
 	reqLogger.V(1).Info("reconciling guardrails webhook")
-	if !octarineSpec.Guardrails.AdmissionController.AutoManage {
-		reqLogger.V(2).Info("Guardrails.AdmissionController.AutoManage is disabled")
+	if !octarineSpec.Guardrails.Enforcer.AdmissionController.AutoManage {
+		reqLogger.V(2).Info("Guardrails.Enforcer.AdmissionController.AutoManage is disabled")
 		err := r.reconcileSecretAndWebhook(reqLogger, octarine, octarineSpec)
 		if err != nil {
 			return err
@@ -73,7 +73,7 @@ func (r *ReconcileOctarine) reconcileSecretAndWebhook(reqLogger logr.Logger, oct
 func (r *ReconcileOctarine) guardrailsDeploymentAvailable(reqLogger logr.Logger, octarine *unstructured.Unstructured) (bool, error) {
 	// Matchers for listing the guardrails deployment(s) - matching by app name label (set by helm) and the namespace
 	matchers := []client.ListOption{
-		client.MatchingLabels{"app.kubernetes.io/name": "guardrails"},
+		client.MatchingLabels{"app.kubernetes.io/name": "guardrails-enforcer"},
 		client.InNamespace(octarine.GetNamespace()),
 	}
 
@@ -193,12 +193,12 @@ func (r *ReconcileOctarine) reconcileGuardrailsWebhook(reqLogger logr.Logger, oc
 	policy := admissionregistrationv1beta1.Ignore
 	sideEffectsNoneOnDryRun := admissionregistrationv1beta1.SideEffectClassNoneOnDryRun
 	sideEffectsNone := admissionregistrationv1beta1.SideEffectClassNone
-	timeoutSeconds := int32(octarineSpec.Guardrails.AdmissionController.TimeoutSeconds)
+	timeoutSeconds := int32(octarineSpec.Guardrails.Enforcer.AdmissionController.TimeoutSeconds)
 	path := "/validate"
 
 	// Create namespace selectors
 	var resourcesWebhookSelector, nsWebhookSelector *metav1.LabelSelector
-	userSelector := octarineSpec.Guardrails.AdmissionController.NamespaceSelector
+	userSelector := octarineSpec.Guardrails.Enforcer.AdmissionController.NamespaceSelector
 	if userSelector != nil {
 		resourcesWebhookSelector = userSelector
 		nsWebhookSelector = userSelector
