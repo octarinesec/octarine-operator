@@ -28,6 +28,11 @@ spec:
             - "/enforcer"
           env:
             {{ include "octarine.common.env" . | nindent 12 }}
+            - name: GUARDRAILS_ENFORCER_PROBES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "guardrails.enforcer.configmap.env.fullname . }}
+                  key: probes.port
           envFrom:
             - configMapRef:
                 name: {{ include "guardrails.enforcer.configmap.env.fullname" . }}
@@ -36,6 +41,7 @@ spec:
             {{- toYaml .Values.enforcer.securityContext | nindent 12 }}
           image: "{{ .Values.enforcer.image.repository }}:{{ $imageTag }}"
           imagePullPolicy: {{ .Values.enforcer.image.pullPolicy }}
+          {{- include "octarine.probes" . | nindent 10 }}
           ports:
             - name: https
               containerPort: 443

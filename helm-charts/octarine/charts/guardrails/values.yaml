@@ -26,6 +26,14 @@ enforcer:
 
   probes:
     port: 8181
+    livenessPath: /alive
+    readinessPath: /ready
+    scheme: HTTP
+    initialDelaySeconds: 3
+    periodSeconds: 30
+    successThreshold: 1
+    timeoutSeconds: 1
+    failureThreshold: 3
 
   prometheus:
     port: 7071
