@@ -57,13 +57,3 @@ func NewOctarineSpec() *OctarineSpec {
 
 	return spec
 }
-
-func (s *OctarineSpec) GetAccountFeatures() (features []AccountFeature) {
-	if s.Guardrails.Enabled {
-		features = append(features, Guardrails)
-	}
-	if s.Nodeguard.Enabled {
-		features = append(features, Nodeaguard)
-	}
-	return
-}

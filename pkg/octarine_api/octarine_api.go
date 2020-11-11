@@ -60,24 +60,6 @@ func (o *OctarineApiClient) RegisterDomain(domain string) error {
 	return nil
 }
 
-func (o *OctarineApiClient) RegisterAccountFeatures(features ...AccountFeature) error {
-	url := fmt.Sprintf("%s/accounts/%s", o.baseUrl(), o.account)
-
-	resp, err := o.baseRequest().
-		SetBody(map[string]interface{}{
-			"features": features,
-		}).
-		Patch(url)
-
-	if err != nil {
-		return err
-	} else if !resp.IsSuccess() {
-		return fmt.Errorf("failed registering account features (%d): %s", resp.StatusCode(), resp)
-	}
-
-	return nil
-}
-
 func (o *OctarineApiClient) GetRegistrySecret() (*RegistrySecret, error) {
 	url := fmt.Sprintf("%s/account/%s/registrySecret", o.baseUrl(), o.account)
 

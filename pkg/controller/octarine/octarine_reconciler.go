@@ -283,7 +283,7 @@ func (r *ReconcileOctarine) labelNs(reqLogger logr.Logger, namespace string) err
 	return nil
 }
 
-// Syncs Octarine account details with the backend - registers the domain and the account features
+// Syncs Octarine account details with the backend - registers the domain
 func (r *ReconcileOctarine) syncOctarineAccountDetails(reqLogger logr.Logger, octarine *unstructured.Unstructured, octarineSpec *OctarineSpec) error {
 	apiClient := NewOctarineApiClient(octarineSpec.Global.Octarine.Account, octarineSpec.Global.Octarine.AccessToken,
 		octarineSpec.Global.Octarine.Api)
@@ -295,11 +295,6 @@ func (r *ReconcileOctarine) syncOctarineAccountDetails(reqLogger logr.Logger, oc
 
 	if err := r.registerDomain(reqLogger, apiClient, octarineSpec); err != nil {
 		reqLogger.Error(err, "Failed registering domain")
-		return err
-	}
-
-	if err := r.registerAccountFeatures(reqLogger, apiClient, octarineSpec); err != nil {
-		reqLogger.Error(err, "Failed registering account features")
 		return err
 	}
 
@@ -356,16 +351,6 @@ func (r *ReconcileOctarine) registerDomain(reqLogger logr.Logger, apiClient *Oct
 	domain := octarineSpec.Global.Octarine.Domain
 	reqLogger.V(1).Info("Registering domain", "domain", domain)
 	if err := apiClient.RegisterDomain(domain); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Registers the account features in Octarine's control plane, according to the features which are installed (guardrails, nodeguard)
-func (r *ReconcileOctarine) registerAccountFeatures(reqLogger logr.Logger, apiClient *OctarineApiClient, octarineSpec *OctarineSpec) error {
-	features := octarineSpec.GetAccountFeatures()
-	reqLogger.V(1).Info("Registering account features", "account features", features)
-	if err := apiClient.RegisterAccountFeatures(features...); err != nil {
 		return err
 	}
 	return nil
