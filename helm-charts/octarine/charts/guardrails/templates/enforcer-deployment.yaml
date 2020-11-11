@@ -31,7 +31,7 @@ spec:
             - name: GUARDRAILS_ENFORCER_PROBES_PORT
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "guardrails.enforcer.configmap.env.fullname . }}
+                  name: {{ include "guardrails.enforcer.configmap.env.fullname" . }}
                   key: probes.port
           envFrom:
             - configMapRef:

@@ -28,6 +28,11 @@ spec:
             - "/state_reporter"
           env:
             {{ include "octarine.common.env" . | nindent 12 }}
+            - name: STATE_REPORTER_PROBES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "guardrails.state-reporter.configmap.env.fullname" . }}
+                  key: probes.port
           envFrom:
             - configMapRef:
                 name: {{ include "guardrails.state-reporter.configmap.env.fullname" . }}
@@ -36,5 +41,6 @@ spec:
             {{- toYaml .Values.stateReporter.securityContext | nindent 12 }}
           image: "{{ .Values.stateReporter.image.repository }}:{{ $imageTag }}"
           imagePullPolicy: {{ .Values.stateReporter.image.pullPolicy }}
+          {{- include "octarine.probes" . | nindent 10 }}
           resources:
             {{- toYaml .Values.stateReporter.resources | nindent 12 }}
