@@ -38,12 +38,13 @@ spec:
   global:
     octarine:
       version: <octarine version>
-      account: <account>
+      account: <account (CB org key)>
       domain: <domain, group:member>
       accessTokenSecret: octarine-access-token
       api:
         host: <api address>
         port: 443
+        adapterName: <api-adapter name, eg. octarine-<release name>>
       messageproxy:
         host: <messageproxy address>
         port: 50051

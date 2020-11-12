@@ -3,18 +3,14 @@ The Octarine operator watches a CR of kind `Octarine`, group `operator.octarines
 The Octarine custom resource defines the parameters for the Octarine components. The operator will deploy the Octarine components based on this custom resource.
 
 ## Installing Octarine components
-1. Create an Octarine access token:
-    1. Login to your account on [Octarine dashboard](https://main.octarinesec.com)
-    2. Go to *Administration > Access keys*
-    3. Create a token with the `dataplane` role
-    4. Copy the `accessjwt`
+1. Create a Carbon Black Cloud access token. The token is in the form `<token>/<token ID>`.
 
 2. Create a secret with the access token in the namespace in which the operator is running:
 
-> Replace `<accessjwt>` with the accessjwt you copied in the previous step
+> Replace `<CB Token>` with the accessjwt you copied in the previous step
 
 ```shell script
-kubectl create secret generic octarine-access-token --namespace octarine-dataplane --from-literal=accessToken=<accessjwt>
+kubectl create secret generic octarine-access-token --namespace octarine-dataplane --from-literal=accessToken=<CB Token>
 ```
 
 3. Create the Octarine CR in the namespace in which the operator is running:
