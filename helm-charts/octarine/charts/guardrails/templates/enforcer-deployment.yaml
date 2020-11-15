@@ -28,11 +28,11 @@ spec:
             - "/enforcer"
           env:
             {{ include "octarine.common.env" . | nindent 12 }}
-            - name: GUARDRAILS_ENFORCER_PROBES_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "guardrails.enforcer.configmap.env.fullname" . }}
-                  key: probes.port
+#            - name: GUARDRAILS_ENFORCER_PROBES_PORT
+#              valueFrom:
+#                configMapKeyRef:
+#                  name: {{ include "guardrails.enforcer.configmap.env.fullname" . }}
+#                  key: probes.port
           envFrom:
             - configMapRef:
                 name: {{ include "guardrails.enforcer.configmap.env.fullname" . }}

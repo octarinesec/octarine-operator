@@ -6,4 +6,4 @@ metadata:
 {{ include "guardrails.enforcer.labels" . | indent 4 }}
 data:
 {{ include "guardrails.enforcer.env" . | indent 2 }}
-  probes.port: {{ .Values.probes.port | quote }}
+  GUARDRAILS_ENFORCER_PROBES_PORT: {{ .Values.probes.port | quote }}
