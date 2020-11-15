@@ -118,6 +118,29 @@ Priority class name
 {{- printf "%s-priority" (include "octarine.fullname" .) -}}
 {{- end }}
 
+{{- define "octarine.probes" -}}
+livenessProbe:
+  failureThreshold: {{ .Values.probes.failureThreshold }}
+  httpGet:
+    path: {{ .Values.probes.livenessPath }}
+    port: {{ .Values.probes.port }}
+    scheme: {{ .Values.probes.scheme }}
+  initialDelaySeconds: {{ .Values.probes.initialDelaySeconds }}
+  periodSeconds: {{ .Values.probes.periodSeconds }}
+  successThreshold: {{ .Values.probes.successThreshold }}
+  timeoutSeconds: {{ .Values.probes.timeoutSeconds }}
+readinessProbe:
+  failureThreshold: {{ .Values.probes.failureThreshold }}
+  httpGet:
+    path: {{ .Values.probes.readinessPath }}
+    port: {{ .Values.probes.port }}
+    scheme: {{ .Values.probes.scheme }}
+  initialDelaySeconds: {{ .Values.probes.initialDelaySeconds }}
+  periodSeconds: {{ .Values.probes.periodSeconds }}
+  successThreshold: {{ .Values.probes.successThreshold }}
+  timeoutSeconds: {{ .Values.probes.timeoutSeconds }}
+{{- end -}}
+
 {{/*
 Determine priority class apiVersion by K8s version
 */}}

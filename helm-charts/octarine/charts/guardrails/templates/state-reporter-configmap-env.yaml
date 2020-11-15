@@ -6,3 +6,4 @@ metadata:
 {{ include "guardrails.state-reporter.labels" . | indent 4 }}
 data:
 {{ include "guardrails.state-reporter.env" . | indent 2 }}
+  STATE_REPORTER_PROBES_PORT: {{ .Values.probes.port | quote }}

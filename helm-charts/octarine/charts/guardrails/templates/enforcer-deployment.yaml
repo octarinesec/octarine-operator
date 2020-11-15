@@ -36,6 +36,7 @@ spec:
             {{- toYaml .Values.enforcer.securityContext | nindent 12 }}
           image: "{{ .Values.enforcer.image.repository }}:{{ $imageTag }}"
           imagePullPolicy: {{ .Values.enforcer.image.pullPolicy }}
+          {{- include "octarine.probes" . | nindent 10 }}
           ports:
             - name: https
               containerPort: 443

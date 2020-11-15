@@ -36,5 +36,6 @@ spec:
             {{- toYaml .Values.stateReporter.securityContext | nindent 12 }}
           image: "{{ .Values.stateReporter.image.repository }}:{{ $imageTag }}"
           imagePullPolicy: {{ .Values.stateReporter.image.pullPolicy }}
+          {{- include "octarine.probes" . | nindent 10 }}
           resources:
             {{- toYaml .Values.stateReporter.resources | nindent 12 }}

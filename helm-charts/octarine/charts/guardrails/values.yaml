@@ -7,6 +7,17 @@ enabled: true
 nameOverride: ""
 fullnameOverride: ""
 
+probes:
+  port: 8181
+  livenessPath: /alive
+  readinessPath: /ready
+  scheme: HTTP
+  initialDelaySeconds: 3
+  periodSeconds: 30
+  successThreshold: 1
+  timeoutSeconds: 1
+  failureThreshold: 3
+
 enforcer:
   replicaCount: 1
 
@@ -23,9 +34,6 @@ enforcer:
   service:
     port: 443
     type: ClusterIP
-
-  probes:
-    port: 8181
 
   prometheus:
     port: 7071
