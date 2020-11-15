@@ -28,11 +28,6 @@ spec:
             - "/state_reporter"
           env:
             {{ include "octarine.common.env" . | nindent 12 }}
-#            - name: STATE_REPORTER_PROBES_PORT
-#              valueFrom:
-#                configMapKeyRef:
-#                  name: {{ include "guardrails.state-reporter.configmap.env.fullname" . }}
-#                  key: probes.port
           envFrom:
             - configMapRef:
                 name: {{ include "guardrails.state-reporter.configmap.env.fullname" . }}
