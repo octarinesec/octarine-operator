@@ -21,9 +21,15 @@ import (
 // deleted (if it's configured)
 func (r *ReconcileOctarine) reconcileGuardrails(reqLogger logr.Logger, octarine *unstructured.Unstructured, octarineSpec *types.OctarineSpec) error {
 	reqLogger.V(1).Info("reconciling guardrails webhook")
+	secret, err := r.reconcileGuardrailsSecret(reqLogger, octarine)
+	if err != nil {
+		reqLogger.Error(err, "error reconciling guardrails secret")
+		return err
+	}
+
 	if !octarineSpec.Guardrails.Enforcer.AdmissionController.AutoManage {
 		reqLogger.V(2).Info("Guardrails.Enforcer.AdmissionController.AutoManage is disabled")
-		err := r.reconcileSecretAndWebhook(reqLogger, octarine, octarineSpec)
+		err := r.reconcileWebhook(reqLogger, octarine, octarineSpec, secret)
 		if err != nil {
 			return err
 		}
@@ -40,7 +46,7 @@ func (r *ReconcileOctarine) reconcileGuardrails(reqLogger logr.Logger, octarine 
 
 	if available {
 		reqLogger.V(1).Info("Guardrails deployment available")
-		err := r.reconcileSecretAndWebhook(reqLogger, octarine, octarineSpec)
+		err := r.reconcileWebhook(reqLogger, octarine, octarineSpec, secret)
 		if err != nil {
 			return err
 		}
@@ -55,13 +61,7 @@ func (r *ReconcileOctarine) reconcileGuardrails(reqLogger logr.Logger, octarine 
 	return nil
 }
 
-func (r *ReconcileOctarine) reconcileSecretAndWebhook(reqLogger logr.Logger, octarine *unstructured.Unstructured, octarineSpec *types.OctarineSpec) error {
-	secret, err := r.reconcileGuardrailsSecret(reqLogger, octarine)
-	if err != nil {
-		reqLogger.Error(err, "error reconciling guardrails secret")
-		return err
-	}
-
+func (r *ReconcileOctarine) reconcileWebhook(reqLogger logr.Logger, octarine *unstructured.Unstructured, octarineSpec *types.OctarineSpec, secret *corev1.Secret) error {
 	if err := r.reconcileGuardrailsWebhook(reqLogger, octarine, octarineSpec, secret); err != nil {
 		reqLogger.Error(err, "error reconciling guardrails webhook")
 		return err
