@@ -40,12 +40,15 @@ webhooks:
         operations:
           - '*'
         resources:
+          - nodes/proxy
           - pods/portforward
           - pods/exec
+          - pods/proxy
           - namespaces
           - pods
           - replicasets
           - services
+          - services/proxy
           - roles
           - rolebindings
           - clusterroles
@@ -58,6 +61,11 @@ webhooks:
           - jobs
           - cronjobs
           - ingresses
+          - selfsubjectaccessreviews
+          - selfsubjectrulesreviews
+          - subjectaccessreviews
+          - localsubjectaccessreviews
+          - customresourcedefinitions
     {{ include "guardrails.enforcer.webhook.timeout" . }}
     clientConfig:
       caBundle: {{ $tls.caCert }}
