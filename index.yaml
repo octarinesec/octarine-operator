@@ -3,16 +3,16 @@ entries:
   octarine-operator:
   - apiVersion: v1
     appVersion: 2.0.0
-    created: "2020-11-29T13:46:18.796027+02:00"
+    created: "2020-11-29T17:14:57.194512+02:00"
     description: A Helm chart for Octarine operator
-    digest: 41f241b7dee3071d22b7942e7a517f40cba700655f437fd3958be7adba8b407e
+    digest: f56490a8fc9a73b18a406b97d084d44c2215eb02679289b74a753d0d6d4bb1bb
     name: octarine-operator
     urls:
     - https://octarinesec.github.io/octarine-operator/helm-repo/octarine-operator-2.0.0.tgz
     version: 2.0.0
   - apiVersion: v1
     appVersion: 1.0.3
-    created: "2020-11-29T13:46:18.794285+02:00"
+    created: "2020-11-29T17:14:57.192932+02:00"
     description: A Helm chart for Octarine operator
     digest: 9189b617d840a03189fe4ec5e0dddcd794d37e618a471776d22dde4c35f5c460
     name: octarine-operator
@@ -21,7 +21,7 @@ entries:
     version: 1.0.3
   - apiVersion: v1
     appVersion: 1.0.2
-    created: "2020-11-29T13:46:18.79345+02:00"
+    created: "2020-11-29T17:14:57.19206+02:00"
     description: A Helm chart for Octarine operator
     digest: 1b4eb60e8234713960b0b10c5dd1c1412548eb959b716182f74a05000b6135e0
     name: octarine-operator
@@ -30,7 +30,7 @@ entries:
     version: 1.0.2
   - apiVersion: v1
     appVersion: 1.0.1
-    created: "2020-11-29T13:46:18.792853+02:00"
+    created: "2020-11-29T17:14:57.191354+02:00"
     description: A Helm chart for Octarine operator
     digest: ea70ce5b549789a3cfc71bed7171a3e582e8cebb38eff47efd423ee9036a43e9
     name: octarine-operator
@@ -39,11 +39,11 @@ entries:
     version: 1.0.1
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-11-29T13:46:18.792224+02:00"
+    created: "2020-11-29T17:14:57.190563+02:00"
     description: A Helm chart for Octarine operator
     digest: 6a1b00cf2da85a4ae81c29eb0a75b055eda5bbaf96bdb7edc17e03c0252d1ed0
     name: octarine-operator
     urls:
     - https://octarinesec.github.io/octarine-operator/helm-repo/octarine-operator-0.1.0.tgz
     version: 0.1.0
-generated: "2020-11-29T13:46:18.790801+02:00"
+generated: "2020-11-29T17:14:57.187683+02:00"
