@@ -84,6 +84,7 @@ webhooks:
         operations:
           - CREATE
           - UPDATE
+          - CONNECT
         resources:
           - namespaces
     {{ include "guardrails.enforcer.webhook.timeout" . }}

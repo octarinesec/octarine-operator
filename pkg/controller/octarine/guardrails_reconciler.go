@@ -291,7 +291,7 @@ func (r *ReconcileOctarine) reconcileGuardrailsWebhook(reqLogger logr.Logger, oc
 				NamespaceSelector: nsWebhookSelector,
 				Rules: []admissionregistrationv1beta1.RuleWithOperations{
 					{
-						Operations: []admissionregistrationv1beta1.OperationType{admissionregistrationv1beta1.Create, admissionregistrationv1beta1.Update},
+						Operations: []admissionregistrationv1beta1.OperationType{admissionregistrationv1beta1.Create, admissionregistrationv1beta1.Update, admissionregistrationv1beta1.Connect},
 						Rule: admissionregistrationv1beta1.Rule{
 							APIGroups:   []string{"*"},
 							APIVersions: []string{"*"},
