@@ -51,7 +51,7 @@ func NewAgent(namespace string, octarineSpec *types.OctarineSpec, k8sClientset *
 
 	return &MonitorAgent{
 		OctarineSpec:  octarineSpec,
-		Interval:      60 * time.Second,
+		Interval:      20 * time.Second,
 		healthChecker: healthChecker,
 		grpcClient:    grpcClient,
 		stopChan:      make(chan struct{}),
