@@ -52,7 +52,7 @@ Parameter | Description | Default
 `guardrails.enabled` | Whether Guardrails should be deployed or not | `true`
 `guardrails.admissionController.autoManage` | If `true`, the operator will deploy the Guardrails validating webhook config when Guardrails service is available and delete it when the service is unavailable. | `true`
 `guardrails.enforcer.replicaCount` | The number of the enforcer replicas to run | `1`
-`nodeguard.enabled` | Whether Nodeguard should be deployed or not | `true`
+`nodeguard.enabled` | Whether Nodeguard should be deployed or not | `false`
 `nodeguard.worker.interfacePrefixes.container` | Prefix of the container network interface | `NO_PREFIX`
 `nodeguard.worker.interfacePrefixes.external` | Prefix of the external network interface | `NO_PREFIX`
 
