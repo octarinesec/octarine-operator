@@ -55,11 +55,11 @@ EOF
 1. Update the version in `version/version.go`, `helm-charts/octarine-operator/Chart.yaml` & `helm-charts/octarine-operator/values.yaml` (`image.tag`) & `deploy/operator.yaml` (`spec.spec.containers.image`) 
 2. Build the operator:
 ```shell script
-operator-sdk build octarinesec/octarine-operator:<version>
+operator-sdk build cbartifactory/octarine-operator:<version>
 ```
 3. Push the image to the registry:
 ```shell script
-docker push octarinesec/octarine-operator:<version>
+docker push cbartifactory/octarine-operator:<version>
 ```
 4. Create helm chart package:
 ```shell script

@@ -210,7 +210,7 @@ spec:
       serviceAccountName: octarine-operator
       containers:
         - name: octarine-operator
-          image: octarinesec/octarine-operator:2.0.0
+          image: cbartifactory/octarine-operator:2.0.0
           imagePullPolicy: Always
           args:
             - --zap-level=1

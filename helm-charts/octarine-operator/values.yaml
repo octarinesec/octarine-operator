@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: octarinesec/octarine-operator
+  repository: cbartifactory/octarine-operator
   tag: 2.0.0
   pullPolicy: Always
 
