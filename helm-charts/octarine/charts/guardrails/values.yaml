@@ -22,7 +22,7 @@ enforcer:
   replicaCount: 1
 
   image:
-    repository: octarinesec/guardrails-enforcer
+    repository: cbartifactory/guardrails-enforcer
     tag:
     pullPolicy: Always
 
@@ -89,7 +89,7 @@ stateReporter:
     GUARDRAILS_ENFORCER_KEY_FILE_PATH: "/etc/octarine-certificates/key"
     GUARDRAILS_ENFORCER_CERT_FILE_PATH: "/etc/octarine-certificates/signed_cert"
   image:
-    repository: octarinesec/guardrails-state-reporter
+    repository: cbartifactory/guardrails-state-reporter
     tag:
     pullPolicy: Always
   probes:
