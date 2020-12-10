@@ -30,6 +30,7 @@ enforcer:
   env:
     GUARDRAILS_ENFORCER_KEY_FILE_PATH: "/etc/octarine-certificates/key"
     GUARDRAILS_ENFORCER_CERT_FILE_PATH: "/etc/octarine-certificates/signed_cert"
+    GIN_MODE: "release"
 
   service:
     port: 443
