@@ -47,9 +47,11 @@ helm upgrade --install --namespace octarine-dataplane octarine-operator octarine
 ```
 
 ## Uninstalling the Octarine operator
-**If you created an Octarine resource to install the Octarine components, please delete it before uninstalling the operator.**
+**If you created an Octarine resource to install the Octarine components, please delete it before uninstalling the operator:**
+```shell script
+kubectl delete octarines.operator.octarinesec.com octarine
+```
 
-### Uninstall a Helm release
 If you deployed the operator using Helm:
 1. Uninstall the `octarine` release:
 ```shell script
@@ -57,10 +59,9 @@ helm delete octarine-operator
 ```
 2. Delete the Octarine CRD which was created by helm:
 ```shell script
-kubectl delete octarines.operator.octarinesec.com octarine
+kubectl delete crd octarines.operator.octarinesec.com
 ```
 
-### Uninstall plain K8s resources
 If you deployed the operator using its plain K8s resources, uninstall it by running:
 ```shell script
 kubectl delete -n octarine-dataplane -Rf deploy
