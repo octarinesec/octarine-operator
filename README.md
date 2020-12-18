@@ -1,7 +1,7 @@
 # VMware Carbon Black Cloud Container Operator 
 ## Cloud Container Operator Overview 
 
-The the Carbon Black Cloud Container Operator runs within a Kubernetes cluster. TheContainer Operator is a set of controllers which deploy and manage the VMware Carbon Black Cloud Container components. 
+The the Carbon Black Cloud Container Operator runs within a Kubernetes cluster.The Container Operator is a set of controllers which deploy and manage the VMware Carbon Black Cloud Container components. 
  
  Capabilities
  * Deploy and manage the Container Essentials product bundle (including the configuration and the image scanning for Kubernetes security)! 
@@ -51,8 +51,7 @@ You can uninstall the Carbon Black Cloud Container Operator in three ways:
 kubectl delete octarines.operator.octarinesec.com octarine 
 ```
 
-2. If you deployed the operator using Helm: 
-Uninstall the octarine release: 
+2. If you deployed the operator using Helm Uninstall the octarine release: 
 ```sh 
 helm delete octarine-operator 
 ```
