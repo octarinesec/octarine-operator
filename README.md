@@ -45,7 +45,7 @@ helm repo updatehelm upgrade --install --namespace octarine-dataplane octarine-o
 ### Uninstalling the Carbon Black Cloud Container Operator 
 You can uninstall the Carbon Black Cloud Container Operator in three ways: 
 
-1. If you created an Octarinea Carbon Black Cloud Container resource to install the Carbon Black components, please delete it before uninstalling the operator: 
+1. If you created an Octarine Carbon Black Cloud Container resource to install the Carbon Black components, please delete it before uninstalling the operator: 
 
 ```sh
 kubectl delete octarines.operator.octarinesec.com octarine 
