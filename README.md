@@ -23,7 +23,9 @@ The operator Helm chart supports Helm 3 and Helm 2 (if you're using Helm 2, make
 Install the chart with the release name octarine in the octarine-dataplane namespace: 
 
 ```sh
-helm repo add octarine-operator https://octarinesec.github.io/octarine-operatorhelm repo updatehelm upgrade --install --namespace octarine-dataplane octarine-operator octarine-operator/octarine-operator 
+helm repo add octarine-operator https://octarinesec.github.io/octarine-operator
+helm repo update
+helm upgrade --install --namespace octarine-dataplane octarine-operator octarine-operator/octarine-operator 
 ```
 ### Deploy K8s resources 
 Create the octarine-dataplane namespace and deploy the resources from the deploy dir:
