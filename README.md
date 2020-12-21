@@ -42,7 +42,8 @@ The namespace label is required due to the validating webhook configured by Cont
 The deployment command can be used for upgrading as well.  
 Note: Make sure to update the helm repo before. 
 ```sh
-helm repo updatehelm upgrade --install --namespace octarine-dataplane octarine-operator octarine-operator/octarine-operator 
+helm repo update
+helm upgrade --install --namespace octarine-dataplane octarine-operator octarine-operator/octarine-operator 
 ```
 ### Uninstalling the Carbon Black Cloud Container Operator 
 You can uninstall the Carbon Black Cloud Container Operator in three ways: 
