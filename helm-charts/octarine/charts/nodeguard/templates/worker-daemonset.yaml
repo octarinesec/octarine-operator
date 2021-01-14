@@ -33,10 +33,6 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
     {{- end }}
-      volumes:
-        - name: host-docker-sock
-          hostPath:
-            path: /var/run/docker.sock
       priorityClassName: {{ include "octarine.priorityClass.name" . }}
       containers:
         - name: {{ include "nodeguard.worker.name" . }}
@@ -59,9 +55,6 @@ spec:
               command:
                 - cat
                 - {{ .Values.worker.probes.livenessPath }}
-          volumeMounts:
-            - name: host-docker-sock
-              mountPath: /var/run/docker.sock
           command:
             - "/run_worker.sh"
           args:
