@@ -8,6 +8,16 @@ metadata:
 
 ---
 
+apiVersion: v1
+kind: Secret
+metadata:
+  name: octarine-operator-public-registry-secret
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: eyJhdXRocyI6IHsiaHR0cHM6Ly9pbmRleC5kb2NrZXIuaW8vdjEvIjogeyJhdXRoIjogImIyTjBZWEpwYm1WdmNHVnlZWFJ2Y2pvMk5HSTFOMkkzTXkweU1qZzNMVFEwT1RJdFlqQm1aaTB4WkRnM05tTXdaalJqWXpBPSJ9fX0=
+
+---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -189,6 +199,7 @@ metadata:
   name: octarine-operator
 imagePullSecrets:
   - name: octarine-operator-registry-secret
+  - name: octarine-operator-public-registry-secret
 
 ---
 
