@@ -82,16 +82,17 @@ See the args value within the values.yaml.
 
 ## Using HTTP proxy
 
-Configuring the Octarine services to use HTTP proxy can be done by setting HTTP_PROXY, HTTPS_PROXY and NO_PROXY environment variables for the services.
+Configuring the Octarine services to use HTTP proxy can be done by setting HTTP_PROXY, HTTPS_PROXY and NO_PROXY environment variables.
 
-In order to configure those environment variables for the Operator, use the following command to patch the Operator deployment:
+In order to configure those environment variables in the Operator, use the following command to patch the Operator deployment:
 ```sh
 kubectl set env -n octarine-dataplane deployment octarine-operator HTTP_PROXY="<proxy-url>" HTTPS_PROXY="<proxy-url>" NO_PROXY="<kubernetes-api-server-ip>/<range>"
 ```
 
-In order to configure those environment variables for the Guardrails-state-reporter and the Guardrails-enforcer, update the Octarine CR using the proxy environment variables as described here: [Custom Resource documentation](docs/octarine_cr.md)
+In order to configure those environment variables in the Guardrails-state-reporter and the Guardrails-enforcer, update the Octarine CR using the proxy environment variables as described here: [Custom Resource documentation](docs/octarine_cr.md)
 
+It is very important to configure the NO_PROXY environment variable with the value of the Kubernetes API server IP.
 Finding the API-server IP:
 ```sh
-kubectl get service -o=jsonpath='{..clusterIP}'
+kubectl -n default get service kubernetes -o=jsonpath='{..clusterIP}'
 ```
