@@ -79,3 +79,19 @@ The following table lists the configurable parameters of the operator chart and 
 ## Logs 
 You can enable verbose logging and set the verbosity level using the --zap-level flag of the operator executable. 
 See the args value within the values.yaml.
+
+## Using HTTP proxy
+
+Configuring the Octarine services to use HTTP proxy can be done by setting HTTP_PROXY, HTTPS_PROXY and NO_PROXY environment variables for the services.
+
+In order to configure those environment variables for the Operator, use the following command to patch the Operator deployment:
+```sh
+kubectl set env -n octarine-dataplane deployment octarine-operator HTTP_PROXY="<proxy-url>" HTTPS_PROXY="<proxy-url>" NO_PROXY="<kubernetes-api-server-ip>/<range>"
+```
+
+In order to configure those environment variables for the Guardrails-state-reporter and the Guardrails-enforcer, update the Octarine CR using the proxy environment variables as described here: [Custom Resource documentation](docs/octarine_cr.md)
+
+Finding the API-server IP:
+```sh
+kubectl get service -o=jsonpath='{..clusterIP}'
+```
