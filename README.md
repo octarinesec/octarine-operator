@@ -92,6 +92,7 @@ kubectl set env -n octarine-dataplane deployment octarine-operator HTTP_PROXY="<
 In order to configure those environment variables in the Guardrails-state-reporter and the Guardrails-enforcer, update the Octarine CR using the proxy environment variables as described here: [Custom Resource documentation](docs/octarine_cr.md)
 
 It is very important to configure the NO_PROXY environment variable with the value of the Kubernetes API server IP.
+
 Finding the API-server IP:
 ```sh
 kubectl -n default get service kubernetes -o=jsonpath='{..clusterIP}'
