@@ -53,6 +53,8 @@ The `spec` of the Cloud Container CR overrides the default values of the Octarin
 | `guardrails.enabled`                        | Whether Container Essentials should be deployed or not                                                                                                                    | `true`  |
 | `guardrails.admissionController.autoManage` | If `true`, the operator will deploy the Container Essential validating webhook config when Guardrails service is available and delete it when the service is unavailable. | `true`  |
 | `guardrails.enforcer.replicaCount`          | The number of the enforcer replicas to run                                                                                                                                | `1`     |
+| `guardrails.enforcer.env`                   | Configure additional environment variables for the enforcer. example: HTTP_PROXY, HTTPS_PROXY, NO_PROXY                                                                    | `1`     |
+| `guardrails.stateReporter.env`              | Configure additional environment variables for the state-reporter. example: HTTP_PROXY, HTTPS_PROXY, NO_PROXY                                                              | `1`     |
 
 ## Updating Cloud Container components configuration
 You can update any of the configurable parameters in an existing Cloud Container CR spec. The operator will perform the corresponding changes in the Cloud Container components.
