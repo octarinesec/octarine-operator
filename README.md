@@ -82,7 +82,7 @@ See the args value within the values.yaml.
 
 ## Using HTTP proxy
 
-Configuring the Octarine services to use HTTP proxy can be done by setting HTTP_PROXY, HTTPS_PROXY and NO_PROXY environment variables.
+Configuring the Carbon Black Cloud Container services to use HTTP proxy can be done by setting HTTP_PROXY, HTTPS_PROXY and NO_PROXY environment variables.
 
 In order to configure those environment variables in the Operator, use the following command to patch the Operator deployment:
 ```sh
