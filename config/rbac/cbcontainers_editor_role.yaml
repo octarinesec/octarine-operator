@@ -1,0 +1,24 @@
+# permissions for end users to edit cbcontainers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cbcontainers-editor-role
+rules:
+- apiGroups:
+  - operator.containers.carbonblack.io
+  resources:
+  - cbcontainers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - operator.containers.carbonblack.io
+  resources:
+  - cbcontainers/status
+  verbs:
+  - get
