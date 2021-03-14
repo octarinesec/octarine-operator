@@ -2,10 +2,6 @@ domain: operator.containers.carbonblack.io
 layout: go.kubebuilder.io/v3
 projectName: rega
 repo: github.com/vmware/cbcontainers-operator
-resources:
-- crdVersion: v1
-  kind: CBContainers
-  version: v1
 version: 3-alpha
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
