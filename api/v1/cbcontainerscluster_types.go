@@ -25,11 +25,8 @@ import (
 
 // CBContainersClusterSpec defines the desired state of CBContainersCluster
 type CBContainersClusterSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of CBContainersCluster. Edit CBContainersCluster_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Account     string `json:"account,omitempty"`
+	ClusterName string `json:"clusterName,omitempty"`
 }
 
 // CBContainersClusterStatus defines the observed state of CBContainersCluster
@@ -42,6 +39,7 @@ type CBContainersClusterStatus struct {
 // +kubebuilder:subresource:status
 
 // CBContainersCluster is the Schema for the cbcontainersclusters API
+//+kubebuilder:subresource:status
 type CBContainersCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
