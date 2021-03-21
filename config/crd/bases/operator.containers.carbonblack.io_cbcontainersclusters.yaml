@@ -37,9 +37,9 @@ spec:
           spec:
             description: CBContainersClusterSpec defines the desired state of CBContainersCluster
             properties:
-              foo:
-                description: Foo is an example field of CBContainersCluster. Edit
-                  CBContainersCluster_types.go to remove/update
+              account:
+                type: string
+              clusterName:
                 type: string
             type: object
           status:
