@@ -42,6 +42,7 @@ type CBContainersGuardrailsStatus struct {
 // +kubebuilder:subresource:status
 
 // CBContainersGuardrails is the Schema for the cbcontainersguardrails API
+//+kubebuilder:subresource:status
 type CBContainersGuardrails struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
