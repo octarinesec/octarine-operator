@@ -6,8 +6,7 @@ import (
 )
 
 type DesiredK8sObject interface {
-	GetNamespacedName() types.NamespacedName
-	GetK8sObject() client.Object
-	GetEmptyK8sObject() client.Object
-	VerifyK8sObject(client.Object) (bool, error)
+	NamespacedName() types.NamespacedName
+	EmptyK8sObject() client.Object
+	MutateK8sObject(client.Object) (bool, error)
 }
