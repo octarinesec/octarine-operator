@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
-	"github.com/vmware/cbcontainers-operator/state/applyment"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -26,5 +26,10 @@ func (c *CBContainersClusterStateController) ApplyState(ctx context.Context, nam
 	}
 
 	c.desiredConfigMap.UpdateCbContainersCluster(cbContainersCluster)
-	return applyment.ApplyDesiredK8sObject(ctx, client, c.desiredConfigMap)
+	ok, err := applyment.ApplyDesiredK8sObject(ctx, client, c.desiredConfigMap)
+	if err != nil {
+		return false, err
+	}
+
+	return ok, nil
 }

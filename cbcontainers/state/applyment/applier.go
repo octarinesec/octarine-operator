@@ -3,25 +3,10 @@ package applyment
 import (
 	"context"
 	"fmt"
-	stateTypes "github.com/vmware/cbcontainers-operator/state/types"
+	stateTypes "github.com/vmware/cbcontainers-operator/cbcontainers/state/types"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-//func applyState(ctx context.Context, client client.Client, desiredState []stateTypes.DesiredK8sObject) (bool, error) {
-//	applyOccurred := false
-//
-//	for _, desiredK8sObject := range desiredState {
-//		if ok, err := applyDesiredK8sObject(ctx, client, desiredK8sObject); err != nil {
-//			logrus.Error(err)
-//			return false, err
-//		} else if ok {
-//			applyOccurred = true
-//		}
-//	}
-//
-//	return applyOccurred, nil
-//}
 
 func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8sObject stateTypes.DesiredK8sObject) (bool, error) {
 	k8sObject := desiredK8sObject.EmptyK8sObject()
