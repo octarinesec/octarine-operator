@@ -132,6 +132,7 @@ rules:
 - apiGroups:
     - rbac.authorization.k8s.io
     - networking.k8s.io
+    - apiextensions.k8s.io
     - extensions
     - rbac
     - batch
@@ -153,6 +154,7 @@ rules:
     - replicasets
     - pods
     - nodes
+    - customresourcedefinitions
   verbs:
     - get
     - watch
@@ -221,7 +223,7 @@ spec:
       serviceAccountName: octarine-operator
       containers:
         - name: octarine-operator
-          image: cbartifactory/octarine-operator:2.0.0
+          image: octarinesec/octarine-operator:grc351
           imagePullPolicy: Always
           args:
             - --zap-level=1
