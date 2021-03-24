@@ -5,8 +5,8 @@
 replicaCount: 1
 
 image:
-  repository: octarinesec/octarine-operator
-  tag: grc351
+  repository: cbartifactory/octarine-operator
+  tag: 2.1.0
   pullPolicy: Always
 
 args:
