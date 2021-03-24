@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/processors"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -31,7 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
+	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	clusterState "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster"
 	"github.com/vmware/cbcontainers-operator/controllers"
 	// +kubebuilder:scaffold:imports
 )
@@ -44,7 +46,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(operatorcontainerscarbonblackiov1.AddToScheme(scheme))
+	utilruntime.Must(cbcontainersv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -82,6 +84,10 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("CBContainersCluster"),
 		Scheme: mgr.GetScheme(),
+		CreateProcessor: func(registrar processors.ClusterRegistrar) controllers.ClusterStateProcessor {
+			return processors.NewCBContainerClusterProcessor(registrar)
+		},
+		StateApplier: clusterState.NewStateApplier(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
 		os.Exit(1)

@@ -25,8 +25,16 @@ import (
 
 // CBContainersClusterSpec defines the desired state of CBContainersCluster
 type CBContainersClusterSpec struct {
-	Account     string `json:"account,omitempty"`
-	ClusterName string `json:"clusterName,omitempty"`
+	Account        string                            `json:"account,omitempty"`
+	ClusterName    string                            `json:"clusterName,omitempty"`
+	ApiGatewaySpec CBContainersClusterApiGatewaySpec `json:"apiGatewaySpec,omitempty"`
+}
+
+type CBContainersClusterApiGatewaySpec struct {
+	Host                  string `json:"host,omitempty"`
+	Port                  int    `json:"port,omitempty"`
+	Adapter               string `json:"adapter,omitempty"`
+	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
 }
 
 // CBContainersClusterStatus defines the observed state of CBContainersCluster
