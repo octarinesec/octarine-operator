@@ -39,6 +39,17 @@ spec:
             properties:
               account:
                 type: string
+              apiGatewaySpec:
+                properties:
+                  accessTokenSecretName:
+                    type: string
+                  adapter:
+                    type: string
+                  host:
+                    type: string
+                  port:
+                    type: integer
+                type: object
               clusterName:
                 type: string
             type: object
