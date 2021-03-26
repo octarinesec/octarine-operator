@@ -10,7 +10,8 @@ import (
 
 func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8sObject stateTypes.DesiredK8sObject) (bool, error) {
 	k8sObject := desiredK8sObject.EmptyK8sObject()
-	foundErr := client.Get(ctx, desiredK8sObject.NamespacedName(), k8sObject)
+	namespacedName := desiredK8sObject.NamespacedName()
+	foundErr := client.Get(ctx, namespacedName, k8sObject)
 
 	if foundErr != nil && !errors.IsNotFound(foundErr) {
 		return false, fmt.Errorf("failed getting K8s object: %v", foundErr)
@@ -23,6 +24,8 @@ func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8s
 
 	// k8s object was not found should, need to create
 	if foundErr != nil {
+		k8sObject.SetNamespace(namespacedName.Namespace)
+		k8sObject.SetName(namespacedName.Name)
 		if creationErr := client.Create(ctx, k8sObject); creationErr != nil {
 			return false, fmt.Errorf("failed creating K8s object: %v", creationErr)
 		}
