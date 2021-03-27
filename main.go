@@ -18,9 +18,8 @@ package main
 
 import (
 	"flag"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/processors"
+	clusterProcessors "github.com/vmware/cbcontainers-operator/cbcontainers/processors/cluster"
 	"os"
-
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -74,6 +73,7 @@ func main() {
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "d27fd235.operator.containers.carbonblack.io",
+		Logger:                 ctrl.Log,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -81,13 +81,11 @@ func main() {
 	}
 
 	if err = (&controllers.CBContainersClusterReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("CBContainersCluster"),
-		Scheme: mgr.GetScheme(),
-		CreateProcessor: func(registrar processors.ClusterRegistrar) controllers.ClusterStateProcessor {
-			return processors.NewCBContainerClusterProcessor(registrar)
-		},
-		StateApplier: clusterState.NewStateApplier(),
+		Client:              mgr.GetClient(),
+		Log:                 ctrl.Log.WithName("controllers").WithName("CBContainersCluster"),
+		Scheme:              mgr.GetScheme(),
+		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(clusterProcessors.NewDefaultClusterRegistrarCreator()),
+		ClusterStateApplier: clusterState.NewStateApplier(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
 		os.Exit(1)

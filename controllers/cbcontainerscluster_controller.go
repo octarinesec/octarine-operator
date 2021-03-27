@@ -20,8 +20,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/communication/gateway"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/processors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -35,23 +33,21 @@ const (
 	AccessTokenSecretKeyName = "accessToken"
 )
 
-type ClusterStateApplier interface {
+type clusterStateApplier interface {
 	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client) (bool, error)
 }
 
-type ClusterStateProcessor interface {
-	Process() error
+type clusterProcessor interface {
+	Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) error
 }
-
-type clusterProcessorCreator func(registrar processors.ClusterRegistrar) ClusterStateProcessor
 
 type CBContainersClusterReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 
-	CreateProcessor clusterProcessorCreator
-	StateApplier    ClusterStateApplier
+	ClusterProcessor    clusterProcessor
+	ClusterStateApplier clusterStateApplier
 }
 
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersclusters,verbs=get;list;watch;create;update;patch;delete
@@ -71,7 +67,7 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 
-	stateWasChanged, err := r.StateApplier.ApplyDesiredState(ctx, cbContainersCluster, r.Client)
+	stateWasChanged, err := r.ClusterStateApplier.ApplyDesiredState(ctx, cbContainersCluster, r.Client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -85,10 +81,7 @@ func (r *CBContainersClusterReconciler) runProcessor(ctx context.Context, cbCont
 		return err
 	}
 
-	spec := cbContainersCluster.Spec
-	apiGateway := gateway.NewApiGateway(spec.Account, spec.ClusterName, accessToken, spec.ApiGatewaySpec.Host, spec.ApiGatewaySpec.Port, spec.ApiGatewaySpec.Adapter)
-	processor := r.CreateProcessor(apiGateway)
-	if err := processor.Process(); err != nil {
+	if err := r.ClusterProcessor.Process(cbContainersCluster, accessToken); err != nil {
 		return err
 	}
 
