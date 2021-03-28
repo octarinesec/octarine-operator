@@ -92,14 +92,6 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
 		os.Exit(1)
 	}
-	if err = (&controllers.CBContainersGuardrailsReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("CBContainersGuardrails"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "CBContainersGuardrails")
-		os.Exit(1)
-	}
 	if err = (&controllers.CBContainersHardeningReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("CBContainersHardening"),

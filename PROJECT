@@ -7,9 +7,6 @@ resources:
   kind: CBContainersCluster
   version: v1
 - crdVersion: v1
-  kind: CBContainersGuardrails
-  version: v1
-- crdVersion: v1
   kind: CBContainersHardening
   version: v1
 version: 3-alpha

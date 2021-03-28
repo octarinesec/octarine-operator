@@ -3,7 +3,6 @@
 # It should be run by config/default
 resources:
 - bases/operator.containers.carbonblack.io_cbcontainersclusters.yaml
-- bases/operator.containers.carbonblack.io_cbcontainersguardrails.yaml
 - bases/operator.containers.carbonblack.io_cbcontainershardenings.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
@@ -11,14 +10,12 @@ patchesStrategicMerge:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
 # patches here are for enabling the conversion webhook for each CRD
 #- patches/webhook_in_cbcontainersclusters.yaml
-#- patches/webhook_in_cbcontainersguardrails.yaml
 #- patches/webhook_in_cbcontainershardenings.yaml
 # +kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable webhook, uncomment all the sections with [CERTMANAGER] prefix.
 # patches here are for enabling the CA injection for each CRD
 #- patches/cainjection_in_cbcontainersclusters.yaml
-#- patches/cainjection_in_cbcontainersguardrails.yaml
 #- patches/cainjection_in_cbcontainershardenings.yaml
 # +kubebuilder:scaffold:crdkustomizecainjectionpatch
 
