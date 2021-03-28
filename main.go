@@ -18,8 +18,10 @@ package main
 
 import (
 	"flag"
-	clusterProcessors "github.com/vmware/cbcontainers-operator/cbcontainers/processors/cluster"
 	"os"
+
+	clusterProcessors "github.com/vmware/cbcontainers-operator/cbcontainers/processors/cluster"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -96,6 +98,14 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersGuardrails")
+		os.Exit(1)
+	}
+	if err = (&controllers.CBContainersHardeningReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("CBContainersHardening"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "CBContainersHardening")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

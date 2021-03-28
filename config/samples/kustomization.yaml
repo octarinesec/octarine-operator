@@ -2,4 +2,5 @@
 resources:
 - _v1_cbcontainerscluster.yaml
 - _v1_cbcontainersguardrails.yaml
+- _v1_cbcontainershardening.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples
