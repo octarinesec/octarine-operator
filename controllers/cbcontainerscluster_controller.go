@@ -20,7 +20,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -34,7 +36,7 @@ const (
 )
 
 type clusterStateApplier interface {
-	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client) (bool, error)
+	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client, setOwner applyment.OwnerSetter) (bool, error)
 }
 
 type clusterProcessor interface {
@@ -63,11 +65,15 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, fmt.Errorf("couldn't find CBContainersCluster k8s object: %v", err)
 	}
 
+	setOwner := func(controlledResource metav1.Object) error {
+		return ctrl.SetControllerReference(cbContainersCluster, controlledResource, r.Scheme)
+	}
+
 	if err := r.runProcessor(ctx, cbContainersCluster); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	stateWasChanged, err := r.ClusterStateApplier.ApplyDesiredState(ctx, cbContainersCluster, r.Client)
+	stateWasChanged, err := r.ClusterStateApplier.ApplyDesiredState(ctx, cbContainersCluster, r.Client, setOwner)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

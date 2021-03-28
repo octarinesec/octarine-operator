@@ -17,9 +17,9 @@ func NewStateApplier() *CBContainersClusterStateApplier {
 	}
 }
 
-func (c *CBContainersClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client) (bool, error) {
+func (c *CBContainersClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client, setOwner applyment.OwnerSetter) (bool, error) {
 	c.desiredConfigMap.UpdateCbContainersCluster(cbContainersCluster)
-	ok, err := applyment.ApplyDesiredK8sObject(ctx, client, c.desiredConfigMap)
+	ok, err := applyment.ApplyDesiredK8sObject(ctx, client, c.desiredConfigMap, setOwner)
 	if err != nil {
 		return false, err
 	}
