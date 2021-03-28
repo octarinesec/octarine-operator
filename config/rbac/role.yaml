@@ -55,7 +55,7 @@ rules:
 - apiGroups:
   - operator.containers.carbonblack.io
   resources:
-  - cbcontainersguardrails
+  - cbcontainershardenings
   verbs:
   - create
   - delete
@@ -67,13 +67,13 @@ rules:
 - apiGroups:
   - operator.containers.carbonblack.io
   resources:
-  - cbcontainersguardrails/finalizers
+  - cbcontainershardenings/finalizers
   verbs:
   - update
 - apiGroups:
   - operator.containers.carbonblack.io
   resources:
-  - cbcontainersguardrails/status
+  - cbcontainershardenings/status
   verbs:
   - get
   - patch
