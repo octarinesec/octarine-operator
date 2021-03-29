@@ -35,11 +35,129 @@ spec:
           metadata:
             type: object
           spec:
-            description: CBContainersHardeningSpec defines the desired state of CBContainersHardening
             properties:
-              foo:
-                description: Foo is an example field of CBContainersHardening. Edit
-                  CBContainersHardening_types.go to remove/update
+              enforcerSpec:
+                properties:
+                  deploymentAnnotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  deploymentLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  env:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  image:
+                    properties:
+                      pullPolicy:
+                        description: PullPolicy describes a policy for if/when to
+                          pull a container image
+                        type: string
+                      repository:
+                        type: string
+                      tag:
+                        type: string
+                    type: object
+                  podTemplateAnnotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podTemplateLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  priorityClassName:
+                    type: string
+                  probes:
+                    properties:
+                      failureThreshold:
+                        format: int32
+                        type: integer
+                      initialDelaySeconds:
+                        format: int32
+                        type: integer
+                      livenessPath:
+                        type: string
+                      periodSeconds:
+                        format: int32
+                        type: integer
+                      port:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        x-kubernetes-int-or-string: true
+                      readinessPath:
+                        type: string
+                      scheme:
+                        description: URIScheme identifies the scheme used for connection
+                          to a host for Get actions
+                        type: string
+                      successThreshold:
+                        format: int32
+                        type: integer
+                      timeoutSeconds:
+                        format: int32
+                        type: integer
+                    required:
+                    - port
+                    type: object
+                  replicasCount:
+                    format: int32
+                    type: integer
+                  resources:
+                    description: ResourceRequirements describes the compute resource
+                      requirements.
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                    type: object
+                  securityContext:
+                    properties:
+                      allowPrivilegeEscalation:
+                        type: boolean
+                      capabilitiesToAdd:
+                        items:
+                          description: Capability represent POSIX capabilities type
+                          type: string
+                        type: array
+                      capabilitiesToDrop:
+                        items:
+                          description: Capability represent POSIX capabilities type
+                          type: string
+                        type: array
+                      readOnlyRootFilesystem:
+                        type: boolean
+                      runAsUser:
+                        format: int64
+                        type: integer
+                    type: object
+                  serviceAccountName:
+                    type: string
+                type: object
+              version:
                 type: string
             type: object
           status:
