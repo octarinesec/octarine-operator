@@ -48,8 +48,8 @@ func (obj *EnforcerK8sObject) MutateK8sObject(k8sObject client.Object) (bool, er
 	mutated = obj.mutateStringsMap(deployment.Annotations, enforcerSpec.DeploymentAnnotations) || mutated
 	mutated = obj.mutateStringsMap(template.Annotations, enforcerSpec.PodTemplateAnnotations) || mutated
 	mutated = applyment.MutateInt32(enforcerSpec.ReplicasCount, func() *int32 { return deployment.Spec.Replicas }, func(value int32) { deployment.Spec.Replicas = &value })
-	mutated = applyment.MutateString(enforcerSpec.ServiceAccountName, func() *string { return &template.Spec.ServiceAccountName }, func(value string) { template.Spec.ServiceAccountName = value })
-	mutated = applyment.MutateString(enforcerSpec.PriorityClassName, func() *string { return &template.Spec.PriorityClassName }, func(value string) { template.Spec.PriorityClassName = value })
+	//mutated = applyment.MutateString(enforcerSpec.ServiceAccountName, func() *string { return &template.Spec.ServiceAccountName }, func(value string) { template.Spec.ServiceAccountName = value })
+	//mutated = applyment.MutateString(enforcerSpec.PriorityClassName, func() *string { return &template.Spec.PriorityClassName }, func(value string) { template.Spec.PriorityClassName = value })
 	mutated = obj.mutateContainersList(&template.Spec)
 
 	return mutated, nil

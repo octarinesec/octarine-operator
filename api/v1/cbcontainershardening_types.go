@@ -31,44 +31,62 @@ type CBContainersHardeningSpec struct {
 }
 
 type CBContainersHardeningEnforcerSpec struct {
-	DeploymentLabels       map[string]string                                `json:"deploymentLabels,omitempty"`
-	PodTemplateLabels      map[string]string                                `json:"podTemplateLabels,omitempty"`
-	DeploymentAnnotations  map[string]string                                `json:"deploymentAnnotations,omitempty"`
-	PodTemplateAnnotations map[string]string                                `json:"podTemplateAnnotations,omitempty"`
-	ReplicasCount          int32                                            `json:"replicasCount,omitempty"`
-	ServiceAccountName     string                                           `json:"serviceAccountName,omitempty"`
-	PriorityClassName      string                                           `json:"priorityClassName,omitempty"`
-	Env                    map[string]string                                `json:"env,omitempty"`
-	Image                  CBContainersHardeningEnforcerImageSpec           `json:"image,omitempty"`
-	SecurityContext        CBContainersHardeningEnforcerSecurityContextSpec `json:"securityContext,omitempty"`
-	Resources              coreV1.ResourceRequirements                      `json:"resources,omitempty"`
-	Probes                 CBContainersHardeningEnforcerProbesSpec          `json:"probes,omitempty"`
+	DeploymentLabels      map[string]string `json:"deploymentLabels,omitempty"`
+	PodTemplateLabels     map[string]string `json:"podTemplateLabels,omitempty"`
+	DeploymentAnnotations map[string]string `json:"deploymentAnnotations,omitempty"`
+	// +kubebuilder:default:={prometheus.io/scrape: "false", prometheus.io/port: "7071"}
+	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
+	// +kubebuilder:default:=1
+	ReplicasCount int32 `json:"replicasCount,omitempty"`
+	// +kubebuilder:default:={GUARDRAILS_ENFORCER_KEY_FILE_PATH: "/etc/octarine-certificates/key", GUARDRAILS_ENFORCER_CERT_FILE_PATH: "/etc/octarine-certificates/signed_cert", GIN_MODE: "release"}
+	Env             map[string]string                                `json:"env,omitempty"`
+	Image           CBContainersHardeningEnforcerImageSpec           `json:"image,omitempty"`
+	SecurityContext CBContainersHardeningEnforcerSecurityContextSpec `json:"securityContext,omitempty"`
+	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}
+	Resources coreV1.ResourceRequirements             `json:"resources,omitempty"`
+	Probes    CBContainersHardeningEnforcerProbesSpec `json:"probes,omitempty"`
 }
 
 type CBContainersHardeningEnforcerImageSpec struct {
-	Repository string            `json:"repository,omitempty"`
-	Tag        string            `json:"tag,omitempty"`
+	// +kubebuilder:default:="cbartifactory/guardrails-enforcer"
+	Repository string `json:"repository,omitempty"`
+	Tag        string `json:"tag,omitempty"`
+	// +kubebuilder:default:="Always"
 	PullPolicy coreV1.PullPolicy `json:"pullPolicy,omitempty"`
 }
 
 type CBContainersHardeningEnforcerSecurityContextSpec struct {
-	AllowPrivilegeEscalation bool                `json:"allowPrivilegeEscalation,omitempty"`
-	ReadOnlyRootFilesystem   bool                `json:"readOnlyRootFilesystem,omitempty"`
-	RunAsUser                int64               `json:"runAsUser,omitempty"`
-	CapabilitiesToAdd        []coreV1.Capability `json:"capabilitiesToAdd,omitempty"`
-	CapabilitiesToDrop       []coreV1.Capability `json:"capabilitiesToDrop,omitempty"`
+	// +kubebuilder:default:=false
+	AllowPrivilegeEscalation bool `json:"allowPrivilegeEscalation,omitempty"`
+	// +kubebuilder:default:=true
+	ReadOnlyRootFilesystem bool `json:"readOnlyRootFilesystem,omitempty"`
+	// +kubebuilder:default:=0
+	RunAsUser int64 `json:"runAsUser,omitempty"`
+	// +kubebuilder:default:={"NET_BIND_SERVICE"}
+	CapabilitiesToAdd []coreV1.Capability `json:"capabilitiesToAdd,omitempty"`
+	// +kubebuilder:default:={"ALL"}
+	CapabilitiesToDrop []coreV1.Capability `json:"capabilitiesToDrop,omitempty"`
 }
 
 type CBContainersHardeningEnforcerProbesSpec struct {
-	LivenessPath        string             `json:"livenessPath,omitempty"`
-	ReadinessPath       string             `json:"readinessPath,omitempty"`
-	Port                intstr.IntOrString `json:"port"`
-	Scheme              coreV1.URIScheme   `json:"scheme,omitempty"`
-	InitialDelaySeconds int32              `json:"initialDelaySeconds,omitempty"`
-	TimeoutSeconds      int32              `json:"timeoutSeconds,omitempty"`
-	PeriodSeconds       int32              `json:"periodSeconds,omitempty"`
-	SuccessThreshold    int32              `json:"successThreshold,omitempty"`
-	FailureThreshold    int32              `json:"failureThreshold,omitempty"`
+	// +kubebuilder:default:="/ready"
+	ReadinessPath string `json:"readinessPath,omitempty"`
+	// +kubebuilder:default:="/alive"
+	LivenessPath string `json:"livenessPath,omitempty"`
+	// +kubebuilder:default:="8181"
+	Port intstr.IntOrString `json:"port"`
+	// +kubebuilder:default:="HTTP"
+	Scheme coreV1.URIScheme `json:"scheme,omitempty"`
+	// +kubebuilder:default:=3
+	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
+	// +kubebuilder:default:=1
+	TimeoutSeconds int32 `json:"timeoutSeconds,omitempty"`
+	// +kubebuilder:default:=30
+	PeriodSeconds int32 `json:"periodSeconds,omitempty"`
+	// +kubebuilder:default:=1
+	SuccessThreshold int32 `json:"successThreshold,omitempty"`
+	// +kubebuilder:default:=3
+	FailureThreshold int32 `json:"failureThreshold,omitempty"`
 }
 
 // CBContainersHardeningStatus defines the observed state of CBContainersHardening

@@ -49,14 +49,20 @@ spec:
                   env:
                     additionalProperties:
                       type: string
+                    default:
+                      GIN_MODE: release
+                      GUARDRAILS_ENFORCER_CERT_FILE_PATH: /etc/octarine-certificates/signed_cert
+                      GUARDRAILS_ENFORCER_KEY_FILE_PATH: /etc/octarine-certificates/key
                     type: object
                   image:
                     properties:
                       pullPolicy:
+                        default: Always
                         description: PullPolicy describes a policy for if/when to
                           pull a container image
                         type: string
                       repository:
+                        default: cbartifactory/guardrails-enforcer
                         type: string
                       tag:
                         type: string
@@ -64,50 +70,68 @@ spec:
                   podTemplateAnnotations:
                     additionalProperties:
                       type: string
+                    default:
+                      prometheus.io/port: "7071"
+                      prometheus.io/scrape: "false"
                     type: object
                   podTemplateLabels:
                     additionalProperties:
                       type: string
                     type: object
-                  priorityClassName:
-                    type: string
                   probes:
                     properties:
                       failureThreshold:
+                        default: 3
                         format: int32
                         type: integer
                       initialDelaySeconds:
+                        default: 3
                         format: int32
                         type: integer
                       livenessPath:
+                        default: /alive
                         type: string
                       periodSeconds:
+                        default: 30
                         format: int32
                         type: integer
                       port:
                         anyOf:
                         - type: integer
                         - type: string
+                        default: "8181"
                         x-kubernetes-int-or-string: true
                       readinessPath:
+                        default: /ready
                         type: string
                       scheme:
+                        default: HTTP
                         description: URIScheme identifies the scheme used for connection
                           to a host for Get actions
                         type: string
                       successThreshold:
+                        default: 1
                         format: int32
                         type: integer
                       timeoutSeconds:
+                        default: 1
                         format: int32
                         type: integer
                     required:
                     - port
                     type: object
                   replicasCount:
+                    default: 1
                     format: int32
                     type: integer
                   resources:
+                    default:
+                      limits:
+                        cpu: 200m
+                        memory: 256Mi
+                      requests:
+                        cpu: 30m
+                        memory: 64Mi
                     description: ResourceRequirements describes the compute resource
                       requirements.
                     properties:
@@ -137,25 +161,30 @@ spec:
                   securityContext:
                     properties:
                       allowPrivilegeEscalation:
+                        default: false
                         type: boolean
                       capabilitiesToAdd:
+                        default:
+                        - NET_BIND_SERVICE
                         items:
                           description: Capability represent POSIX capabilities type
                           type: string
                         type: array
                       capabilitiesToDrop:
+                        default:
+                        - ALL
                         items:
                           description: Capability represent POSIX capabilities type
                           type: string
                         type: array
                       readOnlyRootFilesystem:
+                        default: true
                         type: boolean
                       runAsUser:
+                        default: 0
                         format: int64
                         type: integer
                     type: object
-                  serviceAccountName:
-                    type: string
                 type: object
               version:
                 type: string
