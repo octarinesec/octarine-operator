@@ -35,6 +35,7 @@ import (
 
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	clusterState "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster"
+	hardeningState "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening"
 	"github.com/vmware/cbcontainers-operator/controllers"
 	// +kubebuilder:scaffold:imports
 )
@@ -93,9 +94,10 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controllers.CBContainersHardeningReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("CBContainersHardening"),
-		Scheme: mgr.GetScheme(),
+		Client:                mgr.GetClient(),
+		Log:                   ctrl.Log.WithName("controllers").WithName("CBContainersHardening"),
+		Scheme:                mgr.GetScheme(),
+		HardeningStateApplier: hardeningState.NewHardeningStateApplier(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersHardening")
 		os.Exit(1)

@@ -1,4 +1,4 @@
-package cluster
+package hardening
 
 import (
 	"context"
@@ -8,18 +8,18 @@ import (
 )
 
 type CBContainersClusterStateApplier struct {
-	desiredConfigMap *ConfigurationK8sObject
+	enforcerDeployment *EnforcerK8sObject
 }
 
-func NewStateApplier() *CBContainersClusterStateApplier {
+func NewHardeningStateApplier() *CBContainersClusterStateApplier {
 	return &CBContainersClusterStateApplier{
-		desiredConfigMap: NewConfigurationK8sObject(),
+		enforcerDeployment: NewEnforcerDeploymentK8sObject(),
 	}
 }
 
-func (c *CBContainersClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client, setOwner applyment.OwnerSetter) (bool, error) {
-	c.desiredConfigMap.UpdateCbContainersCluster(cbContainersCluster)
-	ok, err := applyment.ApplyDesiredK8sObject(ctx, client, c.desiredConfigMap, setOwner)
+func (c *CBContainersClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, setOwner applyment.OwnerSetter) (bool, error) {
+	c.enforcerDeployment.UpdateCbContainersHardening(cbContainersHardening)
+	ok, err := applyment.ApplyDesiredK8sObject(ctx, client, c.enforcerDeployment, setOwner)
 	if err != nil {
 		return false, err
 	}

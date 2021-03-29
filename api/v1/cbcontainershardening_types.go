@@ -17,19 +17,58 @@ limitations under the License.
 package v1
 
 import (
+	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// CBContainersHardeningSpec defines the desired state of CBContainersHardening
 type CBContainersHardeningSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Version      string                            `json:"version,omitempty"`
+	EnforcerSpec CBContainersHardeningEnforcerSpec `json:"enforcerSpec,omitempty"`
+}
 
-	// Foo is an example field of CBContainersHardening. Edit CBContainersHardening_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+type CBContainersHardeningEnforcerSpec struct {
+	DeploymentLabels       map[string]string                                `json:"deploymentLabels,omitempty"`
+	PodTemplateLabels      map[string]string                                `json:"podTemplateLabels,omitempty"`
+	DeploymentAnnotations  map[string]string                                `json:"deploymentAnnotations,omitempty"`
+	PodTemplateAnnotations map[string]string                                `json:"podTemplateAnnotations,omitempty"`
+	ReplicasCount          int32                                            `json:"replicasCount,omitempty"`
+	ServiceAccountName     string                                           `json:"serviceAccountName,omitempty"`
+	PriorityClassName      string                                           `json:"priorityClassName,omitempty"`
+	Env                    map[string]string                                `json:"env,omitempty"`
+	Image                  CBContainersHardeningEnforcerImageSpec           `json:"image,omitempty"`
+	SecurityContext        CBContainersHardeningEnforcerSecurityContextSpec `json:"securityContext,omitempty"`
+	Resources              coreV1.ResourceRequirements                      `json:"resources,omitempty"`
+	Probes                 CBContainersHardeningEnforcerProbesSpec          `json:"probes,omitempty"`
+}
+
+type CBContainersHardeningEnforcerImageSpec struct {
+	Repository string            `json:"repository,omitempty"`
+	Tag        string            `json:"tag,omitempty"`
+	PullPolicy coreV1.PullPolicy `json:"pullPolicy,omitempty"`
+}
+
+type CBContainersHardeningEnforcerSecurityContextSpec struct {
+	AllowPrivilegeEscalation bool                `json:"allowPrivilegeEscalation,omitempty"`
+	ReadOnlyRootFilesystem   bool                `json:"readOnlyRootFilesystem,omitempty"`
+	RunAsUser                int64               `json:"runAsUser,omitempty"`
+	CapabilitiesToAdd        []coreV1.Capability `json:"capabilitiesToAdd,omitempty"`
+	CapabilitiesToDrop       []coreV1.Capability `json:"capabilitiesToDrop,omitempty"`
+}
+
+type CBContainersHardeningEnforcerProbesSpec struct {
+	LivenessPath        string             `json:"livenessPath,omitempty"`
+	ReadinessPath       string             `json:"readinessPath,omitempty"`
+	Port                intstr.IntOrString `json:"port"`
+	Scheme              coreV1.URIScheme   `json:"scheme,omitempty"`
+	InitialDelaySeconds int32              `json:"initialDelaySeconds,omitempty"`
+	TimeoutSeconds      int32              `json:"timeoutSeconds,omitempty"`
+	PeriodSeconds       int32              `json:"periodSeconds,omitempty"`
+	SuccessThreshold    int32              `json:"successThreshold,omitempty"`
+	FailureThreshold    int32              `json:"failureThreshold,omitempty"`
 }
 
 // CBContainersHardeningStatus defines the observed state of CBContainersHardening
