@@ -39,3 +39,22 @@ func MutateString(desiredValue string, get func() *string, set func(string)) boo
 
 	return false
 }
+
+func MutateStringsMap(desiredMap map[string]string, get func() map[string]string, set func(map[string]string)) bool {
+	actualMap := get()
+	if actualMap == nil {
+		set(desiredMap)
+		return true
+	}
+
+	mutated := false
+	for key, desiredValue := range desiredMap {
+		actualValue, ok := desiredMap[key]
+		if !ok || actualValue != desiredValue {
+			actualMap[key] = desiredValue
+			mutated = true
+		}
+	}
+
+	return mutated
+}
