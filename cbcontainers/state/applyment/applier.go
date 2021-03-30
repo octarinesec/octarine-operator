@@ -2,10 +2,12 @@ package applyment
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	stateTypes "github.com/vmware/cbcontainers-operator/cbcontainers/state/types"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -20,10 +22,16 @@ func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8s
 		return false, fmt.Errorf("failed getting K8s object: %v", foundErr)
 	}
 
-	mutated, mutateErr := desiredK8sObject.MutateK8sObject(k8sObject)
+	beforeMutation, _ := json.Marshal(k8sObject)
+
+	_, mutateErr := desiredK8sObject.MutateK8sObject(k8sObject)
 	if mutateErr != nil {
-		return false, fmt.Errorf("failed mutating K8s object `%v`: %v", namespacedName, foundErr)
+		return false, fmt.Errorf("failed mutating K8s object `%v`: %v", namespacedName, mutateErr)
 	}
+
+	afterMutation, _ := json.Marshal(k8sObject)
+
+	mutated := !reflect.DeepEqual(beforeMutation, afterMutation)
 
 	// k8s object was not found should, need to create
 	if foundErr != nil {
