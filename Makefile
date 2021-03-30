@@ -60,6 +60,12 @@ undeploy:
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	for filename in $$(ls config/crd/bases) ; do \
+        XT=config/crd/bases/$$filename ; \
+        sed 's/default: <>/default: {}/g' $$XT >> $$XT.temp ; \
+        rm -f $$XT ; \
+        mv $$XT.temp $$XT ; \
+    done
 
 # Run go fmt against code
 fmt:
