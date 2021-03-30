@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	RegistrySecretName = "cbcontainers-registry_secret"
+	RegistrySecretName = "cbcontainers-registry-secret"
 )
 
 type RegistrySecretK8sObject struct {
