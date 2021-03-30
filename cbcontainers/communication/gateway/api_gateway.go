@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"net/http"
 )
 
@@ -50,9 +51,12 @@ func (gateway *ApiGateway) baseRequestWithRetries() *resty.Request {
 	return r
 }
 
-func (gateway *ApiGateway) RegisterCluster() error {
-	url := fmt.Sprintf("%s/account/%s/clusters", gateway.baseUrl(), gateway.account)
+func (gateway *ApiGateway) getResourcePathWithAccountPath(resourceName string) string {
+	return fmt.Sprintf("%s/account/%s/%s", gateway.baseUrl(), gateway.account, resourceName)
+}
 
+func (gateway *ApiGateway) RegisterCluster() error {
+	url := gateway.getResourcePathWithAccountPath("clusters")
 	resp, err := gateway.baseRequest().
 		SetBody(map[string]interface{}{
 			"name":           gateway.cluster,
@@ -68,4 +72,20 @@ func (gateway *ApiGateway) RegisterCluster() error {
 	}
 
 	return nil
+}
+
+func (gateway *ApiGateway) GetRegistrySecret() (*models.RegistrySecretValues, error) {
+	url := gateway.getResourcePathWithAccountPath("registrySecret")
+
+	resp, err := gateway.baseRequest().
+		SetResult(&models.RegistrySecretValues{}).
+		Get(url)
+
+	if err != nil {
+		return nil, err
+	} else if !resp.IsSuccess() {
+		return nil, fmt.Errorf("failed retrieving registry secret (%d): %s", resp.StatusCode(), resp)
+	}
+
+	return resp.Result().(*models.RegistrySecretValues), nil
 }

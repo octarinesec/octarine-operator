@@ -1,9 +1,13 @@
 package cluster
 
-import cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+import (
+	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
+)
 
 type ClusterRegistrar interface {
 	RegisterCluster() error
+	GetRegistrySecret() (*models.RegistrySecretValues, error)
 }
 
 type ClusterRegistrarCreator interface {
@@ -20,7 +24,17 @@ func NewCBContainerClusterProcessor(clusterRegistrarCreator ClusterRegistrarCrea
 	}
 }
 
-func (processor *CBContainerClusterProcessor) Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) error {
+func (processor *CBContainerClusterProcessor) Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error) {
 	clusterRegistrar := processor.clusterRegistrarCreator.CreateClusterRegistrar(cbContainersCluster, accessToken)
-	return clusterRegistrar.RegisterCluster()
+
+	registrySecret, err := clusterRegistrar.GetRegistrySecret()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := clusterRegistrar.RegisterCluster(); err != nil {
+		return nil, err
+	}
+
+	return registrySecret, nil
 }

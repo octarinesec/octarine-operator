@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,11 +37,11 @@ const (
 )
 
 type clusterStateApplier interface {
-	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client, setOwner applyment.OwnerSetter) (bool, error)
+	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, secret *models.RegistrySecretValues, client client.Client, setOwner applyment.OwnerSetter) (bool, error)
 }
 
 type clusterProcessor interface {
-	Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) error
+	Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error)
 }
 
 type CBContainersClusterReconciler struct {
@@ -69,11 +70,12 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.SetControllerReference(cbContainersCluster, controlledResource, r.Scheme)
 	}
 
-	if err := r.runProcessor(ctx, cbContainersCluster); err != nil {
+	registrySecret, err := r.runProcessor(ctx, cbContainersCluster)
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	stateWasChanged, err := r.ClusterStateApplier.ApplyDesiredState(ctx, cbContainersCluster, r.Client, setOwner)
+	stateWasChanged, err := r.ClusterStateApplier.ApplyDesiredState(ctx, cbContainersCluster, registrySecret, r.Client, setOwner)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -81,17 +83,13 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
-func (r *CBContainersClusterReconciler) runProcessor(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) error {
+func (r *CBContainersClusterReconciler) runProcessor(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) (*models.RegistrySecretValues, error) {
 	accessToken, err := r.getAccessToken(ctx, cbContainersCluster)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if err := r.ClusterProcessor.Process(cbContainersCluster, accessToken); err != nil {
-		return err
-	}
-
-	return nil
+	return r.ClusterProcessor.Process(cbContainersCluster, accessToken)
 }
 
 func (r *CBContainersClusterReconciler) getAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) (string, error) {
