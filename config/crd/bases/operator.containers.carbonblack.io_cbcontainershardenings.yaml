@@ -37,14 +37,17 @@ spec:
           spec:
             properties:
               enforcerSpec:
+                default: {}
                 properties:
                   deploymentAnnotations:
                     additionalProperties:
                       type: string
+                    default: {}
                     type: object
                   deploymentLabels:
                     additionalProperties:
                       type: string
+                    default: {}
                     type: object
                   env:
                     additionalProperties:
@@ -55,6 +58,7 @@ spec:
                       GUARDRAILS_ENFORCER_KEY_FILE_PATH: /etc/octarine-certificates/key
                     type: object
                   image:
+                    default: {}
                     properties:
                       pullPolicy:
                         default: Always
@@ -77,8 +81,11 @@ spec:
                   podTemplateLabels:
                     additionalProperties:
                       type: string
+                    default:
+                      ben: ben
                     type: object
                   probes:
+                    default: {}
                     properties:
                       failureThreshold:
                         default: 3
@@ -99,7 +106,7 @@ spec:
                         anyOf:
                         - type: integer
                         - type: string
-                        default: "8181"
+                        default: 8181
                         x-kubernetes-int-or-string: true
                       readinessPath:
                         default: /ready
@@ -159,6 +166,7 @@ spec:
                         type: object
                     type: object
                   securityContext:
+                    default: {}
                     properties:
                       allowPrivilegeEscalation:
                         default: false
@@ -188,11 +196,15 @@ spec:
                 type: object
               version:
                 type: string
+            required:
+            - version
             type: object
           status:
             description: CBContainersHardeningStatus defines the observed state of
               CBContainersHardening
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true

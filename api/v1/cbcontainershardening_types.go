@@ -26,25 +26,32 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 type CBContainersHardeningSpec struct {
-	Version      string                            `json:"version,omitempty"`
+	Version string `json:"version,required"`
+	// +kubebuilder:default:=<>
 	EnforcerSpec CBContainersHardeningEnforcerSpec `json:"enforcerSpec,omitempty"`
 }
 
 type CBContainersHardeningEnforcerSpec struct {
-	DeploymentLabels      map[string]string `json:"deploymentLabels,omitempty"`
-	PodTemplateLabels     map[string]string `json:"podTemplateLabels,omitempty"`
+	// +kubebuilder:default:=<>
+	DeploymentLabels map[string]string `json:"deploymentLabels,omitempty"`
+	// +kubebuilder:default:={ben:ben}
+	PodTemplateLabels map[string]string `json:"podTemplateLabels,omitempty"`
+	// +kubebuilder:default:=<>
 	DeploymentAnnotations map[string]string `json:"deploymentAnnotations,omitempty"`
 	// +kubebuilder:default:={prometheus.io/scrape: "false", prometheus.io/port: "7071"}
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
 	// +kubebuilder:default:=1
 	ReplicasCount int32 `json:"replicasCount,omitempty"`
 	// +kubebuilder:default:={GUARDRAILS_ENFORCER_KEY_FILE_PATH: "/etc/octarine-certificates/key", GUARDRAILS_ENFORCER_CERT_FILE_PATH: "/etc/octarine-certificates/signed_cert", GIN_MODE: "release"}
-	Env             map[string]string                                `json:"env,omitempty"`
-	Image           CBContainersHardeningEnforcerImageSpec           `json:"image,omitempty"`
+	Env map[string]string `json:"env,omitempty"`
+	// +kubebuilder:default:=<>
+	Image CBContainersHardeningEnforcerImageSpec `json:"image,omitempty"`
+	// +kubebuilder:default:=<>
 	SecurityContext CBContainersHardeningEnforcerSecurityContextSpec `json:"securityContext,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}
-	Resources coreV1.ResourceRequirements             `json:"resources,omitempty"`
-	Probes    CBContainersHardeningEnforcerProbesSpec `json:"probes,omitempty"`
+	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
+	// +kubebuilder:default:=<>
+	Probes CBContainersHardeningEnforcerProbesSpec `json:"probes,omitempty"`
 }
 
 type CBContainersHardeningEnforcerImageSpec struct {
@@ -73,7 +80,7 @@ type CBContainersHardeningEnforcerProbesSpec struct {
 	ReadinessPath string `json:"readinessPath,omitempty"`
 	// +kubebuilder:default:="/alive"
 	LivenessPath string `json:"livenessPath,omitempty"`
-	// +kubebuilder:default:="8181"
+	// +kubebuilder:default:=8181
 	Port intstr.IntOrString `json:"port"`
 	// +kubebuilder:default:="HTTP"
 	Scheme coreV1.URIScheme `json:"scheme,omitempty"`
@@ -103,7 +110,7 @@ type CBContainersHardening struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CBContainersHardeningSpec   `json:"spec,omitempty"`
+	Spec   CBContainersHardeningSpec   `json:"spec,required"`
 	Status CBContainersHardeningStatus `json:"status,omitempty"`
 }
 

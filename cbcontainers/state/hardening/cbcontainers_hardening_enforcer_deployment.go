@@ -6,13 +6,14 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	EnforcerName = "Enforcer"
+	EnforcerName = "cbcontainers-hardening-enforcer"
 )
 
 var (
@@ -31,7 +32,9 @@ func (obj *EnforcerK8sObject) NamespacedName() types.NamespacedName {
 	return types.NamespacedName{Name: EnforcerName, Namespace: obj.cbContainersHardening.Namespace}
 }
 
-func (obj *EnforcerK8sObject) EmptyK8sObject() client.Object { return &appsV1.Deployment{} }
+func (obj *EnforcerK8sObject) EmptyK8sObject() client.Object {
+	return &appsV1.Deployment{}
+}
 
 func (obj *EnforcerK8sObject) MutateK8sObject(k8sObject client.Object) (bool, error) {
 	mutated := false
@@ -41,16 +44,24 @@ func (obj *EnforcerK8sObject) MutateK8sObject(k8sObject client.Object) (bool, er
 	if !ok {
 		return false, fmt.Errorf("expected Deployment K8s object")
 	}
-	template := deployment.Spec.Template
 
-	mutated = obj.mutateStringsMap(deployment.Labels, enforcerSpec.DeploymentLabels) || mutated
-	mutated = obj.mutateStringsMap(template.Labels, enforcerSpec.PodTemplateLabels) || mutated
-	mutated = obj.mutateStringsMap(deployment.Annotations, enforcerSpec.DeploymentAnnotations) || mutated
-	mutated = obj.mutateStringsMap(template.Annotations, enforcerSpec.PodTemplateAnnotations) || mutated
-	mutated = applyment.MutateInt32(enforcerSpec.ReplicasCount, func() *int32 { return deployment.Spec.Replicas }, func(value int32) { deployment.Spec.Replicas = &value })
-	//mutated = applyment.MutateString(enforcerSpec.ServiceAccountName, func() *string { return &template.Spec.ServiceAccountName }, func(value string) { template.Spec.ServiceAccountName = value })
-	//mutated = applyment.MutateString(enforcerSpec.PriorityClassName, func() *string { return &template.Spec.PriorityClassName }, func(value string) { template.Spec.PriorityClassName = value })
-	mutated = obj.mutateContainersList(&template.Spec)
+	if deployment.Spec.Selector == nil {
+		deployment.Spec.Selector = &metav1.LabelSelector{
+			MatchLabels: enforcerSpec.PodTemplateLabels,
+		}
+		mutated = true
+	} else {
+		applyment.MutateStringsMap(enforcerSpec.PodTemplateLabels, func() map[string]string { return deployment.Spec.Selector.MatchLabels }, func(value map[string]string) { deployment.Spec.Selector.MatchLabels = value })
+	}
+
+	mutated = applyment.MutateStringsMap(enforcerSpec.DeploymentLabels, func() map[string]string { return deployment.ObjectMeta.Labels }, func(value map[string]string) { deployment.Labels = value }) || mutated
+	mutated = applyment.MutateStringsMap(enforcerSpec.PodTemplateLabels, func() map[string]string { return deployment.Spec.Template.ObjectMeta.Labels }, func(value map[string]string) { deployment.Spec.Template.Labels = value }) || mutated
+	mutated = applyment.MutateStringsMap(enforcerSpec.DeploymentAnnotations, func() map[string]string { return deployment.ObjectMeta.Annotations }, func(value map[string]string) { deployment.Annotations = value }) || mutated
+	mutated = applyment.MutateStringsMap(enforcerSpec.PodTemplateAnnotations, func() map[string]string { return deployment.Spec.Template.ObjectMeta.Annotations }, func(value map[string]string) { deployment.Spec.Template.Annotations = value }) || mutated
+	mutated = applyment.MutateInt32(enforcerSpec.ReplicasCount, func() *int32 { return deployment.Spec.Replicas }, func(value int32) { deployment.Spec.Replicas = &value }) || mutated
+	//mutated = applyment.MutateString(enforcerSpec.ServiceAccountName, func() *string { return &template.Spec.ServiceAccountName }, func(value string) { template.Spec.ServiceAccountName = value }) || mutated
+	//mutated = applyment.MutateString(enforcerSpec.PriorityClassName, func() *string { return &template.Spec.PriorityClassName }, func(value string) { template.Spec.PriorityClassName = value }) || mutated
+	mutated = obj.mutateContainersList(&deployment.Spec.Template.Spec) || mutated
 
 	return mutated, nil
 }
@@ -157,13 +168,29 @@ func (obj *EnforcerK8sObject) mutateSecurityContext(container *coreV1.Container,
 	mutated = applyment.MutateBool(desiredSecurityContext.ReadOnlyRootFilesystem, func() *bool { return container.SecurityContext.ReadOnlyRootFilesystem }, func(value bool) { container.SecurityContext.ReadOnlyRootFilesystem = &value }) || mutated
 	mutated = applyment.MutateInt64(desiredSecurityContext.RunAsUser, func() *int64 { return container.SecurityContext.RunAsUser }, func(value int64) { container.SecurityContext.RunAsUser = &value }) || mutated
 
-	if reflect.DeepEqual(container.SecurityContext.Capabilities.Add, desiredSecurityContext.CapabilitiesToAdd) {
-		container.SecurityContext.Capabilities.Add = desiredSecurityContext.CapabilitiesToAdd
+	mutated = obj.mutateContainerCapabilities(container.SecurityContext, desiredSecurityContext) || mutated
+
+	return mutated
+}
+
+func (obj *EnforcerK8sObject) mutateContainerCapabilities(securityContext *coreV1.SecurityContext, desiredSecurityContext cbcontainersv1.CBContainersHardeningEnforcerSecurityContextSpec) bool {
+	if securityContext.Capabilities == nil {
+		securityContext.Capabilities = &coreV1.Capabilities{
+			Add:  desiredSecurityContext.CapabilitiesToAdd,
+			Drop: desiredSecurityContext.CapabilitiesToDrop,
+		}
+		return true
+	}
+
+	mutated := false
+
+	if reflect.DeepEqual(securityContext.Capabilities.Add, desiredSecurityContext.CapabilitiesToAdd) {
+		securityContext.Capabilities.Add = desiredSecurityContext.CapabilitiesToAdd
 		mutated = true
 	}
 
-	if reflect.DeepEqual(container.SecurityContext.Capabilities.Drop, desiredSecurityContext.CapabilitiesToDrop) {
-		container.SecurityContext.Capabilities.Add = desiredSecurityContext.CapabilitiesToAdd
+	if reflect.DeepEqual(securityContext.Capabilities.Drop, desiredSecurityContext.CapabilitiesToDrop) {
+		securityContext.Capabilities.Add = desiredSecurityContext.CapabilitiesToAdd
 		mutated = true
 	}
 
