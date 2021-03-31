@@ -92,18 +92,19 @@ func (obj *EnforcerK8sObject) mutateContainer(container *coreV1.Container) {
 }
 
 func (obj *EnforcerK8sObject) mutateEnvVars(container *coreV1.Container, desiredEnvsValues map[string]string) {
-	envsShouldBeChanged := false
-
-	for _, actualEnvVar := range container.Env {
-		desiredEnvValue, ok := desiredEnvsValues[actualEnvVar.Name]
-		if !ok || actualEnvVar.Value != desiredEnvValue {
-			envsShouldBeChanged = true
-			break
+	if len(container.Env) == len(desiredEnvsValues) {
+		envsShouldBeChanged := false
+		for _, actualEnvVar := range container.Env {
+			desiredEnvValue, ok := desiredEnvsValues[actualEnvVar.Name]
+			if !ok || actualEnvVar.Value != desiredEnvValue {
+				envsShouldBeChanged = true
+				break
+			}
 		}
-	}
 
-	if !envsShouldBeChanged {
-		return
+		if !envsShouldBeChanged {
+			return
+		}
 	}
 
 	container.Env = make([]coreV1.EnvVar, 0, len(desiredEnvsValues))
