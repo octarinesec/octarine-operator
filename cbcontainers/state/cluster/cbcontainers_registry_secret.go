@@ -44,7 +44,16 @@ func (obj *RegistrySecretK8sObject) MutateK8sObject(k8sObject client.Object) (bo
 	mutated := false
 	actualSecretType := string(secret.Type)
 	mutated = applyment.MutateString(string(obj.registrySecretValues.Type), func() *string { return &actualSecretType }, func(value string) { secret.Type = coreV1.SecretType(value) }) || mutated
-	mutated = reflect.DeepEqual(secret.StringData, obj.registrySecretValues.Data) || mutated
+
+	desiredData := make(map[string]string)
+	for key, value := range obj.registrySecretValues.Data {
+		desiredData[key] = string(value)
+	}
+
+	if !reflect.DeepEqual(secret.StringData, desiredData) {
+		secret.StringData = desiredData
+		mutated = true
+	}
 
 	return mutated, nil
 }
