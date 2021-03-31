@@ -4,6 +4,7 @@ import (
 	"fmt"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
+	clusterState "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,6 +63,7 @@ func (obj *EnforcerK8sObject) MutateK8sObject(k8sObject client.Object) (bool, er
 	//mutated = applyment.MutateString(enforcerSpec.ServiceAccountName, func() *string { return &template.Spec.ServiceAccountName }, func(value string) { template.Spec.ServiceAccountName = value }) || mutated
 	//mutated = applyment.MutateString(enforcerSpec.PriorityClassName, func() *string { return &template.Spec.PriorityClassName }, func(value string) { template.Spec.PriorityClassName = value }) || mutated
 	mutated = obj.mutateContainersList(&deployment.Spec.Template.Spec) || mutated
+	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: clusterState.RegistrySecretName}}
 
 	return mutated, nil
 }
