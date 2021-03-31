@@ -8,5 +8,5 @@ import (
 type DesiredK8sObject interface {
 	NamespacedName() types.NamespacedName
 	EmptyK8sObject() client.Object
-	MutateK8sObject(client.Object) (bool, error)
+	MutateK8sObject(client.Object) error
 }

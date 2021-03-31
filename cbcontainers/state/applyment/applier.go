@@ -22,16 +22,11 @@ func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8s
 		return false, fmt.Errorf("failed getting K8s object: %v", foundErr)
 	}
 
-	beforeMutation, _ := json.Marshal(k8sObject)
-
-	_, mutateErr := desiredK8sObject.MutateK8sObject(k8sObject)
+	beforeMutationRaw, _ := json.Marshal(k8sObject)
+	mutateErr := desiredK8sObject.MutateK8sObject(k8sObject)
 	if mutateErr != nil {
 		return false, fmt.Errorf("failed mutating K8s object `%v`: %v", namespacedName, mutateErr)
 	}
-
-	afterMutation, _ := json.Marshal(k8sObject)
-
-	mutated := !reflect.DeepEqual(beforeMutation, afterMutation)
 
 	// k8s object was not found should, need to create
 	if foundErr != nil {
@@ -48,7 +43,9 @@ func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8s
 		return true, nil
 	}
 
-	if !mutated {
+	afterMutationRaw, _ := json.Marshal(k8sObject)
+	k8sObjectWasChanged := !reflect.DeepEqual(beforeMutationRaw, afterMutationRaw)
+	if !k8sObjectWasChanged {
 		return false, nil
 	}
 

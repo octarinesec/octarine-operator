@@ -4,7 +4,6 @@ import (
 	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -25,24 +24,16 @@ func (obj *ConfigurationK8sObject) NamespacedName() types.NamespacedName {
 
 func (obj *ConfigurationK8sObject) EmptyK8sObject() client.Object { return &v1.ConfigMap{} }
 
-func (obj *ConfigurationK8sObject) MutateK8sObject(k8sObject client.Object) (bool, error) {
+func (obj *ConfigurationK8sObject) MutateK8sObject(k8sObject client.Object) error {
 	configMap, ok := k8sObject.(*v1.ConfigMap)
 	if !ok {
-		return false, fmt.Errorf("expected ConfigMap K8s object")
+		return fmt.Errorf("expected ConfigMap K8s object")
 	}
 
-	expectedData := obj.getConfigMapData()
-	if reflect.DeepEqual(configMap.Data, expectedData) {
-		return false, nil
-	}
-
-	configMap.Data = expectedData
-	return true, nil
-}
-
-func (obj *ConfigurationK8sObject) getConfigMapData() map[string]string {
-	return map[string]string{
+	configMap.Data = map[string]string{
 		DataAccountKey: obj.cbContainersCluster.Spec.Account,
 		DataClusterKey: obj.cbContainersCluster.Spec.ClusterName,
 	}
+
+	return nil
 }
