@@ -33,4 +33,4 @@ jobs:
         with:
           file: ./build/Dockerfile
           push: true
-          tags: cbartifactory/octarine-operator:${GITHUB_REF##*/}
+          tags: cbartifactory/octarine-operator:${{ steps.docker-tag.outputs.tag }}
