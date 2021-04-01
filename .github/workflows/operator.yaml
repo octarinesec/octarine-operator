@@ -27,6 +27,8 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - id: docker-tag
+        uses: yuya-takeyama/docker-tag-from-github-ref-action@v1
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
