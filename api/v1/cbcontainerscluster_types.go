@@ -25,15 +25,20 @@ import (
 
 // CBContainersClusterSpec defines the desired state of CBContainersCluster
 type CBContainersClusterSpec struct {
-	Account        string                            `json:"account,omitempty"`
-	ClusterName    string                            `json:"clusterName,omitempty"`
-	ApiGatewaySpec CBContainersClusterApiGatewaySpec `json:"apiGatewaySpec,omitempty"`
+	Account        string                            `json:"account,required"`
+	ClusterName    string                            `json:"clusterName,required"`
+	ApiGatewaySpec CBContainersClusterApiGatewaySpec `json:"apiGatewaySpec,required"`
 }
 
 type CBContainersClusterApiGatewaySpec struct {
-	Host                  string `json:"host,omitempty"`
-	Port                  int    `json:"port,omitempty"`
-	Adapter               string `json:"adapter,omitempty"`
+	// +kubebuilder:default:="https"
+	Scheme string `json:"scheme,omitempty"`
+	Host   string `json:"host,required"`
+	// +kubebuilder:default:=443
+	Port int `json:"port,omitempty"`
+	// +kubebuilder:default:="containers"
+	Adapter string `json:"adapter,omitempty"`
+	// +kubebuilder:default:="cbcontainers-access-token"
 	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
 }
 

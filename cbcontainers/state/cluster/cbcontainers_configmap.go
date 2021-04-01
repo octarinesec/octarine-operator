@@ -2,14 +2,11 @@ package cluster
 
 import (
 	"fmt"
+	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	DataAccountKey = "Account"
-	DataClusterKey = "Cluster"
+	"strconv"
 )
 
 type ConfigurationK8sObject struct {
@@ -19,7 +16,7 @@ type ConfigurationK8sObject struct {
 func NewConfigurationK8sObject() *ConfigurationK8sObject { return &ConfigurationK8sObject{} }
 
 func (obj *ConfigurationK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: obj.cbContainersCluster.Name, Namespace: obj.cbContainersCluster.Namespace}
+	return types.NamespacedName{Name: commonState.DataPlaneConfigmapName, Namespace: obj.cbContainersCluster.Namespace}
 }
 
 func (obj *ConfigurationK8sObject) EmptyK8sObject() client.Object { return &v1.ConfigMap{} }
@@ -31,8 +28,12 @@ func (obj *ConfigurationK8sObject) MutateK8sObject(k8sObject client.Object) erro
 	}
 
 	configMap.Data = map[string]string{
-		DataAccountKey: obj.cbContainersCluster.Spec.Account,
-		DataClusterKey: obj.cbContainersCluster.Spec.ClusterName,
+		commonState.DataPlaneConfigmapAccountKey:    obj.cbContainersCluster.Spec.Account,
+		commonState.DataPlaneConfigmapClusterKey:    obj.cbContainersCluster.Spec.ClusterName,
+		commonState.DataPlaneConfigmapApiSchemeKey:  obj.cbContainersCluster.Spec.ApiGatewaySpec.Scheme,
+		commonState.DataPlaneConfigmapApiHostKey:    obj.cbContainersCluster.Spec.ApiGatewaySpec.Host,
+		commonState.DataPlaneConfigmapApiPortKey:    strconv.Itoa(obj.cbContainersCluster.Spec.ApiGatewaySpec.Port),
+		commonState.DataPlaneConfigmapApiAdapterKey: obj.cbContainersCluster.Spec.ApiGatewaySpec.Adapter,
 	}
 
 	return nil

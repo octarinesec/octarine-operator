@@ -14,5 +14,5 @@ func NewDefaultClusterRegistrarCreator() *DefaultClusterRegistrarCreator {
 
 func (registrarCreator *DefaultClusterRegistrarCreator) CreateClusterRegistrar(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) ClusterRegistrar {
 	spec := cbContainersCluster.Spec
-	return gateway.NewApiGateway(spec.Account, spec.ClusterName, accessToken, spec.ApiGatewaySpec.Host, spec.ApiGatewaySpec.Port, spec.ApiGatewaySpec.Adapter)
+	return gateway.NewApiGateway(spec.Account, spec.ClusterName, accessToken, spec.ApiGatewaySpec.Scheme, spec.ApiGatewaySpec.Host, spec.ApiGatewaySpec.Port, spec.ApiGatewaySpec.Adapter)
 }

@@ -36,6 +36,9 @@ spec:
             type: object
           spec:
             properties:
+              accessTokenSecretName:
+                default: cbcontainers-access-token
+                type: string
               enforcerSpec:
                 default: {}
                 properties:
@@ -194,9 +197,20 @@ spec:
                         type: integer
                     type: object
                 type: object
+              eventsGatewaySpec:
+                properties:
+                  host:
+                    type: string
+                  port:
+                    default: 443
+                    type: integer
+                required:
+                - host
+                type: object
               version:
                 type: string
             required:
+            - eventsGatewaySpec
             - version
             type: object
           status:

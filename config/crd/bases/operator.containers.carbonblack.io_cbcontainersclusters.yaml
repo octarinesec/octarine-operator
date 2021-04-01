@@ -42,16 +42,28 @@ spec:
               apiGatewaySpec:
                 properties:
                   accessTokenSecretName:
+                    default: cbcontainers-access-token
                     type: string
                   adapter:
+                    default: containers
                     type: string
                   host:
                     type: string
                   port:
+                    default: 443
                     type: integer
+                  scheme:
+                    default: https
+                    type: string
+                required:
+                - host
                 type: object
               clusterName:
                 type: string
+            required:
+            - account
+            - apiGatewaySpec
+            - clusterName
             type: object
           status:
             description: CBContainersClusterStatus defines the observed state of CBContainersCluster

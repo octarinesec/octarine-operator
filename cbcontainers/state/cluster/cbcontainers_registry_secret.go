@@ -3,13 +3,10 @@ package cluster
 import (
 	"fmt"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
+	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	RegistrySecretName = "cbcontainers-registry-secret"
 )
 
 type RegistrySecretK8sObject struct {
@@ -24,7 +21,7 @@ func (obj *RegistrySecretK8sObject) UpdateRegistrySecretValues(registrySecretVal
 }
 
 func (obj *RegistrySecretK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: RegistrySecretName, Namespace: obj.cbContainersCluster.Namespace}
+	return types.NamespacedName{Name: commonState.RegistrySecretName, Namespace: obj.cbContainersCluster.Namespace}
 }
 
 func (obj *RegistrySecretK8sObject) EmptyK8sObject() client.Object { return &coreV1.Secret{} }

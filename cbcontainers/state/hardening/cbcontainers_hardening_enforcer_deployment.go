@@ -4,12 +4,14 @@ import (
 	"fmt"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
-	clusterState "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster"
+	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strconv"
 )
 
 const (
@@ -61,7 +63,7 @@ func (obj *EnforcerK8sObject) MutateK8sObject(k8sObject client.Object) error {
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, enforcerSpec.DeploymentAnnotations)
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, enforcerSpec.PodTemplateAnnotations)
 	deployment.Spec.Replicas = &enforcerSpec.ReplicasCount
-	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: clusterState.RegistrySecretName}}
+	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	obj.mutateContainersList(&deployment.Spec.Template.Spec)
 	//applyment.MutateString(enforcerSpec.ServiceAccountName, func() *string { return &template.Spec.ServiceAccountName }, func(value string) { template.Spec.ServiceAccountName = value })
 	//applyment.MutateString(enforcerSpec.PriorityClassName, func() *string { return &template.Spec.PriorityClassName }, func(value string) { template.Spec.PriorityClassName = value })
@@ -72,7 +74,6 @@ func (obj *EnforcerK8sObject) MutateK8sObject(k8sObject client.Object) error {
 func (obj *EnforcerK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec) {
 	if len(templatePodSpec.Containers) != 1 {
 		container := coreV1.Container{}
-		obj.mutateContainer(&container)
 		templatePodSpec.Containers = []coreV1.Container{container}
 	}
 
@@ -92,24 +93,55 @@ func (obj *EnforcerK8sObject) mutateContainer(container *coreV1.Container) {
 }
 
 func (obj *EnforcerK8sObject) mutateEnvVars(container *coreV1.Container, desiredEnvsValues map[string]string) {
-	if len(container.Env) == len(desiredEnvsValues) {
-		envsShouldBeChanged := false
-		for _, actualEnvVar := range container.Env {
-			desiredEnvValue, ok := desiredEnvsValues[actualEnvVar.Name]
-			if !ok || actualEnvVar.Value != desiredEnvValue {
-				envsShouldBeChanged = true
-				break
-			}
-		}
+	desiredEnvVars := obj.getDesiredEnvVars(desiredEnvsValues)
 
-		if !envsShouldBeChanged {
-			return
+	if !obj.shouldChangeEnvVars(container, desiredEnvVars) {
+		return
+	}
+
+	container.Env = make([]coreV1.EnvVar, 0, len(desiredEnvVars))
+	for _, desiredEnvVar := range desiredEnvVars {
+		container.Env = append(container.Env, desiredEnvVar)
+	}
+}
+
+func (obj *EnforcerK8sObject) shouldChangeEnvVars(container *coreV1.Container, desiredEnvVars map[string]coreV1.EnvVar) bool {
+	if len(container.Env) != len(desiredEnvVars) {
+		return true
+	}
+
+	for _, actualEnvVar := range container.Env {
+		desiredEnvVar, ok := desiredEnvVars[actualEnvVar.Name]
+		if !ok || !reflect.DeepEqual(actualEnvVar, desiredEnvVar) {
+			return true
 		}
 	}
 
-	container.Env = make([]coreV1.EnvVar, 0, len(desiredEnvsValues))
-	for desiredEnvName, desiredEnvValue := range desiredEnvsValues {
-		container.Env = append(container.Env, coreV1.EnvVar{Name: desiredEnvName, Value: desiredEnvValue})
+	return false
+}
+
+func (obj *EnforcerK8sObject) getDesiredEnvVars(desiredEnvsValues map[string]string) map[string]coreV1.EnvVar {
+	desiredEnvVars := make(map[string]coreV1.EnvVar)
+	for desiredEnvVarName, desiredEnvVarValue := range desiredEnvsValues {
+		desiredEnvVars[desiredEnvVarName] = coreV1.EnvVar{Name: desiredEnvVarName, Value: desiredEnvVarValue}
+	}
+	envsToAdd := commonState.GetCommonDataPlaneEnvVars(obj.cbContainersHardening.Spec.AccessTokenSecretName)
+	envsToAdd = append(envsToAdd, obj.getEventsGateWayEnvVars()...)
+
+	for _, dataPlaneEnvVar := range envsToAdd {
+		if _, ok := desiredEnvVars[dataPlaneEnvVar.Name]; ok {
+			continue
+		}
+		desiredEnvVars[dataPlaneEnvVar.Name] = dataPlaneEnvVar
+	}
+	return desiredEnvVars
+}
+
+func (obj *EnforcerK8sObject) getEventsGateWayEnvVars() []coreV1.EnvVar {
+	eventsGatewaySpec := obj.cbContainersHardening.Spec.EventsGatewaySpec
+	return []coreV1.EnvVar{
+		{Name: "OCTARINE_MESSAGEPROXY_HOST", Value: eventsGatewaySpec.Host},
+		{Name: "OCTARINE_MESSAGEPROXY_PORT", Value: strconv.Itoa(eventsGatewaySpec.Port)},
 	}
 }
 

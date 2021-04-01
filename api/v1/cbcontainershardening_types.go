@@ -27,8 +27,17 @@ import (
 
 type CBContainersHardeningSpec struct {
 	Version string `json:"version,required"`
+	// +kubebuilder:default:="cbcontainers-access-token"
+	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
 	// +kubebuilder:default:=<>
-	EnforcerSpec CBContainersHardeningEnforcerSpec `json:"enforcerSpec,omitempty"`
+	EnforcerSpec      CBContainersHardeningEnforcerSpec      `json:"enforcerSpec,omitempty"`
+	EventsGatewaySpec CBContainersHardeningEventsGatewaySpec `json:"eventsGatewaySpec,required"`
+}
+
+type CBContainersHardeningEventsGatewaySpec struct {
+	Host string `json:"host,required"`
+	// +kubebuilder:default:=443
+	Port int `json:"port,omitempty"`
 }
 
 type CBContainersHardeningEnforcerSpec struct {

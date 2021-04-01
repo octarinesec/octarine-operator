@@ -22,6 +22,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
+	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,10 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-)
-
-const (
-	AccessTokenSecretKeyName = "accessToken"
 )
 
 type clusterStateApplier interface {
@@ -99,9 +96,9 @@ func (r *CBContainersClusterReconciler) getAccessToken(ctx context.Context, cbCo
 		return "", fmt.Errorf("couldn't find access token secret k8s object: %v", err)
 	}
 
-	accessToken := string(accessTokenSecret.Data[AccessTokenSecretKeyName])
+	accessToken := string(accessTokenSecret.Data[commonState.AccessTokenSecretKeyName])
 	if accessToken == "" {
-		return "", fmt.Errorf("the k8s secret %v is missing the key %v", accessTokenSecretNamespacedName, AccessTokenSecretKeyName)
+		return "", fmt.Errorf("the k8s secret %v is missing the key %v", accessTokenSecretNamespacedName, commonState.AccessTokenSecretKeyName)
 	}
 
 	return accessToken, nil

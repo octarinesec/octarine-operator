@@ -12,19 +12,21 @@ type ApiGateway struct {
 	account     string
 	cluster     string
 	accessToken string
+	scheme      string
 	host        string
 	port        int
 	adapter     string
 	client      *resty.Client
 }
 
-func NewApiGateway(account, cluster string, accessToken string, host string, port int, adapter string) *ApiGateway {
+func NewApiGateway(account, cluster string, accessToken string, scheme, host string, port int, adapter string) *ApiGateway {
 	client := resty.New()
 	client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 	return &ApiGateway{
 		account:     account,
 		cluster:     cluster,
 		accessToken: accessToken,
+		scheme:      scheme,
 		host:        host,
 		port:        port,
 		adapter:     adapter,
@@ -33,7 +35,7 @@ func NewApiGateway(account, cluster string, accessToken string, host string, por
 }
 
 func (gateway *ApiGateway) baseUrl() string {
-	return fmt.Sprintf("https://%s:%d/%v/v1/orgs/%v", gateway.host, gateway.port, gateway.adapter, gateway.account)
+	return fmt.Sprintf("%v://%s:%d/%v/v1/orgs/%v", gateway.scheme, gateway.host, gateway.port, gateway.adapter, gateway.account)
 }
 
 func (gateway *ApiGateway) baseRequest() *resty.Request {
