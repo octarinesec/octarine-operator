@@ -24,7 +24,7 @@ jobs:
           cd operator-sdk
           make install
       - name: Build octarine operator
-        run: operator-sdk build cbartifactory/octarine-operator:<version>
+        run: operator-sdk build cbartifactory/octarine-operator:infra129
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Login to DockerHub
