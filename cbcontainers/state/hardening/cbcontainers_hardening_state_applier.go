@@ -3,25 +3,20 @@ package hardening
 import (
 	"context"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
-	"k8s.io/apimachinery/pkg/types"
+	hardeningObjects "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/objects"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type tlsSecretsValuesCreator interface {
-	CreateTlsSecretsValues(resourceNamespacedName types.NamespacedName) (models.TlsSecretValues, error)
-}
-
 type CBContainersClusterStateApplier struct {
-	enforcerTlsSecret  *EnforcerTlsK8sObject
-	enforcerDeployment *EnforcerK8sObject
+	enforcerTlsSecret  *hardeningObjects.EnforcerTlsK8sObject
+	enforcerDeployment *hardeningObjects.EnforcerK8sObject
 }
 
-func NewHardeningStateApplier(tlsSecretsValuesCreator tlsSecretsValuesCreator) *CBContainersClusterStateApplier {
+func NewHardeningStateApplier(tlsSecretsValuesCreator hardeningObjects.TlsSecretsValuesCreator) *CBContainersClusterStateApplier {
 	return &CBContainersClusterStateApplier{
-		enforcerTlsSecret:  NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
-		enforcerDeployment: NewEnforcerDeploymentK8sObject(),
+		enforcerTlsSecret:  hardeningObjects.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
+		enforcerDeployment: hardeningObjects.NewEnforcerDeploymentK8sObject(),
 	}
 }
 

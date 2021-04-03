@@ -1,8 +1,9 @@
-package hardening
+package objects
 
 import (
 	"fmt"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -12,11 +13,15 @@ const (
 	EnforcerTlsName = "cbcontainers-hardening-enforcer-tls"
 )
 
-type EnforcerTlsK8sObject struct {
-	tlsSecretsValuesCreator tlsSecretsValuesCreator
+type TlsSecretsValuesCreator interface {
+	CreateTlsSecretsValues(resourceNamespacedName types.NamespacedName) (models.TlsSecretValues, error)
 }
 
-func NewEnforcerTlsK8sObject(tlsSecretsValuesCreator tlsSecretsValuesCreator) *EnforcerTlsK8sObject {
+type EnforcerTlsK8sObject struct {
+	tlsSecretsValuesCreator TlsSecretsValuesCreator
+}
+
+func NewEnforcerTlsK8sObject(tlsSecretsValuesCreator TlsSecretsValuesCreator) *EnforcerTlsK8sObject {
 	return &EnforcerTlsK8sObject{
 		tlsSecretsValuesCreator: tlsSecretsValuesCreator,
 	}
