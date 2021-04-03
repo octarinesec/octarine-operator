@@ -21,7 +21,7 @@ jobs:
       - name: Setup Operator SDK
         working-directory: ./dependencies
         run: | 
-          git clone -b v0.18.0 https://github.com/operator-framework/operator-sdk
+          git clone -b v0.18.0 https://github.com/operator-framework/operator-sdk ./operator-sdk
           cd operator-sdk
           make install
       - name: Build octarine operator
