@@ -21,9 +21,7 @@ jobs:
       - name: Setup Operator SDK
         working-directory: ./dependencies
         run: | 
-          git clone -b v0.18.0 https://github.com/operator-framework/operator-sdk ./operator-sdk
-          cd operator-sdk
-          make install
+          git clone -b v0.18.0 https://github.com/operator-framework/operator-sdk
       - name: Build octarine operator
         run: operator-sdk build cbartifactory/octarine-operator:<version>
       - name: Set up Docker Buildx
