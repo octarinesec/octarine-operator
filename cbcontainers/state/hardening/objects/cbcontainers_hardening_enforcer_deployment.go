@@ -19,6 +19,14 @@ const (
 
 	DesiredContainerPortName  = "https"
 	DesiredContainerPortValue = 443
+
+	DesiredTlsSecretVolumeName      = "cert"
+	DesiredTlsSecretVolumeMountPath = "/etc/octarine-certificates"
+)
+
+var (
+	DesiredTlsSecretVolumeDecimalDefaultMode int32 = 420 // 644 in octal
+	DesiredTlsSecretVolumeOptionalValue            = true
 )
 
 type EnforcerK8sObject struct{}
@@ -62,11 +70,29 @@ func (obj *EnforcerK8sObject) MutateHardeningChildK8sObject(k8sObject client.Obj
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, enforcerSpec.PodTemplateAnnotations)
 	deployment.Spec.Replicas = &enforcerSpec.ReplicasCount
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
+	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec, cbContainersHardening)
 	//applyment.MutateString(enforcerSpec.ServiceAccountName, func() *string { return &template.Spec.ServiceAccountName }, func(value string) { template.Spec.ServiceAccountName = value })
 	//applyment.MutateString(enforcerSpec.PriorityClassName, func() *string { return &template.Spec.PriorityClassName }, func(value string) { template.Spec.PriorityClassName = value })
 
 	return nil
+}
+
+func (obj *EnforcerK8sObject) mutateVolumes(templatePodSpec *coreV1.PodSpec) {
+	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != 1 || templatePodSpec.Volumes[0].Secret == nil {
+		templatePodSpec.Volumes = []coreV1.Volume{
+			{
+				VolumeSource: coreV1.VolumeSource{
+					Secret: &coreV1.SecretVolumeSource{},
+				},
+			},
+		}
+	}
+
+	templatePodSpec.Volumes[0].Name = DesiredTlsSecretVolumeName
+	templatePodSpec.Volumes[0].Secret.SecretName = EnforcerTlsName
+	templatePodSpec.Volumes[0].Secret.DefaultMode = &DesiredTlsSecretVolumeDecimalDefaultMode
+	templatePodSpec.Volumes[0].Secret.Optional = &DesiredTlsSecretVolumeOptionalValue
 }
 
 func (obj *EnforcerK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, cbContainersHardening *cbcontainersv1.CBContainersHardening) {
@@ -85,6 +111,7 @@ func (obj *EnforcerK8sObject) mutateContainer(container *coreV1.Container, cbCon
 	obj.mutateSecurityContext(container, cbContainersHardening.Spec.EnforcerSpec.SecurityContext)
 	obj.mutateContainerProbes(container, cbContainersHardening.Spec.EnforcerSpec.Probes)
 	obj.mutateContainerPorts(container)
+	obj.mutateVolumesMounts(container)
 	container.Resources = cbContainersHardening.Spec.EnforcerSpec.Resources
 }
 
@@ -201,4 +228,13 @@ func (obj *EnforcerK8sObject) mutateContainerPorts(container *coreV1.Container) 
 
 	container.Ports[0].Name = DesiredContainerPortName
 	container.Ports[0].ContainerPort = DesiredContainerPortValue
+}
+
+func (obj *EnforcerK8sObject) mutateVolumesMounts(container *coreV1.Container) {
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != 1 {
+		container.VolumeMounts = []coreV1.VolumeMount{{}}
+	}
+
+	container.VolumeMounts[0].Name = DesiredTlsSecretVolumeName
+	container.VolumeMounts[0].MountPath = DesiredTlsSecretVolumeMountPath
 }
