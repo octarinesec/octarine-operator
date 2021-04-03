@@ -46,10 +46,12 @@ func (obj *EnforcerTlsK8sObject) MutateHardeningChildK8sObject(k8sObject client.
 		return err
 	}
 
-	secret.Data["ca.crt"] = tlsSecretValues.CaCert
-	secret.Data["ca.key"] = tlsSecretValues.CaKey
-	secret.Data["signed_cert"] = tlsSecretValues.SignedCert
-	secret.Data["key"] = tlsSecretValues.Key
+	secret.Data = map[string][]byte{
+		"ca.crt":      tlsSecretValues.CaCert,
+		"ca.key":      tlsSecretValues.CaKey,
+		"signed_cert": tlsSecretValues.SignedCert,
+		"key":         tlsSecretValues.Key,
+	}
 
 	return nil
 }
