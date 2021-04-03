@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
+	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +34,7 @@ import (
 )
 
 type clusterStateApplier interface {
-	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, secret *models.RegistrySecretValues, client client.Client, setOwner applyment.OwnerSetter) (bool, error)
+	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, secret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
 }
 
 type clusterProcessor interface {

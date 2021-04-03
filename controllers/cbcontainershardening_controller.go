@@ -19,7 +19,8 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
+	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 	appsV1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -32,7 +33,7 @@ import (
 )
 
 type hardeningStateApplier interface {
-	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersHardening, client client.Client, setOwner applyment.OwnerSetter) (bool, error)
+	ApplyDesiredState(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
 }
 
 type CBContainersHardeningReconciler struct {
@@ -40,6 +41,8 @@ type CBContainersHardeningReconciler struct {
 	Log                   logr.Logger
 	Scheme                *runtime.Scheme
 	HardeningStateApplier hardeningStateApplier
+
+	tlsSecretValues *models.TlsSecretValues
 }
 
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainershardenings,verbs=get;list;watch;create;update;patch;delete

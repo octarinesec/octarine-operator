@@ -3,6 +3,7 @@ module github.com/vmware/cbcontainers-operator
 go 1.15
 
 require (
+	github.com/cloudflare/cfssl v1.4.1
 	github.com/go-logr/logr v0.3.0
 	github.com/go-resty/resty/v2 v2.5.0
 	github.com/onsi/ginkgo v1.14.1
