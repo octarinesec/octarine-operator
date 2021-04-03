@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"fmt"
+	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	coreV1 "k8s.io/api/core/v1"
@@ -10,7 +11,6 @@ import (
 )
 
 type RegistrySecretK8sObject struct {
-	CBContainersClusterChildK8sObject
 	registrySecretValues *models.RegistrySecretValues
 }
 
@@ -20,13 +20,13 @@ func (obj *RegistrySecretK8sObject) UpdateRegistrySecretValues(registrySecretVal
 	obj.registrySecretValues = registrySecretValues
 }
 
-func (obj *RegistrySecretK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: commonState.RegistrySecretName, Namespace: obj.cbContainersCluster.Namespace}
-}
-
 func (obj *RegistrySecretK8sObject) EmptyK8sObject() client.Object { return &coreV1.Secret{} }
 
-func (obj *RegistrySecretK8sObject) MutateK8sObject(k8sObject client.Object) error {
+func (obj *RegistrySecretK8sObject) ClusterChildNamespacedName(cbContainersCluster *cbcontainersv1.CBContainersCluster) types.NamespacedName {
+	return types.NamespacedName{Name: commonState.RegistrySecretName, Namespace: cbContainersCluster.Namespace}
+}
+
+func (obj *RegistrySecretK8sObject) MutateClusterChildK8sObject(k8sObject client.Object, _ *cbcontainersv1.CBContainersCluster) error {
 	secret, ok := k8sObject.(*coreV1.Secret)
 	if !ok {
 		return fmt.Errorf("expected Secret K8s object")
