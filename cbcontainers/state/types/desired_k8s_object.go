@@ -6,7 +6,15 @@ import (
 )
 
 type DesiredK8sObject interface {
-	NamespacedName() types.NamespacedName
+	DesiredK8sObjectInitializer
+	MutatableK8sObject
+}
+
+type DesiredK8sObjectInitializer interface {
 	EmptyK8sObject() client.Object
+}
+
+type MutatableK8sObject interface {
+	NamespacedName() types.NamespacedName
 	MutateK8sObject(client.Object) error
 }

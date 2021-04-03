@@ -4,7 +4,6 @@ import (
 	"context"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,14 +28,12 @@ func NewHardeningStateApplier(tlsSecretsValuesCreator tlsSecretsValuesCreator) *
 func (c *CBContainersClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
 	applyOptions := applymentOptions.NewApplyOptions().SetOwnerSetter(setOwner)
 
-	c.enforcerTlsSecret.UpdateCbContainersHardening(cbContainersHardening)
-	mutatedSecret, err := applyment.ApplyDesiredK8sObject(ctx, client, c.enforcerTlsSecret, applyOptions, applymentOptions.NewApplyOptions().SetCreateOnly(true))
+	mutatedSecret, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerTlsSecret, applyOptions, applymentOptions.NewApplyOptions().SetCreateOnly(true))
 	if err != nil {
 		return false, err
 	}
 
-	c.enforcerDeployment.UpdateCbContainersHardening(cbContainersHardening)
-	mutatedDeployment, err := applyment.ApplyDesiredK8sObject(ctx, client, c.enforcerDeployment, applyOptions)
+	mutatedDeployment, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerDeployment, applyOptions)
 	if err != nil {
 		return false, err
 	}

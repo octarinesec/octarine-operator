@@ -21,22 +21,20 @@ const (
 	DesiredContainerPortValue = 443
 )
 
-type EnforcerK8sObject struct {
-	CBContainersHardeningChildK8sObject
-}
+type EnforcerK8sObject struct{}
 
 func NewEnforcerDeploymentK8sObject() *EnforcerK8sObject { return &EnforcerK8sObject{} }
-
-func (obj *EnforcerK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: EnforcerName, Namespace: obj.cbContainersHardening.Namespace}
-}
 
 func (obj *EnforcerK8sObject) EmptyK8sObject() client.Object {
 	return &appsV1.Deployment{}
 }
 
-func (obj *EnforcerK8sObject) MutateK8sObject(k8sObject client.Object) error {
-	enforcerSpec := obj.cbContainersHardening.Spec.EnforcerSpec
+func (obj *EnforcerK8sObject) HardeningChildNamespacedName(cbContainersHardening *cbcontainersv1.CBContainersHardening) types.NamespacedName {
+	return types.NamespacedName{Name: EnforcerName, Namespace: cbContainersHardening.Namespace}
+}
+
+func (obj *EnforcerK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
+	enforcerSpec := cbContainersHardening.Spec.EnforcerSpec
 
 	deployment, ok := k8sObject.(*appsV1.Deployment)
 	if !ok {
@@ -64,36 +62,34 @@ func (obj *EnforcerK8sObject) MutateK8sObject(k8sObject client.Object) error {
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, enforcerSpec.PodTemplateAnnotations)
 	deployment.Spec.Replicas = &enforcerSpec.ReplicasCount
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
-	obj.mutateContainersList(&deployment.Spec.Template.Spec)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, cbContainersHardening)
 	//applyment.MutateString(enforcerSpec.ServiceAccountName, func() *string { return &template.Spec.ServiceAccountName }, func(value string) { template.Spec.ServiceAccountName = value })
 	//applyment.MutateString(enforcerSpec.PriorityClassName, func() *string { return &template.Spec.PriorityClassName }, func(value string) { template.Spec.PriorityClassName = value })
 
 	return nil
 }
 
-func (obj *EnforcerK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec) {
+func (obj *EnforcerK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, cbContainersHardening *cbcontainersv1.CBContainersHardening) {
 	if len(templatePodSpec.Containers) != 1 {
 		container := coreV1.Container{}
 		templatePodSpec.Containers = []coreV1.Container{container}
 	}
 
-	obj.mutateContainer(&templatePodSpec.Containers[0])
+	obj.mutateContainer(&templatePodSpec.Containers[0], cbContainersHardening)
 }
 
-func (obj *EnforcerK8sObject) mutateContainer(container *coreV1.Container) {
-	enforcerSpec := obj.cbContainersHardening.Spec.EnforcerSpec
-
+func (obj *EnforcerK8sObject) mutateContainer(container *coreV1.Container, cbContainersHardening *cbcontainersv1.CBContainersHardening) {
 	container.Name = EnforcerName
-	obj.mutateEnvVars(container, enforcerSpec.Env)
-	obj.mutateImage(container, enforcerSpec.Image)
-	obj.mutateSecurityContext(container, enforcerSpec.SecurityContext)
-	obj.mutateContainerProbes(container, enforcerSpec.Probes)
+	obj.mutateEnvVars(container, cbContainersHardening.Spec.EnforcerSpec.Env, cbContainersHardening.Spec.AccessTokenSecretName, cbContainersHardening.Spec.EventsGatewaySpec)
+	obj.mutateImage(container, cbContainersHardening.Spec.EnforcerSpec.Image, cbContainersHardening.Spec.Version)
+	obj.mutateSecurityContext(container, cbContainersHardening.Spec.EnforcerSpec.SecurityContext)
+	obj.mutateContainerProbes(container, cbContainersHardening.Spec.EnforcerSpec.Probes)
 	obj.mutateContainerPorts(container)
-	container.Resources = enforcerSpec.Resources
+	container.Resources = cbContainersHardening.Spec.EnforcerSpec.Resources
 }
 
-func (obj *EnforcerK8sObject) mutateEnvVars(container *coreV1.Container, desiredEnvsValues map[string]string) {
-	desiredEnvVars := obj.getDesiredEnvVars(desiredEnvsValues)
+func (obj *EnforcerK8sObject) mutateEnvVars(container *coreV1.Container, desiredEnvsValues map[string]string, accessTokenSecretName string, eventsGatewaySpec cbcontainersv1.CBContainersHardeningEventsGatewaySpec) {
+	desiredEnvVars := obj.getDesiredEnvVars(desiredEnvsValues, accessTokenSecretName, eventsGatewaySpec)
 
 	if !obj.shouldChangeEnvVars(container, desiredEnvVars) {
 		return
@@ -120,13 +116,13 @@ func (obj *EnforcerK8sObject) shouldChangeEnvVars(container *coreV1.Container, d
 	return false
 }
 
-func (obj *EnforcerK8sObject) getDesiredEnvVars(desiredEnvsValues map[string]string) map[string]coreV1.EnvVar {
+func (obj *EnforcerK8sObject) getDesiredEnvVars(desiredEnvsValues map[string]string, accessTokenSecretName string, eventsGatewaySpec cbcontainersv1.CBContainersHardeningEventsGatewaySpec) map[string]coreV1.EnvVar {
 	desiredEnvVars := make(map[string]coreV1.EnvVar)
 	for desiredEnvVarName, desiredEnvVarValue := range desiredEnvsValues {
 		desiredEnvVars[desiredEnvVarName] = coreV1.EnvVar{Name: desiredEnvVarName, Value: desiredEnvVarValue}
 	}
-	envsToAdd := commonState.GetCommonDataPlaneEnvVars(obj.cbContainersHardening.Spec.AccessTokenSecretName)
-	envsToAdd = append(envsToAdd, obj.getEventsGateWayEnvVars()...)
+	envsToAdd := commonState.GetCommonDataPlaneEnvVars(accessTokenSecretName)
+	envsToAdd = append(envsToAdd, obj.getEventsGateWayEnvVars(eventsGatewaySpec)...)
 
 	for _, dataPlaneEnvVar := range envsToAdd {
 		if _, ok := desiredEnvVars[dataPlaneEnvVar.Name]; ok {
@@ -137,18 +133,17 @@ func (obj *EnforcerK8sObject) getDesiredEnvVars(desiredEnvsValues map[string]str
 	return desiredEnvVars
 }
 
-func (obj *EnforcerK8sObject) getEventsGateWayEnvVars() []coreV1.EnvVar {
-	eventsGatewaySpec := obj.cbContainersHardening.Spec.EventsGatewaySpec
+func (obj *EnforcerK8sObject) getEventsGateWayEnvVars(eventsGatewaySpec cbcontainersv1.CBContainersHardeningEventsGatewaySpec) []coreV1.EnvVar {
 	return []coreV1.EnvVar{
 		{Name: "OCTARINE_MESSAGEPROXY_HOST", Value: eventsGatewaySpec.Host},
 		{Name: "OCTARINE_MESSAGEPROXY_PORT", Value: strconv.Itoa(eventsGatewaySpec.Port)},
 	}
 }
 
-func (obj *EnforcerK8sObject) mutateImage(container *coreV1.Container, desiredImage cbcontainersv1.CBContainersHardeningEnforcerImageSpec) {
+func (obj *EnforcerK8sObject) mutateImage(container *coreV1.Container, desiredImage cbcontainersv1.CBContainersHardeningEnforcerImageSpec, desiredVersion string) {
 	desiredTag := desiredImage.Tag
 	if desiredTag == "" {
-		desiredTag = obj.cbContainersHardening.Spec.Version
+		desiredTag = desiredVersion
 	}
 	desiredFullImage := fmt.Sprintf("%s:%s", desiredImage.Repository, desiredTag)
 
