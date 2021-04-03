@@ -5,18 +5,19 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
+	clusterObjects "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster/objects"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type CBContainersClusterStateApplier struct {
-	desiredConfigMap      *ConfigurationK8sObject
-	desiredRegistrySecret *RegistrySecretK8sObject
+	desiredConfigMap      *clusterObjects.ConfigurationK8sObject
+	desiredRegistrySecret *clusterObjects.RegistrySecretK8sObject
 }
 
 func NewClusterStateApplier() *CBContainersClusterStateApplier {
 	return &CBContainersClusterStateApplier{
-		desiredConfigMap:      NewConfigurationK8sObject(),
-		desiredRegistrySecret: NewRegistrySecretK8sObject(),
+		desiredConfigMap:      clusterObjects.NewConfigurationK8sObject(),
+		desiredRegistrySecret: clusterObjects.NewRegistrySecretK8sObject(),
 	}
 }
 
