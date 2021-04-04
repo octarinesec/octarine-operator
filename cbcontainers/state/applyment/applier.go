@@ -21,6 +21,10 @@ func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8s
 		return false, nil, err
 	}
 
+	if objectExists && applyOptions.CreateOnly() {
+		return false, k8sObject, nil
+	}
+
 	beforeMutationRaw, _ := json.Marshal(k8sObject)
 	if err := desiredK8sObject.MutateK8sObject(k8sObject); err != nil {
 		return false, nil, fmt.Errorf("failed mutating K8s object `%v`: %v", namespacedName, err)
@@ -32,10 +36,6 @@ func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8s
 		}
 
 		return true, k8sObject, nil
-	}
-
-	if applyOptions.CreateOnly() {
-		return false, k8sObject, nil
 	}
 
 	k8sObjectWasChanged, err := updateK8sObject(ctx, client, applyOptions, k8sObject, namespacedName, beforeMutationRaw)
