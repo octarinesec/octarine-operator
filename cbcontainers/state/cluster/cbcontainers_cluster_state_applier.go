@@ -24,13 +24,13 @@ func NewClusterStateApplier() *CBContainersClusterStateApplier {
 func (c *CBContainersClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, registrySecret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
 	applyOptions := applymentOptions.NewApplyOptions().SetOwnerSetter(setOwner)
 
-	mutatedConfigmap, err := ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredConfigMap, applyOptions)
+	mutatedConfigmap, _, err := ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredConfigMap, applyOptions)
 	if err != nil {
 		return false, err
 	}
 
 	c.desiredRegistrySecret.UpdateRegistrySecretValues(registrySecret)
-	mutatedRegistrySecret, err := ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredRegistrySecret, applyOptions)
+	mutatedRegistrySecret, _, err := ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredRegistrySecret, applyOptions)
 	if err != nil {
 		return false, err
 	}

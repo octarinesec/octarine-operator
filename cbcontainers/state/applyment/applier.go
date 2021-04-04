@@ -12,38 +12,38 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8sObject stateTypes.DesiredK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, error) {
+func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8sObject stateTypes.DesiredK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
 	applyOptions := applymentOptions.MergeApplyOptions(applyOptionsList...)
 	namespacedName := desiredK8sObject.NamespacedName()
 
 	k8sObject, objectExists, err := getK8sObject(ctx, client, desiredK8sObject, namespacedName)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	beforeMutationRaw, _ := json.Marshal(k8sObject)
 	if err := desiredK8sObject.MutateK8sObject(k8sObject); err != nil {
-		return false, fmt.Errorf("failed mutating K8s object `%v`: %v", namespacedName, err)
+		return false, nil, fmt.Errorf("failed mutating K8s object `%v`: %v", namespacedName, err)
 	}
 
 	if !objectExists {
 		if err := createK8sObject(ctx, client, k8sObject, namespacedName, applyOptions); err != nil {
-			return false, err
+			return false, nil, err
 		}
 
-		return true, nil
+		return true, k8sObject, nil
 	}
 
 	if applyOptions.CreateOnly() {
-		return false, nil
+		return false, k8sObject, nil
 	}
 
 	k8sObjectWasChanged, err := updateK8sObject(ctx, client, applyOptions, k8sObject, namespacedName, beforeMutationRaw)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return k8sObjectWasChanged, nil
+	return k8sObjectWasChanged, k8sObject, nil
 }
 
 func getK8sObject(ctx context.Context, client client.Client, desiredK8sObject stateTypes.DesiredK8sObject, namespacedName types.NamespacedName) (client.Object, bool, error) {

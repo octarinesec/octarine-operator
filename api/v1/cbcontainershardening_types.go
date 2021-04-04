@@ -61,6 +61,8 @@ type CBContainersHardeningEnforcerSpec struct {
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes CBContainersHardeningEnforcerProbesSpec `json:"probes,omitempty"`
+	// +kubebuilder:default:=5
+	WebhookTimeoutSeconds int32 `json:"webhookTimeoutSeconds,omitempty"`
 }
 
 type CBContainersHardeningEnforcerImageSpec struct {

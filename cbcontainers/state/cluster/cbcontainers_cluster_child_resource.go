@@ -16,7 +16,7 @@ type clusterChildK8sObject interface {
 	stateTypes.DesiredK8sObjectInitializer
 }
 
-func ApplyClusterChildK8sObject(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client, clusterChildK8sObject clusterChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, error) {
+func ApplyClusterChildK8sObject(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client, clusterChildK8sObject clusterChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
 	clusterChildWrapper := NewCBContainersClusterChildK8sObject(cbContainersCluster, clusterChildK8sObject)
 	return applyment.ApplyDesiredK8sObject(ctx, client, clusterChildWrapper, applyOptionsList...)
 }
