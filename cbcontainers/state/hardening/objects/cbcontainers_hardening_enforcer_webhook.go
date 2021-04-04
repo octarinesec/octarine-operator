@@ -6,7 +6,7 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/utils"
-	admissionsV1beta1 "k8s.io/api/admissionregistration/v1beta1"
+	admissionsV1 "k8s.io/api/admissionregistration/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
@@ -19,11 +19,11 @@ const (
 )
 
 var (
-	WebhookFailurePolicy = admissionsV1beta1.Ignore
+	WebhookFailurePolicy = admissionsV1.Ignore
 	WebhookPath          = "/validate"
 
-	ResourcesWebhookSideEffect  = admissionsV1beta1.SideEffectClassNoneOnDryRun
-	NamespacesWebhookSideEffect = admissionsV1beta1.SideEffectClassNone
+	ResourcesWebhookSideEffect  = admissionsV1.SideEffectClassNoneOnDryRun
+	NamespacesWebhookSideEffect = admissionsV1.SideEffectClassNone
 )
 
 type EnforcerWebhookK8sObject struct {
@@ -33,7 +33,7 @@ type EnforcerWebhookK8sObject struct {
 func NewEnforcerWebhookK8sObject() *EnforcerWebhookK8sObject { return &EnforcerWebhookK8sObject{} }
 
 func (obj *EnforcerWebhookK8sObject) EmptyK8sObject() client.Object {
-	return &admissionsV1beta1.ValidatingWebhookConfiguration{}
+	return &admissionsV1.ValidatingWebhookConfiguration{}
 }
 
 func (obj *EnforcerWebhookK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardening) types.NamespacedName {
@@ -41,7 +41,7 @@ func (obj *EnforcerWebhookK8sObject) HardeningChildNamespacedName(_ *cbcontainer
 }
 
 func (obj *EnforcerWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
-	webhookConfiguration, ok := k8sObject.(*admissionsV1beta1.ValidatingWebhookConfiguration)
+	webhookConfiguration, ok := k8sObject.(*admissionsV1.ValidatingWebhookConfiguration)
 	if !ok {
 		return fmt.Errorf("expected Service K8s object")
 	}
@@ -53,9 +53,9 @@ func (obj *EnforcerWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject cli
 	return nil
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration *admissionsV1beta1.ValidatingWebhookConfiguration, cbContainersHardening *cbcontainersv1.CBContainersHardening) {
-	var resourcesWebhookObj *admissionsV1beta1.ValidatingWebhook
-	var namespacesWebhookObj *admissionsV1beta1.ValidatingWebhook
+func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration *admissionsV1.ValidatingWebhookConfiguration, cbContainersHardening *cbcontainersv1.CBContainersHardening) {
+	var resourcesWebhookObj *admissionsV1.ValidatingWebhook
+	var namespacesWebhookObj *admissionsV1.ValidatingWebhook
 	initializeWebhooks := false
 
 	if webhookConfiguration.Webhooks == nil || len(webhookConfiguration.Webhooks) != 2 {
@@ -69,7 +69,7 @@ func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration *admiss
 	}
 
 	if initializeWebhooks {
-		webhookConfiguration.Webhooks = make([]admissionsV1beta1.ValidatingWebhook, 2)
+		webhookConfiguration.Webhooks = make([]admissionsV1.ValidatingWebhook, 2)
 		resourcesWebhookObj = &webhookConfiguration.Webhooks[0]
 		namespacesWebhookObj = &webhookConfiguration.Webhooks[1]
 	}
@@ -78,7 +78,7 @@ func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration *admiss
 	obj.mutateNamespacesWebhook(namespacesWebhookObj, cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds)
 }
 
-func (obj *EnforcerWebhookK8sObject) findWebhookByName(webhooks []admissionsV1beta1.ValidatingWebhook, name string) (*admissionsV1beta1.ValidatingWebhook, bool) {
+func (obj *EnforcerWebhookK8sObject) findWebhookByName(webhooks []admissionsV1.ValidatingWebhook, name string) (*admissionsV1.ValidatingWebhook, bool) {
 	for idx, webhook := range webhooks {
 		if webhook.Name == name {
 			return &webhooks[idx], true
@@ -88,15 +88,16 @@ func (obj *EnforcerWebhookK8sObject) findWebhookByName(webhooks []admissionsV1be
 	return nil, false
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook *admissionsV1beta1.ValidatingWebhook, timeoutSeconds int32) {
+func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook *admissionsV1.ValidatingWebhook, timeoutSeconds int32) {
 	resourcesWebhook.Name = ResourcesWebhookName
+	resourcesWebhook.AdmissionReviewVersions = []string{"v1", "v1beta1"}
 	resourcesWebhook.FailurePolicy = &WebhookFailurePolicy
 	resourcesWebhook.SideEffects = &ResourcesWebhookSideEffect
 	resourcesWebhook.NamespaceSelector = obj.getResourcesNamespaceSelector(resourcesWebhook.NamespaceSelector)
 	obj.mutateResourcesWebhooksRules(resourcesWebhook)
 	resourcesWebhook.TimeoutSeconds = &timeoutSeconds
-	resourcesWebhook.ClientConfig = admissionsV1beta1.WebhookClientConfig{
-		Service: &admissionsV1beta1.ServiceReference{
+	resourcesWebhook.ClientConfig = admissionsV1.WebhookClientConfig{
+		Service: &admissionsV1.ServiceReference{
 			Namespace: commonState.DataPlaneNamespaceName,
 			Name:      EnforcerName,
 			Path:      &WebhookPath,
@@ -145,12 +146,12 @@ func (obj *EnforcerWebhookK8sObject) getResourcesNamespaceSelector(selector *met
 
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhooksRules(webhook *admissionsV1beta1.ValidatingWebhook) {
+func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhooksRules(webhook *admissionsV1.ValidatingWebhook) {
 	if webhook.Rules == nil || len(webhook.Rules) != 1 {
-		webhook.Rules = make([]admissionsV1beta1.RuleWithOperations, 1)
+		webhook.Rules = make([]admissionsV1.RuleWithOperations, 1)
 	}
 
-	webhook.Rules[0].Operations = []admissionsV1beta1.OperationType{admissionsV1beta1.OperationAll}
+	webhook.Rules[0].Operations = []admissionsV1.OperationType{admissionsV1.OperationAll}
 	webhook.Rules[0].Rule.APIGroups = []string{"*"}
 	webhook.Rules[0].Rule.APIVersions = []string{"*"}
 
@@ -184,15 +185,16 @@ func (obj *EnforcerWebhookK8sObject) getResourcesList() []string {
 	}
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook *admissionsV1beta1.ValidatingWebhook, timeoutSeconds int32) {
+func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook *admissionsV1.ValidatingWebhook, timeoutSeconds int32) {
 	namespacesWebhook.Name = NamespacesWebhookName
+	namespacesWebhook.AdmissionReviewVersions = []string{"v1", "v1beta1"}
 	namespacesWebhook.FailurePolicy = &WebhookFailurePolicy
 	namespacesWebhook.SideEffects = &NamespacesWebhookSideEffect
 	namespacesWebhook.NamespaceSelector = nil
 	obj.mutateNamespacesWebhooksRules(namespacesWebhook)
 	namespacesWebhook.TimeoutSeconds = &timeoutSeconds
-	namespacesWebhook.ClientConfig = admissionsV1beta1.WebhookClientConfig{
-		Service: &admissionsV1beta1.ServiceReference{
+	namespacesWebhook.ClientConfig = admissionsV1.WebhookClientConfig{
+		Service: &admissionsV1.ServiceReference{
 			Namespace: commonState.DataPlaneNamespaceName,
 			Name:      EnforcerName,
 			Path:      &WebhookPath,
@@ -201,23 +203,23 @@ func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook *
 	}
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhooksRules(webhook *admissionsV1beta1.ValidatingWebhook) {
+func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhooksRules(webhook *admissionsV1.ValidatingWebhook) {
 	if webhook.Rules == nil || len(webhook.Rules) != 1 {
-		webhook.Rules = make([]admissionsV1beta1.RuleWithOperations, 1)
+		webhook.Rules = make([]admissionsV1.RuleWithOperations, 1)
 	}
 
-	expectedOperations := []admissionsV1beta1.OperationType{admissionsV1beta1.Create, admissionsV1beta1.Update, admissionsV1beta1.Connect}
+	expectedOperations := []admissionsV1.OperationType{admissionsV1.Create, admissionsV1.Update, admissionsV1.Connect}
 	if !utils.StringsSlicesHaveSameItems(obj.operationsToStrings(webhook.Rules[0].Operations), obj.operationsToStrings(expectedOperations)) {
 		webhook.Rules[0].Operations = expectedOperations
 	}
-	webhook.Rules[0].Rule = admissionsV1beta1.Rule{
+	webhook.Rules[0].Rule = admissionsV1.Rule{
 		APIGroups:   []string{"*"},
 		APIVersions: []string{"*"},
 		Resources:   []string{"namespaces"},
 	}
 }
 
-func (obj *EnforcerWebhookK8sObject) operationsToStrings(operations []admissionsV1beta1.OperationType) []string {
+func (obj *EnforcerWebhookK8sObject) operationsToStrings(operations []admissionsV1.OperationType) []string {
 	operationsStrings := make([]string, 0, len(operations))
 	for _, operation := range operations {
 		operationsStrings = append(operationsStrings, string(operation))
