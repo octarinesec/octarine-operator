@@ -50,6 +50,7 @@ type CBContainersClusterStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:path=cbcontainersclusters,scope=Cluster
 
 // CBContainersCluster is the Schema for the cbcontainersclusters API
 //+kubebuilder:subresource:status

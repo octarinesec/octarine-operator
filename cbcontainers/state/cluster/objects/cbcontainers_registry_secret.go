@@ -22,8 +22,8 @@ func (obj *RegistrySecretK8sObject) UpdateRegistrySecretValues(registrySecretVal
 
 func (obj *RegistrySecretK8sObject) EmptyK8sObject() client.Object { return &coreV1.Secret{} }
 
-func (obj *RegistrySecretK8sObject) ClusterChildNamespacedName(cbContainersCluster *cbcontainersv1.CBContainersCluster) types.NamespacedName {
-	return types.NamespacedName{Name: commonState.RegistrySecretName, Namespace: cbContainersCluster.Namespace}
+func (obj *RegistrySecretK8sObject) ClusterChildNamespacedName(_ *cbcontainersv1.CBContainersCluster) types.NamespacedName {
+	return types.NamespacedName{Name: commonState.RegistrySecretName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
 func (obj *RegistrySecretK8sObject) MutateClusterChildK8sObject(k8sObject client.Object, _ *cbcontainersv1.CBContainersCluster) error {

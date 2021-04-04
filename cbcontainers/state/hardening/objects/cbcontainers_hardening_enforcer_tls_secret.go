@@ -4,6 +4,7 @@ import (
 	"fmt"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
+	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,8 +32,8 @@ func (obj *EnforcerTlsK8sObject) EmptyK8sObject() client.Object {
 	return &coreV1.Secret{}
 }
 
-func (obj *EnforcerTlsK8sObject) HardeningChildNamespacedName(cbContainersHardening *cbcontainersv1.CBContainersHardening) types.NamespacedName {
-	return types.NamespacedName{Name: EnforcerTlsName, Namespace: cbContainersHardening.Namespace}
+func (obj *EnforcerTlsK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardening) types.NamespacedName {
+	return types.NamespacedName{Name: EnforcerTlsName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
 func (obj *EnforcerTlsK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {

@@ -90,7 +90,7 @@ func (r *CBContainersClusterReconciler) runProcessor(ctx context.Context, cbCont
 }
 
 func (r *CBContainersClusterReconciler) getAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) (string, error) {
-	accessTokenSecretNamespacedName := types.NamespacedName{Name: cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName, Namespace: cbContainersCluster.Namespace}
+	accessTokenSecretNamespacedName := types.NamespacedName{Name: cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName, Namespace: commonState.DataPlaneNamespaceName}
 	accessTokenSecret := &corev1.Secret{}
 	if err := r.Get(ctx, accessTokenSecretNamespacedName, accessTokenSecret); err != nil {
 		return "", fmt.Errorf("couldn't find access token secret k8s object: %v", err)

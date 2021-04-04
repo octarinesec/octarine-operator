@@ -14,7 +14,7 @@ spec:
     listKind: CBContainersClusterList
     plural: cbcontainersclusters
     singular: cbcontainerscluster
-  scope: Namespaced
+  scope: Cluster
   versions:
   - name: v1
     schema:

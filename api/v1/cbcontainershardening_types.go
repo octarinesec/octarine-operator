@@ -115,6 +115,7 @@ type CBContainersHardeningStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:path=cbcontainershardenings,scope=Cluster
 
 // CBContainersHardening is the Schema for the cbcontainershardenings API
 type CBContainersHardening struct {

@@ -19,8 +19,8 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
+	admissionsV1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,8 +42,6 @@ type CBContainersHardeningReconciler struct {
 	Log                   logr.Logger
 	Scheme                *runtime.Scheme
 	HardeningStateApplier hardeningStateApplier
-
-	tlsSecretValues *models.TlsSecretValues
 }
 
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainershardenings,verbs=get;list;watch;create;update;patch;delete
@@ -78,5 +76,6 @@ func (r *CBContainersHardeningReconciler) SetupWithManager(mgr ctrl.Manager) err
 		For(&cbcontainersv1.CBContainersHardening{}).
 		Owns(&appsV1.Deployment{}).
 		Owns(&coreV1.Service{}).
+		Owns(&admissionsV1beta1.ValidatingWebhookConfiguration{}).
 		Complete(r)
 }

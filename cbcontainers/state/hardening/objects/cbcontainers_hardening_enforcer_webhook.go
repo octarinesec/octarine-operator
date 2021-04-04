@@ -35,8 +35,8 @@ func (obj *EnforcerWebhookK8sObject) EmptyK8sObject() client.Object {
 	return &admissionsV1beta1.ValidatingWebhookConfiguration{}
 }
 
-func (obj *EnforcerWebhookK8sObject) HardeningChildNamespacedName(cbContainersHardening *cbcontainersv1.CBContainersHardening) types.NamespacedName {
-	return types.NamespacedName{Name: EnforcerName, Namespace: cbContainersHardening.Namespace}
+func (obj *EnforcerWebhookK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardening) types.NamespacedName {
+	return types.NamespacedName{Name: EnforcerName, Namespace: ""}
 }
 
 func (obj *EnforcerWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {

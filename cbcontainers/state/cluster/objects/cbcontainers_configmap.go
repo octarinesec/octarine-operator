@@ -16,8 +16,8 @@ func NewConfigurationK8sObject() *ConfigurationK8sObject { return &Configuration
 
 func (obj *ConfigurationK8sObject) EmptyK8sObject() client.Object { return &v1.ConfigMap{} }
 
-func (obj *ConfigurationK8sObject) ClusterChildNamespacedName(cbContainersCluster *cbcontainersv1.CBContainersCluster) types.NamespacedName {
-	return types.NamespacedName{Name: commonState.DataPlaneConfigmapName, Namespace: cbContainersCluster.Namespace}
+func (obj *ConfigurationK8sObject) ClusterChildNamespacedName(_ *cbcontainersv1.CBContainersCluster) types.NamespacedName {
+	return types.NamespacedName{Name: commonState.DataPlaneConfigmapName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
 func (obj *ConfigurationK8sObject) MutateClusterChildK8sObject(k8sObject client.Object, cbContainersCluster *cbcontainersv1.CBContainersCluster) error {

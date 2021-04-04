@@ -37,8 +37,8 @@ func (obj *EnforcerK8sObject) EmptyK8sObject() client.Object {
 	return &appsV1.Deployment{}
 }
 
-func (obj *EnforcerK8sObject) HardeningChildNamespacedName(cbContainersHardening *cbcontainersv1.CBContainersHardening) types.NamespacedName {
-	return types.NamespacedName{Name: EnforcerName, Namespace: cbContainersHardening.Namespace}
+func (obj *EnforcerK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardening) types.NamespacedName {
+	return types.NamespacedName{Name: EnforcerName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
 func (obj *EnforcerK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {

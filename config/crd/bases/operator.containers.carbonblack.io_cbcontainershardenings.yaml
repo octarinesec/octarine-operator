@@ -14,7 +14,7 @@ spec:
     listKind: CBContainersHardeningList
     plural: cbcontainershardenings
     singular: cbcontainershardening
-  scope: Namespaced
+  scope: Cluster
   versions:
   - name: v1
     schema:
