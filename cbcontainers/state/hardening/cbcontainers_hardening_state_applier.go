@@ -11,12 +11,14 @@ import (
 type CBContainersClusterStateApplier struct {
 	enforcerTlsSecret  *hardeningObjects.EnforcerTlsK8sObject
 	enforcerDeployment *hardeningObjects.EnforcerK8sObject
+	enforcerService    *hardeningObjects.EnforcerServiceK8sObject
 }
 
 func NewHardeningStateApplier(tlsSecretsValuesCreator hardeningObjects.TlsSecretsValuesCreator) *CBContainersClusterStateApplier {
 	return &CBContainersClusterStateApplier{
 		enforcerTlsSecret:  hardeningObjects.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
 		enforcerDeployment: hardeningObjects.NewEnforcerDeploymentK8sObject(),
+		enforcerService:    hardeningObjects.NewEnforcerServiceK8sObject(),
 	}
 }
 
@@ -33,5 +35,10 @@ func (c *CBContainersClusterStateApplier) ApplyDesiredState(ctx context.Context,
 		return false, err
 	}
 
-	return mutatedSecret || mutatedDeployment, nil
+	mutatedService, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerService, applyOptions)
+	if err != nil {
+		return false, err
+	}
+
+	return mutatedSecret || mutatedDeployment || mutatedService, nil
 }

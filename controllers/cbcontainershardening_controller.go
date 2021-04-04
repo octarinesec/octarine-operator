@@ -22,6 +22,7 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 	appsV1 "k8s.io/api/apps/v1"
+	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/go-logr/logr"
@@ -49,6 +50,7 @@ type CBContainersHardeningReconciler struct {
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainershardenings/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainershardenings/finalizers,verbs=update
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 
 func (r *CBContainersHardeningReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("cbcontainershardening", req.NamespacedName)
@@ -74,5 +76,6 @@ func (r *CBContainersHardeningReconciler) SetupWithManager(mgr ctrl.Manager) err
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&cbcontainersv1.CBContainersHardening{}).
 		Owns(&appsV1.Deployment{}).
+		Owns(&coreV1.Service{}).
 		Complete(r)
 }
