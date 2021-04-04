@@ -4,6 +4,7 @@ import (
 	"fmt"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
+	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/utils"
 	admissionsV1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,8 +74,8 @@ func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration *admiss
 		namespacesWebhookObj = &webhookConfiguration.Webhooks[1]
 	}
 
-	obj.mutateResourcesWebhook(resourcesWebhookObj, cbContainersHardening.Namespace, cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds)
-	obj.mutateNamespacesWebhook(namespacesWebhookObj, cbContainersHardening.Namespace, cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds)
+	obj.mutateResourcesWebhook(resourcesWebhookObj, cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds)
+	obj.mutateNamespacesWebhook(namespacesWebhookObj, cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds)
 }
 
 func (obj *EnforcerWebhookK8sObject) findWebhookByName(webhooks []admissionsV1beta1.ValidatingWebhook, name string) (*admissionsV1beta1.ValidatingWebhook, bool) {
@@ -87,16 +88,16 @@ func (obj *EnforcerWebhookK8sObject) findWebhookByName(webhooks []admissionsV1be
 	return nil, false
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook *admissionsV1beta1.ValidatingWebhook, namespace string, timeoutSeconds int32) {
+func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook *admissionsV1beta1.ValidatingWebhook, timeoutSeconds int32) {
 	resourcesWebhook.Name = ResourcesWebhookName
 	resourcesWebhook.FailurePolicy = &WebhookFailurePolicy
 	resourcesWebhook.SideEffects = &ResourcesWebhookSideEffect
-	resourcesWebhook.NamespaceSelector = obj.getResourcesNamespaceSelector(resourcesWebhook.NamespaceSelector, namespace)
+	resourcesWebhook.NamespaceSelector = obj.getResourcesNamespaceSelector(resourcesWebhook.NamespaceSelector)
 	obj.mutateResourcesWebhooksRules(resourcesWebhook)
 	resourcesWebhook.TimeoutSeconds = &timeoutSeconds
 	resourcesWebhook.ClientConfig = admissionsV1beta1.WebhookClientConfig{
 		Service: &admissionsV1beta1.ServiceReference{
-			Namespace: namespace,
+			Namespace: commonState.DataPlaneNamespaceName,
 			Name:      EnforcerName,
 			Path:      &WebhookPath,
 		},
@@ -104,7 +105,7 @@ func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook *ad
 	}
 }
 
-func (obj *EnforcerWebhookK8sObject) getResourcesNamespaceSelector(selector *metav1.LabelSelector, namespace string) *metav1.LabelSelector {
+func (obj *EnforcerWebhookK8sObject) getResourcesNamespaceSelector(selector *metav1.LabelSelector) *metav1.LabelSelector {
 	octarineIgnore := metav1.LabelSelectorRequirement{
 		Key:      "octarine",
 		Operator: metav1.LabelSelectorOpNotIn,
@@ -114,7 +115,7 @@ func (obj *EnforcerWebhookK8sObject) getResourcesNamespaceSelector(selector *met
 	cbContainersNamespace := metav1.LabelSelectorRequirement{
 		Key:      "name",
 		Operator: metav1.LabelSelectorOpNotIn,
-		Values:   []string{namespace},
+		Values:   []string{commonState.DataPlaneNamespaceName},
 	}
 
 	initializeLabelSelector := false
@@ -183,7 +184,7 @@ func (obj *EnforcerWebhookK8sObject) getResourcesList() []string {
 	}
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook *admissionsV1beta1.ValidatingWebhook, namespace string, timeoutSeconds int32) {
+func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook *admissionsV1beta1.ValidatingWebhook, timeoutSeconds int32) {
 	namespacesWebhook.Name = NamespacesWebhookName
 	namespacesWebhook.FailurePolicy = &WebhookFailurePolicy
 	namespacesWebhook.SideEffects = &NamespacesWebhookSideEffect
@@ -192,7 +193,7 @@ func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook *
 	namespacesWebhook.TimeoutSeconds = &timeoutSeconds
 	namespacesWebhook.ClientConfig = admissionsV1beta1.WebhookClientConfig{
 		Service: &admissionsV1beta1.ServiceReference{
-			Namespace: namespace,
+			Namespace: commonState.DataPlaneNamespaceName,
 			Name:      EnforcerName,
 			Path:      &WebhookPath,
 		},
