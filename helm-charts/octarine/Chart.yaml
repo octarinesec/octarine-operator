@@ -3,10 +3,10 @@ appVersion: "1.0"
 dependencies:
 - condition: guardrails.enabled
   name: guardrails
-  version: 0.1.0
+  version: 0.1.1
 - condition: nodeguard.enabled
   name: nodeguard
   version: 0.1.0
 description: A Helm chart for Octarine dataplane
 name: octarine
-version: 0.1.0
+version: 0.1.1

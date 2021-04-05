@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: cbartifactory/octarine-operator
-  tag: 2.0.0
+  tag: 2.0.2
   pullPolicy: Always
 
 args:
