@@ -2,8 +2,8 @@ name: Build and publish services
 
 on:
   push:
-    branches:
-      - "*"
+    tags:
+      - "v*.*.*"
   pull_request:
     branches:
       - "*"
@@ -33,7 +33,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Build octarine operator
-        run: operator-sdk build cbartifactory/octarine-operator:infra129
+        run: operator-sdk build cbartifactory/octarine-operator:${{ steps.docker-tag.outputs.tag }}
       - name: Push operator image to CBArtifactory
         id: docker_push
-        run: docker push cbartifactory/octarine-operator:infra129  #${{ steps.docker-tag.outputs.tag }}
+        run: docker push cbartifactory/octarine-operator:${{ steps.docker-tag.outputs.tag }} 
