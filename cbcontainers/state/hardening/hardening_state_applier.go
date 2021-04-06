@@ -13,7 +13,7 @@ import (
 
 type HardeningStateApplier struct {
 	enforcerTlsSecret  *hardeningObjects.EnforcerTlsK8sObject
-	enforcerDeployment *hardeningObjects.EnforcerK8sObject
+	enforcerDeployment *hardeningObjects.EnforcerDeploymentK8sObject
 	enforcerService    *hardeningObjects.EnforcerServiceK8sObject
 	enforcerWebhook    *hardeningObjects.EnforcerWebhookK8sObject
 }
