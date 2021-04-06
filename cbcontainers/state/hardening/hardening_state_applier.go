@@ -32,6 +32,20 @@ func NewHardeningStateApplier(tlsSecretsValuesCreator hardeningObjects.TlsSecret
 func (c *HardeningStateApplier) ApplyDesiredState(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
 	applyOptions := applymentOptions.NewApplyOptions().SetOwnerSetter(setOwner)
 
+	mutatedEnforcer, err := c.applyEnforcer(ctx, cbContainersHardening, client, applyOptions)
+	if err != nil {
+		return false, err
+	}
+
+	mutatedStateReporter, err := c.applyStateReporter(ctx, cbContainersHardening, client, applyOptions)
+	if err != nil {
+		return false, err
+	}
+
+	return mutatedEnforcer || mutatedStateReporter, nil
+}
+
+func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
 	mutatedSecret, secretK8sObject, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerTlsSecret, applyOptions, applymentOptions.NewApplyOptions().SetCreateOnly(true))
 	if err != nil {
 		return false, err
@@ -59,4 +73,9 @@ func (c *HardeningStateApplier) ApplyDesiredState(ctx context.Context, cbContain
 	}
 
 	return mutatedSecret || mutatedDeployment || mutatedService || mutatedWebhook, nil
+}
+
+func (c *HardeningStateApplier) applyStateReporter(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
+	mutatedDeployment, _, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.stateReporterDeployment, applyOptions)
+	return mutatedDeployment, err
 }
