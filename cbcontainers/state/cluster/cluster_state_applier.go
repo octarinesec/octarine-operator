@@ -9,19 +9,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type CBContainersClusterStateApplier struct {
+type ClusterStateApplier struct {
 	desiredConfigMap      *clusterObjects.ConfigurationK8sObject
 	desiredRegistrySecret *clusterObjects.RegistrySecretK8sObject
 }
 
-func NewClusterStateApplier() *CBContainersClusterStateApplier {
-	return &CBContainersClusterStateApplier{
+func NewClusterStateApplier() *ClusterStateApplier {
+	return &ClusterStateApplier{
 		desiredConfigMap:      clusterObjects.NewConfigurationK8sObject(),
 		desiredRegistrySecret: clusterObjects.NewRegistrySecretK8sObject(),
 	}
 }
 
-func (c *CBContainersClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, registrySecret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
+func (c *ClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, registrySecret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
 	applyOptions := applymentOptions.NewApplyOptions().SetOwnerSetter(setOwner)
 
 	mutatedConfigmap, _, err := ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredConfigMap, applyOptions)
