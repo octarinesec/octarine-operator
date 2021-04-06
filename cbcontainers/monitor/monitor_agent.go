@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
+	hardeningObjects "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/objects"
 	admissionsV1 "k8s.io/api/admissionregistration/v1"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
@@ -88,13 +89,18 @@ func (agent *MonitorAgent) buildHealthMessage() (HealthReportMessage, error) {
 		return HealthReportMessage{}, err
 	}
 
+	webhooksReports, err := agent.createWebhooksHealthReport()
+	if err != nil {
+		return HealthReportMessage{}, err
+	}
+
 	return HealthReportMessage{
 		Account:           agent.account,
 		Cluster:           agent.cluster,
 		Version:           agent.version,
 		EnabledComponents: agent.featuresStatus.GetEnabledFeatures(),
 		Workloads:         workloadsReports,
-		Webhooks:          nil,
+		Webhooks:          webhooksReports,
 	}, nil
 }
 
@@ -246,5 +252,35 @@ func (agent *MonitorAgent) updateWorkloadsReplicasWithPodsAndReplicaSets(pods ma
 
 			workloadMessage.ReplicasReports[pod.Name] = replicaMsg
 		}
+	}
+}
+
+func (agent *MonitorAgent) createWebhooksHealthReport() (map[string]WebhookHealthReport, error) {
+	webhooksReports := make(map[string]WebhookHealthReport)
+	validatingWebhooks, err := agent.healthChecker.GetValidatingWebhookConfigurations()
+	if err != nil {
+		return nil, err
+	}
+
+	agent.populateWithValidatingWebhooks(validatingWebhooks, webhooksReports)
+	return webhooksReports, nil
+}
+
+func (agent *MonitorAgent) populateWithValidatingWebhooks(webhooks map[string]admissionsV1.ValidatingWebhookConfiguration, reports map[string]WebhookHealthReport) {
+	if webhook, ok := webhooks[hardeningObjects.EnforcerName]; ok {
+		webhookMessage := agent.buildValidatingWebhookMessage(webhook)
+		if _, ok := webhooks[webhook.Name]; ok {
+			//logger.Info("duplicated webhook name", "webhook", webhook.Name)
+		}
+		reports[webhook.Name] = webhookMessage
+	} else {
+		//logger.Info("octarine validating webhook not found.", "webhook", webhookName)
+	}
+}
+
+func (agent *MonitorAgent) buildValidatingWebhookMessage(webhook admissionsV1.ValidatingWebhookConfiguration) WebhookHealthReport {
+	return WebhookHealthReport{
+		Type: WebhookTypeValidating,
+		Uid:  string(webhook.UID),
 	}
 }

@@ -49,4 +49,5 @@ type ContainerHealthReport struct {
 
 type WebhookHealthReport struct {
 	Type WebhookType
+	Uid  string
 }
