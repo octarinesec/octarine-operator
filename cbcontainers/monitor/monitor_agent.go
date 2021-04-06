@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor/models"
 	hardeningObjects "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/objects"
 	admissionsV1 "k8s.io/api/admissionregistration/v1"
 	appsV1 "k8s.io/api/apps/v1"
@@ -23,7 +24,8 @@ type healthChecker interface {
 }
 
 type messageReporter interface {
-	SendMonitorMessage(message HealthReportMessage) error
+	SendMonitorMessage(message models.HealthReportMessage) error
+	Close() error
 }
 
 type MonitorAgent struct {
@@ -78,23 +80,26 @@ func (agent *MonitorAgent) run() {
 				//logger.Error(err, "error reporting message to backend")
 			}
 		case <-agent.stopChan:
+			if err := agent.messageReporter.Close(); err != nil {
+				//logger.Error(err, "error closing reporter")
+			}
 			return
 		}
 	}
 }
 
-func (agent *MonitorAgent) buildHealthMessage() (HealthReportMessage, error) {
+func (agent *MonitorAgent) buildHealthMessage() (models.HealthReportMessage, error) {
 	workloadsReports, err := agent.createWorkloadsHealthReports()
 	if err != nil {
-		return HealthReportMessage{}, err
+		return models.HealthReportMessage{}, err
 	}
 
 	webhooksReports, err := agent.createWebhooksHealthReport()
 	if err != nil {
-		return HealthReportMessage{}, err
+		return models.HealthReportMessage{}, err
 	}
 
-	return HealthReportMessage{
+	return models.HealthReportMessage{
 		Account:           agent.account,
 		Cluster:           agent.cluster,
 		Version:           agent.version,
@@ -104,8 +109,8 @@ func (agent *MonitorAgent) buildHealthMessage() (HealthReportMessage, error) {
 	}, nil
 }
 
-func (agent *MonitorAgent) createWorkloadsHealthReports() (map[string]WorkloadHealthReport, error) {
-	workloadsReports := make(map[string]WorkloadHealthReport)
+func (agent *MonitorAgent) createWorkloadsHealthReports() (map[string]models.WorkloadHealthReport, error) {
+	workloadsReports := make(map[string]models.WorkloadHealthReport)
 
 	pods, err := agent.healthChecker.GetPods()
 	if err != nil {
@@ -134,7 +139,7 @@ func (agent *MonitorAgent) createWorkloadsHealthReports() (map[string]WorkloadHe
 	return workloadsReports, nil
 }
 
-func (agent *MonitorAgent) populateWithDeploymentsWorkloads(deployments map[string]appsV1.Deployment, reports map[string]WorkloadHealthReport) {
+func (agent *MonitorAgent) populateWithDeploymentsWorkloads(deployments map[string]appsV1.Deployment, reports map[string]models.WorkloadHealthReport) {
 	for _, deployment := range deployments {
 		workloadMessage, err := agent.buildDeploymentMessage(deployment)
 		if err != nil {
@@ -150,7 +155,7 @@ func (agent *MonitorAgent) populateWithDeploymentsWorkloads(deployments map[stri
 	}
 }
 
-func (agent *MonitorAgent) populateWithDaemonSetsWorkloads(daemonSets map[string]appsV1.DaemonSet, services map[string]WorkloadHealthReport) {
+func (agent *MonitorAgent) populateWithDaemonSetsWorkloads(daemonSets map[string]appsV1.DaemonSet, services map[string]models.WorkloadHealthReport) {
 	for _, daemonSet := range daemonSets {
 		workloadMessage, err := agent.buildDaemonSetMessage(daemonSet)
 		if err != nil {
@@ -166,67 +171,67 @@ func (agent *MonitorAgent) populateWithDaemonSetsWorkloads(daemonSets map[string
 	}
 }
 
-func (agent *MonitorAgent) buildDeploymentMessage(deployment appsV1.Deployment) (WorkloadHealthReport, error) {
-	return agent.buildWorkloadMessage(WorkloadKindDeployment, deployment.Name, deployment.Spec.Replicas, deployment.Spec.Template.Spec.Containers, deployment.Status, deployment.Labels)
+func (agent *MonitorAgent) buildDeploymentMessage(deployment appsV1.Deployment) (models.WorkloadHealthReport, error) {
+	return agent.buildWorkloadMessage(models.WorkloadKindDeployment, deployment.Name, deployment.Spec.Replicas, deployment.Spec.Template.Spec.Containers, deployment.Status, deployment.Labels)
 }
 
-func (agent *MonitorAgent) buildDaemonSetMessage(daemon appsV1.DaemonSet) (WorkloadHealthReport, error) {
-	return agent.buildWorkloadMessage(WorkloadKindDaemonSet, daemon.Name, nil, daemon.Spec.Template.Spec.Containers, daemon.Status, daemon.Labels)
+func (agent *MonitorAgent) buildDaemonSetMessage(daemon appsV1.DaemonSet) (models.WorkloadHealthReport, error) {
+	return agent.buildWorkloadMessage(models.WorkloadKindDaemonSet, daemon.Name, nil, daemon.Spec.Template.Spec.Containers, daemon.Status, daemon.Labels)
 }
 
-func (agent *MonitorAgent) buildReplicaMessage(pod coreV1.Pod) (WorkloadReplicaHealthReport, error) {
-	specContainers := make(map[string]ContainerHealthReport)
+func (agent *MonitorAgent) buildReplicaMessage(pod coreV1.Pod) (models.WorkloadReplicaHealthReport, error) {
+	specContainers := make(map[string]models.ContainerHealthReport)
 	for _, container := range pod.Spec.Containers {
-		specContainers[container.Name] = ContainerHealthReport{
+		specContainers[container.Name] = models.ContainerHealthReport{
 			Image: container.Image,
 		}
 	}
 
 	status, err := json.Marshal(pod.Status)
 	if err != nil {
-		return WorkloadReplicaHealthReport{}, fmt.Errorf("error marshaling status for pod: %v", pod.Name)
+		return models.WorkloadReplicaHealthReport{}, fmt.Errorf("error marshaling status for pod: %v", pod.Name)
 	}
 
-	spec := WorkloadReplicaSpecReport{
+	spec := models.WorkloadReplicaSpecReport{
 		Containers: specContainers,
 	}
 
-	return WorkloadReplicaHealthReport{
+	return models.WorkloadReplicaHealthReport{
 		Node:   pod.Spec.NodeName,
 		Spec:   spec,
 		Status: status,
 	}, nil
 }
 
-func (agent *MonitorAgent) buildWorkloadMessage(workloadKind WorkloadKind, name string, replicas *int32, containers []coreV1.Container, statusObj interface{}, labels map[string]string) (WorkloadHealthReport, error) {
-	containersReports := make(map[string]ContainerHealthReport)
+func (agent *MonitorAgent) buildWorkloadMessage(workloadKind models.WorkloadKind, name string, replicas *int32, containers []coreV1.Container, statusObj interface{}, labels map[string]string) (models.WorkloadHealthReport, error) {
+	containersReports := make(map[string]models.ContainerHealthReport)
 	for _, container := range containers {
-		containersReports[container.Name] = ContainerHealthReport{Image: container.Image}
+		containersReports[container.Name] = models.ContainerHealthReport{Image: container.Image}
 	}
 
 	status, err := json.Marshal(statusObj)
 	if err != nil {
-		return WorkloadHealthReport{}, fmt.Errorf("error marshaling status for %v: %v", workloadKind, name)
+		return models.WorkloadHealthReport{}, fmt.Errorf("error marshaling status for %v: %v", workloadKind, name)
 	}
 
-	spec := WorkloadSpecReport{
+	spec := models.WorkloadSpecReport{
 		Containers: containersReports,
 	}
 	if replicas != nil {
 		spec.Replicas = *replicas
 	}
 
-	return WorkloadHealthReport{
+	return models.WorkloadHealthReport{
 		Kind:            workloadKind,
 		Spec:            spec,
 		Status:          status,
-		ReplicasReports: make(map[string]WorkloadReplicaHealthReport),
+		ReplicasReports: make(map[string]models.WorkloadReplicaHealthReport),
 		Labels:          labels,
 	}, nil
 
 }
 
-func (agent *MonitorAgent) updateWorkloadsReplicasWithPodsAndReplicaSets(pods map[string]coreV1.Pod, replicaSets map[string]appsV1.ReplicaSet, reports map[string]WorkloadHealthReport) {
+func (agent *MonitorAgent) updateWorkloadsReplicasWithPodsAndReplicaSets(pods map[string]coreV1.Pod, replicaSets map[string]appsV1.ReplicaSet, reports map[string]models.WorkloadHealthReport) {
 	for _, pod := range pods {
 		if len(pod.OwnerReferences) < 1 {
 			//logger.Info("found pod with no parent", "pod", podName)
@@ -255,8 +260,8 @@ func (agent *MonitorAgent) updateWorkloadsReplicasWithPodsAndReplicaSets(pods ma
 	}
 }
 
-func (agent *MonitorAgent) createWebhooksHealthReport() (map[string]WebhookHealthReport, error) {
-	webhooksReports := make(map[string]WebhookHealthReport)
+func (agent *MonitorAgent) createWebhooksHealthReport() (map[string]models.WebhookHealthReport, error) {
+	webhooksReports := make(map[string]models.WebhookHealthReport)
 	validatingWebhooks, err := agent.healthChecker.GetValidatingWebhookConfigurations()
 	if err != nil {
 		return nil, err
@@ -266,7 +271,7 @@ func (agent *MonitorAgent) createWebhooksHealthReport() (map[string]WebhookHealt
 	return webhooksReports, nil
 }
 
-func (agent *MonitorAgent) populateWithValidatingWebhooks(webhooks map[string]admissionsV1.ValidatingWebhookConfiguration, reports map[string]WebhookHealthReport) {
+func (agent *MonitorAgent) populateWithValidatingWebhooks(webhooks map[string]admissionsV1.ValidatingWebhookConfiguration, reports map[string]models.WebhookHealthReport) {
 	if webhook, ok := webhooks[hardeningObjects.EnforcerName]; ok {
 		webhookMessage := agent.buildValidatingWebhookMessage(webhook)
 		if _, ok := webhooks[webhook.Name]; ok {
@@ -278,9 +283,9 @@ func (agent *MonitorAgent) populateWithValidatingWebhooks(webhooks map[string]ad
 	}
 }
 
-func (agent *MonitorAgent) buildValidatingWebhookMessage(webhook admissionsV1.ValidatingWebhookConfiguration) WebhookHealthReport {
-	return WebhookHealthReport{
-		Type: WebhookTypeValidating,
+func (agent *MonitorAgent) buildValidatingWebhookMessage(webhook admissionsV1.ValidatingWebhookConfiguration) models.WebhookHealthReport {
+	return models.WebhookHealthReport{
+		Type: models.WebhookTypeValidating,
 		Uid:  string(webhook.UID),
 	}
 }

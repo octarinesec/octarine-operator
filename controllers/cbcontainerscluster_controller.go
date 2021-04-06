@@ -38,7 +38,8 @@ type clusterStateApplier interface {
 }
 
 type clusterProcessor interface {
-	Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error)
+	GetRegistrySecretValues(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error)
+	UpdateMonitor(ctx context.Context, cluster *cbcontainersv1.CBContainersCluster)
 }
 
 type CBContainersClusterReconciler struct {
@@ -66,7 +67,7 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.SetControllerReference(cbContainersCluster, controlledResource, r.Scheme)
 	}
 
-	registrySecret, err := r.runProcessor(ctx, cbContainersCluster)
+	registrySecret, err := r.getRegistrySecretValues(ctx, cbContainersCluster)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -76,16 +77,20 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 
+	if stateWasChanged {
+		r.ClusterProcessor.UpdateMonitor(ctx, cbContainersCluster)
+	}
+
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
-func (r *CBContainersClusterReconciler) runProcessor(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) (*models.RegistrySecretValues, error) {
+func (r *CBContainersClusterReconciler) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) (*models.RegistrySecretValues, error) {
 	accessToken, err := r.getAccessToken(ctx, cbContainersCluster)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.ClusterProcessor.Process(cbContainersCluster, accessToken)
+	return r.ClusterProcessor.GetRegistrySecretValues(cbContainersCluster, accessToken)
 }
 
 func (r *CBContainersClusterReconciler) getAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) (string, error) {

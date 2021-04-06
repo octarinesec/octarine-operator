@@ -1,4 +1,4 @@
-package monitor
+package models
 
 type WorkloadKind string
 type WebhookType string

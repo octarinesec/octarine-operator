@@ -6,8 +6,12 @@ require (
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/go-logr/logr v0.3.0
 	github.com/go-resty/resty/v2 v2.5.0
+	github.com/golang/protobuf v1.4.2
+	github.com/google/uuid v1.1.2 // indirect
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.2
+	google.golang.org/grpc v1.36.1
+	google.golang.org/protobuf v1.25.0
 	k8s.io/api v0.19.2
 	k8s.io/apimachinery v0.19.2
 	k8s.io/client-go v0.19.2

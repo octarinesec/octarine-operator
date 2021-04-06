@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
@@ -90,4 +91,12 @@ func (gateway *ApiGateway) GetRegistrySecret() (*models.RegistrySecretValues, er
 	}
 
 	return resp.Result().(*models.RegistrySecretValues), nil
+}
+
+func (gateway *ApiGateway) GetCertificates(name string) (*x509.CertPool, *tls.Certificate, error) {
+	commonName := name
+	organization := []string{"Octarine", gateway.account}
+	organizationalUnit := []string{gateway.cluster}
+
+	return gateway.getCertificates(commonName, organizationalUnit, organization)
 }

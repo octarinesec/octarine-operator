@@ -25,9 +25,16 @@ import (
 
 // CBContainersClusterSpec defines the desired state of CBContainersCluster
 type CBContainersClusterSpec struct {
-	Account        string                            `json:"account,required"`
-	ClusterName    string                            `json:"clusterName,required"`
-	ApiGatewaySpec CBContainersClusterApiGatewaySpec `json:"apiGatewaySpec,required"`
+	Account           string                               `json:"account,required"`
+	ClusterName       string                               `json:"clusterName,required"`
+	ApiGatewaySpec    CBContainersClusterApiGatewaySpec    `json:"apiGatewaySpec,required"`
+	EventsGatewaySpec CBContainersClusterEventsGatewaySpec `json:"eventsGatewaySpec,required"`
+}
+
+type CBContainersClusterEventsGatewaySpec struct {
+	Host string `json:"host,required"`
+	// +kubebuilder:default:=443
+	Port int `json:"port,omitempty"`
 }
 
 type CBContainersClusterApiGatewaySpec struct {
