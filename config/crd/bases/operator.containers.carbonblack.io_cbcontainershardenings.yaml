@@ -55,13 +55,11 @@ spec:
                   env:
                     additionalProperties:
                       type: string
-                    default:
-                      GIN_MODE: release
-                      GUARDRAILS_ENFORCER_CERT_FILE_PATH: /etc/octarine-certificates/signed_cert
-                      GUARDRAILS_ENFORCER_KEY_FILE_PATH: /etc/octarine-certificates/key
+                    default: {}
                     type: object
                   image:
-                    default: {}
+                    default:
+                      repository: cbartifactory/guardrails-enforcer
                     properties:
                       pullPolicy:
                         default: Always
@@ -69,7 +67,6 @@ spec:
                           pull a container image
                         type: string
                       repository:
-                        default: cbartifactory/guardrails-enforcer
                         type: string
                       tag:
                         type: string
@@ -168,34 +165,6 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                         type: object
                     type: object
-                  securityContext:
-                    default: {}
-                    properties:
-                      allowPrivilegeEscalation:
-                        default: false
-                        type: boolean
-                      capabilitiesToAdd:
-                        default:
-                        - NET_BIND_SERVICE
-                        items:
-                          description: Capability represent POSIX capabilities type
-                          type: string
-                        type: array
-                      capabilitiesToDrop:
-                        default:
-                        - ALL
-                        items:
-                          description: Capability represent POSIX capabilities type
-                          type: string
-                        type: array
-                      readOnlyRootFilesystem:
-                        default: true
-                        type: boolean
-                      runAsUser:
-                        default: 0
-                        format: int64
-                        type: integer
-                    type: object
                   webhookTimeoutSeconds:
                     default: 5
                     format: int32
@@ -210,6 +179,129 @@ spec:
                     type: integer
                 required:
                 - host
+                type: object
+              stateReporterSpec:
+                default: {}
+                properties:
+                  deploymentAnnotations:
+                    additionalProperties:
+                      type: string
+                    default: {}
+                    type: object
+                  deploymentLabels:
+                    additionalProperties:
+                      type: string
+                    default: {}
+                    type: object
+                  env:
+                    additionalProperties:
+                      type: string
+                    default: {}
+                    type: object
+                  image:
+                    default:
+                      repository: cbartifactory/guardrails-state-reporter
+                    properties:
+                      pullPolicy:
+                        default: Always
+                        description: PullPolicy describes a policy for if/when to
+                          pull a container image
+                        type: string
+                      repository:
+                        type: string
+                      tag:
+                        type: string
+                    type: object
+                  podTemplateAnnotations:
+                    additionalProperties:
+                      type: string
+                    default:
+                      prometheus.io/port: "7071"
+                      prometheus.io/scrape: "false"
+                    type: object
+                  podTemplateLabels:
+                    additionalProperties:
+                      type: string
+                    default:
+                      ben: ben
+                    type: object
+                  probes:
+                    default: {}
+                    properties:
+                      failureThreshold:
+                        default: 3
+                        format: int32
+                        type: integer
+                      initialDelaySeconds:
+                        default: 3
+                        format: int32
+                        type: integer
+                      livenessPath:
+                        default: /alive
+                        type: string
+                      periodSeconds:
+                        default: 30
+                        format: int32
+                        type: integer
+                      port:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        default: 8181
+                        x-kubernetes-int-or-string: true
+                      readinessPath:
+                        default: /ready
+                        type: string
+                      scheme:
+                        default: HTTP
+                        description: URIScheme identifies the scheme used for connection
+                          to a host for Get actions
+                        type: string
+                      successThreshold:
+                        default: 1
+                        format: int32
+                        type: integer
+                      timeoutSeconds:
+                        default: 1
+                        format: int32
+                        type: integer
+                    required:
+                    - port
+                    type: object
+                  resources:
+                    default:
+                      limits:
+                        cpu: 200m
+                        memory: 256Mi
+                      requests:
+                        cpu: 30m
+                        memory: 64Mi
+                    description: ResourceRequirements describes the compute resource
+                      requirements.
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                    type: object
                 type: object
               version:
                 type: string

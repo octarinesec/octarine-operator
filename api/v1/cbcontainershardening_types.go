@@ -25,13 +25,62 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type CBContainersHardeningProbesSpec struct {
+	// +kubebuilder:default:="/ready"
+	ReadinessPath string `json:"readinessPath,omitempty"`
+	// +kubebuilder:default:="/alive"
+	LivenessPath string `json:"livenessPath,omitempty"`
+	// +kubebuilder:default:=8181
+	Port intstr.IntOrString `json:"port"`
+	// +kubebuilder:default:="HTTP"
+	Scheme coreV1.URIScheme `json:"scheme,omitempty"`
+	// +kubebuilder:default:=3
+	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
+	// +kubebuilder:default:=1
+	TimeoutSeconds int32 `json:"timeoutSeconds,omitempty"`
+	// +kubebuilder:default:=30
+	PeriodSeconds int32 `json:"periodSeconds,omitempty"`
+	// +kubebuilder:default:=1
+	SuccessThreshold int32 `json:"successThreshold,omitempty"`
+	// +kubebuilder:default:=3
+	FailureThreshold int32 `json:"failureThreshold,omitempty"`
+}
+
+type CBContainersHardeningImageSpec struct {
+	Repository string `json:"repository,omitempty"`
+	Tag        string `json:"tag,omitempty"`
+	// +kubebuilder:default:="Always"
+	PullPolicy coreV1.PullPolicy `json:"pullPolicy,omitempty"`
+}
+
 type CBContainersHardeningSpec struct {
 	Version string `json:"version,required"`
 	// +kubebuilder:default:="cbcontainers-access-token"
 	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
 	// +kubebuilder:default:=<>
-	EnforcerSpec      CBContainersHardeningEnforcerSpec      `json:"enforcerSpec,omitempty"`
+	EnforcerSpec CBContainersHardeningEnforcerSpec `json:"enforcerSpec,omitempty"`
+	// +kubebuilder:default:=<>
+	StateReporterSpec CBContainersHardeningStateReporterSpec `json:"stateReporterSpec,omitempty"`
 	EventsGatewaySpec CBContainersHardeningEventsGatewaySpec `json:"eventsGatewaySpec,required"`
+}
+
+type CBContainersHardeningStateReporterSpec struct {
+	// +kubebuilder:default:=<>
+	DeploymentLabels map[string]string `json:"deploymentLabels,omitempty"`
+	// +kubebuilder:default:={ben:ben}
+	PodTemplateLabels map[string]string `json:"podTemplateLabels,omitempty"`
+	// +kubebuilder:default:=<>
+	DeploymentAnnotations map[string]string `json:"deploymentAnnotations,omitempty"`
+	// +kubebuilder:default:={prometheus.io/scrape: "false", prometheus.io/port: "7071"}
+	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
+	// +kubebuilder:default:={repository:"cbartifactory/guardrails-state-reporter"}
+	Image CBContainersHardeningImageSpec `json:"image,omitempty"`
+	// +kubebuilder:default:=<>
+	Env map[string]string `json:"env,omitempty"`
+	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}
+	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
+	// +kubebuilder:default:=<>
+	Probes CBContainersHardeningProbesSpec `json:"probes,omitempty"`
 }
 
 type CBContainersHardeningEventsGatewaySpec struct {
@@ -51,60 +100,16 @@ type CBContainersHardeningEnforcerSpec struct {
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
 	// +kubebuilder:default:=1
 	ReplicasCount int32 `json:"replicasCount,omitempty"`
-	// +kubebuilder:default:={GUARDRAILS_ENFORCER_KEY_FILE_PATH: "/etc/octarine-certificates/key", GUARDRAILS_ENFORCER_CERT_FILE_PATH: "/etc/octarine-certificates/signed_cert", GIN_MODE: "release"}
+	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
-	// +kubebuilder:default:=<>
-	Image CBContainersHardeningEnforcerImageSpec `json:"image,omitempty"`
-	// +kubebuilder:default:=<>
-	SecurityContext CBContainersHardeningEnforcerSecurityContextSpec `json:"securityContext,omitempty"`
+	// +kubebuilder:default:={repository:"cbartifactory/guardrails-enforcer"}
+	Image CBContainersHardeningImageSpec `json:"image,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
-	Probes CBContainersHardeningEnforcerProbesSpec `json:"probes,omitempty"`
+	Probes CBContainersHardeningProbesSpec `json:"probes,omitempty"`
 	// +kubebuilder:default:=5
 	WebhookTimeoutSeconds int32 `json:"webhookTimeoutSeconds,omitempty"`
-}
-
-type CBContainersHardeningEnforcerImageSpec struct {
-	// +kubebuilder:default:="cbartifactory/guardrails-enforcer"
-	Repository string `json:"repository,omitempty"`
-	Tag        string `json:"tag,omitempty"`
-	// +kubebuilder:default:="Always"
-	PullPolicy coreV1.PullPolicy `json:"pullPolicy,omitempty"`
-}
-
-type CBContainersHardeningEnforcerSecurityContextSpec struct {
-	// +kubebuilder:default:=false
-	AllowPrivilegeEscalation bool `json:"allowPrivilegeEscalation,omitempty"`
-	// +kubebuilder:default:=true
-	ReadOnlyRootFilesystem bool `json:"readOnlyRootFilesystem,omitempty"`
-	// +kubebuilder:default:=0
-	RunAsUser int64 `json:"runAsUser,omitempty"`
-	// +kubebuilder:default:={"NET_BIND_SERVICE"}
-	CapabilitiesToAdd []coreV1.Capability `json:"capabilitiesToAdd,omitempty"`
-	// +kubebuilder:default:={"ALL"}
-	CapabilitiesToDrop []coreV1.Capability `json:"capabilitiesToDrop,omitempty"`
-}
-
-type CBContainersHardeningEnforcerProbesSpec struct {
-	// +kubebuilder:default:="/ready"
-	ReadinessPath string `json:"readinessPath,omitempty"`
-	// +kubebuilder:default:="/alive"
-	LivenessPath string `json:"livenessPath,omitempty"`
-	// +kubebuilder:default:=8181
-	Port intstr.IntOrString `json:"port"`
-	// +kubebuilder:default:="HTTP"
-	Scheme coreV1.URIScheme `json:"scheme,omitempty"`
-	// +kubebuilder:default:=3
-	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
-	// +kubebuilder:default:=1
-	TimeoutSeconds int32 `json:"timeoutSeconds,omitempty"`
-	// +kubebuilder:default:=30
-	PeriodSeconds int32 `json:"periodSeconds,omitempty"`
-	// +kubebuilder:default:=1
-	SuccessThreshold int32 `json:"successThreshold,omitempty"`
-	// +kubebuilder:default:=3
-	FailureThreshold int32 `json:"failureThreshold,omitempty"`
 }
 
 // CBContainersHardeningStatus defines the observed state of CBContainersHardening

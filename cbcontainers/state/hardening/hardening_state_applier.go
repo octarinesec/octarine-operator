@@ -12,18 +12,20 @@ import (
 )
 
 type HardeningStateApplier struct {
-	enforcerTlsSecret  *hardeningObjects.EnforcerTlsK8sObject
-	enforcerDeployment *hardeningObjects.EnforcerDeploymentK8sObject
-	enforcerService    *hardeningObjects.EnforcerServiceK8sObject
-	enforcerWebhook    *hardeningObjects.EnforcerWebhookK8sObject
+	enforcerTlsSecret       *hardeningObjects.EnforcerTlsK8sObject
+	enforcerDeployment      *hardeningObjects.EnforcerDeploymentK8sObject
+	enforcerService         *hardeningObjects.EnforcerServiceK8sObject
+	enforcerWebhook         *hardeningObjects.EnforcerWebhookK8sObject
+	stateReporterDeployment *hardeningObjects.StateReporterDeploymentK8sObject
 }
 
 func NewHardeningStateApplier(tlsSecretsValuesCreator hardeningObjects.TlsSecretsValuesCreator) *HardeningStateApplier {
 	return &HardeningStateApplier{
-		enforcerTlsSecret:  hardeningObjects.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
-		enforcerDeployment: hardeningObjects.NewEnforcerDeploymentK8sObject(),
-		enforcerService:    hardeningObjects.NewEnforcerServiceK8sObject(),
-		enforcerWebhook:    hardeningObjects.NewEnforcerWebhookK8sObject(),
+		enforcerTlsSecret:       hardeningObjects.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
+		enforcerDeployment:      hardeningObjects.NewEnforcerDeploymentK8sObject(),
+		enforcerService:         hardeningObjects.NewEnforcerServiceK8sObject(),
+		enforcerWebhook:         hardeningObjects.NewEnforcerWebhookK8sObject(),
+		stateReporterDeployment: hardeningObjects.NewStateReporterDeploymentK8sObject(),
 	}
 }
 
