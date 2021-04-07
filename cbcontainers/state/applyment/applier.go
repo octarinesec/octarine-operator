@@ -12,6 +12,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func DeleteK8sObjectIfExists(ctx context.Context, client client.Client, desiredK8sObject stateTypes.DesiredK8sObject) error {
+	k8sObject, objectExists, err := getK8sObject(ctx, client, desiredK8sObject, desiredK8sObject.NamespacedName())
+	if err != nil {
+		return err
+	}
+
+	if !objectExists {
+		return nil
+	}
+
+	return client.Delete(ctx, k8sObject)
+}
+
 func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8sObject stateTypes.DesiredK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
 	applyOptions := applymentOptions.MergeApplyOptions(applyOptionsList...)
 	namespacedName := desiredK8sObject.NamespacedName()

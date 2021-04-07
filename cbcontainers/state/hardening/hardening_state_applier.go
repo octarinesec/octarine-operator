@@ -7,6 +7,7 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 	hardeningObjects "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/objects"
+	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -56,20 +57,39 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 		return false, fmt.Errorf("expected Secret K8s object")
 	}
 
-	mutatedDeployment, _, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerDeployment, applyOptions)
-	if err != nil {
-		return false, err
-	}
-
 	mutatedService, _, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerService, applyOptions)
 	if err != nil {
+		if deleteErr := DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
+			return false, deleteErr
+		}
 		return false, err
 	}
 
-	c.enforcerWebhook.TlsSecretValues = models.TlsSecretValuesFromSecretData(tlsSecret.Data)
-	mutatedWebhook, _, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerWebhook, applyOptions)
+	mutatedDeployment, deploymentK8sObject, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerDeployment, applyOptions)
 	if err != nil {
+		if deleteErr := DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
+			return false, deleteErr
+		}
 		return false, err
+	}
+
+	enforcerDeployment, ok := deploymentK8sObject.(*appsV1.Deployment)
+	if !ok {
+		return false, fmt.Errorf("expected Deployment K8s object")
+	}
+
+	mutatedWebhook := false
+	if enforcerDeployment.Status.ReadyReplicas < 1 {
+		if deleteErr := DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
+			return false, deleteErr
+		}
+		mutatedWebhook = true
+	} else {
+		c.enforcerWebhook.TlsSecretValues = models.TlsSecretValuesFromSecretData(tlsSecret.Data)
+		mutatedWebhook, _, err = ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerWebhook, applyOptions)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	return mutatedSecret || mutatedDeployment || mutatedService || mutatedWebhook, nil
