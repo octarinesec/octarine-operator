@@ -1,64 +1,87 @@
 package cluster
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
+	"reflect"
 )
 
-type ClusterRegistrar interface {
+type Gateway interface {
 	RegisterCluster() error
 	GetRegistrySecret() (*models.RegistrySecretValues, error)
 	GetCertificates(name string) (*x509.CertPool, *tls.Certificate, error)
 }
 
-type ClusterRegistrarCreator interface {
-	CreateClusterRegistrar(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) ClusterRegistrar
+type gatewayCreator interface {
+	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) Gateway
 }
 
-type monitor interface {
+type monitorCreator interface {
+	CreateMonitor(cbContainersCluster *cbcontainersv1.CBContainersCluster, gateway Gateway) (Monitor, error)
+}
+
+type Monitor interface {
 	Start()
 	Stop()
 }
 
-type monitorCreator func(host string, port int, certPool *x509.CertPool, cert *tls.Certificate) monitor
-
 type CBContainerClusterProcessor struct {
-	clusterRegistrarCreator ClusterRegistrarCreator
-	createMonitor           monitorCreator
-	monitor                 monitor
+	gatewayCreator gatewayCreator
+	monitorCreator monitorCreator
+
+	gateway Gateway
+	monitor Monitor
+
+	lastProcessedObject *cbcontainersv1.CBContainersCluster
 }
 
-func NewCBContainerClusterProcessor(clusterRegistrarCreator ClusterRegistrarCreator, createMonitor monitorCreator) *CBContainerClusterProcessor {
+func NewCBContainerClusterProcessor(clusterRegistrarCreator gatewayCreator, monitorCreator monitorCreator) *CBContainerClusterProcessor {
 	return &CBContainerClusterProcessor{
-		clusterRegistrarCreator: clusterRegistrarCreator,
-		createMonitor:           createMonitor,
-		monitor:                 nil,
+		gatewayCreator:      clusterRegistrarCreator,
+		monitorCreator:      monitorCreator,
+		gateway:             nil,
+		monitor:             nil,
+		lastProcessedObject: nil,
 	}
 }
 
-func (processor *CBContainerClusterProcessor) GetRegistrySecretValues(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error) {
-	clusterRegistrar := processor.clusterRegistrarCreator.CreateClusterRegistrar(cbContainersCluster, accessToken)
+func (processor *CBContainerClusterProcessor) Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error) {
+	if err := processor.initializeIfNeeded(cbContainersCluster, accessToken); err != nil {
+		return nil, err
+	}
 
-	registrySecret, err := clusterRegistrar.GetRegistrySecret()
+	registrySecret, err := processor.gateway.GetRegistrySecret()
 	if err != nil {
 		return nil, err
 	}
 
-	if err := clusterRegistrar.RegisterCluster(); err != nil {
+	if err := processor.gateway.RegisterCluster(); err != nil {
 		return nil, err
 	}
 
 	return registrySecret, nil
 }
 
-func (processor *CBContainerClusterProcessor) UpdateMonitor(ctx context.Context, cluster *cbcontainersv1.CBContainersCluster) {
+func (processor *CBContainerClusterProcessor) initializeIfNeeded(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) error {
+	if processor.gateway != nil && processor.monitor != nil && processor.lastProcessedObject != nil && reflect.DeepEqual(processor.lastProcessedObject, cbContainersCluster) {
+		return nil
+	}
+
+	gateway := processor.gatewayCreator.CreateGateway(cbContainersCluster, accessToken)
+	monitor, err := processor.monitorCreator.CreateMonitor(cbContainersCluster, gateway)
+	if err != nil {
+		return err
+	}
+
 	if processor.monitor != nil {
 		processor.monitor.Stop()
 	}
 
-	processor.monitor = processor.createMonitor(cluster.Spec.EventsGatewaySpec.Host, cluster.Spec.EventsGatewaySpec.Port)
+	processor.gateway = gateway
+	processor.monitor = monitor
 	processor.monitor.Start()
+
+	return nil
 }

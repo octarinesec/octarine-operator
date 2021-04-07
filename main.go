@@ -18,6 +18,8 @@ package main
 
 import (
 	"flag"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor"
+	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"os"
 
 	clusterProcessors "github.com/vmware/cbcontainers-operator/cbcontainers/processors/cluster"
@@ -88,7 +90,7 @@ func main() {
 		Client:              mgr.GetClient(),
 		Log:                 ctrl.Log.WithName("controllers").WithName("CBContainersCluster"),
 		Scheme:              mgr.GetScheme(),
-		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(clusterProcessors.NewDefaultClusterRegistrarCreator()),
+		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(clusterProcessors.NewDefaultGatewayCreator(), clusterProcessors.NewDefaultMonitorCreator(monitor.NewDefaultHealthChecker(mgr.GetClient(), commonState.DataPlaneNamespaceName), monitor.NewDefaultFeaturesStatusProvider(mgr.GetClient()))),
 		ClusterStateApplier: clusterState.NewClusterStateApplier(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")

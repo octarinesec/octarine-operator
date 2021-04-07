@@ -11,11 +11,12 @@ import (
 	"time"
 )
 
-type featuresStatus interface {
-	GetEnabledFeatures() map[string]bool
+type FeaturesStatusProvider interface {
+	HardeningEnabled() (bool, error)
+	RuntimeEnabled() (bool, error)
 }
 
-type healthChecker interface {
+type HealthChecker interface {
 	GetPods() (map[string]coreV1.Pod, error)
 	GetReplicaSets() (map[string]appsV1.ReplicaSet, error)
 	GetDeployments() (map[string]appsV1.Deployment, error)
@@ -34,9 +35,9 @@ type MonitorAgent struct {
 	accessToken string
 	version     string
 
-	healthChecker   healthChecker
-	featuresStatus  featuresStatus
-	messageReporter messageReporter
+	healthChecker          HealthChecker
+	featuresStatusProvider FeaturesStatusProvider
+	messageReporter        messageReporter
 
 	// The interval for sending health reports to the backend
 	interval time.Duration
@@ -45,17 +46,16 @@ type MonitorAgent struct {
 	stopChan chan struct{}
 }
 
-func NewMonitorAgent(account, cluster, accessToken, version string, healthChecker healthChecker, featuresStatus featuresStatus, messageReporter messageReporter, interval time.Duration) *MonitorAgent {
+func NewMonitorAgent(account, cluster, version string, healthChecker HealthChecker, featuresStatus FeaturesStatusProvider, messageReporter messageReporter, interval time.Duration) *MonitorAgent {
 	return &MonitorAgent{
-		account:         account,
-		cluster:         cluster,
-		accessToken:     accessToken,
-		version:         version,
-		healthChecker:   healthChecker,
-		featuresStatus:  featuresStatus,
-		messageReporter: messageReporter,
-		interval:        interval,
-		stopChan:        make(chan struct{}),
+		account:                account,
+		cluster:                cluster,
+		version:                version,
+		healthChecker:          healthChecker,
+		featuresStatusProvider: featuresStatus,
+		messageReporter:        messageReporter,
+		interval:               interval,
+		stopChan:               make(chan struct{}),
 	}
 }
 
@@ -89,6 +89,16 @@ func (agent *MonitorAgent) run() {
 }
 
 func (agent *MonitorAgent) buildHealthMessage() (models.HealthReportMessage, error) {
+	hardeningEnabled, err := agent.featuresStatusProvider.HardeningEnabled()
+	if err != nil {
+		return models.HealthReportMessage{}, err
+	}
+
+	runtimeEnabled, err := agent.featuresStatusProvider.HardeningEnabled()
+	if err != nil {
+		return models.HealthReportMessage{}, err
+	}
+
 	workloadsReports, err := agent.createWorkloadsHealthReports()
 	if err != nil {
 		return models.HealthReportMessage{}, err
@@ -100,12 +110,15 @@ func (agent *MonitorAgent) buildHealthMessage() (models.HealthReportMessage, err
 	}
 
 	return models.HealthReportMessage{
-		Account:           agent.account,
-		Cluster:           agent.cluster,
-		Version:           agent.version,
-		EnabledComponents: agent.featuresStatus.GetEnabledFeatures(),
-		Workloads:         workloadsReports,
-		Webhooks:          webhooksReports,
+		Account: agent.account,
+		Cluster: agent.cluster,
+		Version: agent.version,
+		EnabledComponents: map[string]bool{
+			HardeningFeature: hardeningEnabled,
+			RuntimeFeature:   runtimeEnabled,
+		},
+		Workloads: workloadsReports,
+		Webhooks:  webhooksReports,
 	}, nil
 }
 

@@ -16,7 +16,7 @@ type GrpcMonitorReporter struct {
 	connection *grpc.ClientConn
 }
 
-func NewGrpcMonitorReporter(host string, port uint32, certPool *x509.CertPool, cert *tls.Certificate) (*GrpcMonitorReporter, error) {
+func NewGrpcMonitorReporter(host string, port int, certPool *x509.CertPool, cert *tls.Certificate) (*GrpcMonitorReporter, error) {
 	connection, err := grpcCommunication.GetGrpcConnection(host, port, certPool, cert)
 	if err != nil {
 		return nil, err

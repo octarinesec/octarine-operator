@@ -5,14 +5,14 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/communication/gateway"
 )
 
-type DefaultClusterRegistrarCreator struct {
+type DefaultGatewayCreator struct {
 }
 
-func NewDefaultClusterRegistrarCreator() *DefaultClusterRegistrarCreator {
-	return &DefaultClusterRegistrarCreator{}
+func NewDefaultGatewayCreator() *DefaultGatewayCreator {
+	return &DefaultGatewayCreator{}
 }
 
-func (registrarCreator *DefaultClusterRegistrarCreator) CreateClusterRegistrar(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) ClusterRegistrar {
+func (creator *DefaultGatewayCreator) CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) Gateway {
 	spec := cbContainersCluster.Spec
 	return gateway.NewApiGateway(spec.Account, spec.ClusterName, accessToken, spec.ApiGatewaySpec.Scheme, spec.ApiGatewaySpec.Host, spec.ApiGatewaySpec.Port, spec.ApiGatewaySpec.Adapter)
 }

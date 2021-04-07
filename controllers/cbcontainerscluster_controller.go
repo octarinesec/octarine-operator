@@ -38,8 +38,7 @@ type clusterStateApplier interface {
 }
 
 type clusterProcessor interface {
-	GetRegistrySecretValues(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error)
-	UpdateMonitor(ctx context.Context, cluster *cbcontainersv1.CBContainersCluster)
+	Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error)
 }
 
 type CBContainersClusterReconciler struct {
@@ -77,10 +76,6 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 
-	if stateWasChanged {
-		r.ClusterProcessor.UpdateMonitor(ctx, cbContainersCluster)
-	}
-
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
@@ -90,7 +85,7 @@ func (r *CBContainersClusterReconciler) getRegistrySecretValues(ctx context.Cont
 		return nil, err
 	}
 
-	return r.ClusterProcessor.GetRegistrySecretValues(cbContainersCluster, accessToken)
+	return r.ClusterProcessor.Process(cbContainersCluster, accessToken)
 }
 
 func (r *CBContainersClusterReconciler) getAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) (string, error) {

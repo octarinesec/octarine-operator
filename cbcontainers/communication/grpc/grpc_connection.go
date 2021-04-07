@@ -13,7 +13,7 @@ const (
 	MessageProxyServerName = "messageproxy"
 )
 
-func GetGrpcConnection(host string, port uint32, certPool *x509.CertPool, cert *tls.Certificate) (*grpc.ClientConn, error) {
+func GetGrpcConnection(host string, port int, certPool *x509.CertPool, cert *tls.Certificate) (*grpc.ClientConn, error) {
 	address := fmt.Sprintf("%s:%d", host, port)
 	tlsCredentials := credentials.NewTLS(&tls.Config{
 		ServerName:         MessageProxyServerName,
