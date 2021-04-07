@@ -42,7 +42,7 @@ func (obj *EnforcerTlsK8sObject) MutateHardeningChildK8sObject(k8sObject client.
 		return fmt.Errorf("expected Secret K8s object")
 	}
 
-	tlsSecretValues, err := obj.tlsSecretsValuesCreator.CreateTlsSecretsValues(types.NamespacedName{Name: EnforcerName, Namespace: cbContainersHardening.Namespace})
+	tlsSecretValues, err := obj.tlsSecretsValuesCreator.CreateTlsSecretsValues(types.NamespacedName{Name: EnforcerName, Namespace: commonState.DataPlaneNamespaceName})
 	if err != nil {
 		return err
 	}
