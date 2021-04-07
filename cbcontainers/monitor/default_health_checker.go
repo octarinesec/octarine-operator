@@ -3,7 +3,7 @@ package monitor
 import (
 	"context"
 	"fmt"
-	admissionsV1 "k8s.io/api/admissionregistration/v1"
+	admissionsV1 "k8s.io/api/admissionregistration/v1beta1"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"

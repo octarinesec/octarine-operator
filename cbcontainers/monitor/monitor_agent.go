@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor/models"
 	hardeningObjects "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/objects"
-	admissionsV1 "k8s.io/api/admissionregistration/v1"
+	admissionsV1 "k8s.io/api/admissionregistration/v1beta1"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
 	"time"

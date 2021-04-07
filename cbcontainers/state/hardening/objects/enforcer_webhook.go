@@ -6,7 +6,7 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/utils"
-	admissionsV1 "k8s.io/api/admissionregistration/v1"
+	admissionsV1 "k8s.io/api/admissionregistration/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
@@ -90,8 +90,9 @@ func (obj *EnforcerWebhookK8sObject) findWebhookByName(webhooks []admissionsV1.V
 
 func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook *admissionsV1.ValidatingWebhook, timeoutSeconds int32) {
 	resourcesWebhook.Name = ResourcesWebhookName
-	resourcesWebhook.AdmissionReviewVersions = []string{"v1", "v1beta1"}
+	resourcesWebhook.AdmissionReviewVersions = []string{"v1beta1"}
 	resourcesWebhook.FailurePolicy = &WebhookFailurePolicy
+	//resourcesWebhook.MatchPolicy = &WebhookMatchPolicyType
 	resourcesWebhook.SideEffects = &ResourcesWebhookSideEffect
 	resourcesWebhook.NamespaceSelector = obj.getResourcesNamespaceSelector(resourcesWebhook.NamespaceSelector)
 	obj.mutateResourcesWebhooksRules(resourcesWebhook)
@@ -187,8 +188,9 @@ func (obj *EnforcerWebhookK8sObject) getResourcesList() []string {
 
 func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook *admissionsV1.ValidatingWebhook, timeoutSeconds int32) {
 	namespacesWebhook.Name = NamespacesWebhookName
-	namespacesWebhook.AdmissionReviewVersions = []string{"v1", "v1beta1"}
+	namespacesWebhook.AdmissionReviewVersions = []string{"v1beta1"}
 	namespacesWebhook.FailurePolicy = &WebhookFailurePolicy
+	//namespacesWebhook.MatchPolicy = &WebhookMatchPolicyType
 	namespacesWebhook.SideEffects = &NamespacesWebhookSideEffect
 	namespacesWebhook.NamespaceSelector = nil
 	obj.mutateNamespacesWebhooksRules(namespacesWebhook)
