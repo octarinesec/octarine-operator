@@ -63,6 +63,7 @@ func (obj *StateReporterDeploymentK8sObject) MutateHardeningChildK8sObject(k8sOb
 	deployment.ObjectMeta.Labels = stateReporterSpec.DeploymentLabels
 	deployment.Spec.Selector.MatchLabels = stateReporterSpec.PodTemplateLabels
 	deployment.Spec.Template.ObjectMeta.Labels = stateReporterSpec.PodTemplateLabels
+	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, stateReporterSpec.DeploymentAnnotations)
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, stateReporterSpec.PodTemplateAnnotations)
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}

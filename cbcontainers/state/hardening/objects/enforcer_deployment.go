@@ -79,13 +79,12 @@ func (obj *EnforcerDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject 
 	deployment.ObjectMeta.Labels = enforcerSpec.DeploymentLabels
 	deployment.Spec.Selector.MatchLabels = enforcerSpec.PodTemplateLabels
 	deployment.Spec.Template.ObjectMeta.Labels = enforcerSpec.PodTemplateLabels
+	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, enforcerSpec.DeploymentAnnotations)
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, enforcerSpec.PodTemplateAnnotations)
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec, &cbContainersHardening.Spec.EnforcerSpec, &cbContainersHardening.Spec.EventsGatewaySpec, cbContainersHardening.Spec.Version, cbContainersHardening.Spec.AccessTokenSecretName)
-	//applyment.MutateString(enforcerSpec.ServiceAccountName, func() *string { return &template.Spec.ServiceAccountName }, func(value string) { template.Spec.ServiceAccountName = value })
-	//applyment.MutateString(enforcerSpec.PriorityClassName, func() *string { return &template.Spec.PriorityClassName }, func(value string) { template.Spec.PriorityClassName = value })
 
 	return nil
 }
