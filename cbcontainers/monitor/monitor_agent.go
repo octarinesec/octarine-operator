@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+const (
+	HardeningFeature = "guardrails"
+	RuntimeFeature   = "nodeguard"
+)
+
 type FeaturesStatusProvider interface {
 	HardeningEnabled() (bool, error)
 	RuntimeEnabled() (bool, error)
