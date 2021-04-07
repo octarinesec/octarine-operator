@@ -60,10 +60,21 @@ spec:
                 type: object
               clusterName:
                 type: string
+              eventsGatewaySpec:
+                properties:
+                  host:
+                    type: string
+                  port:
+                    default: 443
+                    type: integer
+                required:
+                - host
+                type: object
             required:
             - account
             - apiGatewaySpec
             - clusterName
+            - eventsGatewaySpec
             type: object
           status:
             description: CBContainersClusterStatus defines the observed state of CBContainersCluster
