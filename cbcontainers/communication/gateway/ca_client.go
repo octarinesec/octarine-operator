@@ -61,7 +61,7 @@ func (gateway *ApiGateway) getCertificateSigned(pemCsr []byte, asCA bool) (*x509
 	if asCA {
 		urlPath += "_ca"
 	}
-	url := gateway.getResourcePathWithAccountPath(urlPath)
+	url := gateway.baseUrl(urlPath)
 	resp, err := gateway.baseRequest().
 		SetResult(&SignResponse{}).
 		SetBody(SignRequest{KeyBits: 1024, CertPem: pemCsr}).
@@ -101,7 +101,7 @@ func (gateway *ApiGateway) getSignedCertificate(privateKey interface{}, commonNa
 }
 
 func (gateway *ApiGateway) getTrustChain() ([]byte, error) {
-	url := gateway.getResourcePathWithAccountPath("certificates/trustchain")
+	url := gateway.baseUrl("certificates/trustchain")
 	resp, err := gateway.baseRequest().
 		SetResult(&TrustChainResponse{}).
 		Get(url)

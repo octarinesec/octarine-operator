@@ -35,8 +35,8 @@ func NewApiGateway(account, cluster string, accessToken string, scheme, host str
 	}
 }
 
-func (gateway *ApiGateway) baseUrl() string {
-	return fmt.Sprintf("%v://%s:%d/%v/v1/orgs/%v", gateway.scheme, gateway.host, gateway.port, gateway.adapter, gateway.account)
+func (gateway *ApiGateway) baseUrl(postFix string) string {
+	return fmt.Sprintf("%v://%s:%d/%v/v1/orgs/%v/%s", gateway.scheme, gateway.host, gateway.port, gateway.adapter, gateway.account, postFix)
 }
 
 func (gateway *ApiGateway) baseRequest() *resty.Request {
@@ -55,7 +55,7 @@ func (gateway *ApiGateway) baseRequestWithRetries() *resty.Request {
 }
 
 func (gateway *ApiGateway) getResourcePathWithAccountPath(resourceName string) string {
-	return fmt.Sprintf("%s/account/%s/%s", gateway.baseUrl(), gateway.account, resourceName)
+	return gateway.baseUrl(fmt.Sprintf("account/%s/%s", gateway.account, resourceName))
 }
 
 func (gateway *ApiGateway) RegisterCluster() error {
