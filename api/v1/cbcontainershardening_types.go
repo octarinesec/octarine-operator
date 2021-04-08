@@ -31,7 +31,7 @@ type CBContainersHardeningProbesSpec struct {
 	// +kubebuilder:default:="/alive"
 	LivenessPath string `json:"livenessPath,omitempty"`
 	// +kubebuilder:default:=8181
-	Port intstr.IntOrString `json:"port"`
+	Port intstr.IntOrString `json:"port,omitempty"`
 	// +kubebuilder:default:="HTTP"
 	Scheme coreV1.URIScheme `json:"scheme,omitempty"`
 	// +kubebuilder:default:=3

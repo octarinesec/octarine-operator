@@ -124,8 +124,6 @@ spec:
                         default: 1
                         format: int32
                         type: integer
-                    required:
-                    - port
                     type: object
                   replicasCount:
                     default: 1
@@ -265,8 +263,6 @@ spec:
                         default: 1
                         format: int32
                         type: integer
-                    required:
-                    - port
                     type: object
                   resources:
                     default:

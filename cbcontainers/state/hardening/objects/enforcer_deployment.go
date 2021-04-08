@@ -79,6 +79,7 @@ func (obj *EnforcerDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject 
 	deployment.ObjectMeta.Labels = enforcerSpec.DeploymentLabels
 	deployment.Spec.Selector.MatchLabels = enforcerSpec.PodTemplateLabels
 	deployment.Spec.Template.ObjectMeta.Labels = enforcerSpec.PodTemplateLabels
+	deployment.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, enforcerSpec.DeploymentAnnotations)
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, enforcerSpec.PodTemplateAnnotations)
