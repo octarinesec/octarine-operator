@@ -50,6 +50,23 @@ type CBContainersClusterReconciler struct {
 	ClusterStateApplier clusterStateApplier
 }
 
+func (r *CBContainersClusterReconciler) getContainersClusterObject(ctx context.Context) (*cbcontainersv1.CBContainersCluster, error) {
+	cbContainersClusterList := &cbcontainersv1.CBContainersClusterList{}
+	if err := r.List(ctx, cbContainersClusterList); err != nil {
+		return nil, fmt.Errorf("couldn't list CBContainersCluster k8s objects: %v", err)
+	}
+
+	if cbContainersClusterList.Items == nil || len(cbContainersClusterList.Items) == 0 {
+		return nil, nil
+	}
+
+	if len(cbContainersClusterList.Items) > 1 {
+		return nil, fmt.Errorf("there is more than 1 CBContainersCluster k8s object, please delete unwanted resources")
+	}
+
+	return &cbContainersClusterList.Items[0], nil
+}
+
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersclusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersclusters/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersclusters/finalizers,verbs=update
@@ -58,9 +75,13 @@ type CBContainersClusterReconciler struct {
 
 func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("cbcontainerscluster", req.NamespacedName)
-	cbContainersCluster := &cbcontainersv1.CBContainersCluster{}
-	if err := r.Get(ctx, req.NamespacedName, cbContainersCluster); err != nil {
-		return ctrl.Result{}, fmt.Errorf("couldn't find CBContainersCluster k8s object: %v", err)
+	cbContainersCluster, err := r.getContainersClusterObject(ctx)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if cbContainersCluster == nil {
+		return ctrl.Result{}, nil
 	}
 
 	setOwner := func(controlledResource metav1.Object) error {

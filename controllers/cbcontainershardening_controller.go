@@ -44,6 +44,23 @@ type CBContainersHardeningReconciler struct {
 	HardeningStateApplier hardeningStateApplier
 }
 
+func (r *CBContainersHardeningReconciler) getContainersHardeningObject(ctx context.Context) (*cbcontainersv1.CBContainersHardening, error) {
+	cbContainersHardeningList := &cbcontainersv1.CBContainersHardeningList{}
+	if err := r.List(ctx, cbContainersHardeningList); err != nil {
+		return nil, fmt.Errorf("couldn't list CBContainersCluster k8s objects: %v", err)
+	}
+
+	if cbContainersHardeningList.Items == nil || len(cbContainersHardeningList.Items) == 0 {
+		return nil, nil
+	}
+
+	if len(cbContainersHardeningList.Items) > 1 {
+		return nil, fmt.Errorf("there is more than 1 CBContainersCluster k8s object, please delete unwanted resources")
+	}
+
+	return &cbContainersHardeningList.Items[0], nil
+}
+
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainershardenings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainershardenings/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainershardenings/finalizers,verbs=update
@@ -53,9 +70,13 @@ type CBContainersHardeningReconciler struct {
 
 func (r *CBContainersHardeningReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("cbcontainershardening", req.NamespacedName)
-	cbContainersHardening := &cbcontainersv1.CBContainersHardening{}
-	if err := r.Get(ctx, req.NamespacedName, cbContainersHardening); err != nil {
-		return ctrl.Result{}, fmt.Errorf("couldn't find CBContainersHardening k8s object: %v", err)
+	cbContainersHardening, err := r.getContainersHardeningObject(ctx)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if cbContainersHardening == nil {
+		return ctrl.Result{}, nil
 	}
 
 	setOwner := func(controlledResource metav1.Object) error {
