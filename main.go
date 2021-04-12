@@ -42,6 +42,7 @@ import (
 	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
 	clusterState "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster"
 	hardeningState "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening"
+	runtimeState "github.com/vmware/cbcontainers-operator/cbcontainers/state/runtime"
 	certificatesUtils "github.com/vmware/cbcontainers-operator/cbcontainers/utils/certificates"
 	"github.com/vmware/cbcontainers-operator/controllers"
 	// +kubebuilder:scaffold:imports
@@ -128,9 +129,10 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controllers.CBContainersRuntimeReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("CBContainersRuntime"),
-		Scheme: mgr.GetScheme(),
+		Client:              mgr.GetClient(),
+		Log:                 ctrl.Log.WithName("controllers").WithName("CBContainersRuntime"),
+		Scheme:              mgr.GetScheme(),
+		RuntimeStateApplier: runtimeState.NewRuntimeStateApplier(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersRuntime")
 		os.Exit(1)
