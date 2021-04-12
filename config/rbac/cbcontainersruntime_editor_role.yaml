@@ -1,0 +1,24 @@
+# permissions for end users to edit cbcontainersruntimes.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cbcontainersruntime-editor-role
+rules:
+- apiGroups:
+  - operator.containers.carbonblack.io
+  resources:
+  - cbcontainersruntimes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - operator.containers.carbonblack.io
+  resources:
+  - cbcontainersruntimes/status
+  verbs:
+  - get
