@@ -92,7 +92,8 @@ func (r *CBContainersHardeningReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.Result{}, err
 	}
 
-	r.Log.Info("Finished reconciling\n\n", "Requiring", stateWasChanged)
+	r.Log.Info("Finished reconciling", "Requiring", stateWasChanged)
+	r.Log.Info("\n\n")
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
