@@ -97,14 +97,13 @@ func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook *ad
 	resourcesWebhook.NamespaceSelector = obj.getResourcesNamespaceSelector(resourcesWebhook.NamespaceSelector)
 	obj.mutateResourcesWebhooksRules(resourcesWebhook)
 	resourcesWebhook.TimeoutSeconds = &timeoutSeconds
-	resourcesWebhook.ClientConfig = admissionsV1.WebhookClientConfig{
-		Service: &admissionsV1.ServiceReference{
-			Namespace: commonState.DataPlaneNamespaceName,
-			Name:      EnforcerName,
-			Path:      &WebhookPath,
-		},
-		CABundle: obj.TlsSecretValues.CaCert,
+	resourcesWebhook.ClientConfig.CABundle = obj.TlsSecretValues.CaCert
+	if resourcesWebhook.ClientConfig.Service == nil {
+		resourcesWebhook.ClientConfig.Service = &admissionsV1.ServiceReference{}
 	}
+	resourcesWebhook.ClientConfig.Service.Namespace = commonState.DataPlaneNamespaceName
+	resourcesWebhook.ClientConfig.Service.Name = EnforcerName
+	resourcesWebhook.ClientConfig.Service.Path = &WebhookPath
 }
 
 func (obj *EnforcerWebhookK8sObject) getResourcesNamespaceSelector(selector *metav1.LabelSelector) *metav1.LabelSelector {
@@ -192,17 +191,17 @@ func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook *
 	namespacesWebhook.FailurePolicy = &WebhookFailurePolicy
 	//namespacesWebhook.MatchPolicy = &WebhookMatchPolicyType
 	namespacesWebhook.SideEffects = &NamespacesWebhookSideEffect
-	namespacesWebhook.NamespaceSelector = nil
+	namespacesWebhook.NamespaceSelector = &metav1.LabelSelector{}
 	obj.mutateNamespacesWebhooksRules(namespacesWebhook)
 	namespacesWebhook.TimeoutSeconds = &timeoutSeconds
-	namespacesWebhook.ClientConfig = admissionsV1.WebhookClientConfig{
-		Service: &admissionsV1.ServiceReference{
-			Namespace: commonState.DataPlaneNamespaceName,
-			Name:      EnforcerName,
-			Path:      &WebhookPath,
-		},
-		CABundle: obj.TlsSecretValues.CaCert,
+	namespacesWebhook.ClientConfig.CABundle = obj.TlsSecretValues.CaCert
+	if namespacesWebhook.ClientConfig.Service == nil {
+		namespacesWebhook.ClientConfig.Service = &admissionsV1.ServiceReference{}
 	}
+	namespacesWebhook.ClientConfig.Service.Namespace = commonState.DataPlaneNamespaceName
+	namespacesWebhook.ClientConfig.Service.Name = EnforcerName
+	namespacesWebhook.ClientConfig.Service.Path = &WebhookPath
+
 }
 
 func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhooksRules(webhook *admissionsV1.ValidatingWebhook) {

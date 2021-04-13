@@ -21,7 +21,7 @@ func ApplyHardeningChildK8sObject(ctx context.Context, cbContainersHardening *cb
 	return applyment.ApplyDesiredK8sObject(ctx, client, hardeningChildWrapper, applyOptionsList...)
 }
 
-func DeleteK8sObjectIfExists(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, hardeningChildK8sObject hardeningChildK8sObject) error {
+func DeleteK8sObjectIfExists(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, hardeningChildK8sObject hardeningChildK8sObject) (bool, error) {
 	hardeningChildWrapper := NewCBContainersHardeningChildK8sObject(cbContainersHardening, hardeningChildK8sObject)
 	return applyment.DeleteK8sObjectIfExists(ctx, client, hardeningChildWrapper)
 }
