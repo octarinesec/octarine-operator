@@ -74,7 +74,10 @@ func (r *CBContainersClusterReconciler) getContainersClusterObject(ctx context.C
 // +kubebuilder:rbac:groups=scheduling.k8s.io,resources=priorityclasses,verbs=*
 
 func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("cbcontainerscluster", req.NamespacedName)
+	r.Log.Info("Got reconcile request", "namespaced name", req.NamespacedName)
+	r.Log.Info("Starting reconciling")
+
+	r.Log.Info("Getting CBContainersCluster object")
 	cbContainersCluster, err := r.getContainersClusterObject(ctx)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -88,16 +91,19 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.SetControllerReference(cbContainersCluster, controlledResource, r.Scheme)
 	}
 
+	r.Log.Info("Getting registry secret values")
 	registrySecret, err := r.getRegistrySecretValues(ctx, cbContainersCluster)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
+	r.Log.Info("Applying desired state")
 	stateWasChanged, err := r.ClusterStateApplier.ApplyDesiredState(ctx, cbContainersCluster, registrySecret, r.Client, setOwner)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
+	r.Log.Info("Finished reconciling", "Requiring", stateWasChanged)
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 

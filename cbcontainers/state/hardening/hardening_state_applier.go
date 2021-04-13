@@ -3,6 +3,7 @@ package hardening
 import (
 	"context"
 	"fmt"
+	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
@@ -18,15 +19,17 @@ type HardeningStateApplier struct {
 	enforcerService         *hardeningObjects.EnforcerServiceK8sObject
 	enforcerWebhook         *hardeningObjects.EnforcerWebhookK8sObject
 	stateReporterDeployment *hardeningObjects.StateReporterDeploymentK8sObject
+	log                     logr.Logger
 }
 
-func NewHardeningStateApplier(tlsSecretsValuesCreator hardeningObjects.TlsSecretsValuesCreator) *HardeningStateApplier {
+func NewHardeningStateApplier(log logr.Logger, tlsSecretsValuesCreator hardeningObjects.TlsSecretsValuesCreator) *HardeningStateApplier {
 	return &HardeningStateApplier{
 		enforcerTlsSecret:       hardeningObjects.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
 		enforcerDeployment:      hardeningObjects.NewEnforcerDeploymentK8sObject(),
 		enforcerService:         hardeningObjects.NewEnforcerServiceK8sObject(),
 		enforcerWebhook:         hardeningObjects.NewEnforcerWebhookK8sObject(),
 		stateReporterDeployment: hardeningObjects.NewStateReporterDeploymentK8sObject(),
+		log:                     log,
 	}
 }
 
@@ -37,11 +40,13 @@ func (c *HardeningStateApplier) ApplyDesiredState(ctx context.Context, cbContain
 	if err != nil {
 		return false, err
 	}
+	c.log.Info("Applied enforcer objects", "Mutated", mutatedEnforcer)
 
 	mutatedStateReporter, err := c.applyStateReporter(ctx, cbContainersHardening, client, applyOptions)
 	if err != nil {
 		return false, err
 	}
+	c.log.Info("Applied state reporter objects", "Mutated", mutatedEnforcer)
 
 	return mutatedEnforcer || mutatedStateReporter, nil
 }
@@ -51,6 +56,7 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 	if err != nil {
 		return false, err
 	}
+	c.log.Info("Applied enfocer tls secret", "Mutated", mutatedSecret)
 
 	tlsSecret, ok := secretK8sObject.(*coreV1.Secret)
 	if !ok {
@@ -64,14 +70,17 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 		}
 		return false, err
 	}
+	c.log.Info("Applied enforcer service", "Mutated", mutatedService)
 
 	mutatedDeployment, deploymentK8sObject, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerDeployment, applyOptions)
 	if err != nil {
 		if deleteErr := DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
 			return false, deleteErr
 		}
+		c.log.Info("Deleted enforcer webhook")
 		return false, err
 	}
+	c.log.Info("Applied enforcer deployment", "Mutated", mutatedDeployment)
 
 	enforcerDeployment, ok := deploymentK8sObject.(*appsV1.Deployment)
 	if !ok {
@@ -83,6 +92,7 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 		if deleteErr := DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
 			return false, deleteErr
 		}
+		c.log.Info("Deleted enforcer webhook")
 		mutatedWebhook = true
 	} else {
 		c.enforcerWebhook.TlsSecretValues = models.TlsSecretValuesFromSecretData(tlsSecret.Data)
@@ -90,6 +100,7 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 		if err != nil {
 			return false, err
 		}
+		c.log.Info("Applied enforcer webhook", "Mutated", mutatedWebhook)
 	}
 
 	return mutatedSecret || mutatedDeployment || mutatedService || mutatedWebhook, nil
@@ -97,5 +108,9 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 
 func (c *HardeningStateApplier) applyStateReporter(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
 	mutatedDeployment, _, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.stateReporterDeployment, applyOptions)
-	return mutatedDeployment, err
+	if err != nil {
+		return false, err
+	}
+	c.log.Info("Applied state reporter deployment", "Mutated", mutatedDeployment)
+	return mutatedDeployment, nil
 }

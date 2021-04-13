@@ -86,21 +86,24 @@ func main() {
 		os.Exit(1)
 	}
 
+	cbContainersClusterLogger := ctrl.Log.WithName("controllers").WithName("CBContainersCluster")
 	if err = (&controllers.CBContainersClusterReconciler{
 		Client:              mgr.GetClient(),
-		Log:                 ctrl.Log.WithName("controllers").WithName("CBContainersCluster"),
+		Log:                 cbContainersClusterLogger,
 		Scheme:              mgr.GetScheme(),
 		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(clusterProcessors.NewDefaultGatewayCreator(), clusterProcessors.NewDefaultMonitorCreator(monitor.NewDefaultHealthChecker(mgr.GetClient(), commonState.DataPlaneNamespaceName), monitor.NewDefaultFeaturesStatusProvider(mgr.GetClient()))),
-		ClusterStateApplier: clusterState.NewClusterStateApplier(),
+		ClusterStateApplier: clusterState.NewClusterStateApplier(cbContainersClusterLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
 		os.Exit(1)
 	}
+
+	cbContainersHardeningLogger := ctrl.Log.WithName("controllers").WithName("CBContainersHardening")
 	if err = (&controllers.CBContainersHardeningReconciler{
 		Client:                mgr.GetClient(),
-		Log:                   ctrl.Log.WithName("controllers").WithName("CBContainersHardening"),
+		Log:                   cbContainersHardeningLogger,
 		Scheme:                mgr.GetScheme(),
-		HardeningStateApplier: hardeningState.NewHardeningStateApplier(certificatesUtils.NewCertificateCreator()),
+		HardeningStateApplier: hardeningState.NewHardeningStateApplier(cbContainersHardeningLogger, certificatesUtils.NewCertificateCreator()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersHardening")
 		os.Exit(1)
