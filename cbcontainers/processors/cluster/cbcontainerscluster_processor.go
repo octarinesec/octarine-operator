@@ -3,6 +3,7 @@ package cluster
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"reflect"
@@ -31,21 +32,22 @@ type CBContainerClusterProcessor struct {
 	gatewayCreator gatewayCreator
 	monitorCreator monitorCreator
 
-	gateway Gateway
 	monitor Monitor
 
 	lastRegistrySecretValues *models.RegistrySecretValues
 
 	lastProcessedObject *cbcontainersv1.CBContainersCluster
+
+	log logr.Logger
 }
 
-func NewCBContainerClusterProcessor(clusterRegistrarCreator gatewayCreator, monitorCreator monitorCreator) *CBContainerClusterProcessor {
+func NewCBContainerClusterProcessor(log logr.Logger, clusterRegistrarCreator gatewayCreator, monitorCreator monitorCreator) *CBContainerClusterProcessor {
 	return &CBContainerClusterProcessor{
 		gatewayCreator:      clusterRegistrarCreator,
 		monitorCreator:      monitorCreator,
-		gateway:             nil,
 		monitor:             nil,
 		lastProcessedObject: nil,
+		log:                 log,
 	}
 }
 
@@ -58,8 +60,7 @@ func (processor *CBContainerClusterProcessor) Process(cbContainersCluster *cbcon
 }
 
 func (processor *CBContainerClusterProcessor) isInitialized(cbContainersCluster *cbcontainersv1.CBContainersCluster) bool {
-	return processor.gateway != nil &&
-		processor.monitor != nil &&
+	return processor.monitor != nil &&
 		processor.lastRegistrySecretValues != nil &&
 		processor.lastProcessedObject != nil &&
 		reflect.DeepEqual(processor.lastProcessedObject, cbContainersCluster)
@@ -70,29 +71,33 @@ func (processor *CBContainerClusterProcessor) initializeIfNeeded(cbContainersClu
 		return nil
 	}
 
+	processor.log.Info("Initializing CBContainerClusterProcessor components")
 	gateway := processor.gatewayCreator.CreateGateway(cbContainersCluster, accessToken)
 	monitor, err := processor.monitorCreator.CreateMonitor(cbContainersCluster, gateway)
 	if err != nil {
 		return err
 	}
 
-	registrySecretValues, err := processor.gateway.GetRegistrySecret()
+	processor.log.Info("Calling get registry secret")
+	registrySecretValues, err := gateway.GetRegistrySecret()
 	if err != nil {
 		return err
 	}
 
-	if err := processor.gateway.RegisterCluster(); err != nil {
+	processor.log.Info("Calling register cluster")
+	if err := gateway.RegisterCluster(); err != nil {
 		return err
 	}
 
-	processor.gateway = gateway
 	processor.lastRegistrySecretValues = registrySecretValues
 	processor.lastProcessedObject = cbContainersCluster
 
 	if processor.monitor != nil {
+		processor.log.Info("Stopping old monitor")
 		processor.monitor.Stop()
 	}
 	processor.monitor = monitor
+	processor.log.Info("Starting new monitor")
 	processor.monitor.Start()
 
 	return nil

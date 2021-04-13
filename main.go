@@ -91,7 +91,7 @@ func main() {
 		Client:              mgr.GetClient(),
 		Log:                 cbContainersClusterLogger,
 		Scheme:              mgr.GetScheme(),
-		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(clusterProcessors.NewDefaultGatewayCreator(), clusterProcessors.NewDefaultMonitorCreator(monitor.NewDefaultHealthChecker(mgr.GetClient(), commonState.DataPlaneNamespaceName), monitor.NewDefaultFeaturesStatusProvider(mgr.GetClient()))),
+		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator(), clusterProcessors.NewDefaultMonitorCreator(monitor.NewDefaultHealthChecker(mgr.GetClient(), commonState.DataPlaneNamespaceName), monitor.NewDefaultFeaturesStatusProvider(mgr.GetClient()))),
 		ClusterStateApplier: clusterState.NewClusterStateApplier(cbContainersClusterLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
