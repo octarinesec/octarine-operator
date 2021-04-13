@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	StateReporterName = "cbcontainers-hardening-state-reporter"
+	StateReporterName     = "cbcontainers-hardening-state-reporter"
+	StateReporterLabelKey = "app.kubernetes.io/name"
 )
 
 var (
@@ -45,10 +46,14 @@ func (obj *StateReporterDeploymentK8sObject) MutateHardeningChildK8sObject(k8sOb
 		return fmt.Errorf("expected Deployment K8s object")
 	}
 
+	desiredLabels := stateReporterSpec.Labels
+	if desiredLabels == nil {
+		desiredLabels = make(map[string]string)
+	}
+	desiredLabels[StateReporterLabelKey] = StateReporterName
+
 	if deployment.Spec.Selector == nil {
-		deployment.Spec.Selector = &metav1.LabelSelector{
-			MatchLabels: stateReporterSpec.PodTemplateLabels,
-		}
+		deployment.Spec.Selector = &metav1.LabelSelector{}
 	}
 
 	if deployment.ObjectMeta.Annotations == nil {
@@ -60,9 +65,9 @@ func (obj *StateReporterDeploymentK8sObject) MutateHardeningChildK8sObject(k8sOb
 	}
 
 	deployment.Spec.Replicas = &StateReporterReplicas
-	deployment.ObjectMeta.Labels = stateReporterSpec.DeploymentLabels
-	deployment.Spec.Selector.MatchLabels = stateReporterSpec.PodTemplateLabels
-	deployment.Spec.Template.ObjectMeta.Labels = stateReporterSpec.PodTemplateLabels
+	deployment.ObjectMeta.Labels = desiredLabels
+	deployment.Spec.Selector.MatchLabels = desiredLabels
+	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, stateReporterSpec.DeploymentAnnotations)

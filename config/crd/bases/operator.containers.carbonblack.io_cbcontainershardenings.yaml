@@ -211,12 +211,6 @@ spec:
                       prometheus.io/port: "7071"
                       prometheus.io/scrape: "false"
                     type: object
-                  podTemplateLabels:
-                    additionalProperties:
-                      type: string
-                    default:
-                      ben: ben
-                    type: object
                   probes:
                     default: {}
                     properties:
