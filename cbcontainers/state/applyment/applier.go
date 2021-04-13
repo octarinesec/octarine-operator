@@ -51,7 +51,12 @@ func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8s
 		return true, k8sObject, nil
 	}
 
-	k8sObjectWasChanged, err := updateK8sObject(ctx, client, applyOptions, k8sObject, namespacedName, beforeMutationRaw)
+	beforeMutationK8sObject := desiredK8sObject.EmptyK8sObject()
+	if err := json.Unmarshal(beforeMutationRaw, &beforeMutationK8sObject); err != nil {
+		return false, nil, fmt.Errorf("couldn't create before marshel object")
+	}
+
+	k8sObjectWasChanged, err := updateK8sObject(ctx, client, applyOptions, beforeMutationK8sObject, k8sObject, namespacedName)
 	if err != nil {
 		return false, nil, err
 	}
@@ -87,18 +92,17 @@ func createK8sObject(ctx context.Context, client client.Client, k8sObject client
 	return nil
 }
 
-func updateK8sObject(ctx context.Context, client client.Client, applyOptions *applymentOptions.ApplyOptions, k8sObject client.Object, namespacedName types.NamespacedName, beforeMutationRaw []byte) (bool, error) {
-	if err := setOwner(applyOptions, k8sObject, namespacedName); err != nil {
+func updateK8sObject(ctx context.Context, client client.Client, applyOptions *applymentOptions.ApplyOptions, beforeMutationK8sObject, afterMutationK8sObject client.Object, namespacedName types.NamespacedName) (bool, error) {
+	if err := setOwner(applyOptions, afterMutationK8sObject, namespacedName); err != nil {
 		return false, err
 	}
 
-	afterMutationRaw, _ := json.Marshal(k8sObject)
-	k8sObjectWasChanged := !reflect.DeepEqual(beforeMutationRaw, afterMutationRaw)
+	k8sObjectWasChanged := !reflect.DeepEqual(beforeMutationK8sObject, afterMutationK8sObject)
 	if !k8sObjectWasChanged {
 		return false, nil
 	}
 
-	if updateErr := client.Update(ctx, k8sObject); updateErr != nil {
+	if updateErr := client.Update(ctx, afterMutationK8sObject); updateErr != nil {
 		return false, fmt.Errorf("failed updating exsiting K8s object `%v`: %v", namespacedName, updateErr)
 	}
 
