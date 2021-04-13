@@ -69,7 +69,8 @@ func (r *CBContainersHardeningReconciler) getContainersHardeningObject(ctx conte
 // +kubebuilder:rbac:groups={rbac.authorization.k8s.io,networking.k8s.io,apiextensions.k8s.io,extensions,rbac,batch,apps,core},resources={namespaces,clusterrolebindings,services,networkpolicies,ingresses,rolebindings,cronjobs,jobs,replicationcontrollers,statefulsets,daemonsets,deployments,replicasets,pods,nodes,customresourcedefinitions},verbs=get;list;watch
 
 func (r *CBContainersHardeningReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.Log.Info("\n\nGot reconcile request", "namespaced name", req.NamespacedName)
+	r.Log.Info("\n\n")
+	r.Log.Info("Got reconcile request", "namespaced name", req.NamespacedName)
 	r.Log.Info("Starting reconciling")
 
 	r.Log.Info("Getting CBContainersHardening object")
