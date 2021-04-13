@@ -213,11 +213,9 @@ func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhooksRules(webhook *admi
 	if !utils.StringsSlicesHaveSameItems(obj.operationsToStrings(webhook.Rules[0].Operations), obj.operationsToStrings(expectedOperations)) {
 		webhook.Rules[0].Operations = expectedOperations
 	}
-	webhook.Rules[0].Rule = admissionsV1.Rule{
-		APIGroups:   []string{"*"},
-		APIVersions: []string{"*"},
-		Resources:   []string{"namespaces"},
-	}
+	webhook.Rules[0].Rule.APIGroups = []string{"*"}
+	webhook.Rules[0].Rule.APIVersions = []string{"*"}
+	webhook.Rules[0].Rule.Resources = []string{"namespaces"}
 }
 
 func (obj *EnforcerWebhookK8sObject) operationsToStrings(operations []admissionsV1.OperationType) []string {
