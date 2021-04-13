@@ -69,7 +69,10 @@ func (r *CBContainersHardeningReconciler) getContainersHardeningObject(ctx conte
 // +kubebuilder:rbac:groups={rbac.authorization.k8s.io,networking.k8s.io,apiextensions.k8s.io,extensions,rbac,batch,apps,core},resources={namespaces,clusterrolebindings,services,networkpolicies,ingresses,rolebindings,cronjobs,jobs,replicationcontrollers,statefulsets,daemonsets,deployments,replicasets,pods,nodes,customresourcedefinitions},verbs=get;list;watch
 
 func (r *CBContainersHardeningReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("cbcontainershardening", req.NamespacedName)
+	r.Log.Info("\n\nGot reconcile request", "namespaced name", req.NamespacedName)
+	r.Log.Info("Starting reconciling")
+
+	r.Log.Info("Getting CBContainersHardening object")
 	cbContainersHardening, err := r.getContainersHardeningObject(ctx)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -83,11 +86,13 @@ func (r *CBContainersHardeningReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.SetControllerReference(cbContainersHardening, controlledResource, r.Scheme)
 	}
 
+	r.Log.Info("Applying desired state")
 	stateWasChanged, err := r.HardeningStateApplier.ApplyDesiredState(ctx, cbContainersHardening, r.Client, setOwner)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
+	r.Log.Info("Finished reconciling\n\n", "Requiring", stateWasChanged)
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 

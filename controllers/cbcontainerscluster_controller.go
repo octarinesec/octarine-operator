@@ -74,7 +74,7 @@ func (r *CBContainersClusterReconciler) getContainersClusterObject(ctx context.C
 // +kubebuilder:rbac:groups=scheduling.k8s.io,resources=priorityclasses,verbs=*
 
 func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.Log.Info("Got reconcile request", "namespaced name", req.NamespacedName)
+	r.Log.Info("\n\nGot reconcile request", "namespaced name", req.NamespacedName)
 	r.Log.Info("Starting reconciling")
 
 	r.Log.Info("Getting CBContainersCluster object")
@@ -103,7 +103,7 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 
-	r.Log.Info("Finished reconciling", "Requiring", stateWasChanged)
+	r.Log.Info("Finished reconciling\n\n", "Requiring", stateWasChanged)
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
