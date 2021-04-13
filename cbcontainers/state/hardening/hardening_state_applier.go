@@ -65,8 +65,10 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 
 	mutatedService, _, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerService, applyOptions)
 	if err != nil {
-		if _, deleteErr := DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
+		if deleted, deleteErr := DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
 			return false, deleteErr
+		} else if deleted {
+			c.log.Info("Deleted enforcer webhook")
 		}
 		return false, err
 	}
@@ -74,10 +76,11 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 
 	mutatedDeployment, deploymentK8sObject, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerDeployment, applyOptions)
 	if err != nil {
-		if _, deleteErr := DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
+		if deleted, deleteErr := DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
 			return false, deleteErr
+		} else if deleted {
+			c.log.Info("Deleted enforcer webhook")
 		}
-		c.log.Info("Deleted enforcer webhook")
 		return false, err
 	}
 	c.log.Info("Applied enforcer deployment", "Mutated", mutatedDeployment)
@@ -89,12 +92,12 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 
 	mutatedWebhook := false
 	if enforcerDeployment.Status.ReadyReplicas < 1 {
-		deleted, deleteErr := DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook)
-		if deleteErr != nil {
+		if deleted, deleteErr := DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
 			return false, deleteErr
+		} else if deleted {
+			mutatedWebhook = true
+			c.log.Info("Deleted enforcer webhook")
 		}
-		mutatedWebhook = deleted
-		c.log.Info("Called delete for enforcer webhook")
 	} else {
 		c.enforcerWebhook.TlsSecretValues = models.TlsSecretValuesFromSecretData(tlsSecret.Data)
 		mutatedWebhook, _, err = ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerWebhook, applyOptions)
