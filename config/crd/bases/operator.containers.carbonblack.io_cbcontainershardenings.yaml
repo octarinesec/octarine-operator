@@ -47,11 +47,6 @@ spec:
                       type: string
                     default: {}
                     type: object
-                  deploymentLabels:
-                    additionalProperties:
-                      type: string
-                    default: {}
-                    type: object
                   env:
                     additionalProperties:
                       type: string
@@ -81,8 +76,7 @@ spec:
                   podTemplateLabels:
                     additionalProperties:
                       type: string
-                    default:
-                      ben: ben
+                    default: {}
                     type: object
                   probes:
                     default: {}

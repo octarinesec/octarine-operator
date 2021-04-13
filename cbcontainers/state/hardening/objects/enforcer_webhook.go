@@ -47,7 +47,7 @@ func (obj *EnforcerWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject cli
 	}
 	enforcerSpec := cbContainersHardening.Spec.EnforcerSpec
 
-	webhookConfiguration.Labels = enforcerSpec.DeploymentLabels
+	webhookConfiguration.Labels = enforcerSpec.Labels
 	obj.mutateWebhooks(webhookConfiguration, cbContainersHardening)
 
 	return nil

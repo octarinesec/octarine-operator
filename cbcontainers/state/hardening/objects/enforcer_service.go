@@ -37,9 +37,11 @@ func (obj *EnforcerServiceK8sObject) MutateHardeningChildK8sObject(k8sObject cli
 
 	enforcerSpec := cbContainersHardening.Spec.EnforcerSpec
 
-	service.Labels = enforcerSpec.DeploymentLabels
+	service.Labels = enforcerSpec.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
-	service.Spec.Selector = enforcerSpec.PodTemplateLabels
+	service.Spec.Selector = map[string]string{
+		EnforcerLabelKey: EnforcerName,
+	}
 	obj.mutatePorts(service)
 
 	return nil

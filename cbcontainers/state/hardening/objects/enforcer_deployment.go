@@ -20,6 +20,8 @@ const (
 
 	DesiredTlsSecretVolumeName      = "cert"
 	DesiredTlsSecretVolumeMountPath = "/etc/octarine-certificates"
+
+	EnforcerLabelKey = "app.kubernetes.io/name"
 )
 
 var (
@@ -61,10 +63,14 @@ func (obj *EnforcerDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject 
 		return fmt.Errorf("expected Deployment K8s object")
 	}
 
+	desiredLabels := enforcerSpec.Labels
+	if desiredLabels == nil {
+		desiredLabels = make(map[string]string)
+	}
+	desiredLabels[EnforcerLabelKey] = EnforcerName
+
 	if deployment.Spec.Selector == nil {
-		deployment.Spec.Selector = &metav1.LabelSelector{
-			MatchLabels: enforcerSpec.PodTemplateLabels,
-		}
+		deployment.Spec.Selector = &metav1.LabelSelector{}
 	}
 
 	if deployment.ObjectMeta.Annotations == nil {
@@ -76,9 +82,9 @@ func (obj *EnforcerDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject 
 	}
 
 	deployment.Spec.Replicas = &enforcerSpec.ReplicasCount
-	deployment.ObjectMeta.Labels = enforcerSpec.DeploymentLabels
-	deployment.Spec.Selector.MatchLabels = enforcerSpec.PodTemplateLabels
-	deployment.Spec.Template.ObjectMeta.Labels = enforcerSpec.PodTemplateLabels
+	deployment.ObjectMeta.Labels = desiredLabels
+	deployment.Spec.Selector.MatchLabels = desiredLabels
+	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, enforcerSpec.DeploymentAnnotations)
