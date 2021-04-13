@@ -36,13 +36,8 @@ func (obj *RegistrySecretK8sObject) MutateClusterChildK8sObject(k8sObject client
 		return fmt.Errorf("wasn't given with the desired registry secret values")
 	}
 
-	desiredData := make(map[string]string)
-	for key, value := range obj.registrySecretValues.Data {
-		desiredData[key] = string(value)
-	}
-
 	secret.Type = obj.registrySecretValues.Type
-	secret.StringData = desiredData
+	secret.Data = obj.registrySecretValues.Data
 
 	return nil
 }
