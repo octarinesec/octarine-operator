@@ -19,7 +19,6 @@ package v1
 import (
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -31,7 +30,7 @@ type CBContainersHardeningProbesSpec struct {
 	// +kubebuilder:default:="/alive"
 	LivenessPath string `json:"livenessPath,omitempty"`
 	// +kubebuilder:default:=8181
-	Port intstr.IntOrString `json:"port,omitempty"`
+	Port int `json:"port,omitempty"`
 	// +kubebuilder:default:="HTTP"
 	Scheme coreV1.URIScheme `json:"scheme,omitempty"`
 	// +kubebuilder:default:=3

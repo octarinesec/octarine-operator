@@ -5,6 +5,7 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	coreV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"reflect"
 	"strconv"
 )
@@ -94,7 +95,7 @@ func mutateProbe(probe *coreV1.Probe, desiredPath string, desiredProbes cbcontai
 	}
 
 	probe.HTTPGet.Path = desiredPath
-	probe.HTTPGet.Port = desiredProbes.Port
+	probe.HTTPGet.Port = intstr.FromInt(desiredProbes.Port)
 	probe.HTTPGet.Scheme = desiredProbes.Scheme
 	probe.InitialDelaySeconds = desiredProbes.InitialDelaySeconds
 	probe.TimeoutSeconds = desiredProbes.TimeoutSeconds

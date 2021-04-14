@@ -97,11 +97,8 @@ spec:
                         format: int32
                         type: integer
                       port:
-                        anyOf:
-                        - type: integer
-                        - type: string
                         default: 8181
-                        x-kubernetes-int-or-string: true
+                        type: integer
                       readinessPath:
                         default: /ready
                         type: string
@@ -230,11 +227,8 @@ spec:
                         format: int32
                         type: integer
                       port:
-                        anyOf:
-                        - type: integer
-                        - type: string
                         default: 8181
-                        x-kubernetes-int-or-string: true
+                        type: integer
                       readinessPath:
                         default: /ready
                         type: string
