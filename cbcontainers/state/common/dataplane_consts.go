@@ -5,7 +5,7 @@ const (
 
 	DataPlaneConfigmapName      = "cbcontainers-dataplane-config"
 	RegistrySecretName          = "cbcontainers-registry-secret"
-	DataPlaneServiceAccountName = "cbcontainers-controller-manager"
+	DataPlaneServiceAccountName = "cbcontainers-operator"
 	DataPlanePriorityClassName  = "cbcontainers-dataplane-priority-class"
 
 	DataPlaneConfigmapAccountKey    = "Account"
