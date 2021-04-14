@@ -88,6 +88,8 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
+	r.setDefaults(cbContainersCluster)
+
 	setOwner := func(controlledResource metav1.Object) error {
 		return ctrl.SetControllerReference(cbContainersCluster, controlledResource, r.Scheme)
 	}
@@ -107,6 +109,28 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 	r.Log.Info("Finished reconciling", "Requiring", stateWasChanged)
 	r.Log.Info("\n\n")
 	return ctrl.Result{Requeue: stateWasChanged}, nil
+}
+
+func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbcontainersv1.CBContainersCluster) {
+	if cbContainersCluster.Spec.ApiGatewaySpec.Scheme == "" {
+		cbContainersCluster.Spec.ApiGatewaySpec.Scheme = "https"
+	}
+
+	if cbContainersCluster.Spec.ApiGatewaySpec.Port == 0 {
+		cbContainersCluster.Spec.ApiGatewaySpec.Port = 443
+	}
+
+	if cbContainersCluster.Spec.ApiGatewaySpec.Adapter == "" {
+		cbContainersCluster.Spec.ApiGatewaySpec.Adapter = "containers"
+	}
+
+	if cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName == "" {
+		cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName = "cbcontainers-access-token"
+	}
+
+	if cbContainersCluster.Spec.EventsGatewaySpec.Port == 0 {
+		cbContainersCluster.Spec.ApiGatewaySpec.Port = 443
+	}
 }
 
 func (r *CBContainersClusterReconciler) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) (*models.RegistrySecretValues, error) {

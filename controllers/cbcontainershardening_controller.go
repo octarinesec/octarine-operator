@@ -23,6 +23,7 @@ import (
 	admissionsV1 "k8s.io/api/admissionregistration/v1beta1"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/go-logr/logr"
@@ -83,6 +84,10 @@ func (r *CBContainersHardeningReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.Result{}, nil
 	}
 
+	if err := r.setDefaults(cbContainersHardening); err != nil {
+		return ctrl.Result{}, fmt.Errorf("faild to set defaults to CR: %v", err)
+	}
+
 	setOwner := func(controlledResource metav1.Object) error {
 		return ctrl.SetControllerReference(cbContainersHardening, controlledResource, r.Scheme)
 	}
@@ -96,6 +101,178 @@ func (r *CBContainersHardeningReconciler) Reconcile(ctx context.Context, req ctr
 	r.Log.Info("Finished reconciling", "Requiring", stateWasChanged)
 	r.Log.Info("\n\n")
 	return ctrl.Result{Requeue: stateWasChanged}, nil
+}
+
+func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
+	if cbContainersHardening.Spec.AccessTokenSecretName == "" {
+		cbContainersHardening.Spec.AccessTokenSecretName = "cbcontainers-access-token"
+	}
+
+	if cbContainersHardening.Spec.AccessTokenSecretName == "" {
+		cbContainersHardening.Spec.AccessTokenSecretName = "cbcontainers-access-token"
+	}
+
+	if cbContainersHardening.Spec.EnforcerSpec.Labels == nil {
+		cbContainersHardening.Spec.EnforcerSpec.Labels = make(map[string]string)
+	}
+
+	if cbContainersHardening.Spec.EnforcerSpec.DeploymentAnnotations == nil {
+		cbContainersHardening.Spec.EnforcerSpec.DeploymentAnnotations = make(map[string]string)
+	}
+
+	if cbContainersHardening.Spec.EnforcerSpec.PodTemplateAnnotations == nil {
+		cbContainersHardening.Spec.EnforcerSpec.PodTemplateAnnotations = map[string]string{
+			"prometheus.io/scrape": "false",
+			"prometheus.io/port":   "7071",
+		}
+	}
+
+	if cbContainersHardening.Spec.EnforcerSpec.ReplicasCount == nil {
+		defaultReplicaCount := int32(1)
+		cbContainersHardening.Spec.EnforcerSpec.ReplicasCount = &defaultReplicaCount
+	}
+
+	if cbContainersHardening.Spec.EnforcerSpec.Env == nil {
+		cbContainersHardening.Spec.EnforcerSpec.Env = make(map[string]string)
+	}
+
+	r.setDefaultImage(&cbContainersHardening.Spec.EnforcerSpec.Image, "cbartifactory/guardrails-enforcer")
+
+	if err := r.setDefaultResourceRequirements(cbContainersHardening.Spec.EnforcerSpec.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
+		return err
+	}
+
+	r.setDefaultProbes(&cbContainersHardening.Spec.EnforcerSpec.Probes)
+
+	if cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds == 0 {
+		cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds = 5
+	}
+
+	if cbContainersHardening.Spec.StateReporterSpec.Labels == nil {
+		cbContainersHardening.Spec.StateReporterSpec.Labels = make(map[string]string)
+	}
+
+	if cbContainersHardening.Spec.StateReporterSpec.DeploymentAnnotations == nil {
+		cbContainersHardening.Spec.StateReporterSpec.DeploymentAnnotations = make(map[string]string)
+	}
+
+	if cbContainersHardening.Spec.StateReporterSpec.PodTemplateAnnotations == nil {
+		cbContainersHardening.Spec.StateReporterSpec.PodTemplateAnnotations = map[string]string{
+			"prometheus.io/scrape": "false",
+			"prometheus.io/port":   "7071",
+		}
+	}
+
+	if cbContainersHardening.Spec.StateReporterSpec.Env == nil {
+		cbContainersHardening.Spec.StateReporterSpec.Env = make(map[string]string)
+	}
+
+	r.setDefaultImage(&cbContainersHardening.Spec.StateReporterSpec.Image, "cbartifactory/guardrails-state-reporter")
+
+	if err := r.setDefaultResourceRequirements(cbContainersHardening.Spec.StateReporterSpec.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
+		return err
+	}
+
+	r.setDefaultProbes(&cbContainersHardening.Spec.StateReporterSpec.Probes)
+
+	if cbContainersHardening.Spec.EventsGatewaySpec.Port == 0 {
+		cbContainersHardening.Spec.EventsGatewaySpec.Port = 443
+	}
+
+	return nil
+}
+
+func (r *CBContainersHardeningReconciler) setDefaultProbes(probesSpec *cbcontainersv1.CBContainersHardeningProbesSpec) {
+	if probesSpec.ReadinessPath == "" {
+		probesSpec.ReadinessPath = "/ready"
+	}
+
+	if probesSpec.LivenessPath == "" {
+		probesSpec.LivenessPath = "/alive"
+	}
+
+	if probesSpec.Port == 0 {
+		probesSpec.Port = 8181
+	}
+
+	if probesSpec.Scheme == "" {
+		probesSpec.Scheme = coreV1.URISchemeHTTP
+	}
+
+	if probesSpec.InitialDelaySeconds == 0 {
+		probesSpec.InitialDelaySeconds = 3
+	}
+
+	if probesSpec.TimeoutSeconds == 0 {
+		probesSpec.TimeoutSeconds = 1
+	}
+
+	if probesSpec.PeriodSeconds == 0 {
+		probesSpec.PeriodSeconds = 30
+	}
+
+	if probesSpec.SuccessThreshold == 0 {
+		probesSpec.SuccessThreshold = 1
+	}
+
+	if probesSpec.FailureThreshold == 0 {
+		probesSpec.FailureThreshold = 3
+	}
+}
+
+func (r *CBContainersHardeningReconciler) setDefaultImage(imageSpec *cbcontainersv1.CBContainersHardeningImageSpec, imageName string) {
+	if imageSpec.Repository == "" {
+		imageSpec.Repository = imageName
+	}
+
+	if imageSpec.PullPolicy == "" {
+		imageSpec.PullPolicy = "Always"
+	}
+}
+
+func (r *CBContainersHardeningReconciler) setDefaultResourceRequirements(resources coreV1.ResourceRequirements, requestMemory, requestCpu, limitMemory, limitCpu string) error {
+	if resources.Requests == nil {
+		resources.Requests = make(coreV1.ResourceList)
+	}
+
+	if err := r.setDefaultsResourcesList(resources.Requests, requestMemory, requestCpu); err != nil {
+		return err
+	}
+
+	if resources.Limits == nil {
+		resources.Limits = make(coreV1.ResourceList)
+	}
+
+	if err := r.setDefaultsResourcesList(resources.Limits, limitMemory, limitCpu); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *CBContainersHardeningReconciler) setDefaultsResourcesList(list coreV1.ResourceList, memory, cpu string) error {
+	if err := r.setDefaultResource(list, coreV1.ResourceMemory, memory); err != nil {
+		return err
+	}
+
+	if err := r.setDefaultResource(list, coreV1.ResourceCPU, cpu); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *CBContainersHardeningReconciler) setDefaultResource(list coreV1.ResourceList, resourceName coreV1.ResourceName, value string) error {
+	if _, ok := list[resourceName]; !ok {
+		quantity, err := resource.ParseQuantity(value)
+		if err != nil {
+			return err
+		}
+
+		list[resourceName] = quantity
+	}
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -104,7 +104,7 @@ func (obj *EnforcerWebhookK8sObject) findWebhookByName(webhooks []admissionsV1.V
 
 func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook *admissionsV1.ValidatingWebhook, timeoutSeconds int32) {
 	resourcesWebhook.Name = ResourcesWebhookName
-	resourcesWebhook.AdmissionReviewVersions = []string{"v1beta1"}
+	//resourcesWebhook.AdmissionReviewVersions = []string{"v1beta1"}
 	resourcesWebhook.FailurePolicy = &WebhookFailurePolicy
 	//resourcesWebhook.MatchPolicy = &WebhookMatchPolicyType
 	resourcesWebhook.SideEffects = &ResourcesWebhookSideEffect
@@ -203,7 +203,7 @@ func (obj *EnforcerWebhookK8sObject) getResourcesList() []string {
 
 func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook *admissionsV1.ValidatingWebhook, timeoutSeconds int32) {
 	namespacesWebhook.Name = NamespacesWebhookName
-	namespacesWebhook.AdmissionReviewVersions = []string{"v1beta1"}
+	//namespacesWebhook.AdmissionReviewVersions = []string{"v1beta1"}
 	namespacesWebhook.FailurePolicy = &WebhookFailurePolicy
 	//namespacesWebhook.MatchPolicy = &WebhookMatchPolicyType
 	namespacesWebhook.SideEffects = &NamespacesWebhookSideEffect
