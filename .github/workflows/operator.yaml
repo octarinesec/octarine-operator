@@ -23,4 +23,4 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Build & Push CBContainers operator
-        run: make docker-build docker-push IMG=cbartifactory/octarine-operator:${{ steps.docker-tag.outputs.tag }}
+	run: ls
