@@ -17,4 +17,4 @@ require (
 	sigs.k8s.io/controller-runtime v0.8.3
 )
 
-replace github.com/vmware/cbcontainers-operator => /Users/benrub/Development/octarinesec/octarine-operator
+replace github.com/vmware/cbcontainers-operator => ./
