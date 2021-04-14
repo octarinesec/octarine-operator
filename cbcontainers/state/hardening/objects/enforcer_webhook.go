@@ -27,10 +27,19 @@ var (
 )
 
 type EnforcerWebhookK8sObject struct {
-	TlsSecretValues models.TlsSecretValues
+	tlsSecretValues *models.TlsSecretValues
+	kubeletVersion  string
 }
 
 func NewEnforcerWebhookK8sObject() *EnforcerWebhookK8sObject { return &EnforcerWebhookK8sObject{} }
+
+func (obj *EnforcerWebhookK8sObject) UpdateTlsSecretValues(tlsSecretValues models.TlsSecretValues) {
+	obj.tlsSecretValues = &tlsSecretValues
+}
+
+func (obj *EnforcerWebhookK8sObject) UpdateKubeletVersion(kubeletVersion string) {
+	obj.kubeletVersion = kubeletVersion
+}
 
 func (obj *EnforcerWebhookK8sObject) EmptyK8sObject() client.Object {
 	return &admissionsV1.ValidatingWebhookConfiguration{}
@@ -45,6 +54,11 @@ func (obj *EnforcerWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject cli
 	if !ok {
 		return fmt.Errorf("expected Service K8s object")
 	}
+
+	if obj.tlsSecretValues == nil {
+		return fmt.Errorf("tls secret values weren't provided")
+	}
+
 	enforcerSpec := cbContainersHardening.Spec.EnforcerSpec
 
 	webhookConfiguration.Labels = enforcerSpec.Labels
@@ -96,8 +110,10 @@ func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook *ad
 	resourcesWebhook.SideEffects = &ResourcesWebhookSideEffect
 	resourcesWebhook.NamespaceSelector = obj.getResourcesNamespaceSelector(resourcesWebhook.NamespaceSelector)
 	obj.mutateResourcesWebhooksRules(resourcesWebhook)
-	resourcesWebhook.TimeoutSeconds = &timeoutSeconds
-	resourcesWebhook.ClientConfig.CABundle = obj.TlsSecretValues.CaCert
+	if obj.kubeletVersion == "" || obj.kubeletVersion >= "v1.14" {
+		resourcesWebhook.TimeoutSeconds = &timeoutSeconds
+	}
+	resourcesWebhook.ClientConfig.CABundle = obj.tlsSecretValues.CaCert
 	if resourcesWebhook.ClientConfig.Service == nil {
 		resourcesWebhook.ClientConfig.Service = &admissionsV1.ServiceReference{}
 	}
@@ -193,8 +209,10 @@ func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook *
 	namespacesWebhook.SideEffects = &NamespacesWebhookSideEffect
 	namespacesWebhook.NamespaceSelector = &metav1.LabelSelector{}
 	obj.mutateNamespacesWebhooksRules(namespacesWebhook)
-	namespacesWebhook.TimeoutSeconds = &timeoutSeconds
-	namespacesWebhook.ClientConfig.CABundle = obj.TlsSecretValues.CaCert
+	if obj.kubeletVersion == "" || obj.kubeletVersion >= "v1.14" {
+		namespacesWebhook.TimeoutSeconds = &timeoutSeconds
+	}
+	namespacesWebhook.ClientConfig.CABundle = obj.tlsSecretValues.CaCert
 	if namespacesWebhook.ClientConfig.Service == nil {
 		namespacesWebhook.ClientConfig.Service = &admissionsV1.ServiceReference{}
 	}

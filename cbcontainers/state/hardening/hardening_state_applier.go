@@ -52,6 +52,12 @@ func (c *HardeningStateApplier) ApplyDesiredState(ctx context.Context, cbContain
 }
 
 func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
+	c.log.Info("Getting Nodes list")
+	nodesList := &coreV1.NodeList{}
+	if err := client.List(ctx, nodesList); err != nil || nodesList.Items == nil || len(nodesList.Items) < 1 {
+		return false, fmt.Errorf("couldn't get nodes list")
+	}
+
 	mutatedSecret, secretK8sObject, err := ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerTlsSecret, applyOptions, applymentOptions.NewApplyOptions().SetCreateOnly(true))
 	if err != nil {
 		return false, err
@@ -99,7 +105,8 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 			c.log.Info("Deleted enforcer webhook")
 		}
 	} else {
-		c.enforcerWebhook.TlsSecretValues = models.TlsSecretValuesFromSecretData(tlsSecret.Data)
+		c.enforcerWebhook.UpdateTlsSecretValues(models.TlsSecretValuesFromSecretData(tlsSecret.Data))
+		c.enforcerWebhook.UpdateKubeletVersion(nodesList.Items[0].Status.NodeInfo.KubeletVersion)
 		mutatedWebhook, _, err = ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerWebhook, applyOptions)
 		if err != nil {
 			return false, err
