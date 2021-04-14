@@ -196,6 +196,11 @@ func (in *CBContainersHardeningEnforcerSpec) DeepCopyInto(out *CBContainersHarde
 			(*out)[key] = val
 		}
 	}
+	if in.ReplicasCount != nil {
+		in, out := &in.ReplicasCount, &out.ReplicasCount
+		*out = new(int32)
+		**out = **in
+	}
 	if in.Env != nil {
 		in, out := &in.Env, &out.Env
 		*out = make(map[string]string, len(*in))

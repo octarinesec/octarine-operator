@@ -81,7 +81,7 @@ func (obj *EnforcerDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject 
 		deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
 
-	deployment.Spec.Replicas = &enforcerSpec.ReplicasCount
+	deployment.Spec.Replicas = enforcerSpec.ReplicasCount
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels
 	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels

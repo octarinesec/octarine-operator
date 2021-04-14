@@ -94,7 +94,7 @@ type CBContainersHardeningEnforcerSpec struct {
 	// +kubebuilder:default:={prometheus.io/scrape: "false", prometheus.io/port: "7071"}
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
 	// +kubebuilder:default:=1
-	ReplicasCount int32 `json:"replicasCount,omitempty"`
+	ReplicasCount *int32 `json:"replicasCount,omitempty"`
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/guardrails-enforcer"}
