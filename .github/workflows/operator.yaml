@@ -21,5 +21,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - run: make generate
+      - run: make manifests
       - name: Build and push
         run: make docker-build docker-push IMG=cbartifactory/octarine-operator:test
