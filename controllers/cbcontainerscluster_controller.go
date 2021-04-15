@@ -129,7 +129,7 @@ func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbconta
 	}
 
 	if cbContainersCluster.Spec.EventsGatewaySpec.Port == 0 {
-		cbContainersCluster.Spec.ApiGatewaySpec.Port = 443
+		cbContainersCluster.Spec.EventsGatewaySpec.Port = 443
 	}
 }
 
