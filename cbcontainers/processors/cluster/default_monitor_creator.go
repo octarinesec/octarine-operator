@@ -27,7 +27,7 @@ func (creator *DefaultMonitorCreator) CreateMonitor(cbContainersCluster *cbconta
 	spec := cbContainersCluster.Spec
 	eventsSpec := cbContainersCluster.Spec.EventsGatewaySpec
 
-	certPool, cert, err := gateway.GetCertificates("")
+	certPool, cert, err := gateway.GetCertificates("monitor-agent")
 	if err != nil {
 		return nil, err
 	}
