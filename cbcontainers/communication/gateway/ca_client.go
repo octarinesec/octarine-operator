@@ -23,16 +23,6 @@ type TrustChainResponse struct {
 	Chain string `json:"chain" binding:"required"`
 }
 
-func MakePrivateKey() (*rsa.PrivateKey, error) {
-	reader := rand.Reader
-	privateKey, err := rsa.GenerateKey(reader, 4096)
-	if err != nil {
-		return nil, err
-	}
-
-	return privateKey, nil
-}
-
 // Makes a CSR
 func makeCertificateRequest(privateKey interface{},
 	commonName string, organizationalUnit []string, organization []string) ([]byte, error) {
@@ -116,12 +106,7 @@ func (gateway *ApiGateway) getTrustChain() ([]byte, error) {
 	return []byte(tcResp.Chain), nil
 }
 
-func (gateway *ApiGateway) getCertificates(commonName string, organizationalUnit []string, organization []string) (*x509.CertPool, *tls.Certificate, error) {
-	privateKey, err := MakePrivateKey()
-	if err != nil {
-		return nil, nil, err
-	}
-
+func (gateway *ApiGateway) getCertificates(commonName string, organizationalUnit []string, organization []string, privateKey *rsa.PrivateKey) (*x509.CertPool, *tls.Certificate, error) {
 	cert, err := gateway.getSignedCertificate(privateKey, commonName, organizationalUnit, organization, false)
 	if err != nil {
 		return nil, nil, err

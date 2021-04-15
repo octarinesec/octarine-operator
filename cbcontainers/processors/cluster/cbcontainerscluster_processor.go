@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"github.com/go-logr/logr"
@@ -12,7 +13,7 @@ import (
 type Gateway interface {
 	RegisterCluster() error
 	GetRegistrySecret() (*models.RegistrySecretValues, error)
-	GetCertificates(name string) (*x509.CertPool, *tls.Certificate, error)
+	GetCertificates(name string, privateKey *rsa.PrivateKey) (*x509.CertPool, *tls.Certificate, error)
 }
 
 type gatewayCreator interface {

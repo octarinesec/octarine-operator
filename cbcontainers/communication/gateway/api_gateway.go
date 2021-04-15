@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -93,10 +94,10 @@ func (gateway *ApiGateway) GetRegistrySecret() (*models.RegistrySecretValues, er
 	return resp.Result().(*models.RegistrySecretValues), nil
 }
 
-func (gateway *ApiGateway) GetCertificates(name string) (*x509.CertPool, *tls.Certificate, error) {
+func (gateway *ApiGateway) GetCertificates(name string, privateKey *rsa.PrivateKey) (*x509.CertPool, *tls.Certificate, error) {
 	commonName := name
 	organization := []string{"Octarine", gateway.account}
 	organizationalUnit := []string{gateway.cluster}
 
-	return gateway.getCertificates(commonName, organizationalUnit, organization)
+	return gateway.getCertificates(commonName, organizationalUnit, organization, privateKey)
 }

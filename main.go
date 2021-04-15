@@ -86,12 +86,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	defaultMonitorCreator, err := clusterProcessors.NewDefaultMonitorCreator(monitor.NewDefaultHealthChecker(mgr.GetClient(), commonState.DataPlaneNamespaceName), monitor.NewDefaultFeaturesStatusProvider(mgr.GetClient()))
+	if err != nil {
+		setupLog.Error(err, "unable to create default monitor creator")
+		os.Exit(1)
+	}
+
 	cbContainersClusterLogger := ctrl.Log.WithName("controllers").WithName("CBContainersCluster")
 	if err = (&controllers.CBContainersClusterReconciler{
 		Client:              mgr.GetClient(),
 		Log:                 cbContainersClusterLogger,
 		Scheme:              mgr.GetScheme(),
-		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator(), clusterProcessors.NewDefaultMonitorCreator(monitor.NewDefaultHealthChecker(mgr.GetClient(), commonState.DataPlaneNamespaceName), monitor.NewDefaultFeaturesStatusProvider(mgr.GetClient()))),
+		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator(), defaultMonitorCreator),
 		ClusterStateApplier: clusterState.NewClusterStateApplier(cbContainersClusterLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
