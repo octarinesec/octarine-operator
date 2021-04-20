@@ -1,5 +1,5 @@
 # VMware Carbon Black Cloud Container Operator
-## Cloud Container Operator Overview 
+## Overview 
 
 The Carbon Black Cloud Container Operator runs within a Kubernetes cluster. The Container Operator is a set of controllers which deploy and manage the VMware Carbon Black Cloud Container components. 
  

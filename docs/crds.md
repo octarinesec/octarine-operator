@@ -1,6 +1,6 @@
 # VMware Carbon Black Cloud Container Operator
 
-## Cloud Container Operator Custom Resources Definitions
+## Custom Resources Definitions
 
 The operator implements controllers for the Carbon Black Container custom resources definitions:
 
