@@ -59,11 +59,11 @@ spec:
                     tag:
                       type: string
                   type: object
-                podTemplateAnnotations:
+                labels:
                   additionalProperties:
                     type: string
                   type: object
-                podTemplateLabels:
+                podTemplateAnnotations:
                   additionalProperties:
                     type: string
                   type: object
@@ -144,10 +144,6 @@ spec:
                   additionalProperties:
                     type: string
                   type: object
-                deploymentLabels:
-                  additionalProperties:
-                    type: string
-                  type: object
                 env:
                   additionalProperties:
                     type: string
@@ -162,6 +158,10 @@ spec:
                       type: string
                     tag:
                       type: string
+                  type: object
+                labels:
+                  additionalProperties:
+                    type: string
                   type: object
                 podTemplateAnnotations:
                   additionalProperties:

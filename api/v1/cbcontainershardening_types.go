@@ -65,7 +65,7 @@ type CBContainersHardeningSpec struct {
 
 type CBContainersHardeningStateReporterSpec struct {
 	// +kubebuilder:default:=<>
-	Labels map[string]string `json:"deploymentLabels,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
 	DeploymentAnnotations map[string]string `json:"deploymentAnnotations,omitempty"`
 	// +kubebuilder:default:={prometheus.io/scrape: "false", prometheus.io/port: "7071"}
@@ -88,7 +88,7 @@ type CBContainersHardeningEventsGatewaySpec struct {
 
 type CBContainersHardeningEnforcerSpec struct {
 	// +kubebuilder:default:=<>
-	Labels map[string]string `json:"podTemplateLabels,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
 	DeploymentAnnotations map[string]string `json:"deploymentAnnotations,omitempty"`
 	// +kubebuilder:default:={prometheus.io/scrape: "false", prometheus.io/port: "7071"}
