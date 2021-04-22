@@ -279,6 +279,7 @@ func (r *CBContainersHardeningReconciler) setDefaultResource(list coreV1.Resourc
 func (r *CBContainersHardeningReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&cbcontainersv1.CBContainersHardening{}).
+		Owns(&coreV1.Secret{}).
 		Owns(&appsV1.Deployment{}).
 		Owns(&coreV1.Service{}).
 		Owns(&admissionsV1.ValidatingWebhookConfiguration{}).
