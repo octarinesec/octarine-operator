@@ -122,6 +122,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - operator.containers.carbonblack.io
+  resources:
+  - cbcontainersruntimes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - operator.containers.carbonblack.io
+  resources:
+  - cbcontainersruntimes/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - operator.containers.carbonblack.io
+  resources:
+  - cbcontainersruntimes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - scheduling.k8s.io
   resources:
   - priorityclasses

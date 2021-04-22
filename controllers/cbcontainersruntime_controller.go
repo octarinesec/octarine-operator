@@ -18,8 +18,10 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,25 +42,79 @@ type CBContainersRuntimeReconciler struct {
 	RuntimeStateApplier runtimeStateApplier
 }
 
+func (r *CBContainersRuntimeReconciler) getContainersRuntimeObject(ctx context.Context) (*operatorcontainerscarbonblackiov1.CBContainersRuntime, error) {
+	cbContainersRuntimeList := &operatorcontainerscarbonblackiov1.CBContainersRuntimeList{}
+	if err := r.List(ctx, cbContainersRuntimeList); err != nil {
+		return nil, fmt.Errorf("couldn't list CBContainersRuntime k8s objects: %v", err)
+	}
+
+	if cbContainersRuntimeList.Items == nil || len(cbContainersRuntimeList.Items) == 0 {
+		return nil, nil
+	}
+
+	if len(cbContainersRuntimeList.Items) > 1 {
+		return nil, fmt.Errorf("there is more than 1 CBContainersRuntime k8s object, please delete unwanted resources")
+	}
+
+	return &cbContainersRuntimeList.Items[0], nil
+}
+
+func (r *CBContainersRuntimeReconciler) setDefaults(cbContainersRuntime *operatorcontainerscarbonblackiov1.CBContainersRuntime) {
+	// if cbContainersRuntime.Spec.ApiGatewaySpec.Scheme == "" {
+	// 	cbContainersRuntime.Spec.ApiGatewaySpec.Scheme = "https"
+	// }
+	//
+	// if cbContainersRuntime.Spec.ApiGatewaySpec.Port == 0 {
+	// 	cbContainersRuntime.Spec.ApiGatewaySpec.Port = 443
+	// }
+	//
+	// if cbContainersRuntime.Spec.ApiGatewaySpec.Adapter == "" {
+	// 	cbContainersRuntime.Spec.ApiGatewaySpec.Adapter = "containers"
+	// }
+	//
+	// if cbContainersRuntime.Spec.ApiGatewaySpec.AccessTokenSecretName == "" {
+	// 	cbContainersRuntime.Spec.ApiGatewaySpec.AccessTokenSecretName = "cbcontainers-access-token"
+	// }
+	//
+	// if cbContainersRuntime.Spec.EventsGatewaySpec.Port == 0 {
+	// 	cbContainersRuntime.Spec.EventsGatewaySpec.Port = 443
+	// }
+}
+
 //+kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the CBContainersRuntime object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.2/pkg/reconcile
 func (r *CBContainersRuntimeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("cbcontainersruntime", req.NamespacedName)
+	r.Log.Info("\n\n")
+	r.Log.Info("Got reconcile request", "namespaced name", req.NamespacedName)
+	r.Log.Info("Starting reconciling")
 
-	// your logic here
+	r.Log.Info("Getting CBContainersRuntime object")
+	cbContainersRuntime, err := r.getContainersRuntimeObject(ctx)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
-	return ctrl.Result{}, nil
+	if cbContainersRuntime == nil {
+		return ctrl.Result{}, nil
+	}
+
+	r.setDefaults(cbContainersRuntime)
+
+	setOwner := func(controlledResource metav1.Object) error {
+		return ctrl.SetControllerReference(cbContainersRuntime, controlledResource, r.Scheme)
+	}
+
+	r.Log.Info("Applying desired state")
+	stateWasChanged, err := r.RuntimeStateApplier.ApplyDesiredState(ctx, cbContainersRuntime, r.Client, setOwner)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	r.Log.Info("Finished reconciling", "Requiring", stateWasChanged)
+	r.Log.Info("\n\n")
+	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

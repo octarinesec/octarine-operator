@@ -2,6 +2,7 @@ package objects
 
 import (
 	"fmt"
+
 	cbContainersV1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
@@ -90,9 +91,9 @@ func (obj *StateReporterDeploymentK8sObject) mutateContainersList(templatePodSpe
 func (obj *StateReporterDeploymentK8sObject) mutateContainer(container *coreV1.Container, stateReporterSpec *cbContainersV1.CBContainersHardeningStateReporterSpec, eventsGatewaySpec *cbContainersV1.CBContainersHardeningEventsGatewaySpec, version, accessTokenSecretName string) {
 	container.Name = StateReporterName
 	container.Resources = stateReporterSpec.Resources
-	mutateEnvVars(container, stateReporterSpec.Env, accessTokenSecretName, eventsGatewaySpec)
-	mutateImage(container, stateReporterSpec.Image, version)
-	mutateContainerProbes(container, stateReporterSpec.Probes)
+	commonState.MutateEnvVars(container, stateReporterSpec.Env, accessTokenSecretName, eventsGatewaySpec)
+	commonState.MutateImage(container, stateReporterSpec.Image, version)
+	commonState.MutateContainerProbes(container, stateReporterSpec.Probes)
 	obj.mutateSecurityContext(container)
 }
 

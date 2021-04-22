@@ -17,19 +17,44 @@ limitations under the License.
 package v1
 
 import (
+	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+type CBContainersRuntimeControllerSpec struct {
+	// +kubebuilder:default:=<>
+	Labels map[string]string `json:"labels,omitempty"`
+	// +kubebuilder:default:=<>
+	DeploymentAnnotations map[string]string `json:"deploymentAnnotations,omitempty"`
+	// +kubebuilder:default:={prometheus.io/scrape: "false", prometheus.io/port: "7071"}
+	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
+	// +kubebuilder:default:=1
+	ReplicasCount *int32 `json:"replicasCount,omitempty"`
+	// +kubebuilder:default:=<>
+	Env map[string]string `json:"env,omitempty"`
+	// +kubebuilder:default:={repository:"cbartifactory/nodeguard-controller"}
+	Image CBContainersHardeningImageSpec `json:"image,omitempty"`
+	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "128Mi", cpu: "600m"}}
+	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
+	// +kubebuilder:default:=<>
+	Probes            CBContainersHardeningProbesSpec        `json:"probes,omitempty"`
+	EventsGatewaySpec CBContainersHardeningEventsGatewaySpec `json:"eventsGatewaySpec,required"`
+}
+
+type CBContainersRuntimeWorkerSpec struct {
+}
 
 // CBContainersRuntimeSpec defines the desired state of CBContainersRuntime
 type CBContainersRuntimeSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of CBContainersRuntime. Edit cbcontainersruntime_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Version string `json:"version,required"`
+	// +kubebuilder:default:="cbcontainers-access-token"
+	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
+	// +kubebuilder:default:=<>
+	ControllerSpec CBContainersRuntimeControllerSpec `json:"controllerSpec,omitempty"`
+	// +kubebuilder:default:=<>
+	WorkerSpec CBContainersRuntimeWorkerSpec `json:"workerSpec,omitempty"`
+	// +kubebuilder:default:=443
+	InternalGrpcPort int `json:"internalGrpcPort,required"`
 }
 
 // CBContainersRuntimeStatus defines the observed state of CBContainersRuntime
@@ -38,9 +63,9 @@ type CBContainersRuntimeStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
 
 // CBContainersRuntime is the Schema for the cbcontainersruntimes API
 type CBContainersRuntime struct {
@@ -51,7 +76,7 @@ type CBContainersRuntime struct {
 	Status CBContainersRuntimeStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // CBContainersRuntimeList contains a list of CBContainersRuntime
 type CBContainersRuntimeList struct {

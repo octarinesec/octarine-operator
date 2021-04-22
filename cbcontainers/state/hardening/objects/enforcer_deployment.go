@@ -2,6 +2,7 @@ package objects
 
 import (
 	"fmt"
+
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
@@ -129,15 +130,15 @@ func (obj *EnforcerDeploymentK8sObject) mutateContainer(container *coreV1.Contai
 	container.Name = EnforcerName
 	container.Resources = enforcerSpec.Resources
 	obj.mutateEnforcerEnvVars(container, enforcerSpec, accessTokenSecretName, eventsGatewaySpec)
-	mutateImage(container, enforcerSpec.Image, version)
-	mutateContainerProbes(container, enforcerSpec.Probes)
+	commonState.MutateImage(container, enforcerSpec.Image, version)
+	commonState.MutateContainerProbes(container, enforcerSpec.Probes)
 	obj.mutateSecurityContext(container)
 	obj.mutateContainerPorts(container)
 	obj.mutateVolumesMounts(container)
 }
 
 func (obj *EnforcerDeploymentK8sObject) mutateEnforcerEnvVars(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersHardeningEventsGatewaySpec) {
-	mutateEnvVars(container, enforcerSpec.Env, accessTokenSecretName, eventsGatewaySpec,
+	commonState.MutateEnvVars(container, enforcerSpec.Env, accessTokenSecretName, eventsGatewaySpec,
 		coreV1.EnvVar{Name: "GUARDRAILS_ENFORCER_KEY_FILE_PATH", Value: fmt.Sprintf("%s/key", DesiredTlsSecretVolumeMountPath)},
 		coreV1.EnvVar{Name: "GUARDRAILS_ENFORCER_CERT_FILE_PATH", Value: fmt.Sprintf("%s/signed_cert", DesiredTlsSecretVolumeMountPath)},
 		coreV1.EnvVar{Name: "GUARDRAILS_ENFORCER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", enforcerSpec.Prometheus.Port)},

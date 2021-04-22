@@ -1,16 +1,16 @@
-package objects
+package common
 
 import (
 	"fmt"
-	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
-	coreV1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"reflect"
 	"strconv"
+
+	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	coreV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func mutateEnvVars(container *coreV1.Container, desiredEnvsValues map[string]string, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersHardeningEventsGatewaySpec, customEnvsToAdd ...coreV1.EnvVar) {
+func MutateEnvVars(container *coreV1.Container, desiredEnvsValues map[string]string, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersHardeningEventsGatewaySpec, customEnvsToAdd ...coreV1.EnvVar) {
 	desiredEnvVars := getDesiredEnvVars(desiredEnvsValues, accessTokenSecretName, eventsGatewaySpec, customEnvsToAdd)
 
 	if !shouldChangeEnvVars(container, desiredEnvVars) {
@@ -43,7 +43,7 @@ func getDesiredEnvVars(desiredEnvsValues map[string]string, accessTokenSecretNam
 	for desiredEnvVarName, desiredEnvVarValue := range desiredEnvsValues {
 		desiredEnvVars[desiredEnvVarName] = coreV1.EnvVar{Name: desiredEnvVarName, Value: desiredEnvVarValue}
 	}
-	envsToAdd := commonState.GetCommonDataPlaneEnvVars(accessTokenSecretName)
+	envsToAdd := GetCommonDataPlaneEnvVars(accessTokenSecretName)
 	envsToAdd = append(envsToAdd, getEventsGateWayEnvVars(eventsGatewaySpec)...)
 	envsToAdd = append(envsToAdd, customEnvsToAdd...)
 
@@ -63,7 +63,7 @@ func getEventsGateWayEnvVars(eventsGatewaySpec *cbcontainersv1.CBContainersHarde
 	}
 }
 
-func mutateImage(container *coreV1.Container, desiredImage cbcontainersv1.CBContainersHardeningImageSpec, desiredVersion string) {
+func MutateImage(container *coreV1.Container, desiredImage cbcontainersv1.CBContainersHardeningImageSpec, desiredVersion string) {
 	desiredTag := desiredImage.Tag
 	if desiredTag == "" {
 		desiredTag = desiredVersion
@@ -74,7 +74,7 @@ func mutateImage(container *coreV1.Container, desiredImage cbcontainersv1.CBCont
 	container.ImagePullPolicy = desiredImage.PullPolicy
 }
 
-func mutateContainerProbes(container *coreV1.Container, desiredProbes cbcontainersv1.CBContainersHardeningProbesSpec) {
+func MutateContainerProbes(container *coreV1.Container, desiredProbes cbcontainersv1.CBContainersHardeningProbesSpec) {
 	if container.ReadinessProbe == nil {
 		container.ReadinessProbe = &coreV1.Probe{}
 	}
