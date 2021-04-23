@@ -92,6 +92,7 @@ func (obj *StateReporterDeploymentK8sObject) mutateContainer(container *coreV1.C
 	container.Resources = stateReporterSpec.Resources
 	mutateEnvVars(container, stateReporterSpec.Env, accessTokenSecretName, eventsGatewaySpec)
 	mutateImage(container, stateReporterSpec.Image, version)
+	mutateContainerProbes(container, stateReporterSpec.Probes)
 	obj.mutateSecurityContext(container)
 }
 
