@@ -138,7 +138,7 @@ func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbc
 
 	r.setDefaultImage(&cbContainersHardening.Spec.EnforcerSpec.Image, "cbartifactory/guardrails-enforcer")
 
-	if err := r.setDefaultResourceRequirements(cbContainersHardening.Spec.EnforcerSpec.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
+	if err := r.setDefaultResourceRequirements(&cbContainersHardening.Spec.EnforcerSpec.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
 		return err
 	}
 
@@ -169,7 +169,7 @@ func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbc
 
 	r.setDefaultImage(&cbContainersHardening.Spec.StateReporterSpec.Image, "cbartifactory/guardrails-state-reporter")
 
-	if err := r.setDefaultResourceRequirements(cbContainersHardening.Spec.StateReporterSpec.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
+	if err := r.setDefaultResourceRequirements(&cbContainersHardening.Spec.StateReporterSpec.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
 		return err
 	}
 
@@ -230,7 +230,7 @@ func (r *CBContainersHardeningReconciler) setDefaultImage(imageSpec *cbcontainer
 	}
 }
 
-func (r *CBContainersHardeningReconciler) setDefaultResourceRequirements(resources coreV1.ResourceRequirements, requestMemory, requestCpu, limitMemory, limitCpu string) error {
+func (r *CBContainersHardeningReconciler) setDefaultResourceRequirements(resources *coreV1.ResourceRequirements, requestMemory, requestCpu, limitMemory, limitCpu string) error {
 	if resources.Requests == nil {
 		resources.Requests = make(coreV1.ResourceList)
 	}
