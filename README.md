@@ -8,7 +8,7 @@ The Carbon Black Cloud Container Operator runs within a Kubernetes cluster. The 
  * Deploy and manage the Container Advanced product bundle (including the runtime for Kubernetes security) 
  * Automatically fetch and deploy the Carbon Black Cloud Container private image registry secret
  * Automatically register the Carbon Black Cloud Container cluster
- * Manage the Container Essentials validationng webhook - dynamically manage the admission control webhook to avoid possible downtime
+ * Manage the Container Essentials validating webhook - dynamically manage the admission control webhook to avoid possible downtime
  * Monitor and report agent availability to the Carbon Black console
 
 The Carbon Black Cloud Container Operator utilizes the operator-framework to create a GO operator, which is responsible for managing and monitoring the Cloud Container components deployment. 
@@ -35,11 +35,22 @@ make undeploy
 * Notice that the above command will delete the Carbon Black Container custom resources definitions and instances.
 
 ## Data Plane Deployment
+
+### 1. Apply the Carbon Black Container Api Token Secret
+
+```
+kubectl create secret generic cbcontainers-access-token \
+--namespace cbcontainers-dataplane --from-literal=accessToken=\
+{API_Secret_Key}/{API_ID}
+```
+
+### 2. Apply the Carbon Black Container Custom Resources
+
 The operator implements controllers for the Carbon Black Container custom resources definitions
 
 [Full Custom Resources Definitions Documentation](docs/crds.md)
 
-### 1. Carbon Black Container Cluster CR
+#### 2.1 Apply the Carbon Black Container Cluster CR
 <u>cbcontainersclusters.operator.containers.carbonblack.io</u>
 
 This is the first CR you'll need to deploy in order to initialize the data plane components.
@@ -59,7 +70,10 @@ spec:
     host: {EVENTS_HOST}
 ```
 
-### 2. Carbon Black Container Hardening CR
+* notice that without applying the api token secret, the operator will return the error:
+`couldn't find access token secret k8s object`
+
+#### 2.2 Apply the Carbon Black Container Hardening CR
 <u>cbcontainershardenings.operator.containers.carbonblack.io</u>
 
 This is the CR you'll need to deploy in order to install the Carbon Black Container Hardening feature components.
