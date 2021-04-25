@@ -4,8 +4,7 @@
 The Carbon Black Cloud Container Operator runs within a Kubernetes cluster. The Container Operator is a set of controllers which deploy and manage the VMware Carbon Black Cloud Container components. 
  
  Capabilities
- * Deploy and manage the Container Essentials product bundle (including the configuration and the image scanning for Kubernetes security)! 
- * Deploy and manage the Container Advanced product bundle (including the runtime for Kubernetes security) 
+ * Deploy and manage the Container Essentials product bundle (including the configuration and the image scanning for Kubernetes security)!
  * Automatically fetch and deploy the Carbon Black Cloud Container private image registry secret
  * Automatically register the Carbon Black Cloud Container cluster
  * Manage the Container Essentials validating webhook - dynamically manage the admission control webhook to avoid possible downtime
