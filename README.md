@@ -27,12 +27,6 @@ make docker-build docker-push IMG={IMAGE_NAME}
 make deploy IMG=={IMAGE_NAME}
 ```
 
-### Uninstalling the Carbon Black Cloud Container Operator
-```sh
-make undeploy
-```
-* Notice that the above command will delete the Carbon Black Container custom resources definitions and instances.
-
 ## Data Plane Deployment
 
 ### 1. Apply the Carbon Black Container Api Token Secret
@@ -92,6 +86,11 @@ spec:
     host: {EVENTS_HOST}
 ```
 
+### Uninstalling the Carbon Black Cloud Container Operator
+```sh
+make undeploy
+```
+* Notice that the above command will delete the Carbon Black Container custom resources definitions and instances.
 
 ## Using HTTP proxy
 
