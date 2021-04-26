@@ -105,7 +105,7 @@ In order to configure those environment variables for the Hardening Enforcer and
 update the Hardening CR using the proxy environment variables:
 
 ```sh
-spec:s
+specs:
   enforcerSpec:
     env:
       HTTP_PROXY="<proxy-url>"
