@@ -99,7 +99,7 @@ func (agent *MonitorAgent) buildHealthMessage() (models.HealthReportMessage, err
 		return models.HealthReportMessage{}, err
 	}
 
-	runtimeEnabled, err := agent.featuresStatusProvider.HardeningEnabled()
+	runtimeEnabled, err := agent.featuresStatusProvider.RuntimeEnabled()
 	if err != nil {
 		return models.HealthReportMessage{}, err
 	}
