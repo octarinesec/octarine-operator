@@ -19,6 +19,9 @@ package controllers
 import (
 	"context"
 	"fmt"
+
+	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 	admissionsV1 "k8s.io/api/admissionregistration/v1beta1"
 	appsV1 "k8s.io/api/apps/v1"
@@ -30,8 +33,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 )
 
 var falseRef = false
@@ -176,7 +177,7 @@ func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbc
 	return nil
 }
 
-func (r *CBContainersHardeningReconciler) setDefaultProbes(probesSpec *cbcontainersv1.CBContainersHardeningProbesSpec) {
+func (r *CBContainersHardeningReconciler) setDefaultProbes(probesSpec *common_specs.CBContainersHTTPProbesSpec) {
 	if probesSpec.ReadinessPath == "" {
 		probesSpec.ReadinessPath = "/ready"
 	}
@@ -214,7 +215,7 @@ func (r *CBContainersHardeningReconciler) setDefaultProbes(probesSpec *cbcontain
 	}
 }
 
-func (r *CBContainersHardeningReconciler) setDefaultPrometheus(prometheusSpec *cbcontainersv1.CBContainersHardeningPrometheusSpec) {
+func (r *CBContainersHardeningReconciler) setDefaultPrometheus(prometheusSpec *common_specs.CBContainersPrometheusSpec) {
 	if prometheusSpec.Enabled == nil {
 		prometheusSpec.Enabled = &falseRef
 	}
@@ -224,7 +225,7 @@ func (r *CBContainersHardeningReconciler) setDefaultPrometheus(prometheusSpec *c
 	}
 }
 
-func (r *CBContainersHardeningReconciler) setDefaultImage(imageSpec *cbcontainersv1.CBContainersHardeningImageSpec, imageName string) {
+func (r *CBContainersHardeningReconciler) setDefaultImage(imageSpec *common_specs.CBContainersImageSpec, imageName string) {
 	if imageSpec.Repository == "" {
 		imageSpec.Repository = imageName
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	cbContainersV1 "github.com/vmware/cbcontainers-operator/api/v1"
+	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	appsV1 "k8s.io/api/apps/v1"
@@ -79,7 +80,7 @@ func (obj *ControllerDeploymentK8sObject) MutateRuntimeChildK8sObject(k8sObject 
 	return nil
 }
 
-func (obj *ControllerDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, controllerSpec *cbContainersV1.CBContainersRuntimeControllerSpec, eventsGatewaySpec *cbContainersV1.CBContainersHardeningEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *ControllerDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, controllerSpec *cbContainersV1.CBContainersRuntimeControllerSpec, eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
 	if len(templatePodSpec.Containers) != 1 {
 		container := coreV1.Container{}
 		templatePodSpec.Containers = []coreV1.Container{container}
@@ -88,7 +89,7 @@ func (obj *ControllerDeploymentK8sObject) mutateContainersList(templatePodSpec *
 	obj.mutateContainer(&templatePodSpec.Containers[0], controllerSpec, eventsGatewaySpec, version, accessTokenSecretName)
 }
 
-func (obj *ControllerDeploymentK8sObject) mutateContainer(container *coreV1.Container, controllerSpec *cbContainersV1.CBContainersRuntimeControllerSpec, eventsGatewaySpec *cbContainersV1.CBContainersHardeningEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *ControllerDeploymentK8sObject) mutateContainer(container *coreV1.Container, controllerSpec *cbContainersV1.CBContainersRuntimeControllerSpec, eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
 	container.Name = ControllerName
 	container.Resources = controllerSpec.Resources
 	commonState.MutateEnvVars(container, controllerSpec.Env, accessTokenSecretName, eventsGatewaySpec)

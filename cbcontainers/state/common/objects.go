@@ -5,12 +5,12 @@ import (
 	"reflect"
 	"strconv"
 
-	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func MutateEnvVars(container *coreV1.Container, desiredEnvsValues map[string]string, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersHardeningEventsGatewaySpec, customEnvsToAdd ...coreV1.EnvVar) {
+func MutateEnvVars(container *coreV1.Container, desiredEnvsValues map[string]string, accessTokenSecretName string, eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec, customEnvsToAdd ...coreV1.EnvVar) {
 	desiredEnvVars := getDesiredEnvVars(desiredEnvsValues, accessTokenSecretName, eventsGatewaySpec, customEnvsToAdd)
 
 	if !shouldChangeEnvVars(container, desiredEnvVars) {
@@ -38,7 +38,7 @@ func shouldChangeEnvVars(container *coreV1.Container, desiredEnvVars map[string]
 	return false
 }
 
-func getDesiredEnvVars(desiredEnvsValues map[string]string, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersHardeningEventsGatewaySpec, customEnvsToAdd []coreV1.EnvVar) map[string]coreV1.EnvVar {
+func getDesiredEnvVars(desiredEnvsValues map[string]string, accessTokenSecretName string, eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec, customEnvsToAdd []coreV1.EnvVar) map[string]coreV1.EnvVar {
 	desiredEnvVars := make(map[string]coreV1.EnvVar)
 	for desiredEnvVarName, desiredEnvVarValue := range desiredEnvsValues {
 		desiredEnvVars[desiredEnvVarName] = coreV1.EnvVar{Name: desiredEnvVarName, Value: desiredEnvVarValue}
@@ -56,14 +56,14 @@ func getDesiredEnvVars(desiredEnvsValues map[string]string, accessTokenSecretNam
 	return desiredEnvVars
 }
 
-func getEventsGateWayEnvVars(eventsGatewaySpec *cbcontainersv1.CBContainersHardeningEventsGatewaySpec) []coreV1.EnvVar {
+func getEventsGateWayEnvVars(eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec) []coreV1.EnvVar {
 	return []coreV1.EnvVar{
 		{Name: "OCTARINE_MESSAGEPROXY_HOST", Value: eventsGatewaySpec.Host},
 		{Name: "OCTARINE_MESSAGEPROXY_PORT", Value: strconv.Itoa(eventsGatewaySpec.Port)},
 	}
 }
 
-func MutateImage(container *coreV1.Container, desiredImage cbcontainersv1.CBContainersHardeningImageSpec, desiredVersion string) {
+func MutateImage(container *coreV1.Container, desiredImage common_specs.CBContainersImageSpec, desiredVersion string) {
 	desiredTag := desiredImage.Tag
 	if desiredTag == "" {
 		desiredTag = desiredVersion
@@ -74,7 +74,7 @@ func MutateImage(container *coreV1.Container, desiredImage cbcontainersv1.CBCont
 	container.ImagePullPolicy = desiredImage.PullPolicy
 }
 
-func MutateContainerProbes(container *coreV1.Container, desiredProbes cbcontainersv1.CBContainersHardeningProbesSpec) {
+func MutateContainerHTTPProbes(container *coreV1.Container, desiredProbes common_specs.CBContainersHTTPProbesSpec) {
 	if container.ReadinessProbe == nil {
 		container.ReadinessProbe = &coreV1.Probe{}
 	}
@@ -83,11 +83,11 @@ func MutateContainerProbes(container *coreV1.Container, desiredProbes cbcontaine
 		container.LivenessProbe = &coreV1.Probe{}
 	}
 
-	mutateProbe(container.ReadinessProbe, desiredProbes.ReadinessPath, desiredProbes)
-	mutateProbe(container.LivenessProbe, desiredProbes.LivenessPath, desiredProbes)
+	mutateHTTPProbe(container.ReadinessProbe, desiredProbes.ReadinessPath, desiredProbes)
+	mutateHTTPProbe(container.LivenessProbe, desiredProbes.LivenessPath, desiredProbes)
 }
 
-func mutateProbe(probe *coreV1.Probe, desiredPath string, desiredProbes cbcontainersv1.CBContainersHardeningProbesSpec) {
+func mutateHTTPProbe(probe *coreV1.Probe, desiredPath string, desiredProbes common_specs.CBContainersHTTPProbesSpec) {
 	if probe.Handler.HTTPGet == nil {
 		probe.Handler = coreV1.Handler{
 			HTTPGet: &coreV1.HTTPGetAction{},

@@ -3,10 +3,13 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	logrTesting "github.com/go-logr/logr/testing"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/test_utils"
@@ -17,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrlRuntime "sigs.k8s.io/controller-runtime"
-	"testing"
 )
 
 type SetupClusterControllerTest func(*ClusterControllerTestMocks)
@@ -39,7 +41,7 @@ var (
 	ClusterCustomResourceItems = []cbcontainersv1.CBContainersCluster{
 		{
 			Spec: cbcontainersv1.CBContainersClusterSpec{
-				ApiGatewaySpec: cbcontainersv1.CBContainersClusterApiGatewaySpec{
+				ApiGatewaySpec: common_specs.CBContainersApiGatewaySpec{
 					AccessTokenSecretName: ClusterAccessTokenSecretName,
 				},
 			},

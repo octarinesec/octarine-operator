@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -24,50 +25,15 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-type CBContainersHardeningProbesSpec struct {
-	// +kubebuilder:default:="/ready"
-	ReadinessPath string `json:"readinessPath,omitempty"`
-	// +kubebuilder:default:="/alive"
-	LivenessPath string `json:"livenessPath,omitempty"`
-	// +kubebuilder:default:=8181
-	Port int `json:"port,omitempty"`
-	// +kubebuilder:default:="HTTP"
-	Scheme coreV1.URIScheme `json:"scheme,omitempty"`
-	// +kubebuilder:default:=3
-	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
-	// +kubebuilder:default:=1
-	TimeoutSeconds int32 `json:"timeoutSeconds,omitempty"`
-	// +kubebuilder:default:=30
-	PeriodSeconds int32 `json:"periodSeconds,omitempty"`
-	// +kubebuilder:default:=1
-	SuccessThreshold int32 `json:"successThreshold,omitempty"`
-	// +kubebuilder:default:=3
-	FailureThreshold int32 `json:"failureThreshold,omitempty"`
-}
-
-type CBContainersHardeningPrometheusSpec struct {
-	// +kubebuilder:default:=false
-	Enabled *bool `json:"enabled,omitempty"`
-	// +kubebuilder:default:=7071
-	Port int `json:"port,omitempty"`
-}
-
-type CBContainersHardeningImageSpec struct {
-	Repository string `json:"repository,omitempty"`
-	Tag        string `json:"tag,omitempty"`
-	// +kubebuilder:default:="Always"
-	PullPolicy coreV1.PullPolicy `json:"pullPolicy,omitempty"`
-}
-
 type CBContainersHardeningSpec struct {
-	Version string `json:"version,required"`
+	Version           string                                     `json:"version,required"`
+	EventsGatewaySpec common_specs.CBContainersEventsGatewaySpec `json:"eventsGatewaySpec,required"`
 	// +kubebuilder:default:="cbcontainers-access-token"
 	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
 	// +kubebuilder:default:=<>
 	EnforcerSpec CBContainersHardeningEnforcerSpec `json:"enforcerSpec,omitempty"`
 	// +kubebuilder:default:=<>
 	StateReporterSpec CBContainersHardeningStateReporterSpec `json:"stateReporterSpec,omitempty"`
-	EventsGatewaySpec CBContainersHardeningEventsGatewaySpec `json:"eventsGatewaySpec,required"`
 }
 
 type CBContainersHardeningStateReporterSpec struct {
@@ -78,19 +44,13 @@ type CBContainersHardeningStateReporterSpec struct {
 	// +kubebuilder:default:=<>
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/guardrails-state-reporter"}
-	Image CBContainersHardeningImageSpec `json:"image,omitempty"`
+	Image common_specs.CBContainersImageSpec `json:"image,omitempty"`
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
-	Probes CBContainersHardeningProbesSpec `json:"probes,omitempty"`
-}
-
-type CBContainersHardeningEventsGatewaySpec struct {
-	Host string `json:"host,required"`
-	// +kubebuilder:default:=443
-	Port int `json:"port,omitempty"`
+	Probes common_specs.CBContainersHTTPProbesSpec `json:"probes,omitempty"`
 }
 
 type CBContainersHardeningEnforcerSpec struct {
@@ -105,13 +65,13 @@ type CBContainersHardeningEnforcerSpec struct {
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
 	// +kubebuilder:default:=<>
-	Prometheus CBContainersHardeningPrometheusSpec `json:"prometheus,omitempty"`
+	Prometheus common_specs.CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/guardrails-enforcer"}
-	Image CBContainersHardeningImageSpec `json:"image,omitempty"`
+	Image common_specs.CBContainersImageSpec `json:"image,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
-	Probes CBContainersHardeningProbesSpec `json:"probes,omitempty"`
+	Probes common_specs.CBContainersHTTPProbesSpec `json:"probes,omitempty"`
 	// +kubebuilder:default:=5
 	WebhookTimeoutSeconds int32 `json:"webhookTimeoutSeconds,omitempty"`
 }

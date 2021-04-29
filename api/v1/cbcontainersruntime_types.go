@@ -17,11 +17,13 @@ limitations under the License.
 package v1
 
 import (
+	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type CBContainersRuntimeControllerSpec struct {
+	EventsGatewaySpec common_specs.CBContainersEventsGatewaySpec `json:"eventsGatewaySpec,required"`
 	// +kubebuilder:default:=<>
 	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
@@ -33,12 +35,11 @@ type CBContainersRuntimeControllerSpec struct {
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/nodeguard-controller"}
-	Image CBContainersHardeningImageSpec `json:"image,omitempty"`
+	Image common_specs.CBContainersImageSpec `json:"image,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "128Mi", cpu: "600m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
-	Probes            CBContainersHardeningProbesSpec        `json:"probes,omitempty"`
-	EventsGatewaySpec CBContainersHardeningEventsGatewaySpec `json:"eventsGatewaySpec,required"`
+	Probes common_specs.CBContainersHTTPProbesSpec `json:"probes,omitempty"`
 }
 
 type CBContainersRuntimeWorkerSpec struct {

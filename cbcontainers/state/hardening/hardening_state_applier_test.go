@@ -2,10 +2,14 @@ package hardening_test
 
 import (
 	"context"
+	"reflect"
+	"testing"
+
 	logrTesting "github.com/go-logr/logr/testing"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening"
@@ -16,9 +20,7 @@ import (
 	admissionsV1 "k8s.io/api/admissionregistration/v1beta1"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 const (
@@ -86,7 +88,7 @@ func testHardeningStateApplier(t *testing.T, setup HardeningStateApplierTestSetu
 	cbContainersHardening := &cbcontainersv1.CBContainersHardening{
 		Spec: cbcontainersv1.CBContainersHardeningSpec{
 			Version: Version,
-			EventsGatewaySpec: cbcontainersv1.CBContainersHardeningEventsGatewaySpec{
+			EventsGatewaySpec: common_specs.CBContainersEventsGatewaySpec{
 				Host: EventsGateWayHost,
 			},
 		},
