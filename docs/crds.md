@@ -23,9 +23,7 @@ plane Configmap, Registry Secret and PriorityClass.
 
 | Parameter                                    | Description                                              | Default                     |
 | ---------------------------------------------| ---------------------------------------------------------| ------------                |
-| `spec.apiGatewaySpec.scheme`                 | Carbon Black Container api scheme                        | `https`                     |
 | `spec.apiGatewaySpec.port`                   | Carbon Black Container api port                          | 443                         |
-| `spec.apiGatewaySpec.adapter`                | Carbon Black Container api adapter                       | `containers`                |
 | `spec.apiGatewaySpec.accessTokenSecretName`  | Carbon Black Container api access token secret name      | `cbcontainers-access-token` |
 | `spec.eventsGatewaySpec.port`                | Carbon Black Container events port                       | 443                         |
 
