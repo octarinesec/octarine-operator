@@ -1,2 +1,0 @@
-Octarine operator installed successfully.
-Deploy an Octarine CR in order to install & configure the Octarine dataplane components.

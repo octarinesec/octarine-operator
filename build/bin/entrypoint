@@ -1,4 +1,0 @@
-#!/bin/sh -e
-
-cd $HOME
-exec ${OPERATOR} exec-entrypoint helm --watches-file=$HOME/watches.yaml $@

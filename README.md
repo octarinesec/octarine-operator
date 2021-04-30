@@ -1,84 +1,96 @@
-# VMware Carbon Black Cloud Container Operator 
-## Cloud Container Operator Overview 
+# VMware Carbon Black Cloud Container Operator
+## Overview 
 
-The the Carbon Black Cloud Container Operator runs within a Kubernetes cluster.The Container Operator is a set of controllers which deploy and manage the VMware Carbon Black Cloud Container components. 
+The Carbon Black Cloud Container Operator runs within a Kubernetes cluster. The Container Operator is a set of controllers which deploy and manage the VMware Carbon Black Cloud Container components. 
  
  Capabilities
- * Deploy and manage the Container Essentials product bundle (including the configuration and the image scanning for Kubernetes security)! 
- * Deploy and manage the Container Advanced product bundle (including the runtime for Kubernetes security) 
+ * Deploy and manage the Container Essentials product bundle (including the configuration and the image scanning for Kubernetes security)!
  * Automatically fetch and deploy the Carbon Black Cloud Container private image registry secret
  * Automatically register the Carbon Black Cloud Container cluster
- * Manage the Container Essentials validationng webhook - dynamically manage the admission control webhook to avoid possible downtime
+ * Manage the Container Essentials validating webhook - dynamically manage the admission control webhook to avoid possible downtime
  * Monitor and report agent availability to the Carbon Black console
 
-The Carbon Black Cloud Container Operator utilizes the operator-framework to create a hybrid operator, which combines helm and go operators. 
-The helm controller within the operator is responsible for managing the Cloud Container components deployment, and the go controller monitors and manages them. 
+The Carbon Black Cloud Container Operator utilizes the operator-framework to create a GO operator, which is responsible for managing and monitoring the Cloud Container components deployment. 
 
-## Deployment and Upgrade 
+## Operator Deployment
+
 ### Prerequisites
 Kubernetes 1.13+ 
 
-### Deploy using Helm 
-The operator Helm chart supports Helm 3 and Helm 2 (if you're using Helm 2, make sure that Tiller pod is running).
-Install the chart with the release name octarine in the octarine-dataplane namespace: 
+### Create the operator image
+```
+make docker-build docker-push IMG={IMAGE_NAME}
+```
+
+### Deploy the operator resources
+```
+make deploy IMG=={IMAGE_NAME}
+```
+
+## Data Plane Deployment
+
+### 1. Apply the Carbon Black Container Api Token Secret
+
+```
+kubectl create secret generic cbcontainers-access-token \
+--namespace cbcontainers-dataplane --from-literal=accessToken=\
+{API_Secret_Key}/{API_ID}
+```
+
+### 2. Apply the Carbon Black Container Custom Resources
+
+The operator implements controllers for the Carbon Black Container custom resources definitions
+
+[Full Custom Resources Definitions Documentation](docs/crds.md)
+
+#### 2.1 Apply the Carbon Black Container Cluster CR
+<u>cbcontainersclusters.operator.containers.carbonblack.io</u>
+
+This is the first CR you'll need to deploy in order to initialize the data plane components.
+This will create the data plane Configmap, Registry Secret and PriorityClass.
 
 ```sh
-helm repo add octarine-operator https://octarinesec.github.io/octarine-operator
-helm repo update
-helm upgrade --install --namespace octarine-dataplane octarine-operator octarine-operator/octarine-operator 
+apiVersion: operator.containers.carbonblack.io/v1
+kind: CBContainersCluster
+metadata:
+  name: cbcontainerscluster-sample
+spec:
+  account: {ORG_KEY}
+  apiGatewaySpec:
+    host: {API_HOST}
+  clusterName: {CLUSTER_GROUP}:{CLUSTER_NAME}
+  eventsGatewaySpec:
+    host: {EVENTS_HOST}
 ```
-### Deploy K8s resources 
-Create the octarine-dataplane namespace and deploy the resources from the deploy dir:
-```
-kubectl create namespace octarine-dataplane
-kubectl label namespace octarine-dataplane name=octarine-dataplane
-kubectl apply -n octarine-dataplane -Rf deploy
-```
-The namespace label is required due to the validating webhook configured by Container Essentials, and in order to ensure the service availability. 
 
-*After deploying the Operator,please refer to the Octarine [Custom Resource documentation](docs/octarine_cr.md) in order to deploy Octarine dataplane components.*
+* notice that without applying the api token secret, the operator will return the error:
+`couldn't find access token secret k8s object`
 
-### Rolling upgrade 
-The deployment command can be used for upgrading as well.  
-Note: Make sure to update the helm repo before. 
-```sh
-helm repo update
-helm upgrade --install --namespace octarine-dataplane octarine-operator octarine-operator/octarine-operator 
-```
-### Uninstalling the Carbon Black Cloud Container Operator 
-You can uninstall the Carbon Black Cloud Container Operator in three ways: 
+#### 2.2 Apply the Carbon Black Container Hardening CR
+<u>cbcontainershardenings.operator.containers.carbonblack.io</u>
 
-1. If you created an Octarine Carbon Black Cloud Container resource to install the Carbon Black components, please delete it before uninstalling the operator: 
+This is the CR you'll need to deploy in order to install the Carbon Black Container Hardening feature components.
+This will install the Hardening Enforcer components that are responsible for enforcing the configured policies and
+the State Reporter components that are responsible for reporting the cluster state.
+
+* Notice that without the first CR, the Hardening components won't be able to work. 
 
 ```sh
-kubectl delete octarines.operator.octarinesec.com octarine 
+apiVersion: operator.containers.carbonblack.io/v1
+kind: CBContainersHardening
+metadata:
+  name: cbcontainershardening-sample
+spec:
+  version: {HARDENING_VERSION}
+  eventsGatewaySpec:
+    host: {EVENTS_HOST}
 ```
 
-2. If you deployed the operator using Helm Uninstall the octarine release: 
-```sh 
-helm delete octarine-operator 
-```
-
-Delete the Octarine CRD which was created by helm: 
+### Uninstalling the Carbon Black Cloud Container Operator
 ```sh
-kubectl delete crd octarines.operator.octarinesec.com 
+make undeploy
 ```
-
-3. If you deployed the operator using its plain K8s resources, uninstall it by running: 
-
-```sh
-kubectl delete -n octarine-dataplane -Rf deploy 
-```
-
-## Customize the configuration 
-
-The following table lists the configurable parameters of the operator chart and their default values. 
-| Parameter      | Description                                | Default |
-| -------------- | ------------------------------------------ | ------- |
-| `replicaCount` | The number of the operator replicas to run | `1`     |
-## Logs 
-You can enable verbose logging and set the verbosity level using the --zap-level flag of the operator executable. 
-See the args value within the values.yaml.
+* Notice that the above command will delete the Carbon Black Container custom resources definitions and instances.
 
 ## Using HTTP proxy
 
@@ -86,10 +98,25 @@ Configuring the Carbon Black Cloud Container services to use HTTP proxy can be d
 
 In order to configure those environment variables in the Operator, use the following command to patch the Operator deployment:
 ```sh
-kubectl set env -n octarine-dataplane deployment octarine-operator HTTP_PROXY="<proxy-url>" HTTPS_PROXY="<proxy-url>" NO_PROXY="<kubernetes-api-server-ip>/<range>"
+kubectl set env -n cbcontainers-dataplane deployment cbcontainers-operator HTTP_PROXY="<proxy-url>" HTTPS_PROXY="<proxy-url>" NO_PROXY="<kubernetes-api-server-ip>/<range>"
 ```
 
-In order to configure those environment variables in the Guardrails-state-reporter and the Guardrails-enforcer, update the Octarine CR using the proxy environment variables as described here: [Custom Resource documentation](docs/octarine_cr.md)
+In order to configure those environment variables for the Hardening Enforcer and the Hardening State Reporter components,
+update the Hardening CR using the proxy environment variables:
+
+```sh
+specs:
+  enforcerSpec:
+    env:
+      HTTP_PROXY="<proxy-url>"
+      HTTPS_PROXY="<proxy-url>"
+      NO_PROXY="<kubernetes-api-server-ip>/<range>"
+  stateReporterSpec:
+    env:
+      HTTP_PROXY="<proxy-url>"
+      HTTPS_PROXY="<proxy-url>"
+      NO_PROXY="<kubernetes-api-server-ip>/<range>"
+```
 
 It is very important to configure the NO_PROXY environment variable with the value of the Kubernetes API server IP.
 

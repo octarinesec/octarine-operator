@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include "guardrails.state-reporter.configmap.env.fullname" . }}
-  labels:
-{{ include "guardrails.state-reporter.labels" . | indent 4 }}
-data:
-{{ include "guardrails.state-reporter.env" . | indent 2 }}
-  STATE_REPORTER_PROBES_PORT: {{ .Values.probes.port | quote }}

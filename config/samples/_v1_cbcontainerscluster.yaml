@@ -1,0 +1,7 @@
+apiVersion: operator.containers.carbonblack.io/v1
+kind: CBContainersCluster
+metadata:
+  name: cbcontainerscluster-sample
+spec:
+  # Add fields here
+  foo: bar
