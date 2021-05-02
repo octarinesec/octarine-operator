@@ -83,10 +83,12 @@ func (agent *MonitorAgent) run() {
 			message, err := agent.buildHealthMessage()
 			if err != nil {
 				agent.log.Error(err, "error building health message")
+				continue
 			}
 
 			if err = agent.messageReporter.SendMonitorMessage(message); err != nil {
 				agent.log.Error(err, "error reporting message to backend")
+				continue
 			}
 		case <-agent.stopChan:
 			if err := agent.messageReporter.Close(); err != nil {
