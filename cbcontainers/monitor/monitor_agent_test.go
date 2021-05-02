@@ -32,9 +32,9 @@ type TestMonitorObjects struct {
 	log                 *testUtilsMocks.MockLogger
 }
 
-type SetupFunc func(*MonitorAgent, *TestMonitorObjects) (models.HealthReportMessage, error)
+type AgentTestSetupFunc func(*MonitorAgent, *TestMonitorObjects) (models.HealthReportMessage, error)
 
-func testMonitorAgent(t *testing.T, setup SetupFunc) {
+func testMonitorAgent(t *testing.T, setup AgentTestSetupFunc) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
