@@ -86,7 +86,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	defaultMonitorCreator, err := clusterProcessors.NewDefaultMonitorCreator(monitor.NewDefaultHealthChecker(mgr.GetClient(), commonState.DataPlaneNamespaceName), monitor.NewDefaultFeaturesStatusProvider(mgr.GetClient()))
+	defaultMonitorCreator, err := clusterProcessors.NewDefaultMonitorCreator(monitor.NewDefaultHealthChecker(mgr.GetClient(), commonState.DataPlaneNamespaceName), monitor.NewDefaultFeaturesStatusProvider(mgr.GetClient()), ctrl.Log.WithName("monitor"))
 	if err != nil {
 		setupLog.Error(err, "unable to create default monitor creator")
 		os.Exit(1)

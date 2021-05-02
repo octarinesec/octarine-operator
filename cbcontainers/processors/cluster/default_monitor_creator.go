@@ -18,9 +18,11 @@ type DefaultMonitorCreator struct {
 	healthChecker          monitor.HealthChecker
 	featuresStatusProvider monitor.FeaturesStatusProvider
 	privateKey             *rsa.PrivateKey
+
+	log logr.Logger
 }
 
-func NewDefaultMonitorCreator(healthChecker monitor.HealthChecker, featuresStatusProvider monitor.FeaturesStatusProvider) (*DefaultMonitorCreator, error) {
+func NewDefaultMonitorCreator(healthChecker monitor.HealthChecker, featuresStatusProvider monitor.FeaturesStatusProvider, log logr.Logger) (*DefaultMonitorCreator, error) {
 	privateKey, err := makePrivateKey()
 	if err != nil {
 		return nil, err
@@ -30,6 +32,7 @@ func NewDefaultMonitorCreator(healthChecker monitor.HealthChecker, featuresStatu
 		healthChecker:          healthChecker,
 		featuresStatusProvider: featuresStatusProvider,
 		privateKey:             privateKey,
+		log:                    log,
 	}, nil
 }
 
@@ -43,7 +46,7 @@ func makePrivateKey() (*rsa.PrivateKey, error) {
 	return privateKey, nil
 }
 
-func (creator *DefaultMonitorCreator) CreateMonitor(cbContainersCluster *cbcontainersv1.CBContainersCluster, gateway Gateway, log logr.Logger) (Monitor, error) {
+func (creator *DefaultMonitorCreator) CreateMonitor(cbContainersCluster *cbcontainersv1.CBContainersCluster, gateway Gateway) (Monitor, error) {
 	spec := cbContainersCluster.Spec
 	eventsSpec := cbContainersCluster.Spec.EventsGatewaySpec
 
@@ -57,5 +60,5 @@ func (creator *DefaultMonitorCreator) CreateMonitor(cbContainersCluster *cbconta
 		return nil, err
 	}
 
-	return monitor.NewMonitorAgent(spec.Account, spec.ClusterName, "", creator.healthChecker, creator.featuresStatusProvider, reporter, MonitorInterval, log), nil
+	return monitor.NewMonitorAgent(spec.Account, spec.ClusterName, "", creator.healthChecker, creator.featuresStatusProvider, reporter, MonitorInterval, creator.log), nil
 }
