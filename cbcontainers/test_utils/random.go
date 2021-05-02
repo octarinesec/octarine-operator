@@ -12,7 +12,7 @@ func init() {
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func RandomString() string {
-	return RandomStringWithLength(6)
+	return RandomStringWithLength(rand.Intn(10) + 6)
 }
 
 func RandomStringWithLength(n int) string {
@@ -21,4 +21,13 @@ func RandomStringWithLength(n int) string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return string(b)
+}
+
+func RandomLabels() map[string]string {
+	randomLabels := make(map[string]string)
+	for i := 0; i < rand.Intn(10)+2; i++ {
+		randomLabels[RandomString()] = RandomString()
+	}
+
+	return randomLabels
 }
