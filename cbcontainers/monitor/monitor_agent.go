@@ -29,7 +29,7 @@ type HealthChecker interface {
 	GetValidatingWebhookConfigurations() (map[string]admissionsV1.ValidatingWebhookConfiguration, error)
 }
 
-type messageReporter interface {
+type MessageReporter interface {
 	SendMonitorMessage(message models.HealthReportMessage) error
 	Close() error
 }
@@ -42,7 +42,7 @@ type MonitorAgent struct {
 
 	healthChecker          HealthChecker
 	featuresStatusProvider FeaturesStatusProvider
-	messageReporter        messageReporter
+	messageReporter        MessageReporter
 
 	// The interval for sending health reports to the backend
 	interval time.Duration
@@ -51,7 +51,7 @@ type MonitorAgent struct {
 	stopChan chan struct{}
 }
 
-func NewMonitorAgent(account, cluster, version string, healthChecker HealthChecker, featuresStatus FeaturesStatusProvider, messageReporter messageReporter, interval time.Duration) *MonitorAgent {
+func NewMonitorAgent(account, cluster, version string, healthChecker HealthChecker, featuresStatus FeaturesStatusProvider, messageReporter MessageReporter, interval time.Duration) *MonitorAgent {
 	return &MonitorAgent{
 		account:                account,
 		cluster:                cluster,
@@ -114,17 +114,12 @@ func (agent *MonitorAgent) buildHealthMessage() (models.HealthReportMessage, err
 		return models.HealthReportMessage{}, err
 	}
 
-	return models.HealthReportMessage{
-		Account: agent.account,
-		Cluster: agent.cluster,
-		Version: agent.version,
-		EnabledComponents: map[string]bool{
-			HardeningFeature: hardeningEnabled,
-			RuntimeFeature:   runtimeEnabled,
-		},
-		Workloads: workloadsReports,
-		Webhooks:  webhooksReports,
-	}, nil
+	enabledComponents := map[string]bool{
+		HardeningFeature: hardeningEnabled,
+		RuntimeFeature:   runtimeEnabled,
+	}
+
+	return models.NewHealthReportMessage(agent.account, agent.cluster, agent.version, enabledComponents, workloadsReports, webhooksReports), nil
 }
 
 func (agent *MonitorAgent) createWorkloadsHealthReports() (map[string]models.WorkloadHealthReport, error) {
