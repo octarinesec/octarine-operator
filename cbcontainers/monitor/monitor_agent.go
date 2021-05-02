@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-logr/logr"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor/models"
 	hardeningObjects "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/objects"
 	admissionsV1 "k8s.io/api/admissionregistration/v1beta1"
@@ -49,9 +50,11 @@ type MonitorAgent struct {
 
 	// Channel for stopping the agent
 	stopChan chan struct{}
+
+	log logr.Logger
 }
 
-func NewMonitorAgent(account, cluster, version string, healthChecker HealthChecker, featuresStatus FeaturesStatusProvider, messageReporter MessageReporter, interval time.Duration) *MonitorAgent {
+func NewMonitorAgent(account, cluster, version string, healthChecker HealthChecker, featuresStatus FeaturesStatusProvider, messageReporter MessageReporter, interval time.Duration, log logr.Logger) *MonitorAgent {
 	return &MonitorAgent{
 		account:                account,
 		cluster:                cluster,
@@ -61,6 +64,7 @@ func NewMonitorAgent(account, cluster, version string, healthChecker HealthCheck
 		messageReporter:        messageReporter,
 		interval:               interval,
 		stopChan:               make(chan struct{}),
+		log:                    log,
 	}
 }
 
@@ -78,15 +82,15 @@ func (agent *MonitorAgent) run() {
 		case <-time.After(agent.interval):
 			message, err := agent.buildHealthMessage()
 			if err != nil {
-				//logger.Error(err, "error building health message")
+				agent.log.Error(err, "error building health message")
 			}
 
 			if err = agent.messageReporter.SendMonitorMessage(message); err != nil {
-				//logger.Error(err, "error reporting message to backend")
+				agent.log.Error(err, "error reporting message to backend")
 			}
 		case <-agent.stopChan:
 			if err := agent.messageReporter.Close(); err != nil {
-				//logger.Error(err, "error closing reporter")
+				agent.log.Error(err, "error closing reporter")
 			}
 			return
 		}
@@ -156,12 +160,12 @@ func (agent *MonitorAgent) populateWithDeploymentsWorkloads(deployments map[stri
 	for _, deployment := range deployments {
 		workloadMessage, err := agent.buildDeploymentMessage(deployment)
 		if err != nil {
-			//logger.Error(err, "error building Deployment message")
+			agent.log.Error(err, "error building Deployment message")
 			continue
 		}
 
 		if _, ok := reports[deployment.Name]; ok {
-			//logger.Info("duplicated workload name", "service", deploymentName)
+			agent.log.Info("duplicated workload name", "service", deployment.Name)
 		}
 
 		reports[deployment.Name] = workloadMessage
@@ -172,12 +176,12 @@ func (agent *MonitorAgent) populateWithDaemonSetsWorkloads(daemonSets map[string
 	for _, daemonSet := range daemonSets {
 		workloadMessage, err := agent.buildDaemonSetMessage(daemonSet)
 		if err != nil {
-			//logger.Error(err, "error building DaemonSet message")
+			agent.log.Error(err, "error building DaemonSet message")
 			continue
 		}
 
 		if _, ok := services[daemonSet.Name]; ok {
-			//logger.Info("duplicate service name", "service", daemonSet.Name)
+			agent.log.Info("duplicate service name", "service", daemonSet.Name)
 		}
 
 		services[daemonSet.Name] = workloadMessage
@@ -247,7 +251,7 @@ func (agent *MonitorAgent) buildWorkloadMessage(workloadKind models.WorkloadKind
 func (agent *MonitorAgent) updateWorkloadsReplicasWithPodsAndReplicaSets(pods map[string]coreV1.Pod, replicaSets map[string]appsV1.ReplicaSet, reports map[string]models.WorkloadHealthReport) {
 	for _, pod := range pods {
 		if len(pod.OwnerReferences) < 1 {
-			//logger.Info("found pod with no parent", "pod", podName)
+			agent.log.Info("found pod with no parent", "pod", pod.Name)
 			continue
 		}
 		owner := pod.OwnerReferences[0]
@@ -264,7 +268,7 @@ func (agent *MonitorAgent) updateWorkloadsReplicasWithPodsAndReplicaSets(pods ma
 		if workloadMessage, ok := reports[ownerName]; ok {
 			replicaMsg, err := agent.buildReplicaMessage(pod)
 			if err != nil {
-				//logger.Error(err, "error getting pod data", "pod", podName)
+				agent.log.Error(err, "error getting pod data", "pod", pod.Name)
 				continue
 			}
 
@@ -288,11 +292,11 @@ func (agent *MonitorAgent) populateWithValidatingWebhooks(webhooks map[string]ad
 	if webhook, ok := webhooks[hardeningObjects.EnforcerName]; ok {
 		webhookMessage := agent.buildValidatingWebhookMessage(webhook)
 		if _, ok := webhooks[webhook.Name]; ok {
-			//logger.Info("duplicated webhook name", "webhook", webhook.Name)
+			agent.log.Info("duplicated webhook name", "webhook", webhook.Name)
 		}
 		reports[webhook.Name] = webhookMessage
 	} else {
-		//logger.Info("octarine validating webhook not found.", "webhook", webhookName)
+		agent.log.Info("octarine validating webhook not found.", "webhook", webhook.Name)
 	}
 }
 

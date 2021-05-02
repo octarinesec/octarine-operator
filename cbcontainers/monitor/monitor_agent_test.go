@@ -41,7 +41,7 @@ func testMonitorAgent(t *testing.T, setup SetupFunc) {
 		featuresMock:        mocks.NewMockFeaturesStatusProvider(ctrl),
 		messageReporterMock: mocks.NewMockMessageReporter(ctrl),
 	}
-	agent := NewMonitorAgent(Account, Cluster, Version, testObjects.healthCheckerMock, testObjects.featuresMock, testObjects.messageReporterMock, SendInterval)
+	agent := NewMonitorAgent(Account, Cluster, Version, testObjects.healthCheckerMock, testObjects.featuresMock, testObjects.messageReporterMock, SendInterval, nil)
 
 	expectedHealthReportMessage := setup(agent, testObjects)
 	testObjects.messageReporterMock.EXPECT().SendMonitorMessage(expectedHealthReportMessage).Return(nil)

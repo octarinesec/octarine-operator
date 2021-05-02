@@ -3,6 +3,7 @@ package cluster
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor/reporters"
@@ -42,7 +43,7 @@ func makePrivateKey() (*rsa.PrivateKey, error) {
 	return privateKey, nil
 }
 
-func (creator *DefaultMonitorCreator) CreateMonitor(cbContainersCluster *cbcontainersv1.CBContainersCluster, gateway Gateway) (Monitor, error) {
+func (creator *DefaultMonitorCreator) CreateMonitor(cbContainersCluster *cbcontainersv1.CBContainersCluster, gateway Gateway, log logr.Logger) (Monitor, error) {
 	spec := cbContainersCluster.Spec
 	eventsSpec := cbContainersCluster.Spec.EventsGatewaySpec
 
@@ -56,5 +57,5 @@ func (creator *DefaultMonitorCreator) CreateMonitor(cbContainersCluster *cbconta
 		return nil, err
 	}
 
-	return monitor.NewMonitorAgent(spec.Account, spec.ClusterName, "", creator.healthChecker, creator.featuresStatusProvider, reporter, MonitorInterval), nil
+	return monitor.NewMonitorAgent(spec.Account, spec.ClusterName, "", creator.healthChecker, creator.featuresStatusProvider, reporter, MonitorInterval, log), nil
 }

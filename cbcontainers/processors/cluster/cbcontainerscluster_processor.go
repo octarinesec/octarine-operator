@@ -21,7 +21,7 @@ type gatewayCreator interface {
 }
 
 type monitorCreator interface {
-	CreateMonitor(cbContainersCluster *cbcontainersv1.CBContainersCluster, gateway Gateway) (Monitor, error)
+	CreateMonitor(cbContainersCluster *cbcontainersv1.CBContainersCluster, gateway Gateway, log logr.Logger) (Monitor, error)
 }
 
 type Monitor interface {
@@ -74,7 +74,7 @@ func (processor *CBContainerClusterProcessor) initializeIfNeeded(cbContainersClu
 
 	processor.log.Info("Initializing CBContainerClusterProcessor components")
 	gateway := processor.gatewayCreator.CreateGateway(cbContainersCluster, accessToken)
-	monitor, err := processor.monitorCreator.CreateMonitor(cbContainersCluster, gateway)
+	monitor, err := processor.monitorCreator.CreateMonitor(cbContainersCluster, gateway, processor.log)
 	if err != nil {
 		return err
 	}
