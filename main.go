@@ -98,7 +98,7 @@ func main() {
 		Log:                 cbContainersClusterLogger,
 		Scheme:              mgr.GetScheme(),
 		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator(), defaultMonitorCreator),
-		ClusterStateApplier: clusterState.NewClusterStateApplier(cbContainersClusterLogger),
+		ClusterStateApplier: clusterState.NewClusterStateApplier(cbContainersClusterLogger, clusterState.NewDefaultClusterChildK8sObjectApplier()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
 		os.Exit(1)

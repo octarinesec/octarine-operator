@@ -16,14 +16,20 @@ type ClusterStateApplier struct {
 	desiredConfigMap      *clusterObjects.ConfigurationK8sObject
 	desiredRegistrySecret *clusterObjects.RegistrySecretK8sObject
 	desiredPriorityClass  *clusterObjects.PriorityClassK8sObject
+	childApplier          ClusterChildK8sObjectApplier
 	log                   logr.Logger
 }
 
-func NewClusterStateApplier(log logr.Logger) *ClusterStateApplier {
+type ClusterChildK8sObjectApplier interface {
+	ApplyClusterChildK8sObject(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client, clusterChildK8sObject ClusterChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error)
+}
+
+func NewClusterStateApplier(log logr.Logger, clusterChildK8sObjectApplier ClusterChildK8sObjectApplier) *ClusterStateApplier {
 	return &ClusterStateApplier{
 		desiredConfigMap:      clusterObjects.NewConfigurationK8sObject(),
 		desiredRegistrySecret: clusterObjects.NewRegistrySecretK8sObject(),
 		desiredPriorityClass:  clusterObjects.NewPriorityClassK8sObject(),
+		childApplier:          clusterChildK8sObjectApplier,
 		log:                   log,
 	}
 }
@@ -37,21 +43,21 @@ func (c *ClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainer
 		return false, fmt.Errorf("couldn't get nodes list")
 	}
 
-	mutatedConfigmap, _, err := ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredConfigMap, applyOptions)
+	mutatedConfigmap, _, err := c.childApplier.ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredConfigMap, applyOptions)
 	if err != nil {
 		return false, err
 	}
 	c.log.Info("Applied config map", "Mutated", mutatedConfigmap)
 
 	c.desiredRegistrySecret.UpdateRegistrySecretValues(registrySecret)
-	mutatedRegistrySecret, _, err := ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredRegistrySecret, applyOptions)
+	mutatedRegistrySecret, _, err := c.childApplier.ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredRegistrySecret, applyOptions)
 	if err != nil {
 		return false, err
 	}
 	c.log.Info("Applied registry secret", "Mutated", mutatedRegistrySecret)
 
 	c.desiredPriorityClass.UpdateKubeletVersion(nodesList.Items[0].Status.NodeInfo.KubeletVersion)
-	mutatedPriorityClass, _, err := ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredPriorityClass, applyOptions)
+	mutatedPriorityClass, _, err := c.childApplier.ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredPriorityClass, applyOptions)
 	if err != nil {
 		return false, err
 	}
