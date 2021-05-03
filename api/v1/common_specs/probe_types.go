@@ -18,7 +18,7 @@ type CBContainersCommonProbesSpec struct {
 }
 
 type CBContainersHTTPProbesSpec struct {
-	CBContainersCommonProbesSpec `json:"commonSpec,omitempty"`
+	CBContainersCommonProbesSpec `json:",inline"`
 	// +kubebuilder:default:="/ready"
 	ReadinessPath string `json:"readinessPath,omitempty"`
 	// +kubebuilder:default:="/alive"
@@ -30,7 +30,7 @@ type CBContainersHTTPProbesSpec struct {
 }
 
 type CBContainersFileProbesSpec struct {
-	CBContainersCommonProbesSpec `json:"commonSpec,omitempty"`
+	CBContainersCommonProbesSpec `json:",inline"`
 	// +kubebuilder:default:="/tmp/ready"
 	ReadinessPath string `json:"readinessPath,omitempty"`
 	// +kubebuilder:default:="/tmp/alive"
