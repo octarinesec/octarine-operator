@@ -52,7 +52,7 @@ plane Configmap, Registry Secret and PriorityClass.
 | ---------------------------------------------| ---------------------------------------------------------------------------------------| ------------------------------------------------------------- |                                                               
 | `labels`                                     | Carbon Black Container Hardening Enforcer/State Reporter Deployment & Pod labels       | Empty map                                                     |
 | `deploymentAnnotations`                      | Carbon Black Container Hardening Enforcer/State Reporter Deployment annotations        | Empty map                                                     |
-| `podTemplateAnnotations`                     | Carbon Black Container Hardening Enforcer/State Reporter Pod annotations               | `{prometheus.io/scrape: "false", prometheus.io/port: "7071"}` |
+| `podTemplateAnnotations`                     | Carbon Black Container Hardening Enforcer/State Reporter Pod annotations               | `{}` |
 | `env`                                        | Carbon Black Container Hardening Enforcer/State Reporter Pod environment vars          | Empty map                                                     |
 | `image.tag`                                  | Carbon Black Container Hardening Enforcer/State Reporter image tag                     | The Hardening feature version                                 |
 | `image.pullPolicy`                           | Carbon Black Container Hardening Enforcer/State Reporter pull policy                   | `Always`                                                      |
@@ -66,3 +66,5 @@ plane Configmap, Registry Secret and PriorityClass.
 | `probes.periodSeconds`                       | Carbon Black Container Hardening Enforcer/State Reporter probes period seconds         | 30                                                            |
 | `probes.successThreshold`                    | Carbon Black Container Hardening Enforcer/State Reporter probes success threshold      | 1                                                             |
 | `probes.failureThreshold`                    | Carbon Black Container Hardening Enforcer/State Reporter probes failure threshold      | 3                                                             |
+| `prometheus.enabled`                         | Carbon Black Container Hardening Enforcer/State Reporter enable Prometheus scraping    | false                                                         |
+| `prometheus.port`                            | Carbon Black Container Hardening Enforcer/State Reporter Prometheus server port        | 7071                                                          |

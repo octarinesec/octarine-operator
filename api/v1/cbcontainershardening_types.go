@@ -45,6 +45,13 @@ type CBContainersHardeningProbesSpec struct {
 	FailureThreshold int32 `json:"failureThreshold,omitempty"`
 }
 
+type CBContainersHardeningPrometheusSpec struct {
+	// +kubebuilder:default:=false
+	Enabled *bool `json:"enabled,omitempty"`
+	// +kubebuilder:default:=7071
+	Port int `json:"port,omitempty"`
+}
+
 type CBContainersHardeningImageSpec struct {
 	Repository string `json:"repository,omitempty"`
 	Tag        string `json:"tag,omitempty"`
@@ -68,7 +75,7 @@ type CBContainersHardeningStateReporterSpec struct {
 	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
 	DeploymentAnnotations map[string]string `json:"deploymentAnnotations,omitempty"`
-	// +kubebuilder:default:={prometheus.io/scrape: "false", prometheus.io/port: "7071"}
+	// +kubebuilder:default:=<>
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/guardrails-state-reporter"}
 	Image CBContainersHardeningImageSpec `json:"image,omitempty"`
@@ -91,12 +98,14 @@ type CBContainersHardeningEnforcerSpec struct {
 	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
 	DeploymentAnnotations map[string]string `json:"deploymentAnnotations,omitempty"`
-	// +kubebuilder:default:={prometheus.io/scrape: "false", prometheus.io/port: "7071"}
+	// +kubebuilder:default:=<>
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
 	// +kubebuilder:default:=1
 	ReplicasCount *int32 `json:"replicasCount,omitempty"`
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
+	// +kubebuilder:default:=<>
+	Prometheus CBContainersHardeningPrometheusSpec `json:"prometheus,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/guardrails-enforcer"}
 	Image CBContainersHardeningImageSpec `json:"image,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}
