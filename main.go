@@ -109,7 +109,7 @@ func main() {
 		Client:                mgr.GetClient(),
 		Log:                   cbContainersHardeningLogger,
 		Scheme:                mgr.GetScheme(),
-		HardeningStateApplier: hardeningState.NewHardeningStateApplier(cbContainersHardeningLogger, certificatesUtils.NewCertificateCreator()),
+		HardeningStateApplier: hardeningState.NewHardeningStateApplier(cbContainersHardeningLogger, certificatesUtils.NewCertificateCreator(), hardeningState.NewDefaultHardeningChildK8sObjectApplier()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersHardening")
 		os.Exit(1)

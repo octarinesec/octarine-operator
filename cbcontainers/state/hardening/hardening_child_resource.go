@@ -10,31 +10,37 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type hardeningChildK8sObject interface {
+type HardeningChildK8sObject interface {
 	MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error
 	HardeningChildNamespacedName(cbContainersHardening *cbcontainersv1.CBContainersHardening) types.NamespacedName
 	stateTypes.DesiredK8sObjectInitializer
 }
 
-func ApplyHardeningChildK8sObject(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, hardeningChildK8sObject hardeningChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
+type DefaultHardeningChildK8sObjectApplier struct{}
+
+func NewDefaultHardeningChildK8sObjectApplier() *DefaultHardeningChildK8sObjectApplier {
+	return &DefaultHardeningChildK8sObjectApplier{}
+}
+
+func (applier *DefaultHardeningChildK8sObjectApplier) ApplyHardeningChildK8sObject(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, hardeningChildK8sObject HardeningChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
 	hardeningChildWrapper := NewCBContainersHardeningChildK8sObject(cbContainersHardening, hardeningChildK8sObject)
 	return applyment.ApplyDesiredK8sObject(ctx, client, hardeningChildWrapper, applyOptionsList...)
 }
 
-func DeleteK8sObjectIfExists(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, hardeningChildK8sObject hardeningChildK8sObject) (bool, error) {
+func (applier *DefaultHardeningChildK8sObjectApplier) DeleteK8sObjectIfExists(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, hardeningChildK8sObject HardeningChildK8sObject) (bool, error) {
 	hardeningChildWrapper := NewCBContainersHardeningChildK8sObject(cbContainersHardening, hardeningChildK8sObject)
 	return applyment.DeleteK8sObjectIfExists(ctx, client, hardeningChildWrapper)
 }
 
 type CBContainersHardeningChildK8sObject struct {
 	cbContainersHardening *cbcontainersv1.CBContainersHardening
-	hardeningChildK8sObject
+	HardeningChildK8sObject
 }
 
-func NewCBContainersHardeningChildK8sObject(cbContainersHardening *cbcontainersv1.CBContainersHardening, hardeningChildK8sObject hardeningChildK8sObject) *CBContainersHardeningChildK8sObject {
+func NewCBContainersHardeningChildK8sObject(cbContainersHardening *cbcontainersv1.CBContainersHardening, hardeningChildK8sObject HardeningChildK8sObject) *CBContainersHardeningChildK8sObject {
 	return &CBContainersHardeningChildK8sObject{
 		cbContainersHardening:   cbContainersHardening,
-		hardeningChildK8sObject: hardeningChildK8sObject,
+		HardeningChildK8sObject: hardeningChildK8sObject,
 	}
 }
 

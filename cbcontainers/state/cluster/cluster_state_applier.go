@@ -24,12 +24,12 @@ type ClusterChildK8sObjectApplier interface {
 	ApplyClusterChildK8sObject(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client, clusterChildK8sObject ClusterChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error)
 }
 
-func NewClusterStateApplier(log logr.Logger, clusterChildK8sObjectApplier ClusterChildK8sObjectApplier) *ClusterStateApplier {
+func NewClusterStateApplier(log logr.Logger, childApplier ClusterChildK8sObjectApplier) *ClusterStateApplier {
 	return &ClusterStateApplier{
 		desiredConfigMap:      clusterObjects.NewConfigurationK8sObject(),
 		desiredRegistrySecret: clusterObjects.NewRegistrySecretK8sObject(),
 		desiredPriorityClass:  clusterObjects.NewPriorityClassK8sObject(),
-		childApplier:          clusterChildK8sObjectApplier,
+		childApplier:          childApplier,
 		log:                   log,
 	}
 }
