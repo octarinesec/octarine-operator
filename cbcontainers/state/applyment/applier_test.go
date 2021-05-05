@@ -40,10 +40,7 @@ type ApplierTestMocks struct {
 
 type ApplierTestSetup func(*ApplierTestMocks)
 
-func testApplyDesiredK8sObject(t *testing.T, setup ApplierTestSetup, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
+func createMocks(ctrl *gomock.Controller, setup ApplierTestSetup) *ApplierTestMocks {
 	mockObjects := &ApplierTestMocks{
 		client:           testUtilsMocks.NewMockClient(ctrl),
 		desiredK8sObject: mocks.NewMockDesiredK8sObject(ctrl),
@@ -52,8 +49,25 @@ func testApplyDesiredK8sObject(t *testing.T, setup ApplierTestSetup, applyOption
 	mockObjects.desiredK8sObject.EXPECT().NamespacedName().Return(NamespacedName)
 	mockObjects.desiredK8sObject.EXPECT().EmptyK8sObject().Return(K8sObject)
 	setup(mockObjects)
+	return mockObjects
+}
+
+func testApplyDesiredK8sObject(t *testing.T, setup ApplierTestSetup, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockObjects := createMocks(ctrl, setup)
 
 	return ApplyDesiredK8sObject(context.Background(), mockObjects.client, mockObjects.desiredK8sObject, applyOptionsList...)
+}
+
+func testDeleteK8sObjectIfExists(t *testing.T, setup ApplierTestSetup) (bool, error) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockObjects := createMocks(ctrl, setup)
+
+	return DeleteK8sObjectIfExists(context.Background(), mockObjects.client, mockObjects.desiredK8sObject)
 }
 
 func TestApplyFailsWhenGetFails(t *testing.T) {
@@ -136,4 +150,41 @@ func TestApplyFailsWhenExistingAndUpdateFails(t *testing.T) {
 	})
 
 	require.Error(t, err)
+}
+
+func TestDeleteFailsWhenGetFails(t *testing.T) {
+	_, err := testDeleteK8sObjectIfExists(t, func(mocks *ApplierTestMocks) {
+		mocks.client.EXPECT().Get(gomock.Any(), NamespacedName, K8sObject).Return(fmt.Errorf(""))
+	})
+
+	require.Error(t, err)
+}
+
+func TestDeleteFailsWhenDeleteCallFails(t *testing.T) {
+	_, err := testDeleteK8sObjectIfExists(t, func(mocks *ApplierTestMocks) {
+		mocks.client.EXPECT().Get(gomock.Any(), NamespacedName, K8sObject).Return(nil)
+		mocks.client.EXPECT().Delete(gomock.Any(), K8sObject).Return(fmt.Errorf(""))
+	})
+
+	require.Error(t, err)
+}
+
+func TestObjectIsDeletedWhenExisting(t *testing.T) {
+	deleted, err := testDeleteK8sObjectIfExists(t, func(mocks *ApplierTestMocks) {
+		mocks.client.EXPECT().Get(gomock.Any(), NamespacedName, K8sObject).Return(nil)
+		mocks.client.EXPECT().Delete(gomock.Any(), K8sObject).Return(nil)
+	})
+
+	require.NoError(t, err)
+	require.True(t, deleted)
+}
+
+func TestObjectIsNotDeletedWhenNotExisting(t *testing.T) {
+	deleted, err := testDeleteK8sObjectIfExists(t, func(mocks *ApplierTestMocks) {
+		notFoundError := errors.NewNotFound(schema.GroupResource{}, "")
+		mocks.client.EXPECT().Get(gomock.Any(), NamespacedName, K8sObject).Return(notFoundError)
+	})
+
+	require.NoError(t, err)
+	require.False(t, deleted)
 }
