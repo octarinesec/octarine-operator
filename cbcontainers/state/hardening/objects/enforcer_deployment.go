@@ -33,12 +33,6 @@ var (
 	EnforcerRunAsUser                int64 = 0
 	EnforcerCapabilitiesToAdd              = []coreV1.Capability{"NET_BIND_SERVICE"}
 	EnforcerCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
-
-	EnforcerEnvVars = []coreV1.EnvVar{
-		{Name: "GUARDRAILS_ENFORCER_KEY_FILE_PATH", Value: fmt.Sprintf("%s/key", DesiredTlsSecretVolumeMountPath)},
-		{Name: "GUARDRAILS_ENFORCER_CERT_FILE_PATH", Value: fmt.Sprintf("%s/signed_cert", DesiredTlsSecretVolumeMountPath)},
-		{Name: "GIN_MODE", Value: "release"},
-	}
 )
 
 type EnforcerDeploymentK8sObject struct{}
@@ -73,27 +67,36 @@ func (obj *EnforcerDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject 
 		deployment.Spec.Selector = &metav1.LabelSelector{}
 	}
 
-	if deployment.ObjectMeta.Annotations == nil {
-		deployment.ObjectMeta.Annotations = make(map[string]string)
-	}
-
-	if deployment.Spec.Template.ObjectMeta.Annotations == nil {
-		deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
-	}
-
 	deployment.Spec.Replicas = enforcerSpec.ReplicasCount
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels
 	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
-	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, enforcerSpec.DeploymentAnnotations)
-	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, enforcerSpec.PodTemplateAnnotations)
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
+	obj.mutateAnnotations(deployment, enforcerSpec)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec, &cbContainersHardening.Spec.EnforcerSpec, &cbContainersHardening.Spec.EventsGatewaySpec, cbContainersHardening.Spec.Version, cbContainersHardening.Spec.AccessTokenSecretName)
 
 	return nil
+}
+
+func (obj *EnforcerDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Deployment, enforcerSpec cbcontainersv1.CBContainersHardeningEnforcerSpec) {
+	if deployment.ObjectMeta.Annotations == nil {
+		deployment.ObjectMeta.Annotations = make(map[string]string)
+	}
+
+	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, enforcerSpec.DeploymentAnnotations)
+
+	if deployment.Spec.Template.ObjectMeta.Annotations == nil {
+		deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
+	}
+
+	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, map[string]string{
+		"prometheus.io/scrape": fmt.Sprint(*enforcerSpec.Prometheus.Enabled),
+		"prometheus.io/port":   fmt.Sprint(enforcerSpec.Prometheus.Port),
+	})
+	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, enforcerSpec.PodTemplateAnnotations)
 }
 
 func (obj *EnforcerDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.PodSpec) {
@@ -125,12 +128,21 @@ func (obj *EnforcerDeploymentK8sObject) mutateContainersList(templatePodSpec *co
 func (obj *EnforcerDeploymentK8sObject) mutateContainer(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersHardeningEventsGatewaySpec, version, accessTokenSecretName string) {
 	container.Name = EnforcerName
 	container.Resources = enforcerSpec.Resources
-	mutateEnvVars(container, enforcerSpec.Env, accessTokenSecretName, eventsGatewaySpec, EnforcerEnvVars...)
+	obj.mutateEnforcerEnvVars(container, enforcerSpec, accessTokenSecretName, eventsGatewaySpec)
 	mutateImage(container, enforcerSpec.Image, version)
 	mutateContainerProbes(container, enforcerSpec.Probes)
 	obj.mutateSecurityContext(container)
 	obj.mutateContainerPorts(container)
 	obj.mutateVolumesMounts(container)
+}
+
+func (obj *EnforcerDeploymentK8sObject) mutateEnforcerEnvVars(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersHardeningEventsGatewaySpec) {
+	mutateEnvVars(container, enforcerSpec.Env, accessTokenSecretName, eventsGatewaySpec,
+		coreV1.EnvVar{Name: "GUARDRAILS_ENFORCER_KEY_FILE_PATH", Value: fmt.Sprintf("%s/key", DesiredTlsSecretVolumeMountPath)},
+		coreV1.EnvVar{Name: "GUARDRAILS_ENFORCER_CERT_FILE_PATH", Value: fmt.Sprintf("%s/signed_cert", DesiredTlsSecretVolumeMountPath)},
+		coreV1.EnvVar{Name: "GUARDRAILS_ENFORCER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", enforcerSpec.Prometheus.Port)},
+		coreV1.EnvVar{Name: "GIN_MODE", Value: "release"},
+	)
 }
 
 func (obj *EnforcerDeploymentK8sObject) mutateSecurityContext(container *coreV1.Container) {

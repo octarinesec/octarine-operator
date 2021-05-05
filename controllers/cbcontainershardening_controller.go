@@ -34,6 +34,8 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 )
 
+var falseRef = false
+
 type hardeningStateApplier interface {
 	ApplyDesiredState(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
 }
@@ -121,10 +123,7 @@ func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbc
 	}
 
 	if cbContainersHardening.Spec.EnforcerSpec.PodTemplateAnnotations == nil {
-		cbContainersHardening.Spec.EnforcerSpec.PodTemplateAnnotations = map[string]string{
-			"prometheus.io/scrape": "false",
-			"prometheus.io/port":   "7071",
-		}
+		cbContainersHardening.Spec.EnforcerSpec.PodTemplateAnnotations = make(map[string]string)
 	}
 
 	if cbContainersHardening.Spec.EnforcerSpec.ReplicasCount == nil {
@@ -135,6 +134,8 @@ func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbc
 	if cbContainersHardening.Spec.EnforcerSpec.Env == nil {
 		cbContainersHardening.Spec.EnforcerSpec.Env = make(map[string]string)
 	}
+
+	r.setDefaultPrometheus(&cbContainersHardening.Spec.EnforcerSpec.Prometheus)
 
 	r.setDefaultImage(&cbContainersHardening.Spec.EnforcerSpec.Image, "cbartifactory/guardrails-enforcer")
 
@@ -157,10 +158,7 @@ func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbc
 	}
 
 	if cbContainersHardening.Spec.StateReporterSpec.PodTemplateAnnotations == nil {
-		cbContainersHardening.Spec.StateReporterSpec.PodTemplateAnnotations = map[string]string{
-			"prometheus.io/scrape": "false",
-			"prometheus.io/port":   "7071",
-		}
+		cbContainersHardening.Spec.StateReporterSpec.PodTemplateAnnotations = make(map[string]string)
 	}
 
 	if cbContainersHardening.Spec.StateReporterSpec.Env == nil {
@@ -217,6 +215,16 @@ func (r *CBContainersHardeningReconciler) setDefaultProbes(probesSpec *cbcontain
 
 	if probesSpec.FailureThreshold == 0 {
 		probesSpec.FailureThreshold = 3
+	}
+}
+
+func (r *CBContainersHardeningReconciler) setDefaultPrometheus(prometheusSpec *cbcontainersv1.CBContainersHardeningPrometheusSpec) {
+	if prometheusSpec.Enabled == nil {
+		prometheusSpec.Enabled = &falseRef
+	}
+
+	if prometheusSpec.Port == 0 {
+		prometheusSpec.Port = 7071
 	}
 }
 

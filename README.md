@@ -24,7 +24,7 @@ make docker-build docker-push IMG={IMAGE_NAME}
 
 ### Deploy the operator resources
 ```
-make deploy IMG=={IMAGE_NAME}
+make deploy IMG={IMAGE_NAME}
 ```
 
 ## Data Plane Deployment
