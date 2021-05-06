@@ -13,7 +13,7 @@ import (
 
 type SetupAndAssertDefaultFeaturesProvider func(*mocks.MockClient, *monitor.DefaultFeaturesStatusProvider)
 
-func testHardeningEnabled(t *testing.T, setupAndAssert SetupAndAssertDefaultFeaturesProvider) {
+func testFeatures(t *testing.T, setupAndAssert SetupAndAssertDefaultFeaturesProvider) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -23,7 +23,7 @@ func testHardeningEnabled(t *testing.T, setupAndAssert SetupAndAssertDefaultFeat
 
 func TestHardeningEnabled(t *testing.T) {
 	t.Run("When Client.List returns error, should return error", func(t *testing.T) {
-		testHardeningEnabled(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
+		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
 			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersHardeningList{}).Return(fmt.Errorf(""))
 			_, err := provider.HardeningEnabled()
 			require.Error(t, err)
@@ -31,7 +31,7 @@ func TestHardeningEnabled(t *testing.T) {
 	})
 
 	t.Run("When Client.List returns no items, should return error", func(t *testing.T) {
-		testHardeningEnabled(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
+		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
 			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersHardeningList{}).Return(nil)
 			_, err := provider.HardeningEnabled()
 			require.Error(t, err)
@@ -39,7 +39,7 @@ func TestHardeningEnabled(t *testing.T) {
 	})
 
 	t.Run("When Client.List returns 0 items, should return false", func(t *testing.T) {
-		testHardeningEnabled(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
+		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
 			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersHardeningList{}).
 				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList) {
 					list.Items = make([]cbcontainersv1.CBContainersHardening, 0)
@@ -52,7 +52,7 @@ func TestHardeningEnabled(t *testing.T) {
 	})
 
 	t.Run("When Client.List returns 1 items, should return true", func(t *testing.T) {
-		testHardeningEnabled(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
+		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
 			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersHardeningList{}).
 				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList) {
 					list.Items = make([]cbcontainersv1.CBContainersHardening, 1)
@@ -67,7 +67,7 @@ func TestHardeningEnabled(t *testing.T) {
 
 func TestRuntimeEnabled(t *testing.T) {
 	t.Run("Always return false", func(t *testing.T) {
-		testHardeningEnabled(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
+		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
 			enabled, err := provider.RuntimeEnabled()
 			require.NoError(t, err)
 			require.False(t, enabled)
