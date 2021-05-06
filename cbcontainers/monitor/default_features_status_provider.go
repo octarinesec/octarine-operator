@@ -8,8 +8,7 @@ import (
 )
 
 type DefaultFeaturesStatusProvider struct {
-	client    client.Client
-	namespace string
+	client client.Client
 }
 
 func NewDefaultFeaturesStatusProvider(client client.Client) *DefaultFeaturesStatusProvider {
