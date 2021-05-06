@@ -34,7 +34,7 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 )
 
-type hardeningStateApplier interface {
+type HardeningStateApplier interface {
 	ApplyDesiredState(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
 }
 
@@ -42,7 +42,7 @@ type CBContainersHardeningReconciler struct {
 	client.Client
 	Log                   logr.Logger
 	Scheme                *runtime.Scheme
-	HardeningStateApplier hardeningStateApplier
+	HardeningStateApplier HardeningStateApplier
 }
 
 func (r *CBContainersHardeningReconciler) getContainersHardeningObject(ctx context.Context) (*cbcontainersv1.CBContainersHardening, error) {
