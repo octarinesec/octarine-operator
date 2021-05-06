@@ -110,10 +110,6 @@ func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbc
 		cbContainersHardening.Spec.AccessTokenSecretName = "cbcontainers-access-token"
 	}
 
-	if cbContainersHardening.Spec.AccessTokenSecretName == "" {
-		cbContainersHardening.Spec.AccessTokenSecretName = "cbcontainers-access-token"
-	}
-
 	if cbContainersHardening.Spec.EnforcerSpec.Labels == nil {
 		cbContainersHardening.Spec.EnforcerSpec.Labels = make(map[string]string)
 	}
