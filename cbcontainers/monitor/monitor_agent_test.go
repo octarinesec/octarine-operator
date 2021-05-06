@@ -1,10 +1,11 @@
-package monitor
+package monitor_test
 
 import (
 	"encoding/json"
 	"fmt"
 	logrTesting "github.com/go-logr/logr/testing"
 	"github.com/golang/mock/gomock"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor/mocks"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor/models"
 	hardeningObjects "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/objects"
@@ -31,7 +32,7 @@ type TestMonitorObjects struct {
 	messageReporterMock *mocks.MockMessageReporter
 }
 
-type AgentTestSetupFunc func(*MonitorAgent, *TestMonitorObjects) (models.HealthReportMessage, error)
+type AgentTestSetupFunc func(*monitor.MonitorAgent, *TestMonitorObjects) (models.HealthReportMessage, error)
 
 func testMonitorAgent(t *testing.T, setup AgentTestSetupFunc) {
 	ctrl := gomock.NewController(t)
@@ -42,7 +43,7 @@ func testMonitorAgent(t *testing.T, setup AgentTestSetupFunc) {
 		featuresMock:        mocks.NewMockFeaturesStatusProvider(ctrl),
 		messageReporterMock: mocks.NewMockMessageReporter(ctrl),
 	}
-	agent := NewMonitorAgent(Account, Cluster, Version, testObjects.healthCheckerMock, testObjects.featuresMock, testObjects.messageReporterMock, SendInterval, &logrTesting.TestLogger{T: t})
+	agent := monitor.NewMonitorAgent(Account, Cluster, Version, testObjects.healthCheckerMock, testObjects.featuresMock, testObjects.messageReporterMock, SendInterval, &logrTesting.TestLogger{T: t})
 
 	expectedHealthReportMessage, err := setup(agent, testObjects)
 	if err == nil {
@@ -59,7 +60,7 @@ func testMonitorAgent(t *testing.T, setup AgentTestSetupFunc) {
 
 func TestWorkloadsReports(t *testing.T) {
 	testWorkloadsReports := func(t *testing.T, expectedDeployments map[string]appsV1.Deployment, expectedDaemonSets map[string]appsV1.DaemonSet, expectedReplicaSets map[string]appsV1.ReplicaSet, expectedPods map[string]coreV1.Pod, expectedWorkloadHealthReports map[string]models.WorkloadHealthReport) {
-		testMonitorAgent(t, func(agent *MonitorAgent, testObjects *TestMonitorObjects) (models.HealthReportMessage, error) {
+		testMonitorAgent(t, func(agent *monitor.MonitorAgent, testObjects *TestMonitorObjects) (models.HealthReportMessage, error) {
 			testObjects.featuresMock.EXPECT().HardeningEnabled().Return(true, nil)
 			testObjects.featuresMock.EXPECT().RuntimeEnabled().Return(true, nil)
 			testObjects.healthCheckerMock.EXPECT().GetPods().Return(expectedPods, nil)
@@ -68,7 +69,7 @@ func TestWorkloadsReports(t *testing.T) {
 			testObjects.healthCheckerMock.EXPECT().GetReplicaSets().Return(expectedReplicaSets, nil)
 			testObjects.healthCheckerMock.EXPECT().GetValidatingWebhookConfigurations().Return(map[string]admissionsV1beta1.ValidatingWebhookConfiguration{}, nil)
 
-			return models.NewHealthReportMessage(Account, Cluster, Version, map[string]bool{HardeningFeature: true, RuntimeFeature: true}, expectedWorkloadHealthReports, map[string]models.WebhookHealthReport{}), nil
+			return models.NewHealthReportMessage(Account, Cluster, Version, map[string]bool{monitor.HardeningFeature: true, monitor.RuntimeFeature: true}, expectedWorkloadHealthReports, map[string]models.WebhookHealthReport{}), nil
 		})
 	}
 
@@ -223,7 +224,7 @@ func TestWorkloadsReports(t *testing.T) {
 
 func TestWebhookReports(t *testing.T) {
 	testWebhookReports := func(t *testing.T, expectedValidatingWebhooks map[string]admissionsV1beta1.ValidatingWebhookConfiguration, expectedWebhookReports map[string]models.WebhookHealthReport) {
-		testMonitorAgent(t, func(agent *MonitorAgent, testObjects *TestMonitorObjects) (models.HealthReportMessage, error) {
+		testMonitorAgent(t, func(agent *monitor.MonitorAgent, testObjects *TestMonitorObjects) (models.HealthReportMessage, error) {
 			testObjects.featuresMock.EXPECT().HardeningEnabled().Return(true, nil)
 			testObjects.featuresMock.EXPECT().RuntimeEnabled().Return(true, nil)
 			testObjects.healthCheckerMock.EXPECT().GetPods().Return(map[string]coreV1.Pod{}, nil)
@@ -232,7 +233,7 @@ func TestWebhookReports(t *testing.T) {
 			testObjects.healthCheckerMock.EXPECT().GetReplicaSets().Return(map[string]appsV1.ReplicaSet{}, nil)
 			testObjects.healthCheckerMock.EXPECT().GetValidatingWebhookConfigurations().Return(expectedValidatingWebhooks, nil)
 
-			return models.NewHealthReportMessage(Account, Cluster, Version, map[string]bool{HardeningFeature: true, RuntimeFeature: true}, map[string]models.WorkloadHealthReport{}, expectedWebhookReports), nil
+			return models.NewHealthReportMessage(Account, Cluster, Version, map[string]bool{monitor.HardeningFeature: true, monitor.RuntimeFeature: true}, map[string]models.WorkloadHealthReport{}, expectedWebhookReports), nil
 		})
 	}
 
@@ -272,7 +273,7 @@ func TestWebhookReports(t *testing.T) {
 
 func TestEnabledComponents(t *testing.T) {
 	testEnabledComponents := func(t *testing.T, hardeningEnabled, runtimeEnabled bool) {
-		testMonitorAgent(t, func(agent *MonitorAgent, testObjects *TestMonitorObjects) (models.HealthReportMessage, error) {
+		testMonitorAgent(t, func(agent *monitor.MonitorAgent, testObjects *TestMonitorObjects) (models.HealthReportMessage, error) {
 			testObjects.featuresMock.EXPECT().HardeningEnabled().Return(hardeningEnabled, nil)
 			testObjects.featuresMock.EXPECT().RuntimeEnabled().Return(runtimeEnabled, nil)
 			testObjects.healthCheckerMock.EXPECT().GetPods().Return(map[string]coreV1.Pod{}, nil)
@@ -281,12 +282,12 @@ func TestEnabledComponents(t *testing.T) {
 			testObjects.healthCheckerMock.EXPECT().GetReplicaSets().Return(map[string]appsV1.ReplicaSet{}, nil)
 			testObjects.healthCheckerMock.EXPECT().GetValidatingWebhookConfigurations().Return(map[string]admissionsV1beta1.ValidatingWebhookConfiguration{}, nil)
 
-			return models.NewHealthReportMessage(Account, Cluster, Version, map[string]bool{HardeningFeature: hardeningEnabled, RuntimeFeature: runtimeEnabled}, map[string]models.WorkloadHealthReport{}, map[string]models.WebhookHealthReport{}), nil
+			return models.NewHealthReportMessage(Account, Cluster, Version, map[string]bool{monitor.HardeningFeature: hardeningEnabled, monitor.RuntimeFeature: runtimeEnabled}, map[string]models.WorkloadHealthReport{}, map[string]models.WebhookHealthReport{}), nil
 		})
 	}
 
 	t.Run("When can't get hardening enabled status, log error", func(t *testing.T) {
-		testMonitorAgent(t, func(agent *MonitorAgent, testObjects *TestMonitorObjects) (models.HealthReportMessage, error) {
+		testMonitorAgent(t, func(agent *monitor.MonitorAgent, testObjects *TestMonitorObjects) (models.HealthReportMessage, error) {
 			err := fmt.Errorf("mock-error-for-getting-hardening")
 			testObjects.featuresMock.EXPECT().HardeningEnabled().Return(false, err)
 			return models.HealthReportMessage{}, err
@@ -294,7 +295,7 @@ func TestEnabledComponents(t *testing.T) {
 	})
 
 	t.Run("When can't get runtime enabled status, log error", func(t *testing.T) {
-		testMonitorAgent(t, func(agent *MonitorAgent, testObjects *TestMonitorObjects) (models.HealthReportMessage, error) {
+		testMonitorAgent(t, func(agent *monitor.MonitorAgent, testObjects *TestMonitorObjects) (models.HealthReportMessage, error) {
 			err := fmt.Errorf("mock-error-for-getting-runtime")
 			testObjects.featuresMock.EXPECT().HardeningEnabled().Return(true, nil)
 			testObjects.featuresMock.EXPECT().RuntimeEnabled().Return(false, err)
