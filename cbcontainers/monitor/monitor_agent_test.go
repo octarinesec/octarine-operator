@@ -288,7 +288,7 @@ func TestEnabledComponents(t *testing.T) {
 	t.Run("When can't get hardening enabled status, log error", func(t *testing.T) {
 		testMonitorAgent(t, func(agent *MonitorAgent, testObjects *TestMonitorObjects) (models.HealthReportMessage, error) {
 			err := fmt.Errorf("mock-error-for-getting-hardening")
-			testObjects.featuresMock.EXPECT().HardeningEnabled().Return(gomock.Any(), err)
+			testObjects.featuresMock.EXPECT().HardeningEnabled().Return(false, err)
 			return models.HealthReportMessage{}, err
 		})
 	})
