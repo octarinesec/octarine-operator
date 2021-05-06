@@ -64,7 +64,7 @@ func testCBContainersClusterController(t *testing.T, setups ...SetupClusterContr
 
 	controller := &controllers.CBContainersClusterReconciler{
 		Client: mocksObjects.client,
-		Log:    &logrTesting.TestLogger{},
+		Log:    &logrTesting.TestLogger{T: t},
 		Scheme: &runtime.Scheme{},
 
 		ClusterProcessor:    mocksObjects.ClusterProcessor,

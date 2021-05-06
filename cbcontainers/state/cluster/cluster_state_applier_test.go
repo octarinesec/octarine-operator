@@ -37,7 +37,6 @@ var (
 )
 
 type ClusterStateApplierTestMocks struct {
-	log                 *logrTesting.TestLogger
 	client              *testUtilsMocks.MockClient
 	childApplier        *mocks.MockClusterChildK8sObjectApplier
 	cbContainersCluster *cbcontainersv1.CBContainersCluster
@@ -74,7 +73,6 @@ func testClusterStateApplier(t *testing.T, setup ClusterStateApplierTestSetup, k
 	}
 
 	mockObjects := &ClusterStateApplierTestMocks{
-		log:                 &logrTesting.TestLogger{},
 		client:              testUtilsMocks.NewMockClient(ctrl),
 		childApplier:        mocks.NewMockClusterChildK8sObjectApplier(ctrl),
 		cbContainersCluster: cbContainersCluster,
@@ -87,7 +85,7 @@ func testClusterStateApplier(t *testing.T, setup ClusterStateApplierTestSetup, k
 
 	setup(mockObjects)
 
-	return cluster.NewClusterStateApplier(mockObjects.log, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersCluster, nil, mockObjects.client, nil)
+	return cluster.NewClusterStateApplier(&logrTesting.TestLogger{T: t}, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersCluster, nil, mockObjects.client, nil)
 }
 
 func getAppliedObjects(t *testing.T, k8sVersion string) []AppliedObject {

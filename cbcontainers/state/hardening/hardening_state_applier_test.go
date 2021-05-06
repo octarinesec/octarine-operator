@@ -64,7 +64,6 @@ var (
 )
 
 type HardeningStateApplierTestMocks struct {
-	log                   *logrTesting.TestLogger
 	client                *testUtilsMocks.MockClient
 	secretValuesCreator   *mocks.MockTlsSecretsValuesCreator
 	childApplier          *mocks.MockHardeningChildK8sObjectApplier
@@ -98,7 +97,6 @@ func testHardeningStateApplier(t *testing.T, setup HardeningStateApplierTestSetu
 	}
 
 	mockObjects := &HardeningStateApplierTestMocks{
-		log:                   &logrTesting.TestLogger{},
 		client:                testUtilsMocks.NewMockClient(ctrl),
 		secretValuesCreator:   mocks.NewMockTlsSecretsValuesCreator(ctrl),
 		childApplier:          mocks.NewMockHardeningChildK8sObjectApplier(ctrl),
@@ -112,7 +110,7 @@ func testHardeningStateApplier(t *testing.T, setup HardeningStateApplierTestSetu
 
 	setup(mockObjects)
 
-	return hardening.NewHardeningStateApplier(mockObjects.log, mockObjects.secretValuesCreator, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersHardening, mockObjects.client, nil)
+	return hardening.NewHardeningStateApplier(&logrTesting.TestLogger{T: t}, mockObjects.secretValuesCreator, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersHardening, mockObjects.client, nil)
 }
 
 func getAppliedAndDeletedObjects(t *testing.T, k8sVersion string, appliedK8sObjectsChangers ...AppliedK8sObjectsChanger) ([]K8sObjectDetails, []K8sObjectDetails, error) {

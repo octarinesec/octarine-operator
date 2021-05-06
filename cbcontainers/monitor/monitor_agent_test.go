@@ -3,12 +3,12 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
+	logrTesting "github.com/go-logr/logr/testing"
 	"github.com/golang/mock/gomock"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor/mocks"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor/models"
 	hardeningObjects "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/objects"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/test_utils"
-	testUtilsMocks "github.com/vmware/cbcontainers-operator/cbcontainers/test_utils/mocks"
 	admissionsV1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
@@ -29,7 +29,6 @@ type TestMonitorObjects struct {
 	healthCheckerMock   *mocks.MockHealthChecker
 	featuresMock        *mocks.MockFeaturesStatusProvider
 	messageReporterMock *mocks.MockMessageReporter
-	log                 *testUtilsMocks.MockLogger
 }
 
 type AgentTestSetupFunc func(*MonitorAgent, *TestMonitorObjects) (models.HealthReportMessage, error)
@@ -42,14 +41,11 @@ func testMonitorAgent(t *testing.T, setup AgentTestSetupFunc) {
 		healthCheckerMock:   mocks.NewMockHealthChecker(ctrl),
 		featuresMock:        mocks.NewMockFeaturesStatusProvider(ctrl),
 		messageReporterMock: mocks.NewMockMessageReporter(ctrl),
-		log:                 testUtilsMocks.NewMockLogger(ctrl),
 	}
-	agent := NewMonitorAgent(Account, Cluster, Version, testObjects.healthCheckerMock, testObjects.featuresMock, testObjects.messageReporterMock, SendInterval, testObjects.log)
+	agent := NewMonitorAgent(Account, Cluster, Version, testObjects.healthCheckerMock, testObjects.featuresMock, testObjects.messageReporterMock, SendInterval, &logrTesting.TestLogger{T: t})
 
 	expectedHealthReportMessage, err := setup(agent, testObjects)
-	if err != nil {
-		testObjects.log.EXPECT().Error(err, gomock.Any())
-	} else {
+	if err == nil {
 		testObjects.messageReporterMock.EXPECT().SendMonitorMessage(expectedHealthReportMessage).Return(nil)
 	}
 

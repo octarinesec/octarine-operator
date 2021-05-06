@@ -50,7 +50,7 @@ func testCBContainersHardeningController(t *testing.T, setups ...SetupHardeningC
 
 	controller := &controllers.CBContainersHardeningReconciler{
 		Client: mocksObjects.client,
-		Log:    &logrTesting.TestLogger{},
+		Log:    &logrTesting.TestLogger{T: t},
 		Scheme: &runtime.Scheme{},
 
 		HardeningStateApplier: mocksObjects.HardeningStateApplier,
