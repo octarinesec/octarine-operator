@@ -95,6 +95,13 @@ spec:
                       format: int32
                       type: integer
                   type: object
+                prometheus:
+                  properties:
+                    enabled:
+                      type: boolean
+                    port:
+                      type: integer
+                  type: object
                 replicasCount:
                   format: int32
                   type: integer
