@@ -86,7 +86,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	defaultMonitorCreator, err := clusterProcessors.NewDefaultMonitorCreator(monitor.NewDefaultHealthChecker(mgr.GetClient(), commonState.DataPlaneNamespaceName), monitor.NewDefaultFeaturesStatusProvider(mgr.GetClient()))
+	defaultMonitorCreator, err := clusterProcessors.NewDefaultMonitorCreator(monitor.NewDefaultHealthChecker(mgr.GetClient(), commonState.DataPlaneNamespaceName), monitor.NewDefaultFeaturesStatusProvider(mgr.GetClient()), ctrl.Log.WithName("monitor"))
 	if err != nil {
 		setupLog.Error(err, "unable to create default monitor creator")
 		os.Exit(1)
@@ -98,7 +98,7 @@ func main() {
 		Log:                 cbContainersClusterLogger,
 		Scheme:              mgr.GetScheme(),
 		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator(), defaultMonitorCreator),
-		ClusterStateApplier: clusterState.NewClusterStateApplier(cbContainersClusterLogger),
+		ClusterStateApplier: clusterState.NewClusterStateApplier(cbContainersClusterLogger, clusterState.NewDefaultClusterChildK8sObjectApplier()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
 		os.Exit(1)
@@ -109,7 +109,7 @@ func main() {
 		Client:                mgr.GetClient(),
 		Log:                   cbContainersHardeningLogger,
 		Scheme:                mgr.GetScheme(),
-		HardeningStateApplier: hardeningState.NewHardeningStateApplier(cbContainersHardeningLogger, certificatesUtils.NewCertificateCreator()),
+		HardeningStateApplier: hardeningState.NewHardeningStateApplier(cbContainersHardeningLogger, certificatesUtils.NewCertificateCreator(), hardeningState.NewDefaultHardeningChildK8sObjectApplier()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersHardening")
 		os.Exit(1)

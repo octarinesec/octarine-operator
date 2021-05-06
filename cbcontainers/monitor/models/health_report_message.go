@@ -20,6 +20,17 @@ type HealthReportMessage struct {
 	Webhooks          map[string]WebhookHealthReport
 }
 
+func NewHealthReportMessage(account, cluster, version string, enabledComponents map[string]bool, workloads map[string]WorkloadHealthReport, webhooks map[string]WebhookHealthReport) HealthReportMessage {
+	return HealthReportMessage{
+		Account:           account,
+		Cluster:           cluster,
+		Version:           version,
+		EnabledComponents: enabledComponents,
+		Workloads:         workloads,
+		Webhooks:          webhooks,
+	}
+}
+
 type WorkloadHealthReport struct {
 	Kind            WorkloadKind
 	Status          []byte

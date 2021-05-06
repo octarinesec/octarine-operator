@@ -16,11 +16,11 @@ type Gateway interface {
 	GetCertificates(name string, privateKey *rsa.PrivateKey) (*x509.CertPool, *tls.Certificate, error)
 }
 
-type gatewayCreator interface {
+type GatewayCreator interface {
 	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) Gateway
 }
 
-type monitorCreator interface {
+type MonitorCreator interface {
 	CreateMonitor(cbContainersCluster *cbcontainersv1.CBContainersCluster, gateway Gateway) (Monitor, error)
 }
 
@@ -30,8 +30,8 @@ type Monitor interface {
 }
 
 type CBContainerClusterProcessor struct {
-	gatewayCreator gatewayCreator
-	monitorCreator monitorCreator
+	gatewayCreator GatewayCreator
+	monitorCreator MonitorCreator
 
 	monitor Monitor
 
@@ -42,7 +42,7 @@ type CBContainerClusterProcessor struct {
 	log logr.Logger
 }
 
-func NewCBContainerClusterProcessor(log logr.Logger, clusterRegistrarCreator gatewayCreator, monitorCreator monitorCreator) *CBContainerClusterProcessor {
+func NewCBContainerClusterProcessor(log logr.Logger, clusterRegistrarCreator GatewayCreator, monitorCreator MonitorCreator) *CBContainerClusterProcessor {
 	return &CBContainerClusterProcessor{
 		gatewayCreator:      clusterRegistrarCreator,
 		monitorCreator:      monitorCreator,

@@ -3,6 +3,7 @@ package cluster
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor/reporters"
@@ -17,9 +18,11 @@ type DefaultMonitorCreator struct {
 	healthChecker          monitor.HealthChecker
 	featuresStatusProvider monitor.FeaturesStatusProvider
 	privateKey             *rsa.PrivateKey
+
+	log logr.Logger
 }
 
-func NewDefaultMonitorCreator(healthChecker monitor.HealthChecker, featuresStatusProvider monitor.FeaturesStatusProvider) (*DefaultMonitorCreator, error) {
+func NewDefaultMonitorCreator(healthChecker monitor.HealthChecker, featuresStatusProvider monitor.FeaturesStatusProvider, log logr.Logger) (*DefaultMonitorCreator, error) {
 	privateKey, err := makePrivateKey()
 	if err != nil {
 		return nil, err
@@ -29,6 +32,7 @@ func NewDefaultMonitorCreator(healthChecker monitor.HealthChecker, featuresStatu
 		healthChecker:          healthChecker,
 		featuresStatusProvider: featuresStatusProvider,
 		privateKey:             privateKey,
+		log:                    log,
 	}, nil
 }
 
@@ -56,5 +60,5 @@ func (creator *DefaultMonitorCreator) CreateMonitor(cbContainersCluster *cbconta
 		return nil, err
 	}
 
-	return monitor.NewMonitorAgent(spec.Account, spec.ClusterName, "", creator.healthChecker, creator.featuresStatusProvider, reporter, MonitorInterval), nil
+	return monitor.NewMonitorAgent(spec.Account, spec.ClusterName, "", creator.healthChecker, creator.featuresStatusProvider, reporter, MonitorInterval, creator.log), nil
 }

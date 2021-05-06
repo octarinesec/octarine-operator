@@ -33,11 +33,11 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 )
 
-type clusterStateApplier interface {
+type ClusterStateApplier interface {
 	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, secret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
 }
 
-type clusterProcessor interface {
+type ClusterProcessor interface {
 	Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error)
 }
 
@@ -46,8 +46,8 @@ type CBContainersClusterReconciler struct {
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 
-	ClusterProcessor    clusterProcessor
-	ClusterStateApplier clusterStateApplier
+	ClusterProcessor    ClusterProcessor
+	ClusterStateApplier ClusterStateApplier
 }
 
 func (r *CBContainersClusterReconciler) getContainersClusterObject(ctx context.Context) (*cbcontainersv1.CBContainersCluster, error) {

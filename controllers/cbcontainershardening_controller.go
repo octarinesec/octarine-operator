@@ -36,7 +36,7 @@ import (
 
 var falseRef = false
 
-type hardeningStateApplier interface {
+type HardeningStateApplier interface {
 	ApplyDesiredState(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
 }
 
@@ -44,7 +44,7 @@ type CBContainersHardeningReconciler struct {
 	client.Client
 	Log                   logr.Logger
 	Scheme                *runtime.Scheme
-	HardeningStateApplier hardeningStateApplier
+	HardeningStateApplier HardeningStateApplier
 }
 
 func (r *CBContainersHardeningReconciler) getContainersHardeningObject(ctx context.Context) (*cbcontainersv1.CBContainersHardening, error) {
@@ -106,10 +106,6 @@ func (r *CBContainersHardeningReconciler) Reconcile(ctx context.Context, req ctr
 }
 
 func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
-	if cbContainersHardening.Spec.AccessTokenSecretName == "" {
-		cbContainersHardening.Spec.AccessTokenSecretName = "cbcontainers-access-token"
-	}
-
 	if cbContainersHardening.Spec.AccessTokenSecretName == "" {
 		cbContainersHardening.Spec.AccessTokenSecretName = "cbcontainers-access-token"
 	}

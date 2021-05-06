@@ -34,5 +34,6 @@ jobs:
         uses: yuya-takeyama/docker-tag-from-github-ref-action@v1
       - run: make generate
       - run: make manifests
+      - run: make test
       - name: Build and push
         run: make docker-build docker-push IMG=cbartifactory/octarine-operator:${{ steps.docker-tag.outputs.tag }}
