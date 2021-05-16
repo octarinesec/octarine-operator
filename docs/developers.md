@@ -20,3 +20,21 @@ The `run` command executes with the local GO environment the main.go file
 * Run/Debug the main.go from your editor (verify the `KUBECONFIG` env var)
 
 
+### Installing the Data Plane on your own control plane
+
+Under the Carbon Black Container Cluster CR:
+```
+spec:
+  apiGatewaySpec:
+    adapter: {MY-ADAPTER-NAME}
+```
+
+Change {MY-ADAPTER-NAME} to your control plane adapter name.
+The default value is `containers`
+
+### Changing the security context settings
+
+#### Hardening enforcer/state_reporter security context settings
+Under `cbcontainers/state/hardening/objects`
+for `enforcer_deployment.go` or `state_reporter_deployment`
+You can change the values on the top of the file to suite your needs.
