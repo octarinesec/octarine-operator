@@ -4,21 +4,19 @@
 
 ### Running the operator locally without deploying it
 
-#### From the terminal
-* Run the following command (verify the kube config context)
+#### Installing dependencies (verify the kube config context)
 ```
-make install run
+make deploy OPERATOR_REPLICAS=0
 ```
+
+#### Running the operator from the terminal
+* Run the following commands (verify the kube config context)
+```
+make run
+```
+The `run` command executes with the local GO environment the main.go file
 
 #### From your editor
-* Run the following command (verify the kube config context)
-```
-make install
-```
 * Run/Debug the main.go from your editor (verify the `KUBECONFIG` env var)
 
-
-The `install` command deploys the custom resource definitions and the rbac resources.
-
-The `run` command executes with the local GO environment the main.go file
 
