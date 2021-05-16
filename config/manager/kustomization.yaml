@@ -1,5 +1,4 @@
 resources:
-  - namespace.yaml
   - manager.yaml
 
 generatorOptions:
