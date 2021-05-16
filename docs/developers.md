@@ -4,21 +4,37 @@
 
 ### Running the operator locally without deploying it
 
-#### From the terminal
-* Run the following command (verify the kube config context)
+#### Installing dependencies (verify the kube config context)
 ```
-make install run
+make deploy OPERATOR_REPLICAS=0
 ```
 
+#### Running the operator from the terminal
+* Run the following commands (verify the kube config context)
+```
+make run
+```
+The `run` command executes with the local GO environment the main.go file
+
 #### From your editor
-* Run the following command (verify the kube config context)
-```
-make install
-```
 * Run/Debug the main.go from your editor (verify the `KUBECONFIG` env var)
 
 
-The `install` command deploys the custom resource definitions and the rbac resources.
+### Installing the Data Plane on your own control plane
 
-The `run` command executes with the local GO environment the main.go file
+Under the Carbon Black Container Cluster CR:
+```
+spec:
+  apiGatewaySpec:
+    adapter: {MY-ADAPTER-NAME}
+```
 
+Change {MY-ADAPTER-NAME} to your control plane adapter name.
+The default value is `containers`
+
+### Changing the security context settings
+
+#### Hardening enforcer/state_reporter security context settings
+Under `cbcontainers/state/hardening/objects`
+for `enforcer_deployment.go` or `state_reporter_deployment.go`
+You can change the values on the top of the file to suite your needs.
