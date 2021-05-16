@@ -36,5 +36,5 @@ The default value is `containers`
 
 #### Hardening enforcer/state_reporter security context settings
 Under `cbcontainers/state/hardening/objects`
-for `enforcer_deployment.go` or `state_reporter_deployment`
+for `enforcer_deployment.go` or `state_reporter_deployment.go`
 You can change the values on the top of the file to suite your needs.
