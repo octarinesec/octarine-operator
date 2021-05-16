@@ -64,12 +64,9 @@ uninstall: manifests kustomize
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 create_operator_spec: manifests kustomize
-	$(info ************ Cleaning and preparing temp files ************)
 	rm -f operator.yaml
-	$(info ************ Running KUSTOMIZE ************)
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	- $(KUSTOMIZE) build config/default >> operator.yaml
-	$(info ************ Deleting temp files ************)
 	git restore config/manager/kustomization.yaml
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
