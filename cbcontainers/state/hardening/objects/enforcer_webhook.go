@@ -31,14 +31,14 @@ type EnforcerWebhookK8sObject struct {
 	kubeletVersion  string
 }
 
-func NewEnforcerWebhookK8sObject() *EnforcerWebhookK8sObject { return &EnforcerWebhookK8sObject{} }
+func NewEnforcerWebhookK8sObject(kubeletVersion string) *EnforcerWebhookK8sObject {
+	return &EnforcerWebhookK8sObject{
+		kubeletVersion: kubeletVersion,
+	}
+}
 
 func (obj *EnforcerWebhookK8sObject) UpdateTlsSecretValues(tlsSecretValues models.TlsSecretValues) {
 	obj.tlsSecretValues = &tlsSecretValues
-}
-
-func (obj *EnforcerWebhookK8sObject) UpdateKubeletVersion(kubeletVersion string) {
-	obj.kubeletVersion = kubeletVersion
 }
 
 func (obj *EnforcerWebhookK8sObject) EmptyK8sObject() client.Object {

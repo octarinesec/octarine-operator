@@ -26,17 +26,19 @@ type HardeningStateApplier struct {
 	stateReporterDeployment *hardeningObjects.StateReporterDeploymentK8sObject
 	childApplier            HardeningChildK8sObjectApplier
 	log                     logr.Logger
+	k8sVersion              string
 }
 
-func NewHardeningStateApplier(log logr.Logger, tlsSecretsValuesCreator hardeningObjects.TlsSecretsValuesCreator, childApplier HardeningChildK8sObjectApplier) *HardeningStateApplier {
+func NewHardeningStateApplier(log logr.Logger, k8sVersion string, tlsSecretsValuesCreator hardeningObjects.TlsSecretsValuesCreator, childApplier HardeningChildK8sObjectApplier) *HardeningStateApplier {
 	return &HardeningStateApplier{
 		enforcerTlsSecret:       hardeningObjects.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
 		enforcerDeployment:      hardeningObjects.NewEnforcerDeploymentK8sObject(),
 		enforcerService:         hardeningObjects.NewEnforcerServiceK8sObject(),
-		enforcerWebhook:         hardeningObjects.NewEnforcerWebhookK8sObject(),
+		enforcerWebhook:         hardeningObjects.NewEnforcerWebhookK8sObject(k8sVersion),
 		stateReporterDeployment: hardeningObjects.NewStateReporterDeploymentK8sObject(),
 		childApplier:            childApplier,
 		log:                     log,
+		k8sVersion:              k8sVersion,
 	}
 }
 
@@ -59,12 +61,6 @@ func (c *HardeningStateApplier) ApplyDesiredState(ctx context.Context, cbContain
 }
 
 func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
-	c.log.Info("Getting Nodes list")
-	nodesList := &coreV1.NodeList{}
-	if err := client.List(ctx, nodesList); err != nil || nodesList.Items == nil || len(nodesList.Items) < 1 {
-		return false, fmt.Errorf("couldn't get nodes list")
-	}
-
 	mutatedSecret, secretK8sObject, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerTlsSecret, applyOptions, applymentOptions.NewApplyOptions().SetCreateOnly(true))
 	if err != nil {
 		return false, err
@@ -113,7 +109,6 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 		}
 	} else {
 		c.enforcerWebhook.UpdateTlsSecretValues(models.TlsSecretValuesFromSecretData(tlsSecret.Data))
-		c.enforcerWebhook.UpdateKubeletVersion(nodesList.Items[0].Status.NodeInfo.KubeletVersion)
 		mutatedWebhook, _, err = c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerWebhook, applyOptions)
 		if err != nil {
 			return false, err

@@ -2,13 +2,11 @@ package cluster
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 	clusterObjects "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster/objects"
-	coreV1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -18,30 +16,30 @@ type ClusterStateApplier struct {
 	desiredPriorityClass  *clusterObjects.PriorityClassK8sObject
 	childApplier          ClusterChildK8sObjectApplier
 	log                   logr.Logger
+	k8sVersion            string
 }
 
 type ClusterChildK8sObjectApplier interface {
 	ApplyClusterChildK8sObject(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client, clusterChildK8sObject ClusterChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error)
 }
 
-func NewClusterStateApplier(log logr.Logger, childApplier ClusterChildK8sObjectApplier) *ClusterStateApplier {
+func NewClusterStateApplier(log logr.Logger, k8sVersion string, childApplier ClusterChildK8sObjectApplier) *ClusterStateApplier {
 	return &ClusterStateApplier{
 		desiredConfigMap:      clusterObjects.NewConfigurationK8sObject(),
 		desiredRegistrySecret: clusterObjects.NewRegistrySecretK8sObject(),
-		desiredPriorityClass:  clusterObjects.NewPriorityClassK8sObject(),
+		desiredPriorityClass:  clusterObjects.NewPriorityClassK8sObject(k8sVersion),
 		childApplier:          childApplier,
 		log:                   log,
+		k8sVersion:            k8sVersion,
 	}
+}
+
+func (c *ClusterStateApplier) GetPriorityClassEmptyK8sObject() client.Object {
+	return c.desiredPriorityClass.EmptyK8sObject()
 }
 
 func (c *ClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, registrySecret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
 	applyOptions := applymentOptions.NewApplyOptions().SetOwnerSetter(setOwner)
-
-	c.log.Info("Getting Nodes list")
-	nodesList := &coreV1.NodeList{}
-	if err := client.List(ctx, nodesList); err != nil || nodesList.Items == nil || len(nodesList.Items) < 1 {
-		return false, fmt.Errorf("couldn't get nodes list")
-	}
 
 	mutatedConfigmap, _, err := c.childApplier.ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredConfigMap, applyOptions)
 	if err != nil {
@@ -56,7 +54,6 @@ func (c *ClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainer
 	}
 	c.log.Info("Applied registry secret", "Mutated", mutatedRegistrySecret)
 
-	c.desiredPriorityClass.UpdateKubeletVersion(nodesList.Items[0].Status.NodeInfo.KubeletVersion)
 	mutatedPriorityClass, _, err := c.childApplier.ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredPriorityClass, applyOptions)
 	if err != nil {
 		return false, err

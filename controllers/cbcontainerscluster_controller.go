@@ -34,6 +34,7 @@ import (
 )
 
 type ClusterStateApplier interface {
+	GetPriorityClassEmptyK8sObject() client.Object
 	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, secret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
 }
 
@@ -162,5 +163,6 @@ func (r *CBContainersClusterReconciler) SetupWithManager(mgr ctrl.Manager) error
 		For(&cbcontainersv1.CBContainersCluster{}).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Secret{}).
+		Owns(r.ClusterStateApplier.GetPriorityClassEmptyK8sObject()).
 		Complete(r)
 }
