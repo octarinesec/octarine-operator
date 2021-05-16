@@ -64,17 +64,23 @@ uninstall: manifests kustomize
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 create_operator_spec: manifests kustomize
+	$(info ************ Cleaning and preparing temp files ************)
+	rm -f operator.yaml
+	$(info ************ Running KUSTOMIZE ************)
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default
+	- $(KUSTOMIZE) build config/default >> operator.yaml
+	$(info ************ Deleting temp files ************)
+	git restore config/manager/kustomization.yaml
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests kustomize
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+deploy: create_operator_spec
+	- kubectl apply -f operator.yaml
+	rm -f operator.yaml
 
 # UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
-undeploy:
-	$(KUSTOMIZE) build config/default | kubectl delete -f -
+undeploy: create_operator_spec
+	- kubectl delete -f operator.yaml
+	rm -f operator.yaml
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
