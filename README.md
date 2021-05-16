@@ -105,17 +105,17 @@ In order to configure those environment variables for the Hardening Enforcer and
 update the Hardening CR using the proxy environment variables:
 
 ```sh
-specs:
+spec:
   enforcerSpec:
     env:
-      HTTP_PROXY="<proxy-url>"
-      HTTPS_PROXY="<proxy-url>"
-      NO_PROXY="<kubernetes-api-server-ip>/<range>"
+      HTTP_PROXY: "<proxy-url>"
+      HTTPS_PROXY: "<proxy-url>"
+      NO_PROXY: "<kubernetes-api-server-ip>/<range>"
   stateReporterSpec:
     env:
-      HTTP_PROXY="<proxy-url>"
-      HTTPS_PROXY="<proxy-url>"
-      NO_PROXY="<kubernetes-api-server-ip>/<range>"
+      HTTP_PROXY: "<proxy-url>"
+      HTTPS_PROXY: "<proxy-url>"
+      NO_PROXY: "<kubernetes-api-server-ip>/<range>"
 ```
 
 It is very important to configure the NO_PROXY environment variable with the value of the Kubernetes API server IP.
