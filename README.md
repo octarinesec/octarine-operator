@@ -92,17 +92,56 @@ make undeploy
 ```
 * Notice that the above command will delete the Carbon Black Container custom resources definitions and instances.
 
-## Reading Metrics
+## Reading Metrics With Prometheus
+
 The operator metrics are protected by kube-auth-proxy.
 
 You will need to grant permissions to your Prometheus server so that it can scrape the protected metrics.
 
-To achieve that, you can create a clusterRoleBinding to bind the clusterRole to the service account that your Prometheus server uses.
-If you are using kube-prometheus, this cluster binding already exists.
+You can create a ClusterRole and bind it with ClusterRoleBinding to the service account that your Prometheus server uses.
+If you don't have such cluster role & cluster role binding configured:
 
-You can run the following kubectl command to create it:
+Cluster Role:
+```sh
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+name: cbcontainers-metrics-reader
+rules:
+- nonResourceURLs:
+    - /metrics
+      verbs:
+    - get
+```
+
+Cluster Role binding creation:
 ```sh
 kubectl create clusterrolebinding metrics --clusterrole=cbcontainers-metrics-reader --serviceaccount=<namespace>:<service-account-name>
+```
+
+### When using Prometheus Operator
+
+The Service Monitor to add for scraping metrics from the CBContainers operator:
+* Make sure that your Prometheus custom resource service monitor selectors can match it. 
+```
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    control-plane: operator
+  name: cbcontainers-operator-metrics-monitor
+  namespace: cbcontainers-dataplane
+spec:
+  endpoints:
+  - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    path: /metrics
+    port: https
+    scheme: https
+    tlsConfig:
+      insecureSkipVerify: true
+  selector:
+    matchLabels:
+      control-plane: operator
 ```
 
 ## Using HTTP proxy
