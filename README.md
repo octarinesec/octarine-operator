@@ -116,7 +116,7 @@ rules:
 
 Cluster Role binding creation:
 ```sh
-kubectl create clusterrolebinding metrics --clusterrole=cbcontainers-metrics-reader --serviceaccount=<namespace>:<service-account-name>
+kubectl create clusterrolebinding metrics --clusterrole=cbcontainers-metrics-reader --serviceaccount=<prometheus-namespace>:<prometheus-service-account-name>
 ```
 
 ### When using Prometheus Operator
