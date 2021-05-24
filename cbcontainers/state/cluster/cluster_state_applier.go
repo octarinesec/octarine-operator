@@ -16,7 +16,6 @@ type ClusterStateApplier struct {
 	desiredPriorityClass  *clusterObjects.PriorityClassK8sObject
 	childApplier          ClusterChildK8sObjectApplier
 	log                   logr.Logger
-	k8sVersion            string
 }
 
 type ClusterChildK8sObjectApplier interface {
@@ -30,7 +29,6 @@ func NewClusterStateApplier(log logr.Logger, k8sVersion string, childApplier Clu
 		desiredPriorityClass:  clusterObjects.NewPriorityClassK8sObject(k8sVersion),
 		childApplier:          childApplier,
 		log:                   log,
-		k8sVersion:            k8sVersion,
 	}
 }
 

@@ -26,7 +26,6 @@ type HardeningStateApplier struct {
 	stateReporterDeployment *hardeningObjects.StateReporterDeploymentK8sObject
 	childApplier            HardeningChildK8sObjectApplier
 	log                     logr.Logger
-	k8sVersion              string
 }
 
 func NewHardeningStateApplier(log logr.Logger, k8sVersion string, tlsSecretsValuesCreator hardeningObjects.TlsSecretsValuesCreator, childApplier HardeningChildK8sObjectApplier) *HardeningStateApplier {
@@ -38,7 +37,6 @@ func NewHardeningStateApplier(log logr.Logger, k8sVersion string, tlsSecretsValu
 		stateReporterDeployment: hardeningObjects.NewStateReporterDeploymentK8sObject(),
 		childApplier:            childApplier,
 		log:                     log,
-		k8sVersion:              k8sVersion,
 	}
 }
 
