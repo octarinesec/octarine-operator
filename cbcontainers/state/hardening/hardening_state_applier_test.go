@@ -104,13 +104,9 @@ func testHardeningStateApplier(t *testing.T, setup HardeningStateApplierTestSetu
 		kubeletVersion:        k8sVersion,
 	}
 
-	mockObjects.client.EXPECT().List(gomock.Any(), gomock.Any()).Do(func(arg0 context.Context, arg1 *coreV1.NodeList, arg2 ...client.ListOption) {
-		arg1.Items = append(arg1.Items, coreV1.Node{Status: coreV1.NodeStatus{NodeInfo: coreV1.NodeSystemInfo{KubeletVersion: mockObjects.kubeletVersion}}})
-	}).Return(nil)
-
 	setup(mockObjects)
 
-	return hardening.NewHardeningStateApplier(&logrTesting.TestLogger{T: t}, mockObjects.secretValuesCreator, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersHardening, mockObjects.client, nil)
+	return hardening.NewHardeningStateApplier(&logrTesting.TestLogger{T: t}, k8sVersion, mockObjects.secretValuesCreator, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersHardening, mockObjects.client, nil)
 }
 
 func getAppliedAndDeletedObjects(t *testing.T, k8sVersion string, appliedK8sObjectsChangers ...AppliedK8sObjectsChanger) ([]K8sObjectDetails, []K8sObjectDetails, error) {
