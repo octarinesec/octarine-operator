@@ -92,6 +92,59 @@ make undeploy
 ```
 * Notice that the above command will delete the Carbon Black Container custom resources definitions and instances.
 
+## Reading Metrics With Prometheus
+
+The operator metrics are protected by kube-auth-proxy.
+
+You will need to grant permissions to your Prometheus server to allow it to scrape the protected metrics.
+
+You can create a ClusterRole and bind it with ClusterRoleBinding to the service account that your Prometheus server uses.
+
+If you don't have such cluster role & cluster role binding configured, you can use the following:
+
+Cluster Role:
+```sh
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+name: cbcontainers-metrics-reader
+rules:
+- nonResourceURLs:
+    - /metrics
+      verbs:
+    - get
+```
+
+Cluster Role binding creation:
+```sh
+kubectl create clusterrolebinding metrics --clusterrole=cbcontainers-metrics-reader --serviceaccount=<prometheus-namespace>:<prometheus-service-account-name>
+```
+
+### When using Prometheus Operator
+
+Use the following ServiceMonitor to start scraping metrics from the CBContainers operator:
+* Make sure that your Prometheus custom resource service monitor selectors match it. 
+```
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    control-plane: operator
+  name: cbcontainers-operator-metrics-monitor
+  namespace: cbcontainers-dataplane
+spec:
+  endpoints:
+  - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    path: /metrics
+    port: https
+    scheme: https
+    tlsConfig:
+      insecureSkipVerify: true
+  selector:
+    matchLabels:
+      control-plane: operator
+```
+
 ## Using HTTP proxy
 
 Configuring the Carbon Black Cloud Container services to use HTTP proxy can be done by setting HTTP_PROXY, HTTPS_PROXY and NO_PROXY environment variables.
