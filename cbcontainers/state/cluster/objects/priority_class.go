@@ -22,10 +22,10 @@ type PriorityClassK8sObject struct {
 	kubeletVersion string
 }
 
-func NewPriorityClassK8sObject() *PriorityClassK8sObject { return &PriorityClassK8sObject{} }
-
-func (obj *PriorityClassK8sObject) UpdateKubeletVersion(kubeletVersion string) {
-	obj.kubeletVersion = kubeletVersion
+func NewPriorityClassK8sObject(kubeletVersion string) *PriorityClassK8sObject {
+	return &PriorityClassK8sObject{
+		kubeletVersion: kubeletVersion,
+	}
 }
 
 func (obj *PriorityClassK8sObject) EmptyK8sObject() client.Object {

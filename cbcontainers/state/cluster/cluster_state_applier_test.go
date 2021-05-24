@@ -79,13 +79,9 @@ func testClusterStateApplier(t *testing.T, setup ClusterStateApplierTestSetup, k
 		kubeletVersion:      k8sVersion,
 	}
 
-	mockObjects.client.EXPECT().List(gomock.Any(), gomock.Any()).Do(func(arg0 context.Context, arg1 *coreV1.NodeList, arg2 ...client.ListOption) {
-		arg1.Items = append(arg1.Items, coreV1.Node{Status: coreV1.NodeStatus{NodeInfo: coreV1.NodeSystemInfo{KubeletVersion: mockObjects.kubeletVersion}}})
-	}).Return(nil)
-
 	setup(mockObjects)
 
-	return cluster.NewClusterStateApplier(&logrTesting.TestLogger{T: t}, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersCluster, nil, mockObjects.client, nil)
+	return cluster.NewClusterStateApplier(&logrTesting.TestLogger{T: t}, k8sVersion, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersCluster, nil, mockObjects.client, nil)
 }
 
 func getAppliedObjects(t *testing.T, k8sVersion string) []AppliedObject {

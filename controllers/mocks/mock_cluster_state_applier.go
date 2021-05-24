@@ -52,3 +52,17 @@ func (mr *MockClusterStateApplierMockRecorder) ApplyDesiredState(arg0, arg1, arg
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyDesiredState", reflect.TypeOf((*MockClusterStateApplier)(nil).ApplyDesiredState), arg0, arg1, arg2, arg3, arg4)
 }
+
+// GetPriorityClassEmptyK8sObject mocks base method.
+func (m *MockClusterStateApplier) GetPriorityClassEmptyK8sObject() client.Object {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPriorityClassEmptyK8sObject")
+	ret0, _ := ret[0].(client.Object)
+	return ret0
+}
+
+// GetPriorityClassEmptyK8sObject indicates an expected call of GetPriorityClassEmptyK8sObject.
+func (mr *MockClusterStateApplierMockRecorder) GetPriorityClassEmptyK8sObject() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPriorityClassEmptyK8sObject", reflect.TypeOf((*MockClusterStateApplier)(nil).GetPriorityClassEmptyK8sObject))
+}
