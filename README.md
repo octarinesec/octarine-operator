@@ -21,6 +21,7 @@ Kubernetes 1.13+
 ```
 make docker-build docker-push IMG={IMAGE_NAME}
 ```
+* or use the latest official image: ```cbartifactory/octarine-operator:3.0.1```
 
 ### Deploy the operator resources
 ```
