@@ -27,7 +27,7 @@ make docker-build docker-push IMG={IMAGE_NAME}
 make deploy IMG={IMAGE_NAME}
 ```
 
-* View [Developer Guide](docs/developers.md) to see how deploy the source code without creating an image
+* View [Developer Guide](docs/developers.md#running-the-operator-locally-without-creating-an-image) to see how deploy the source code without creating an image
 
 ## Data Plane Deployment
 
