@@ -2,7 +2,7 @@
 
 ## Developer Guide
 
-### Running the operator locally without deploying it
+### Running the operator locally without creating an image
 
 #### Installing dependencies (verify the kube config context)
 ```
