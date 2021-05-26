@@ -293,12 +293,12 @@ func (agent *MonitorAgent) createWebhooksHealthReport() (map[string]models.Webho
 func (agent *MonitorAgent) populateWithValidatingWebhooks(webhooks map[string]admissionsV1.ValidatingWebhookConfiguration, reports map[string]models.WebhookHealthReport) {
 	if webhook, ok := webhooks[hardeningObjects.EnforcerName]; ok {
 		webhookMessage := agent.buildValidatingWebhookMessage(webhook)
-		if _, ok := webhooks[webhook.Name]; ok {
+		if _, ok := reports[webhook.Name]; ok {
 			agent.log.Info("duplicated webhook name", "webhook", webhook.Name)
 		}
 		reports[webhook.Name] = webhookMessage
 	} else {
-		agent.log.Info("octarine validating webhook not found.", "webhook", webhook.Name)
+		agent.log.Info(fmt.Sprintf("%v validating webhook not found.", hardeningObjects.EnforcerName), "webhook", webhook.Name)
 	}
 }
 
