@@ -3,6 +3,7 @@ package hardening
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"

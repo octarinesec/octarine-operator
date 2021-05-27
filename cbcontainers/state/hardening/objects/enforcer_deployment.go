@@ -52,7 +52,7 @@ func (obj *EnforcerDeploymentK8sObject) HardeningChildNamespacedName(_ *cbcontai
 }
 
 func (obj *EnforcerDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
-	enforcerSpec := cbContainersHardening.Spec.EnforcerSpec
+	enforcerSpec := &cbContainersHardening.Spec.EnforcerSpec
 
 	deployment, ok := k8sObject.(*appsV1.Deployment)
 	if !ok {
@@ -78,12 +78,12 @@ func (obj *EnforcerDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject 
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	obj.mutateAnnotations(deployment, enforcerSpec)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, &cbContainersHardening.Spec.EnforcerSpec, &cbContainersHardening.Spec.EventsGatewaySpec, cbContainersHardening.Spec.Version, cbContainersHardening.Spec.AccessTokenSecretName)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, enforcerSpec, &cbContainersHardening.Spec.EventsGatewaySpec, cbContainersHardening.Spec.Version, cbContainersHardening.Spec.AccessTokenSecretName)
 
 	return nil
 }
 
-func (obj *EnforcerDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Deployment, enforcerSpec cbcontainersv1.CBContainersHardeningEnforcerSpec) {
+func (obj *EnforcerDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Deployment, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec) {
 	if deployment.ObjectMeta.Annotations == nil {
 		deployment.ObjectMeta.Annotations = make(map[string]string)
 	}

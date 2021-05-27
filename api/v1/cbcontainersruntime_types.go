@@ -22,7 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type CBContainersRuntimeControllerSpec struct {
+type CBContainersRuntimeResolverSpec struct {
 	EventsGatewaySpec common_specs.CBContainersEventsGatewaySpec `json:"eventsGatewaySpec,required"`
 	// +kubebuilder:default:=<>
 	Labels map[string]string `json:"labels,omitempty"`
@@ -40,9 +40,11 @@ type CBContainersRuntimeControllerSpec struct {
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes common_specs.CBContainersHTTPProbesSpec `json:"probes,omitempty"`
+	// +kubebuilder:default:=<>
+	Prometheus common_specs.CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 }
 
-type CBContainersRuntimeWorkerSpec struct {
+type CBContainersRuntimeSensorSpec struct {
 }
 
 // CBContainersRuntimeSpec defines the desired state of CBContainersRuntime
@@ -51,11 +53,11 @@ type CBContainersRuntimeSpec struct {
 	// +kubebuilder:default:="cbcontainers-access-token"
 	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
 	// +kubebuilder:default:=<>
-	ControllerSpec CBContainersRuntimeControllerSpec `json:"controllerSpec,omitempty"`
+	ResolverSpec CBContainersRuntimeResolverSpec `json:"controllerSpec,omitempty"`
 	// +kubebuilder:default:=<>
-	WorkerSpec CBContainersRuntimeWorkerSpec `json:"workerSpec,omitempty"`
+	SensorSpec CBContainersRuntimeSensorSpec `json:"workerSpec,omitempty"`
 	// +kubebuilder:default:=443
-	InternalGrpcPort int `json:"internalGrpcPort,required"`
+	InternalGrpcPort int32 `json:"internalGrpcPort,required"`
 }
 
 // CBContainersRuntimeStatus defines the observed state of CBContainersRuntime

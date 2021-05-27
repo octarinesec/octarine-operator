@@ -12,31 +12,37 @@ import (
 	stateTypes "github.com/vmware/cbcontainers-operator/cbcontainers/state/types"
 )
 
-type runtimeChildK8sObject interface {
+type RuntimeChildK8sObject interface {
 	MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntime *cbcontainersv1.CBContainersRuntime) error
 	RuntimeChildNamespacedName(cbContainersRuntime *cbcontainersv1.CBContainersRuntime) types.NamespacedName
 	stateTypes.DesiredK8sObjectInitializer
 }
 
-func ApplyRuntimeChildK8sObject(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, runtimeChildK8sObject runtimeChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
+type DefaultRuntimeChildK8sObjectApplier struct{}
+
+func NewDefaultRuntimeChildK8sObjectApplier() *DefaultRuntimeChildK8sObjectApplier {
+	return &DefaultRuntimeChildK8sObjectApplier{}
+}
+
+func (applier *DefaultRuntimeChildK8sObjectApplier) ApplyRuntimeChildK8sObject(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, runtimeChildK8sObject RuntimeChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
 	runtimeChildWrapper := NewCBContainersRuntimeChildK8sObject(cbContainersRuntime, runtimeChildK8sObject)
 	return applyment.ApplyDesiredK8sObject(ctx, client, runtimeChildWrapper, applyOptionsList...)
 }
 
-func DeleteK8sObjectIfExists(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, runtimeChildK8sObject runtimeChildK8sObject) (bool, error) {
+func (applier *DefaultRuntimeChildK8sObjectApplier) DeleteK8sObjectIfExists(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, runtimeChildK8sObject RuntimeChildK8sObject) (bool, error) {
 	runtimeChildWrapper := NewCBContainersRuntimeChildK8sObject(cbContainersRuntime, runtimeChildK8sObject)
 	return applyment.DeleteK8sObjectIfExists(ctx, client, runtimeChildWrapper)
 }
 
 type CBContainersRuntimeChildK8sObject struct {
 	cbContainersRuntime *cbcontainersv1.CBContainersRuntime
-	runtimeChildK8sObject
+	RuntimeChildK8sObject
 }
 
-func NewCBContainersRuntimeChildK8sObject(cbContainersRuntime *cbcontainersv1.CBContainersRuntime, runtimeChildK8sObject runtimeChildK8sObject) *CBContainersRuntimeChildK8sObject {
+func NewCBContainersRuntimeChildK8sObject(cbContainersRuntime *cbcontainersv1.CBContainersRuntime, runtimeChildK8sObject RuntimeChildK8sObject) *CBContainersRuntimeChildK8sObject {
 	return &CBContainersRuntimeChildK8sObject{
 		cbContainersRuntime:   cbContainersRuntime,
-		runtimeChildK8sObject: runtimeChildK8sObject,
+		RuntimeChildK8sObject: runtimeChildK8sObject,
 	}
 }
 
