@@ -18,6 +18,7 @@ type RuntimeChildK8sObjectApplier interface {
 
 type RuntimeStateApplier struct {
 	resolverDeployment *runtimeObjects.ResolverDeploymentK8sObject
+	resolverService    *runtimeObjects.ResolverServiceK8sObject
 	childApplier       RuntimeChildK8sObjectApplier
 	log                logr.Logger
 }
@@ -25,6 +26,7 @@ type RuntimeStateApplier struct {
 func NewRuntimeStateApplier(log logr.Logger, childApplier RuntimeChildK8sObjectApplier) *RuntimeStateApplier {
 	return &RuntimeStateApplier{
 		resolverDeployment: runtimeObjects.NewResolverDeploymentK8sObject(),
+		resolverService:    runtimeObjects.NewResolverServiceK8sObject(),
 		childApplier:       childApplier,
 		log:                log,
 	}
@@ -36,16 +38,22 @@ func (c *RuntimeStateApplier) ApplyDesiredState(ctx context.Context, cbContainer
 	if err != nil {
 		return false, err
 	}
-	c.log.Info("Applied runtime resolver objects", "Mutated", mutatedResolver)
+	c.log.Info("Applied runtime kubernetes resolver objects", "Mutated", mutatedResolver)
 
-	return mutatedResolver , nil
+	return mutatedResolver, nil
 }
 
 func (c *RuntimeStateApplier) applyResolver(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
+	mutatedService, _, err := c.childApplier.ApplyRuntimeChildK8sObject(ctx, cbContainersRuntime, client, c.resolverService, applyOptions)
+	if err != nil {
+		return false, err
+	}
+	c.log.Info("Applied kubernetes resolver service", "Mutated", mutatedService)
+
 	mutatedDeployment, _, err := c.childApplier.ApplyRuntimeChildK8sObject(ctx, cbContainersRuntime, client, c.resolverDeployment, applyOptions)
 	if err != nil {
 		return false, err
 	}
-	c.log.Info("Applied runtime resolver deployment", "Mutated", mutatedDeployment)
-	return mutatedDeployment, nil
+	c.log.Info("Applied runtime kubernetes resolver deployment", "Mutated", mutatedDeployment)
+	return mutatedService || mutatedDeployment, nil
 }

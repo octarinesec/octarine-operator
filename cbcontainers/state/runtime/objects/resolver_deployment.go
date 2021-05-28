@@ -18,7 +18,8 @@ const (
 	ResolverName     = "cbcontainers-runtime-resolver"
 	ResolverLabelKey = "app.kubernetes.io/name"
 
-	ResolverDesiredGRPCPortName = "grpc"
+	DesiredDeploymentGRPCPortName = "grpc"
+	DesiredInitializationTimeoutMinutes = 3
 )
 
 var (
@@ -106,7 +107,7 @@ func (obj *ResolverDeploymentK8sObject) mutateContainersList(
 	eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec,
 	version,
 	accessTokenSecretName string,
-	desiredGRPCPort int32) {
+	desiredGRPCPortValue int32) {
 
 	if len(templatePodSpec.Containers) != 1 {
 		container := coreV1.Container{}
@@ -114,7 +115,7 @@ func (obj *ResolverDeploymentK8sObject) mutateContainersList(
 	}
 
 	obj.mutateContainer(&templatePodSpec.Containers[0], resolverSpec, eventsGatewaySpec,
-		version, accessTokenSecretName, desiredGRPCPort)
+		version, accessTokenSecretName, desiredGRPCPortValue)
 }
 
 func (obj *ResolverDeploymentK8sObject) mutateContainer(
@@ -123,34 +124,38 @@ func (obj *ResolverDeploymentK8sObject) mutateContainer(
 	eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec,
 	version,
 	accessTokenSecretName string,
-	desiredGRPCPort int32) {
+	desiredGRPCPortValue int32) {
 
 	container.Name = ResolverName
 	container.Resources = resolverSpec.Resources
 	commonState.MutateImage(container, resolverSpec.Image, version)
 	commonState.MutateContainerHTTPProbes(container, resolverSpec.Probes)
-	obj.mutateEnvVars(container, resolverSpec, eventsGatewaySpec, accessTokenSecretName)
-	obj.mutateContainerPorts(container, desiredGRPCPort)
+	obj.mutateEnvVars(container, resolverSpec, eventsGatewaySpec, accessTokenSecretName, desiredGRPCPortValue)
+	obj.mutateContainerPorts(container, desiredGRPCPortValue)
 	obj.mutateSecurityContext(container)
 }
 
-func (obj *ResolverDeploymentK8sObject) mutateContainerPorts(container *coreV1.Container, desiredGRPCPort int32) {
+func (obj *ResolverDeploymentK8sObject) mutateContainerPorts(container *coreV1.Container, desiredGRPCPortValue int32) {
 	if container.Ports == nil || len(container.Ports) != 1 {
 		container.Ports = []coreV1.ContainerPort{{}}
 	}
 
-	container.Ports[0].Name = ResolverDesiredGRPCPortName
-	container.Ports[0].ContainerPort = desiredGRPCPort
+	container.Ports[0].Name = DesiredDeploymentGRPCPortName
+	container.Ports[0].ContainerPort = desiredGRPCPortValue
 }
 
 func (obj *ResolverDeploymentK8sObject) mutateEnvVars(
 	container *coreV1.Container,
 	resolverSpec *cbContainersV1.CBContainersRuntimeResolverSpec,
 	eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec,
-	accessTokenSecretName string,) {
+	accessTokenSecretName string,
+	desiredGRPCPortValue int32) {
 
 	commonState.MutateEnvVars(container, resolverSpec.Env, accessTokenSecretName, eventsGatewaySpec,
+		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_RESOLVER_GRPC_PORT", Value: fmt.Sprintf("%d", desiredGRPCPortValue)},
 		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_RESOLVER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", resolverSpec.Prometheus.Port)},
+		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_RESOLVER_PROBES_PORT", Value: fmt.Sprintf("%d", resolverSpec.Probes.Port)},
+		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_RESOLVER_INITIALIZATION_TIMEOUT_MINUTES", Value: fmt.Sprintf("%d", DesiredInitializationTimeoutMinutes)},
 		coreV1.EnvVar{Name: "GIN_MODE", Value: "release"},
 	)
 }
