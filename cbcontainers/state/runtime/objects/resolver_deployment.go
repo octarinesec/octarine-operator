@@ -155,13 +155,20 @@ func (obj *ResolverDeploymentK8sObject) mutateEnvVars(
 	accessTokenSecretName string,
 	desiredGRPCPortValue int32) {
 
-	commonState.MutateEnvVars(container, resolverSpec.Env, accessTokenSecretName, eventsGatewaySpec,
-		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_RESOLVER_GRPC_PORT", Value: fmt.Sprintf("%d", desiredGRPCPortValue)},
-		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_RESOLVER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", resolverSpec.Prometheus.Port)},
-		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_RESOLVER_PROBES_PORT", Value: fmt.Sprintf("%d", resolverSpec.Probes.Port)},
-		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_RESOLVER_INITIALIZATION_TIMEOUT_MINUTES", Value: fmt.Sprintf("%d", desiredInitializationTimeoutMinutes)},
-		coreV1.EnvVar{Name: "GIN_MODE", Value: "release"},
-	)
+	customEnvs := []coreV1.EnvVar {
+		{Name: "RUNTIME_KUBERNETES_RESOLVER_GRPC_PORT", Value: fmt.Sprintf("%d", desiredGRPCPortValue)},
+		{Name: "RUNTIME_KUBERNETES_RESOLVER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", resolverSpec.Prometheus.Port)},
+		{Name: "RUNTIME_KUBERNETES_RESOLVER_PROBES_PORT", Value: fmt.Sprintf("%d", resolverSpec.Probes.Port)},
+		{Name: "RUNTIME_KUBERNETES_RESOLVER_INITIALIZATION_TIMEOUT_MINUTES", Value: fmt.Sprintf("%d", desiredInitializationTimeoutMinutes)},
+		{Name: "GIN_MODE", Value: "release"},
+	}
+
+	envVarBuilder := commonState.NewEnvVarBuilder().
+		WithCommonDataPlane(accessTokenSecretName).
+		WithEventsGateway(eventsGatewaySpec).
+		WithCustom(customEnvs...).
+		WithSpec(resolverSpec.Env)
+	commonState.MutateEnvVars(container, envVarBuilder)
 }
 
 func (obj *ResolverDeploymentK8sObject) mutateSecurityContext(container *coreV1.Container) {

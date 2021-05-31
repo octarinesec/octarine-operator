@@ -150,14 +150,19 @@ func (obj *SensorDaemonSetK8sObject) mutateEnvVars(
 	sensorSpec *cbContainersV1.CBContainersRuntimeSensorSpec,
 	accessTokenSecretName string,
 	desiredGRPCPortValue int32) {
+	customEnvs := []coreV1.EnvVar{
+		{Name: "RUNTIME_KUBERNETES_SENSOR_GRPC_PORT", Value: fmt.Sprintf("%d", desiredGRPCPortValue)},
+		{Name: "RUNTIME_KUBERNETES_SENSOR_RESOLVER_ADDRESS", Value: resolverAddress},
+		{Name: "RUNTIME_KUBERNETES_SENSOR_RESOLVER_CONNECTION_TIMEOUT_SECONDS", Value: fmt.Sprintf("%d", desiredConnectionTimeoutSeconds)},
+		{Name: "RUNTIME_KUBERNETES_SENSOR_LIVENESS_PATH", Value: sensorSpec.Probes.LivenessPath},
+		{Name: "RUNTIME_KUBERNETES_SENSOR_READINESS_PATH", Value: sensorSpec.Probes.ReadinessPath},
+	}
 
-	commonState.MutateEnvVars(container, sensorSpec.Env, accessTokenSecretName, nil,
-		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_SENSOR_GRPC_PORT", Value: fmt.Sprintf("%d", desiredGRPCPortValue)},
-		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_SENSOR_RESOLVER_ADDRESS", Value: resolverAddress},
-		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_SENSOR_RESOLVER_CONNECTION_TIMEOUT_SECONDS", Value: fmt.Sprintf("%d", desiredConnectionTimeoutSeconds)},
-		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_SENSOR_LIVENESS_PATH", Value: sensorSpec.Probes.LivenessPath},
-		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_SENSOR_READINESS_PATH", Value: sensorSpec.Probes.ReadinessPath},
-	)
+	envVarBuilder := commonState.NewEnvVarBuilder().
+		WithCommonDataPlane(accessTokenSecretName).
+		WithCustom(customEnvs...).
+		WithSpec(sensorSpec.Env)
+	commonState.MutateEnvVars(container, envVarBuilder)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateSecurityContext(container *coreV1.Container) {

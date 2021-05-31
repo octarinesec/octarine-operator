@@ -92,7 +92,13 @@ func (obj *StateReporterDeploymentK8sObject) mutateContainersList(templatePodSpe
 func (obj *StateReporterDeploymentK8sObject) mutateContainer(container *coreV1.Container, stateReporterSpec *cbContainersV1.CBContainersHardeningStateReporterSpec, eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
 	container.Name = StateReporterName
 	container.Resources = stateReporterSpec.Resources
-	commonState.MutateEnvVars(container, stateReporterSpec.Env, accessTokenSecretName, eventsGatewaySpec)
+
+	envVarBuilder := commonState.NewEnvVarBuilder().
+		WithCommonDataPlane(accessTokenSecretName).
+		WithEventsGateway(eventsGatewaySpec).
+		WithSpec(stateReporterSpec.Env)
+	commonState.MutateEnvVars(container, envVarBuilder)
+
 	commonState.MutateImage(container, stateReporterSpec.Image, version)
 	commonState.MutateContainerHTTPProbes(container, stateReporterSpec.Probes)
 	obj.mutateSecurityContext(container)

@@ -139,12 +139,19 @@ func (obj *EnforcerDeploymentK8sObject) mutateContainer(container *coreV1.Contai
 }
 
 func (obj *EnforcerDeploymentK8sObject) mutateEnforcerEnvVars(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, accessTokenSecretName string, eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec) {
-	commonState.MutateEnvVars(container, enforcerSpec.Env, accessTokenSecretName, eventsGatewaySpec,
-		coreV1.EnvVar{Name: "GUARDRAILS_ENFORCER_KEY_FILE_PATH", Value: fmt.Sprintf("%s/key", DesiredTlsSecretVolumeMountPath)},
-		coreV1.EnvVar{Name: "GUARDRAILS_ENFORCER_CERT_FILE_PATH", Value: fmt.Sprintf("%s/signed_cert", DesiredTlsSecretVolumeMountPath)},
-		coreV1.EnvVar{Name: "GUARDRAILS_ENFORCER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", enforcerSpec.Prometheus.Port)},
-		coreV1.EnvVar{Name: "GIN_MODE", Value: "release"},
-	)
+	customEnvs := []coreV1.EnvVar {
+		{Name: "GUARDRAILS_ENFORCER_KEY_FILE_PATH", Value: fmt.Sprintf("%s/key", DesiredTlsSecretVolumeMountPath)},
+		{Name: "GUARDRAILS_ENFORCER_CERT_FILE_PATH", Value: fmt.Sprintf("%s/signed_cert", DesiredTlsSecretVolumeMountPath)},
+		{Name: "GUARDRAILS_ENFORCER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", enforcerSpec.Prometheus.Port)},
+		{Name: "GIN_MODE", Value: "release"},
+	}
+
+	envVarBuilder := commonState.NewEnvVarBuilder().
+		WithCommonDataPlane(accessTokenSecretName).
+		WithEventsGateway(eventsGatewaySpec).
+		WithCustom(customEnvs...).
+		WithSpec(enforcerSpec.Env)
+	commonState.MutateEnvVars(container, envVarBuilder)
 }
 
 func (obj *EnforcerDeploymentK8sObject) mutateSecurityContext(container *coreV1.Container) {
