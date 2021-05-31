@@ -55,7 +55,7 @@ type CBContainersRuntimeSensorSpec struct {
 	Env map[string]string `json:"env,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/runtime-kubernetes-sensor"}
 	Image common_specs.CBContainersImageSpec `json:"image,omitempty"`
-	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "128Mi", cpu: "600m"}}
+	// +kubebuilder:default:={requests: {memory: "1Gi", cpu: "400m"}, limits: {memory: "2Gi", cpu: "1"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes common_specs.CBContainersFileProbesSpec `json:"probes,omitempty"`
