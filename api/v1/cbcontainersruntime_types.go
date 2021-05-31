@@ -48,7 +48,7 @@ type CBContainersRuntimeSensorSpec struct {
 	// +kubebuilder:default:=<>
 	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
-	DeploymentAnnotations map[string]string `json:"deploymentAnnotations,omitempty"`
+	DaemonSetAnnotations map[string]string `json:"daemonSetAnnotations,omitempty"`
 	// +kubebuilder:default:={prometheus.io/scrape: "false", prometheus.io/port: "7071"}
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
 	// +kubebuilder:default:=<>
@@ -71,11 +71,11 @@ type CBContainersRuntimeSpec struct {
 	// +kubebuilder:default:="cbcontainers-access-token"
 	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
 	// +kubebuilder:default:=<>
-	ResolverSpec CBContainersRuntimeResolverSpec `json:"controllerSpec,omitempty"`
+	ResolverSpec CBContainersRuntimeResolverSpec `json:"resolverSpec,omitempty"`
 	// +kubebuilder:default:=<>
-	SensorSpec CBContainersRuntimeSensorSpec `json:"workerSpec,omitempty"`
+	SensorSpec CBContainersRuntimeSensorSpec `json:"sensorSpec,omitempty"`
 	// +kubebuilder:default:=443
-	InternalGrpcPort int32 `json:"internalGrpcPort,required"`
+	InternalGrpcPort int32 `json:"internalGrpcPort,omitempty"`
 }
 
 // CBContainersRuntimeStatus defines the observed state of CBContainersRuntime

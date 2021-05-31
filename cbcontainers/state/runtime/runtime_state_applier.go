@@ -36,13 +36,20 @@ func NewRuntimeStateApplier(log logr.Logger, childApplier RuntimeChildK8sObjectA
 
 func (c *RuntimeStateApplier) ApplyDesiredState(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
 	applyOptions := applymentOptions.NewApplyOptions().SetOwnerSetter(setOwner)
+
 	mutatedResolver, err := c.applyResolver(ctx, cbContainersRuntime, client, applyOptions)
 	if err != nil {
 		return false, err
 	}
 	c.log.Info("Applied runtime kubernetes resolver objects", "Mutated", mutatedResolver)
 
-	return mutatedResolver, nil
+	mutatedSensor, err := c.applySensor(ctx, cbContainersRuntime, client, applyOptions)
+	if err != nil {
+		return false, err
+	}
+	c.log.Info("Applied runtime kubernetes sensor objects", "Mutated", mutatedSensor)
+
+	return mutatedResolver || mutatedSensor, nil
 }
 
 func (c *RuntimeStateApplier) applyResolver(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {

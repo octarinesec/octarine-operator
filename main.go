@@ -128,11 +128,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersHardening")
 		os.Exit(1)
 	}
+
+	cbContainersRuntimeLogger := ctrl.Log.WithName("controllers").WithName("CBContainersRuntime")
 	if err = (&controllers.CBContainersRuntimeReconciler{
 		Client:              mgr.GetClient(),
-		Log:                 ctrl.Log.WithName("controllers").WithName("CBContainersRuntime"),
+		Log:                 cbContainersRuntimeLogger,
 		Scheme:              mgr.GetScheme(),
-		RuntimeStateApplier: runtimeState.NewRuntimeStateApplier(),
+		RuntimeStateApplier: runtimeState.NewRuntimeStateApplier(cbContainersRuntimeLogger, runtimeState.NewDefaultRuntimeChildK8sObjectApplier()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersRuntime")
 		os.Exit(1)

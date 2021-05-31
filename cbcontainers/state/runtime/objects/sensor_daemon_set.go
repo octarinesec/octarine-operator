@@ -20,6 +20,10 @@ const (
 	sensorVerbosityFlag = "-v"
 	sensorRunCommand    = "/run_worker.sh"
 
+	sensorDNSPolicy   = coreV1.DNSClusterFirstWithHostNet
+	sensorHostNetwork = true
+	sensorHostPID     = true
+
 	desiredConnectionTimeoutSeconds = 60
 )
 
@@ -76,9 +80,9 @@ func (obj *SensorDaemonSetK8sObject) MutateRuntimeChildK8sObject(k8sObject clien
 	daemonSet.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	daemonSet.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 
-	daemonSet.Spec.Template.Spec.DNSPolicy = coreV1.DNSClusterFirstWithHostNet
-	daemonSet.Spec.Template.Spec.HostNetwork = true
-	daemonSet.Spec.Template.Spec.HostPID = true
+	daemonSet.Spec.Template.Spec.DNSPolicy = sensorDNSPolicy
+	daemonSet.Spec.Template.Spec.HostNetwork = sensorHostNetwork
+	daemonSet.Spec.Template.Spec.HostPID = sensorHostPID
 
 	obj.mutateAnnotations(daemonSet, sensorSpec)
 	obj.mutateContainersList(&daemonSet.Spec.Template.Spec,
@@ -96,7 +100,7 @@ func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonS
 		daemonSet.ObjectMeta.Annotations = make(map[string]string)
 	}
 
-	applyment.EnforceMapContains(daemonSet.ObjectMeta.Annotations, sensorSpec.DeploymentAnnotations)
+	applyment.EnforceMapContains(daemonSet.ObjectMeta.Annotations, sensorSpec.DaemonSetAnnotations)
 
 	if daemonSet.Spec.Template.ObjectMeta.Annotations == nil {
 		daemonSet.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
@@ -138,19 +142,7 @@ func (obj *SensorDaemonSetK8sObject) mutateContainer(
 	commonState.MutateImage(container, sensorSpec.Image, version)
 	commonState.MutateContainerFileProbes(container, sensorSpec.Probes)
 	obj.mutateEnvVars(container, sensorSpec, accessTokenSecretName, desiredGRPCPortValue)
-	obj.mutateContainerPorts(container, desiredGRPCPortValue)
 	obj.mutateSecurityContext(container)
-}
-
-func (obj *SensorDaemonSetK8sObject) mutateContainerPorts(container *coreV1.Container, desiredGRPCPortValue int32) {
-	if container.Ports == nil || len(container.Ports) != 1 {
-		container.Ports = []coreV1.ContainerPort{{}}
-	}
-
-	container.Ports[0].Name = desiredDeploymentGRPCPortName
-	container.Ports[0].ContainerPort = desiredGRPCPortValue
-	container.Ports[0].HostPort = desiredGRPCPortValue
-
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateEnvVars(
