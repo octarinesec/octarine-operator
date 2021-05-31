@@ -15,18 +15,18 @@ import (
 )
 
 const (
-	ResolverName     = "cbcontainers-runtime-resolver"
-	ResolverLabelKey = "app.kubernetes.io/name"
+	resolverName     = "cbcontainers-runtime-resolver"
+	resolverLabelKey = "app.kubernetes.io/name"
 
-	DesiredDeploymentGRPCPortName = "grpc"
-	DesiredInitializationTimeoutMinutes = 3
+	desiredDeploymentGRPCPortName       = "grpc"
+	desiredInitializationTimeoutMinutes = 3
 )
 
 var (
-	ResolverAllowPrivilegeEscalation       = false
-	ResolverReadOnlyRootFilesystem         = true
-	ResolverRunAsUser                int64 = 1500
-	ResolverCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
+	resolverAllowPrivilegeEscalation       = false
+	resolverReadOnlyRootFilesystem         = true
+	resolverRunAsUser                int64 = 1500
+	resolverCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
 )
 
 type ResolverDeploymentK8sObject struct{}
@@ -40,7 +40,7 @@ func (obj *ResolverDeploymentK8sObject) EmptyK8sObject() client.Object {
 }
 
 func (obj *ResolverDeploymentK8sObject) RuntimeChildNamespacedName(_ *cbContainersV1.CBContainersRuntime) types.NamespacedName {
-	return types.NamespacedName{Name: ResolverName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: resolverName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
 func (obj *ResolverDeploymentK8sObject) MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntime *cbContainersV1.CBContainersRuntime) error {
@@ -54,7 +54,7 @@ func (obj *ResolverDeploymentK8sObject) MutateRuntimeChildK8sObject(k8sObject cl
 	if desiredLabels == nil {
 		desiredLabels = make(map[string]string)
 	}
-	desiredLabels[ResolverLabelKey] = ResolverName
+	desiredLabels[resolverLabelKey] = resolverName
 
 	if deployment.Spec.Selector == nil {
 		deployment.Spec.Selector = &metav1.LabelSelector{}
@@ -76,9 +76,13 @@ func (obj *ResolverDeploymentK8sObject) MutateRuntimeChildK8sObject(k8sObject cl
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	obj.mutateAnnotations(deployment, resolverSpec)
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, resolverSpec,
-		&cbContainersRuntime.Spec.ResolverSpec.EventsGatewaySpec, cbContainersRuntime.Spec.Version,
-		cbContainersRuntime.Spec.AccessTokenSecretName, cbContainersRuntime.Spec.InternalGrpcPort)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec,
+		resolverSpec,
+		&cbContainersRuntime.Spec.ResolverSpec.EventsGatewaySpec,
+		cbContainersRuntime.Spec.Version,
+		cbContainersRuntime.Spec.AccessTokenSecretName,
+		cbContainersRuntime.Spec.InternalGrpcPort,
+	)
 
 	return nil
 }
@@ -126,7 +130,7 @@ func (obj *ResolverDeploymentK8sObject) mutateContainer(
 	accessTokenSecretName string,
 	desiredGRPCPortValue int32) {
 
-	container.Name = ResolverName
+	container.Name = resolverName
 	container.Resources = resolverSpec.Resources
 	commonState.MutateImage(container, resolverSpec.Image, version)
 	commonState.MutateContainerHTTPProbes(container, resolverSpec.Probes)
@@ -140,7 +144,7 @@ func (obj *ResolverDeploymentK8sObject) mutateContainerPorts(container *coreV1.C
 		container.Ports = []coreV1.ContainerPort{{}}
 	}
 
-	container.Ports[0].Name = DesiredDeploymentGRPCPortName
+	container.Ports[0].Name = desiredDeploymentGRPCPortName
 	container.Ports[0].ContainerPort = desiredGRPCPortValue
 }
 
@@ -155,7 +159,7 @@ func (obj *ResolverDeploymentK8sObject) mutateEnvVars(
 		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_RESOLVER_GRPC_PORT", Value: fmt.Sprintf("%d", desiredGRPCPortValue)},
 		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_RESOLVER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", resolverSpec.Prometheus.Port)},
 		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_RESOLVER_PROBES_PORT", Value: fmt.Sprintf("%d", resolverSpec.Probes.Port)},
-		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_RESOLVER_INITIALIZATION_TIMEOUT_MINUTES", Value: fmt.Sprintf("%d", DesiredInitializationTimeoutMinutes)},
+		coreV1.EnvVar{Name: "RUNTIME_KUBERNETES_RESOLVER_INITIALIZATION_TIMEOUT_MINUTES", Value: fmt.Sprintf("%d", desiredInitializationTimeoutMinutes)},
 		coreV1.EnvVar{Name: "GIN_MODE", Value: "release"},
 	)
 }
@@ -165,10 +169,10 @@ func (obj *ResolverDeploymentK8sObject) mutateSecurityContext(container *coreV1.
 		container.SecurityContext = &coreV1.SecurityContext{}
 	}
 
-	container.SecurityContext.AllowPrivilegeEscalation = &ResolverAllowPrivilegeEscalation
-	container.SecurityContext.ReadOnlyRootFilesystem = &ResolverReadOnlyRootFilesystem
-	container.SecurityContext.RunAsUser = &ResolverRunAsUser
+	container.SecurityContext.AllowPrivilegeEscalation = &resolverAllowPrivilegeEscalation
+	container.SecurityContext.ReadOnlyRootFilesystem = &resolverReadOnlyRootFilesystem
+	container.SecurityContext.RunAsUser = &resolverRunAsUser
 	container.SecurityContext.Capabilities = &coreV1.Capabilities{
-		Drop: ResolverCapabilitiesToDrop,
+		Drop: resolverCapabilitiesToDrop,
 	}
 }

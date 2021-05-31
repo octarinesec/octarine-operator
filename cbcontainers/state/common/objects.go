@@ -44,7 +44,9 @@ func getDesiredEnvVars(desiredEnvsValues map[string]string, accessTokenSecretNam
 		desiredEnvVars[desiredEnvVarName] = coreV1.EnvVar{Name: desiredEnvVarName, Value: desiredEnvVarValue}
 	}
 	envsToAdd := GetCommonDataPlaneEnvVars(accessTokenSecretName)
-	envsToAdd = append(envsToAdd, getEventsGateWayEnvVars(eventsGatewaySpec)...)
+	if eventsGatewaySpec != nil {
+		envsToAdd = append(envsToAdd, getEventsGateWayEnvVars(eventsGatewaySpec)...)
+	}
 	envsToAdd = append(envsToAdd, customEnvsToAdd...)
 
 	for _, dataPlaneEnvVar := range envsToAdd {

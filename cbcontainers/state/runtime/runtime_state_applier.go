@@ -19,6 +19,7 @@ type RuntimeChildK8sObjectApplier interface {
 type RuntimeStateApplier struct {
 	resolverDeployment *runtimeObjects.ResolverDeploymentK8sObject
 	resolverService    *runtimeObjects.ResolverServiceK8sObject
+	sensorDaemonSet    *runtimeObjects.SensorDaemonSetK8sObject
 	childApplier       RuntimeChildK8sObjectApplier
 	log                logr.Logger
 }
@@ -27,6 +28,7 @@ func NewRuntimeStateApplier(log logr.Logger, childApplier RuntimeChildK8sObjectA
 	return &RuntimeStateApplier{
 		resolverDeployment: runtimeObjects.NewResolverDeploymentK8sObject(),
 		resolverService:    runtimeObjects.NewResolverServiceK8sObject(),
+		sensorDaemonSet:    runtimeObjects.NewSensorDaemonSetK8sObject(),
 		childApplier:       childApplier,
 		log:                log,
 	}
@@ -56,4 +58,13 @@ func (c *RuntimeStateApplier) applyResolver(ctx context.Context, cbContainersRun
 	}
 	c.log.Info("Applied runtime kubernetes resolver deployment", "Mutated", mutatedDeployment)
 	return mutatedService || mutatedDeployment, nil
+}
+
+func (c *RuntimeStateApplier) applySensor(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
+	mutatedDaemonSet, _, err := c.childApplier.ApplyRuntimeChildK8sObject(ctx, cbContainersRuntime, client, c.sensorDaemonSet, applyOptions)
+	if err != nil {
+		return false, err
+	}
+	c.log.Info("Applied runtime kubernetes sensor daemon set", "Mutated", mutatedDaemonSet)
+	return mutatedDaemonSet, nil
 }
