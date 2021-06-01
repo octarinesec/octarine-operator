@@ -12,10 +12,10 @@ import (
 )
 
 const (
-	DesiredServiceGRPCPortName  = "https"
+	DesiredServiceGRPCPortName = "https"
 )
 
-type ResolverServiceK8sObject struct {}
+type ResolverServiceK8sObject struct{}
 
 func NewResolverServiceK8sObject() *ResolverServiceK8sObject { return &ResolverServiceK8sObject{} }
 

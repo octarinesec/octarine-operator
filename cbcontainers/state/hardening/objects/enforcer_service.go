@@ -16,7 +16,7 @@ const (
 	DesiredServicePortValue = 443
 )
 
-type EnforcerServiceK8sObject struct {}
+type EnforcerServiceK8sObject struct{}
 
 func NewEnforcerServiceK8sObject() *EnforcerServiceK8sObject { return &EnforcerServiceK8sObject{} }
 

@@ -138,7 +138,7 @@ func (obj *EnforcerDeploymentK8sObject) mutateContainer(container *coreV1.Contai
 }
 
 func (obj *EnforcerDeploymentK8sObject) mutateEnforcerEnvVars(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec) {
-	customEnvs := []coreV1.EnvVar {
+	customEnvs := []coreV1.EnvVar{
 		{Name: "GUARDRAILS_ENFORCER_KEY_FILE_PATH", Value: fmt.Sprintf("%s/key", DesiredTlsSecretVolumeMountPath)},
 		{Name: "GUARDRAILS_ENFORCER_CERT_FILE_PATH", Value: fmt.Sprintf("%s/signed_cert", DesiredTlsSecretVolumeMountPath)},
 		{Name: "GUARDRAILS_ENFORCER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", enforcerSpec.Prometheus.Port)},

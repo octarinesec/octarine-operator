@@ -154,7 +154,7 @@ func (obj *ResolverDeploymentK8sObject) mutateEnvVars(
 	accessTokenSecretName string,
 	desiredGRPCPortValue int32) {
 
-	customEnvs := []coreV1.EnvVar {
+	customEnvs := []coreV1.EnvVar{
 		{Name: "RUNTIME_KUBERNETES_RESOLVER_GRPC_PORT", Value: fmt.Sprintf("%d", desiredGRPCPortValue)},
 		{Name: "RUNTIME_KUBERNETES_RESOLVER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", resolverSpec.Prometheus.Port)},
 		{Name: "RUNTIME_KUBERNETES_RESOLVER_PROBES_PORT", Value: fmt.Sprintf("%d", resolverSpec.Probes.Port)},

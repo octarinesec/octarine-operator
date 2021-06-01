@@ -7,7 +7,7 @@ type CBContainersEventsGatewaySpec struct {
 }
 
 type CBContainersApiGatewaySpec struct {
-	Host   string `json:"host,required"`
+	Host string `json:"host,required"`
 	// +kubebuilder:default:="https"
 	Scheme string `json:"scheme,omitempty"`
 	// +kubebuilder:default:=443
