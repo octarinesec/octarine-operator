@@ -6,6 +6,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
+const (
+	defaultAccessToken = "cbcontainers-access-token"
+)
+
 var falseRef = false
 
 func setDefaultProbesCommon(probesSpec *v1.CBContainersCommonProbesSpec) {

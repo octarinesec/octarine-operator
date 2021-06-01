@@ -104,7 +104,7 @@ func (r *CBContainersHardeningReconciler) Reconcile(ctx context.Context, req ctr
 
 func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
 	if cbContainersHardening.Spec.AccessTokenSecretName == "" {
-		cbContainersHardening.Spec.AccessTokenSecretName = "cbcontainers-access-token"
+		cbContainersHardening.Spec.AccessTokenSecretName = defaultAccessToken
 	}
 
 	if cbContainersHardening.Spec.EnforcerSpec.Labels == nil {

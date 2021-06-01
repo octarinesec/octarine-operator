@@ -61,9 +61,9 @@ func (r *CBContainersRuntimeReconciler) getContainersRuntimeObject(ctx context.C
 	return &cbContainersRuntimeList.Items[0], nil
 }
 
-//+kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes/finalizers,verbs=update
+// +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes/finalizers,verbs=update
 
 func (r *CBContainersRuntimeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("\n\n")
@@ -80,7 +80,9 @@ func (r *CBContainersRuntimeReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	r.setDefaults(cbContainersRuntime)
+	if err := r.setDefaults(cbContainersRuntime); err != nil {
+		return ctrl.Result{}, fmt.Errorf("faild to set defaults to CR: %v", err)
+	}
 
 	setOwner := func(controlledResource metav1.Object) error {
 		return ctrl.SetControllerReference(cbContainersRuntime, controlledResource, r.Scheme)
@@ -97,8 +99,82 @@ func (r *CBContainersRuntimeReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
-func (r *CBContainersRuntimeReconciler) setDefaults(cbContainersRuntime *operatorcontainerscarbonblackiov1.CBContainersRuntime) {
-	// TODO
+func (r *CBContainersRuntimeReconciler) setDefaults(cbContainersRuntime *operatorcontainerscarbonblackiov1.CBContainersRuntime) error {
+	if cbContainersRuntime.Spec.AccessTokenSecretName == "" {
+		cbContainersRuntime.Spec.AccessTokenSecretName = defaultAccessToken
+	}
+
+	if cbContainersRuntime.Spec.ResolverSpec.Labels == nil {
+		cbContainersRuntime.Spec.ResolverSpec.Labels = make(map[string]string)
+	}
+
+	if cbContainersRuntime.Spec.ResolverSpec.DeploymentAnnotations == nil {
+		cbContainersRuntime.Spec.ResolverSpec.DeploymentAnnotations = make(map[string]string)
+	}
+
+	if cbContainersRuntime.Spec.ResolverSpec.PodTemplateAnnotations == nil {
+		cbContainersRuntime.Spec.ResolverSpec.PodTemplateAnnotations = make(map[string]string)
+	}
+
+	if cbContainersRuntime.Spec.ResolverSpec.ReplicasCount == nil {
+		defaultReplicaCount := int32(1)
+		cbContainersRuntime.Spec.ResolverSpec.ReplicasCount = &defaultReplicaCount
+	}
+
+	if cbContainersRuntime.Spec.ResolverSpec.Env == nil {
+		cbContainersRuntime.Spec.ResolverSpec.Env = make(map[string]string)
+	}
+
+	if cbContainersRuntime.Spec.ResolverSpec.EventsGatewaySpec.Port == 0 {
+		cbContainersRuntime.Spec.ResolverSpec.EventsGatewaySpec.Port = 443
+	}
+
+	setDefaultPrometheus(&cbContainersRuntime.Spec.ResolverSpec.Prometheus)
+
+	setDefaultImage(&cbContainersRuntime.Spec.ResolverSpec.Image, "cbartifactory/runtime-kubernetes-resolver")
+
+	if err := setDefaultResourceRequirements(&cbContainersRuntime.Spec.ResolverSpec.Resources, "64Mi", "200m", "128Mi", "600m"); err != nil {
+		return err
+	}
+
+	setDefaultHTTPProbes(&cbContainersRuntime.Spec.ResolverSpec.Probes)
+
+	if cbContainersRuntime.Spec.SensorSpec.Labels == nil {
+		cbContainersRuntime.Spec.SensorSpec.Labels = make(map[string]string)
+	}
+
+	if cbContainersRuntime.Spec.SensorSpec.DaemonSetAnnotations == nil {
+		cbContainersRuntime.Spec.SensorSpec.DaemonSetAnnotations = make(map[string]string)
+	}
+
+	if cbContainersRuntime.Spec.SensorSpec.PodTemplateAnnotations == nil {
+		cbContainersRuntime.Spec.SensorSpec.PodTemplateAnnotations = make(map[string]string)
+	}
+
+	if cbContainersRuntime.Spec.SensorSpec.Env == nil {
+		cbContainersRuntime.Spec.SensorSpec.Env = make(map[string]string)
+	}
+
+	setDefaultPrometheus(&cbContainersRuntime.Spec.SensorSpec.Prometheus)
+
+	setDefaultImage(&cbContainersRuntime.Spec.SensorSpec.Image, "cbartifactory/runtime-kubernetes-sensor")
+
+	if err := setDefaultResourceRequirements(&cbContainersRuntime.Spec.SensorSpec.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
+		return err
+	}
+
+	setDefaultFileProbes(&cbContainersRuntime.Spec.SensorSpec.Probes)
+
+	if cbContainersRuntime.Spec.SensorSpec.VerbosityLevel == nil {
+		defaultVerbosity := 1
+		cbContainersRuntime.Spec.SensorSpec.VerbosityLevel = &defaultVerbosity
+	}
+
+	if cbContainersRuntime.Spec.InternalGrpcPort == 0 {
+		cbContainersRuntime.Spec.InternalGrpcPort = 443
+	}
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

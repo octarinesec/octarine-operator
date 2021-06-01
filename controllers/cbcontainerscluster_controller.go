@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
@@ -126,7 +127,7 @@ func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbconta
 	}
 
 	if cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName == "" {
-		cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName = "cbcontainers-access-token"
+		cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName = defaultAccessToken
 	}
 
 	if cbContainersCluster.Spec.EventsGatewaySpec.Port == 0 {
