@@ -78,7 +78,7 @@ the State Reporter components that are responsible for reporting the cluster sta
 
 * Notice that without the first CR, the Hardening components won't be able to work. 
 
-```sh
+```yaml
 apiVersion: operator.containers.carbonblack.io/v1
 kind: CBContainersHardening
 metadata:
@@ -88,6 +88,11 @@ spec:
   eventsGatewaySpec:
     host: {EVENTS_HOST}
 ```
+
+#### 2.3 Apply the Carbon Black Container Runtime CR
+<u>cbcontainersruntimes.operator.containers.carbonblack.io</u>
+
+TODO
 
 ### Uninstalling the Carbon Black Cloud Container Operator
 ```sh
@@ -106,7 +111,7 @@ You can create a ClusterRole and bind it with ClusterRoleBinding to the service 
 If you don't have such cluster role & cluster role binding configured, you can use the following:
 
 Cluster Role:
-```sh
+```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -115,7 +120,7 @@ rules:
 - nonResourceURLs:
     - /metrics
       verbs:
-    - get
+      - get
 ```
 
 Cluster Role binding creation:
@@ -127,7 +132,7 @@ kubectl create clusterrolebinding metrics --clusterrole=cbcontainers-metrics-rea
 
 Use the following ServiceMonitor to start scraping metrics from the CBContainers operator:
 * Make sure that your Prometheus custom resource service monitor selectors match it. 
-```
+```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -160,7 +165,7 @@ kubectl set env -n cbcontainers-dataplane deployment cbcontainers-operator HTTP_
 In order to configure those environment variables for the Hardening Enforcer and the Hardening State Reporter components,
 update the Hardening CR using the proxy environment variables:
 
-```sh
+```yaml
 spec:
   enforcerSpec:
     env:
