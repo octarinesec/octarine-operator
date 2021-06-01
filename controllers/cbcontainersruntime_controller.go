@@ -21,6 +21,8 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	appsV1 "k8s.io/api/apps/v1"
+	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -59,28 +61,6 @@ func (r *CBContainersRuntimeReconciler) getContainersRuntimeObject(ctx context.C
 	return &cbContainersRuntimeList.Items[0], nil
 }
 
-func (r *CBContainersRuntimeReconciler) setDefaults(cbContainersRuntime *operatorcontainerscarbonblackiov1.CBContainersRuntime) {
-	// if cbContainersRuntime.Spec.ApiGatewaySpec.Scheme == "" {
-	// 	cbContainersRuntime.Spec.ApiGatewaySpec.Scheme = "https"
-	// }
-	//
-	// if cbContainersRuntime.Spec.ApiGatewaySpec.Port == 0 {
-	// 	cbContainersRuntime.Spec.ApiGatewaySpec.Port = 443
-	// }
-	//
-	// if cbContainersRuntime.Spec.ApiGatewaySpec.Adapter == "" {
-	// 	cbContainersRuntime.Spec.ApiGatewaySpec.Adapter = "containers"
-	// }
-	//
-	// if cbContainersRuntime.Spec.ApiGatewaySpec.AccessTokenSecretName == "" {
-	// 	cbContainersRuntime.Spec.ApiGatewaySpec.AccessTokenSecretName = "cbcontainers-access-token"
-	// }
-	//
-	// if cbContainersRuntime.Spec.EventsGatewaySpec.Port == 0 {
-	// 	cbContainersRuntime.Spec.EventsGatewaySpec.Port = 443
-	// }
-}
-
 //+kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes/finalizers,verbs=update
@@ -117,9 +97,16 @@ func (r *CBContainersRuntimeReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
+func (r *CBContainersRuntimeReconciler) setDefaults(cbContainersRuntime *operatorcontainerscarbonblackiov1.CBContainersRuntime) {
+	// TODO
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *CBContainersRuntimeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&operatorcontainerscarbonblackiov1.CBContainersRuntime{}).
+		Owns(&appsV1.Deployment{}).
+		Owns(&coreV1.Service{}).
+		Owns(&appsV1.DaemonSet{}).
 		Complete(r)
 }

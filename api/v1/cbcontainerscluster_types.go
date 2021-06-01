@@ -17,7 +17,6 @@ limitations under the License.
 package v1
 
 import (
-	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -26,10 +25,10 @@ import (
 
 // CBContainersClusterSpec defines the desired state of CBContainersCluster
 type CBContainersClusterSpec struct {
-	Account           string                                     `json:"account,required"`
-	ClusterName       string                                     `json:"clusterName,required"`
-	ApiGatewaySpec    common_specs.CBContainersApiGatewaySpec    `json:"apiGatewaySpec,required"`
-	EventsGatewaySpec common_specs.CBContainersEventsGatewaySpec `json:"eventsGatewaySpec,required"`
+	Account           string                        `json:"account,required"`
+	ClusterName       string                        `json:"clusterName,required"`
+	ApiGatewaySpec    CBContainersApiGatewaySpec    `json:"apiGatewaySpec,required"`
+	EventsGatewaySpec CBContainersEventsGatewaySpec `json:"eventsGatewaySpec,required"`
 }
 
 // CBContainersClusterStatus defines the observed state of CBContainersCluster

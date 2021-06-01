@@ -1,4 +1,4 @@
-package common_specs
+package v1
 
 import (
 	coreV1 "k8s.io/api/core/v1"

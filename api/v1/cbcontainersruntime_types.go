@@ -17,13 +17,12 @@ limitations under the License.
 package v1
 
 import (
-	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type CBContainersRuntimeResolverSpec struct {
-	EventsGatewaySpec common_specs.CBContainersEventsGatewaySpec `json:"eventsGatewaySpec,required"`
+	EventsGatewaySpec CBContainersEventsGatewaySpec `json:"eventsGatewaySpec,required"`
 	// +kubebuilder:default:=<>
 	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
@@ -35,13 +34,13 @@ type CBContainersRuntimeResolverSpec struct {
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/runtime-kubernetes-resolver"}
-	Image common_specs.CBContainersImageSpec `json:"image,omitempty"`
+	Image CBContainersImageSpec `json:"image,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "128Mi", cpu: "600m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
-	Probes common_specs.CBContainersHTTPProbesSpec `json:"probes,omitempty"`
+	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
 	// +kubebuilder:default:=<>
-	Prometheus common_specs.CBContainersPrometheusSpec `json:"prometheus,omitempty"`
+	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 }
 
 type CBContainersRuntimeSensorSpec struct {
@@ -54,13 +53,13 @@ type CBContainersRuntimeSensorSpec struct {
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/runtime-kubernetes-sensor"}
-	Image common_specs.CBContainersImageSpec `json:"image,omitempty"`
+	Image CBContainersImageSpec `json:"image,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "1Gi", cpu: "400m"}, limits: {memory: "2Gi", cpu: "1"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
-	Probes common_specs.CBContainersFileProbesSpec `json:"probes,omitempty"`
+	Probes CBContainersFileProbesSpec `json:"probes,omitempty"`
 	// +kubebuilder:default:=<>
-	Prometheus common_specs.CBContainersPrometheusSpec `json:"prometheus,omitempty"`
+	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 	// +kubebuilder:default:=2
 	VerbosityLevel *int `json:"verbosity_level,omitempty"`
 }

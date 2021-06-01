@@ -9,7 +9,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/test_utils"
@@ -41,7 +40,7 @@ var (
 	ClusterCustomResourceItems = []cbcontainersv1.CBContainersCluster{
 		{
 			Spec: cbcontainersv1.CBContainersClusterSpec{
-				ApiGatewaySpec: common_specs.CBContainersApiGatewaySpec{
+				ApiGatewaySpec: cbcontainersv1.CBContainersApiGatewaySpec{
 					AccessTokenSecretName: ClusterAccessTokenSecretName,
 				},
 			},

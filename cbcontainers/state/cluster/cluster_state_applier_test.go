@@ -9,7 +9,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster/mocks"
@@ -61,7 +60,7 @@ func testClusterStateApplier(t *testing.T, setup ClusterStateApplierTestSetup, k
 		Spec: cbcontainersv1.CBContainersClusterSpec{
 			Account:     Account,
 			ClusterName: Cluster,
-			ApiGatewaySpec: common_specs.CBContainersApiGatewaySpec{
+			ApiGatewaySpec: cbcontainersv1.CBContainersApiGatewaySpec{
 				Scheme:  ApiGateWayScheme,
 				Host:    ApiGateWayHost,
 				Port:    ApiGateWayPort,

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	cbContainersV1 "github.com/vmware/cbcontainers-operator/api/v1"
-	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	appsV1 "k8s.io/api/apps/v1"
@@ -108,7 +107,7 @@ func (obj *ResolverDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Dep
 func (obj *ResolverDeploymentK8sObject) mutateContainersList(
 	templatePodSpec *coreV1.PodSpec,
 	resolverSpec *cbContainersV1.CBContainersRuntimeResolverSpec,
-	eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec,
+	eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec,
 	version,
 	accessTokenSecretName string,
 	desiredGRPCPortValue int32) {
@@ -125,7 +124,7 @@ func (obj *ResolverDeploymentK8sObject) mutateContainersList(
 func (obj *ResolverDeploymentK8sObject) mutateContainer(
 	container *coreV1.Container,
 	resolverSpec *cbContainersV1.CBContainersRuntimeResolverSpec,
-	eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec,
+	eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec,
 	version,
 	accessTokenSecretName string,
 	desiredGRPCPortValue int32) {
@@ -151,7 +150,7 @@ func (obj *ResolverDeploymentK8sObject) mutateContainerPorts(container *coreV1.C
 func (obj *ResolverDeploymentK8sObject) mutateEnvVars(
 	container *coreV1.Container,
 	resolverSpec *cbContainersV1.CBContainersRuntimeResolverSpec,
-	eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec,
+	eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec,
 	accessTokenSecretName string,
 	desiredGRPCPortValue int32) {
 

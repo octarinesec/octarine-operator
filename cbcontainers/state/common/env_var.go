@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
+	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	coreV1 "k8s.io/api/core/v1"
 )
 
@@ -37,7 +37,7 @@ func (b *EnvVarBuilder) WithSpec(desiredEnvsValues map[string]string) *EnvVarBui
 	return b
 }
 
-func (b *EnvVarBuilder) WithEventsGateway(eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec) *EnvVarBuilder {
+func (b *EnvVarBuilder) WithEventsGateway(eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec) *EnvVarBuilder {
 	b.envVars[eventGatewayHostVarName] = coreV1.EnvVar{Name: eventGatewayHostVarName, Value: eventsGatewaySpec.Host}
 	b.envVars[eventGatewayPortVarName] = coreV1.EnvVar{Name: eventGatewayPortVarName, Value: strconv.Itoa(eventsGatewaySpec.Port)}
 

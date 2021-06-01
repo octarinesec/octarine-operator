@@ -9,7 +9,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening"
@@ -88,7 +87,7 @@ func testHardeningStateApplier(t *testing.T, setup HardeningStateApplierTestSetu
 	cbContainersHardening := &cbcontainersv1.CBContainersHardening{
 		Spec: cbcontainersv1.CBContainersHardeningSpec{
 			Version: Version,
-			EventsGatewaySpec: common_specs.CBContainersEventsGatewaySpec{
+			EventsGatewaySpec: cbcontainersv1.CBContainersEventsGatewaySpec{
 				Host: EventsGateWayHost,
 			},
 		},

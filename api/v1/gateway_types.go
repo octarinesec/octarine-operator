@@ -1,4 +1,4 @@
-package common_specs
+package v1
 
 type CBContainersEventsGatewaySpec struct {
 	Host string `json:"host,required"`

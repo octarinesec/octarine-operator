@@ -1,4 +1,4 @@
-package common_specs
+package v1
 
 type CBContainersPrometheusSpec struct {
 	// +kubebuilder:default:=false

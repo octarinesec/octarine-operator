@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	cbContainersV1 "github.com/vmware/cbcontainers-operator/api/v1"
-	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	appsV1 "k8s.io/api/apps/v1"
@@ -80,7 +79,7 @@ func (obj *StateReporterDeploymentK8sObject) MutateHardeningChildK8sObject(k8sOb
 	return nil
 }
 
-func (obj *StateReporterDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, stateReporterSpec *cbContainersV1.CBContainersHardeningStateReporterSpec, eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *StateReporterDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, stateReporterSpec *cbContainersV1.CBContainersHardeningStateReporterSpec, eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
 	if len(templatePodSpec.Containers) != 1 {
 		container := coreV1.Container{}
 		templatePodSpec.Containers = []coreV1.Container{container}
@@ -89,7 +88,7 @@ func (obj *StateReporterDeploymentK8sObject) mutateContainersList(templatePodSpe
 	obj.mutateContainer(&templatePodSpec.Containers[0], stateReporterSpec, eventsGatewaySpec, version, accessTokenSecretName)
 }
 
-func (obj *StateReporterDeploymentK8sObject) mutateContainer(container *coreV1.Container, stateReporterSpec *cbContainersV1.CBContainersHardeningStateReporterSpec, eventsGatewaySpec *common_specs.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *StateReporterDeploymentK8sObject) mutateContainer(container *coreV1.Container, stateReporterSpec *cbContainersV1.CBContainersHardeningStateReporterSpec, eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
 	container.Name = StateReporterName
 	container.Resources = stateReporterSpec.Resources
 

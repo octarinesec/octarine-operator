@@ -17,7 +17,6 @@ limitations under the License.
 package v1
 
 import (
-	"github.com/vmware/cbcontainers-operator/api/v1/common_specs"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -26,8 +25,8 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 type CBContainersHardeningSpec struct {
-	Version           string                                     `json:"version,required"`
-	EventsGatewaySpec common_specs.CBContainersEventsGatewaySpec `json:"eventsGatewaySpec,required"`
+	Version           string                        `json:"version,required"`
+	EventsGatewaySpec CBContainersEventsGatewaySpec `json:"eventsGatewaySpec,required"`
 	// +kubebuilder:default:="cbcontainers-access-token"
 	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
 	// +kubebuilder:default:=<>
@@ -44,13 +43,13 @@ type CBContainersHardeningStateReporterSpec struct {
 	// +kubebuilder:default:=<>
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/guardrails-state-reporter"}
-	Image common_specs.CBContainersImageSpec `json:"image,omitempty"`
+	Image CBContainersImageSpec `json:"image,omitempty"`
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
-	Probes common_specs.CBContainersHTTPProbesSpec `json:"probes,omitempty"`
+	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
 }
 
 type CBContainersHardeningEnforcerSpec struct {
@@ -65,13 +64,13 @@ type CBContainersHardeningEnforcerSpec struct {
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
 	// +kubebuilder:default:=<>
-	Prometheus common_specs.CBContainersPrometheusSpec `json:"prometheus,omitempty"`
+	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/guardrails-enforcer"}
-	Image common_specs.CBContainersImageSpec `json:"image,omitempty"`
+	Image CBContainersImageSpec `json:"image,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
-	Probes common_specs.CBContainersHTTPProbesSpec `json:"probes,omitempty"`
+	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
 	// +kubebuilder:default:=5
 	WebhookTimeoutSeconds int32 `json:"webhookTimeoutSeconds,omitempty"`
 }
