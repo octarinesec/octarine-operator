@@ -64,6 +64,7 @@ func (r *CBContainersRuntimeReconciler) getContainersRuntimeObject(ctx context.C
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersruntimes/finalizers,verbs=update
+// +kubebuilder:rbac:groups={apps,core},resources={deployments,services,daemonsets},verbs=get;list;watch;create;update;patch;delete
 
 func (r *CBContainersRuntimeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("\n\n")

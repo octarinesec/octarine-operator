@@ -26,6 +26,7 @@ var (
 	resolverReadOnlyRootFilesystem         = true
 	resolverRunAsUser                int64 = 1500
 	resolverCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
+	resolverCapabilitiesToAdd              = []coreV1.Capability{"CAP_NET_BIND_SERVICE"}
 )
 
 type ResolverDeploymentK8sObject struct{}
@@ -180,5 +181,6 @@ func (obj *ResolverDeploymentK8sObject) mutateSecurityContext(container *coreV1.
 	container.SecurityContext.RunAsUser = &resolverRunAsUser
 	container.SecurityContext.Capabilities = &coreV1.Capabilities{
 		Drop: resolverCapabilitiesToDrop,
+		Add:  resolverCapabilitiesToAdd,
 	}
 }
