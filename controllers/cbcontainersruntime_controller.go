@@ -167,7 +167,7 @@ func (r *CBContainersRuntimeReconciler) setDefaults(cbContainersRuntime *operato
 	setDefaultFileProbes(&cbContainersRuntime.Spec.SensorSpec.Probes)
 
 	if cbContainersRuntime.Spec.SensorSpec.VerbosityLevel == nil {
-		defaultVerbosity := 1
+		defaultVerbosity := 2
 		cbContainersRuntime.Spec.SensorSpec.VerbosityLevel = &defaultVerbosity
 	}
 

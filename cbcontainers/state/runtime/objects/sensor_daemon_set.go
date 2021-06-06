@@ -18,7 +18,7 @@ const (
 	sensorLabelKey = "app.kubernetes.io/name"
 
 	sensorVerbosityFlag = "-v"
-	sensorRunCommand    = "/run_worker.sh"
+	sensorRunCommand    = "/run_sensor.sh"
 
 	sensorDNSPolicy   = coreV1.DNSClusterFirstWithHostNet
 	sensorHostNetwork = true
@@ -137,7 +137,7 @@ func (obj *SensorDaemonSetK8sObject) mutateContainer(
 
 	container.Name = sensorName
 	container.Resources = sensorSpec.Resources
-	container.Args = []string{sensorVerbosityFlag, fmt.Sprintf("%d", sensorSpec.VerbosityLevel)}
+	container.Args = []string{sensorVerbosityFlag, fmt.Sprintf("%d", *sensorSpec.VerbosityLevel)}
 	container.Command = []string{sensorRunCommand}
 	commonState.MutateImage(container, sensorSpec.Image, version)
 	commonState.MutateContainerFileProbes(container, sensorSpec.Probes)
@@ -159,7 +159,6 @@ func (obj *SensorDaemonSetK8sObject) mutateEnvVars(
 	}
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
-		WithCommonDataPlane(accessTokenSecretName).
 		WithCustom(customEnvs...).
 		WithSpec(sensorSpec.Env)
 	commonState.MutateEnvVars(container, envVarBuilder)

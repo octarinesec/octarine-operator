@@ -24,9 +24,9 @@ const (
 var (
 	resolverAllowPrivilegeEscalation       = false
 	resolverReadOnlyRootFilesystem         = true
-	resolverRunAsUser                int64 = 1500
+	resolverRunAsUser                int64 = 0
 	resolverCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
-	resolverCapabilitiesToAdd              = []coreV1.Capability{"CAP_NET_BIND_SERVICE"}
+	resolverCapabilitiesToAdd              = []coreV1.Capability{"NET_BIND_SERVICE"}
 )
 
 type ResolverDeploymentK8sObject struct{}
