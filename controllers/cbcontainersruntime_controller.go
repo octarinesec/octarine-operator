@@ -32,7 +32,7 @@ import (
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 )
 
-type runtimeStateApplier interface {
+type RuntimeStateApplier interface {
 	ApplyDesiredState(ctx context.Context, cbContainersRuntime *operatorcontainerscarbonblackiov1.CBContainersRuntime, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
 }
 
@@ -41,7 +41,7 @@ type CBContainersRuntimeReconciler struct {
 	client.Client
 	Log                 logr.Logger
 	Scheme              *runtime.Scheme
-	RuntimeStateApplier runtimeStateApplier
+	RuntimeStateApplier RuntimeStateApplier
 }
 
 func (r *CBContainersRuntimeReconciler) getContainersRuntimeObject(ctx context.Context) (*operatorcontainerscarbonblackiov1.CBContainersRuntime, error) {

@@ -42,7 +42,7 @@ func TestHardeningEnabled(t *testing.T) {
 	t.Run("When Client.List returns 0 items, should return false", func(t *testing.T) {
 		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
 			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersHardeningList{}).
-				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList) {
+				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList, _ ...interface{}) {
 					list.Items = make([]cbcontainersv1.CBContainersHardening, 0)
 				}).
 				Return(nil)
@@ -55,7 +55,7 @@ func TestHardeningEnabled(t *testing.T) {
 	t.Run("When Client.List returns 1 items, should return true", func(t *testing.T) {
 		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
 			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersHardeningList{}).
-				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList) {
+				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList, _ ...interface{}) {
 					list.Items = make([]cbcontainersv1.CBContainersHardening, 1)
 				}).
 				Return(nil)
@@ -86,7 +86,7 @@ func TestRuntimeEnabled(t *testing.T) {
 	t.Run("When Client.List returns 0 items, should return false", func(t *testing.T) {
 		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
 			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersRuntimeList{}).
-				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersRuntimeList) {
+				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersRuntimeList, _ ...interface{}) {
 					list.Items = make([]cbcontainersv1.CBContainersRuntime, 0)
 				}).
 				Return(nil)
@@ -99,7 +99,7 @@ func TestRuntimeEnabled(t *testing.T) {
 	t.Run("When Client.List returns 1 items, should return true", func(t *testing.T) {
 		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
 			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersRuntimeList{}).
-				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersRuntimeList) {
+				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersRuntimeList, _ ...interface{}) {
 					list.Items = make([]cbcontainersv1.CBContainersRuntime, 1)
 				}).
 				Return(nil)
