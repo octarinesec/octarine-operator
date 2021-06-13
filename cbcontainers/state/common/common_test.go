@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	coreV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -307,4 +308,137 @@ func TestMutationTrueDifferentSize(t *testing.T) {
 
 	MutateEnvVars(container, builder)
 	compareEnvVars(t, expected, container.Env)
+}
+
+func TestMutateImageWithTag(t *testing.T) {
+	expectedImage := "cbartifactory/test:1.0.0"
+	expectedPullPolicy := coreV1.PullPolicy("IfNotPresent")
+	imageSpec := cbcontainersv1.CBContainersImageSpec{
+		Repository: "cbartifactory/test",
+		Tag:        "1.0.0",
+		PullPolicy: expectedPullPolicy,
+	}
+	container := &coreV1.Container{}
+	MutateImage(container, imageSpec, "3.0.0")
+	require.Equal(t, expectedImage, container.Image)
+	require.Equal(t, expectedPullPolicy, container.ImagePullPolicy)
+}
+
+func TestMutateImageWithoutTag(t *testing.T) {
+	expectedImage := "cbartifactory/test:3.0.0"
+	expectedPullPolicy := coreV1.PullPolicy("IfNotPresent")
+	imageSpec := cbcontainersv1.CBContainersImageSpec{
+		Repository: "cbartifactory/test",
+		Tag:        "",
+		PullPolicy: expectedPullPolicy,
+	}
+	container := &coreV1.Container{}
+	MutateImage(container, imageSpec, "3.0.0")
+	require.Equal(t, expectedImage, container.Image)
+	require.Equal(t, expectedPullPolicy, container.ImagePullPolicy)
+}
+
+const (
+	expectedInitialDelay     = 1
+	expectedTimeout          = 2
+	expectedPeriod           = 3
+	expectedSuccessThreshold = 4
+	expectedFailureThreshold = 5
+	expectedPort             = 8181
+	expectedReadinessPath    = "/ready"
+	expectedLivenessPath     = "/alive"
+)
+
+func TestMutateContainerHTTPProbes(t *testing.T) {
+	httpProbesSpec := cbcontainersv1.CBContainersHTTPProbesSpec{
+		CBContainersCommonProbesSpec: cbcontainersv1.CBContainersCommonProbesSpec{
+			InitialDelaySeconds: expectedInitialDelay,
+			TimeoutSeconds:      expectedTimeout,
+			PeriodSeconds:       expectedPeriod,
+			SuccessThreshold:    expectedSuccessThreshold,
+			FailureThreshold:    expectedFailureThreshold,
+		},
+		ReadinessPath: expectedReadinessPath,
+		LivenessPath:  expectedLivenessPath,
+		Port:          expectedPort,
+		Scheme:        coreV1.URISchemeHTTP,
+	}
+
+	expectedReadinessProbe := &coreV1.Probe{
+		Handler: coreV1.Handler{
+			HTTPGet: &coreV1.HTTPGetAction{
+				Path:   expectedReadinessPath,
+				Port:   intstr.FromInt(expectedPort),
+				Scheme: coreV1.URISchemeHTTP,
+			},
+		},
+		InitialDelaySeconds: expectedInitialDelay,
+		TimeoutSeconds:      expectedTimeout,
+		PeriodSeconds:       expectedPeriod,
+		SuccessThreshold:    expectedSuccessThreshold,
+		FailureThreshold:    expectedFailureThreshold,
+	}
+	expectedLivenessProbe := &coreV1.Probe{
+		Handler: coreV1.Handler{
+			HTTPGet: &coreV1.HTTPGetAction{
+				Path:   expectedLivenessPath,
+				Port:   intstr.FromInt(expectedPort),
+				Scheme: coreV1.URISchemeHTTP,
+			},
+		},
+		InitialDelaySeconds: expectedInitialDelay,
+		TimeoutSeconds:      expectedTimeout,
+		PeriodSeconds:       expectedPeriod,
+		SuccessThreshold:    expectedSuccessThreshold,
+		FailureThreshold:    expectedFailureThreshold,
+	}
+
+	container := &coreV1.Container{}
+	MutateContainerHTTPProbes(container, httpProbesSpec)
+	require.True(t, reflect.DeepEqual(expectedLivenessProbe, container.LivenessProbe))
+	require.True(t, reflect.DeepEqual(expectedReadinessProbe, container.ReadinessProbe))
+}
+
+func TestMutateContainerFileProbes(t *testing.T) {
+	fileProbesSpec := cbcontainersv1.CBContainersFileProbesSpec{
+		CBContainersCommonProbesSpec: cbcontainersv1.CBContainersCommonProbesSpec{
+			InitialDelaySeconds: expectedInitialDelay,
+			TimeoutSeconds:      expectedTimeout,
+			PeriodSeconds:       expectedPeriod,
+			SuccessThreshold:    expectedSuccessThreshold,
+			FailureThreshold:    expectedFailureThreshold,
+		},
+		ReadinessPath: expectedReadinessPath,
+		LivenessPath:  expectedLivenessPath,
+	}
+
+	expectedReadinessProbe := &coreV1.Probe{
+		Handler: coreV1.Handler{
+			Exec: &coreV1.ExecAction{
+				Command: []string{"cat", expectedReadinessPath},
+			},
+		},
+		InitialDelaySeconds: expectedInitialDelay,
+		TimeoutSeconds:      expectedTimeout,
+		PeriodSeconds:       expectedPeriod,
+		SuccessThreshold:    expectedSuccessThreshold,
+		FailureThreshold:    expectedFailureThreshold,
+	}
+	expectedLivenessProbe := &coreV1.Probe{
+		Handler: coreV1.Handler{
+			Exec: &coreV1.ExecAction{
+				Command: []string{"cat", expectedLivenessPath},
+			},
+		},
+		InitialDelaySeconds: expectedInitialDelay,
+		TimeoutSeconds:      expectedTimeout,
+		PeriodSeconds:       expectedPeriod,
+		SuccessThreshold:    expectedSuccessThreshold,
+		FailureThreshold:    expectedFailureThreshold,
+	}
+
+	container := &coreV1.Container{}
+	MutateContainerFileProbes(container, fileProbesSpec)
+	require.True(t, reflect.DeepEqual(expectedLivenessProbe, container.LivenessProbe))
+	require.True(t, reflect.DeepEqual(expectedReadinessProbe, container.ReadinessProbe))
 }
