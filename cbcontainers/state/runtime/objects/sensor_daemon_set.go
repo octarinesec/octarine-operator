@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	sensorName     = "cbcontainers-runtime-sensor"
+	SensorName     = "cbcontainers-runtime-sensor"
 	sensorLabelKey = "app.kubernetes.io/name"
 
 	sensorVerbosityFlag = "-v"
@@ -31,7 +31,7 @@ var (
 	sensorIsPrivileged       = true
 	sensorRunAsUser    int64 = 0
 
-	resolverAddress = fmt.Sprintf("%s.%s.svc.cluster.local", resolverName, commonState.DataPlaneNamespaceName)
+	resolverAddress = fmt.Sprintf("%s.%s.svc.cluster.local", ResolverName, commonState.DataPlaneNamespaceName)
 )
 
 type SensorDaemonSetK8sObject struct{}
@@ -45,7 +45,7 @@ func (obj *SensorDaemonSetK8sObject) EmptyK8sObject() client.Object {
 }
 
 func (obj *SensorDaemonSetK8sObject) RuntimeChildNamespacedName(_ *cbContainersV1.CBContainersRuntime) types.NamespacedName {
-	return types.NamespacedName{Name: sensorName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: SensorName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
 func (obj *SensorDaemonSetK8sObject) MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntime *cbContainersV1.CBContainersRuntime) error {
@@ -59,7 +59,7 @@ func (obj *SensorDaemonSetK8sObject) MutateRuntimeChildK8sObject(k8sObject clien
 	if desiredLabels == nil {
 		desiredLabels = make(map[string]string)
 	}
-	desiredLabels[sensorLabelKey] = sensorName
+	desiredLabels[sensorLabelKey] = SensorName
 
 	if daemonSet.Spec.Selector == nil {
 		daemonSet.Spec.Selector = &metav1.LabelSelector{}
@@ -135,7 +135,7 @@ func (obj *SensorDaemonSetK8sObject) mutateContainer(
 	accessTokenSecretName string,
 	desiredGRPCPortValue int32) {
 
-	container.Name = sensorName
+	container.Name = SensorName
 	container.Resources = sensorSpec.Resources
 	container.Args = []string{sensorVerbosityFlag, fmt.Sprintf("%d", *sensorSpec.VerbosityLevel)}
 	container.Command = []string{sensorRunCommand}

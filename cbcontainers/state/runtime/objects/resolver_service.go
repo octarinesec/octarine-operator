@@ -24,7 +24,7 @@ func (obj *ResolverServiceK8sObject) EmptyK8sObject() client.Object {
 }
 
 func (obj *ResolverServiceK8sObject) RuntimeChildNamespacedName(_ *cbcontainersv1.CBContainersRuntime) types.NamespacedName {
-	return types.NamespacedName{Name: resolverName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: ResolverName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
 func (obj *ResolverServiceK8sObject) MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntime *cbcontainersv1.CBContainersRuntime) error {
@@ -38,7 +38,7 @@ func (obj *ResolverServiceK8sObject) MutateRuntimeChildK8sObject(k8sObject clien
 	service.Labels = resolverSpec.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
 	service.Spec.Selector = map[string]string{
-		resolverLabelKey: resolverName,
+		resolverLabelKey: ResolverName,
 	}
 	obj.mutatePorts(service, cbContainersRuntime.Spec.InternalGrpcPort)
 

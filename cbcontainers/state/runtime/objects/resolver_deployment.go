@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	resolverName     = "cbcontainers-runtime-resolver"
+	ResolverName     = "cbcontainers-runtime-resolver"
 	resolverLabelKey = "app.kubernetes.io/name"
 
 	desiredDeploymentGRPCPortName       = "grpc"
@@ -40,7 +40,7 @@ func (obj *ResolverDeploymentK8sObject) EmptyK8sObject() client.Object {
 }
 
 func (obj *ResolverDeploymentK8sObject) RuntimeChildNamespacedName(_ *cbContainersV1.CBContainersRuntime) types.NamespacedName {
-	return types.NamespacedName{Name: resolverName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: ResolverName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
 func (obj *ResolverDeploymentK8sObject) MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntime *cbContainersV1.CBContainersRuntime) error {
@@ -54,7 +54,7 @@ func (obj *ResolverDeploymentK8sObject) MutateRuntimeChildK8sObject(k8sObject cl
 	if desiredLabels == nil {
 		desiredLabels = make(map[string]string)
 	}
-	desiredLabels[resolverLabelKey] = resolverName
+	desiredLabels[resolverLabelKey] = ResolverName
 
 	if deployment.Spec.Selector == nil {
 		deployment.Spec.Selector = &metav1.LabelSelector{}
@@ -130,7 +130,7 @@ func (obj *ResolverDeploymentK8sObject) mutateContainer(
 	accessTokenSecretName string,
 	desiredGRPCPortValue int32) {
 
-	container.Name = resolverName
+	container.Name = ResolverName
 	container.Resources = resolverSpec.Resources
 	commonState.MutateImage(container, resolverSpec.Image, version)
 	commonState.MutateContainerHTTPProbes(container, resolverSpec.Probes)
