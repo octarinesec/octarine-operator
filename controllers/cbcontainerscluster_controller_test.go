@@ -3,6 +3,8 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	logrTesting "github.com/go-logr/logr/testing"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -17,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrlRuntime "sigs.k8s.io/controller-runtime"
-	"testing"
 )
 
 type SetupClusterControllerTest func(*ClusterControllerTestMocks)
@@ -39,7 +40,7 @@ var (
 	ClusterCustomResourceItems = []cbcontainersv1.CBContainersCluster{
 		{
 			Spec: cbcontainersv1.CBContainersClusterSpec{
-				ApiGatewaySpec: cbcontainersv1.CBContainersClusterApiGatewaySpec{
+				ApiGatewaySpec: cbcontainersv1.CBContainersApiGatewaySpec{
 					AccessTokenSecretName: ClusterAccessTokenSecretName,
 				},
 			},
@@ -76,7 +77,7 @@ func testCBContainersClusterController(t *testing.T, setups ...SetupClusterContr
 
 func setupClusterCustomResource(testMocks *ClusterControllerTestMocks) {
 	testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersClusterList{}).
-		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersClusterList) {
+		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersClusterList, _ ...interface{}) {
 			list.Items = ClusterCustomResourceItems
 		}).
 		Return(nil)
@@ -113,7 +114,7 @@ func TestNotFindingAnyClusterResourceShouldReturnNil(t *testing.T) {
 func TestFindingMoreThanOneClusterResourceShouldReturnError(t *testing.T) {
 	_, err := testCBContainersClusterController(t, func(testMocks *ClusterControllerTestMocks) {
 		testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersClusterList{}).
-			Do(func(ctx context.Context, list *cbcontainersv1.CBContainersClusterList) {
+			Do(func(ctx context.Context, list *cbcontainersv1.CBContainersClusterList, _ ...interface{}) {
 				list.Items = append(list.Items, cbcontainersv1.CBContainersCluster{})
 				list.Items = append(list.Items, cbcontainersv1.CBContainersCluster{})
 			}).

@@ -2,6 +2,7 @@ package objects
 
 import (
 	"fmt"
+
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	coreV1 "k8s.io/api/core/v1"
@@ -15,9 +16,7 @@ const (
 	DesiredServicePortValue = 443
 )
 
-type EnforcerServiceK8sObject struct {
-	tlsSecretsValuesCreator TlsSecretsValuesCreator
-}
+type EnforcerServiceK8sObject struct{}
 
 func NewEnforcerServiceK8sObject() *EnforcerServiceK8sObject { return &EnforcerServiceK8sObject{} }
 

@@ -3,6 +3,7 @@ package monitor
 import (
 	"context"
 	"fmt"
+
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -31,5 +32,14 @@ func (provider DefaultFeaturesStatusProvider) HardeningEnabled() (bool, error) {
 }
 
 func (provider DefaultFeaturesStatusProvider) RuntimeEnabled() (bool, error) {
-	return false, nil
+	cbContainersRuntimeList := &cbcontainersv1.CBContainersRuntimeList{}
+	if err := provider.client.List(context.Background(), cbContainersRuntimeList); err != nil {
+		return false, fmt.Errorf("couldn't find CBContainersRuntime k8s object: %v", err)
+	}
+
+	if cbContainersRuntimeList.Items == nil {
+		return false, fmt.Errorf("couldn't find CBContainersRuntime k8s object")
+	}
+
+	return len(cbContainersRuntimeList.Items) > 0, nil
 }

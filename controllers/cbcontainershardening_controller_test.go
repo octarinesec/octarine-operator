@@ -3,6 +3,8 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	logrTesting "github.com/go-logr/logr/testing"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -13,7 +15,6 @@ import (
 	"github.com/vmware/cbcontainers-operator/controllers/mocks"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrlRuntime "sigs.k8s.io/controller-runtime"
-	"testing"
 )
 
 type SetupHardeningControllerTest func(*HardeningControllerTestMocks)
@@ -61,7 +62,7 @@ func testCBContainersHardeningController(t *testing.T, setups ...SetupHardeningC
 
 func setupHardeningCustomResource(testMocks *HardeningControllerTestMocks) {
 	testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersHardeningList{}).
-		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList) {
+		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList, _ ...interface{}) {
 			list.Items = HardeningCustomResourceItems
 		}).
 		Return(nil)
@@ -87,7 +88,7 @@ func TestNotFindingAnyHardeningResourceShouldReturnNil(t *testing.T) {
 func TestFindingMoreThanOneHardeningResourceShouldReturnError(t *testing.T) {
 	_, err := testCBContainersHardeningController(t, func(testMocks *HardeningControllerTestMocks) {
 		testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersHardeningList{}).
-			Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList) {
+			Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList, _ ...interface{}) {
 				list.Items = append(list.Items, cbcontainersv1.CBContainersHardening{})
 				list.Items = append(list.Items, cbcontainersv1.CBContainersHardening{})
 			}).

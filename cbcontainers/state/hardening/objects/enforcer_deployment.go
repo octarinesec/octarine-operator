@@ -2,6 +2,7 @@ package objects
 
 import (
 	"fmt"
+
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
@@ -50,7 +51,7 @@ func (obj *EnforcerDeploymentK8sObject) HardeningChildNamespacedName(_ *cbcontai
 }
 
 func (obj *EnforcerDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
-	enforcerSpec := cbContainersHardening.Spec.EnforcerSpec
+	enforcerSpec := &cbContainersHardening.Spec.EnforcerSpec
 
 	deployment, ok := k8sObject.(*appsV1.Deployment)
 	if !ok {
@@ -76,12 +77,12 @@ func (obj *EnforcerDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject 
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	obj.mutateAnnotations(deployment, enforcerSpec)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, &cbContainersHardening.Spec.EnforcerSpec, &cbContainersHardening.Spec.EventsGatewaySpec, cbContainersHardening.Spec.Version, cbContainersHardening.Spec.AccessTokenSecretName)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, enforcerSpec, &cbContainersHardening.Spec.EventsGatewaySpec, cbContainersHardening.Spec.Version, cbContainersHardening.Spec.AccessTokenSecretName)
 
 	return nil
 }
 
-func (obj *EnforcerDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Deployment, enforcerSpec cbcontainersv1.CBContainersHardeningEnforcerSpec) {
+func (obj *EnforcerDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Deployment, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec) {
 	if deployment.ObjectMeta.Annotations == nil {
 		deployment.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -116,7 +117,7 @@ func (obj *EnforcerDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.Po
 	templatePodSpec.Volumes[0].Secret.Optional = &DesiredTlsSecretVolumeOptionalValue
 }
 
-func (obj *EnforcerDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersHardeningEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *EnforcerDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
 	if len(templatePodSpec.Containers) != 1 {
 		container := coreV1.Container{}
 		templatePodSpec.Containers = []coreV1.Container{container}
@@ -125,24 +126,31 @@ func (obj *EnforcerDeploymentK8sObject) mutateContainersList(templatePodSpec *co
 	obj.mutateContainer(&templatePodSpec.Containers[0], enforcerSpec, eventsGatewaySpec, version, accessTokenSecretName)
 }
 
-func (obj *EnforcerDeploymentK8sObject) mutateContainer(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersHardeningEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *EnforcerDeploymentK8sObject) mutateContainer(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
 	container.Name = EnforcerName
 	container.Resources = enforcerSpec.Resources
 	obj.mutateEnforcerEnvVars(container, enforcerSpec, accessTokenSecretName, eventsGatewaySpec)
-	mutateImage(container, enforcerSpec.Image, version)
-	mutateContainerProbes(container, enforcerSpec.Probes)
+	commonState.MutateImage(container, enforcerSpec.Image, version)
+	commonState.MutateContainerHTTPProbes(container, enforcerSpec.Probes)
 	obj.mutateSecurityContext(container)
 	obj.mutateContainerPorts(container)
 	obj.mutateVolumesMounts(container)
 }
 
-func (obj *EnforcerDeploymentK8sObject) mutateEnforcerEnvVars(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersHardeningEventsGatewaySpec) {
-	mutateEnvVars(container, enforcerSpec.Env, accessTokenSecretName, eventsGatewaySpec,
-		coreV1.EnvVar{Name: "GUARDRAILS_ENFORCER_KEY_FILE_PATH", Value: fmt.Sprintf("%s/key", DesiredTlsSecretVolumeMountPath)},
-		coreV1.EnvVar{Name: "GUARDRAILS_ENFORCER_CERT_FILE_PATH", Value: fmt.Sprintf("%s/signed_cert", DesiredTlsSecretVolumeMountPath)},
-		coreV1.EnvVar{Name: "GUARDRAILS_ENFORCER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", enforcerSpec.Prometheus.Port)},
-		coreV1.EnvVar{Name: "GIN_MODE", Value: "release"},
-	)
+func (obj *EnforcerDeploymentK8sObject) mutateEnforcerEnvVars(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec) {
+	customEnvs := []coreV1.EnvVar{
+		{Name: "GUARDRAILS_ENFORCER_KEY_FILE_PATH", Value: fmt.Sprintf("%s/key", DesiredTlsSecretVolumeMountPath)},
+		{Name: "GUARDRAILS_ENFORCER_CERT_FILE_PATH", Value: fmt.Sprintf("%s/signed_cert", DesiredTlsSecretVolumeMountPath)},
+		{Name: "GUARDRAILS_ENFORCER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", enforcerSpec.Prometheus.Port)},
+		{Name: "GIN_MODE", Value: "release"},
+	}
+
+	envVarBuilder := commonState.NewEnvVarBuilder().
+		WithCommonDataPlane(accessTokenSecretName).
+		WithEventsGateway(eventsGatewaySpec).
+		WithCustom(customEnvs...).
+		WithSpec(enforcerSpec.Env)
+	commonState.MutateEnvVars(container, envVarBuilder)
 }
 
 func (obj *EnforcerDeploymentK8sObject) mutateSecurityContext(container *coreV1.Container) {

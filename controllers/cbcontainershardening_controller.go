@@ -19,22 +19,19 @@ package controllers
 import (
 	"context"
 	"fmt"
+
+	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 	admissionsV1 "k8s.io/api/admissionregistration/v1beta1"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 )
-
-var falseRef = false
 
 type HardeningStateApplier interface {
 	ApplyDesiredState(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
@@ -107,7 +104,7 @@ func (r *CBContainersHardeningReconciler) Reconcile(ctx context.Context, req ctr
 
 func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
 	if cbContainersHardening.Spec.AccessTokenSecretName == "" {
-		cbContainersHardening.Spec.AccessTokenSecretName = "cbcontainers-access-token"
+		cbContainersHardening.Spec.AccessTokenSecretName = defaultAccessToken
 	}
 
 	if cbContainersHardening.Spec.EnforcerSpec.Labels == nil {
@@ -131,15 +128,15 @@ func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbc
 		cbContainersHardening.Spec.EnforcerSpec.Env = make(map[string]string)
 	}
 
-	r.setDefaultPrometheus(&cbContainersHardening.Spec.EnforcerSpec.Prometheus)
+	setDefaultPrometheus(&cbContainersHardening.Spec.EnforcerSpec.Prometheus)
 
-	r.setDefaultImage(&cbContainersHardening.Spec.EnforcerSpec.Image, "cbartifactory/guardrails-enforcer")
+	setDefaultImage(&cbContainersHardening.Spec.EnforcerSpec.Image, "cbartifactory/guardrails-enforcer")
 
-	if err := r.setDefaultResourceRequirements(&cbContainersHardening.Spec.EnforcerSpec.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
+	if err := setDefaultResourceRequirements(&cbContainersHardening.Spec.EnforcerSpec.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
 		return err
 	}
 
-	r.setDefaultProbes(&cbContainersHardening.Spec.EnforcerSpec.Probes)
+	setDefaultHTTPProbes(&cbContainersHardening.Spec.EnforcerSpec.Probes)
 
 	if cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds == 0 {
 		cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds = 5
@@ -161,119 +158,16 @@ func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbc
 		cbContainersHardening.Spec.StateReporterSpec.Env = make(map[string]string)
 	}
 
-	r.setDefaultImage(&cbContainersHardening.Spec.StateReporterSpec.Image, "cbartifactory/guardrails-state-reporter")
+	setDefaultImage(&cbContainersHardening.Spec.StateReporterSpec.Image, "cbartifactory/guardrails-state-reporter")
 
-	if err := r.setDefaultResourceRequirements(&cbContainersHardening.Spec.StateReporterSpec.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
+	if err := setDefaultResourceRequirements(&cbContainersHardening.Spec.StateReporterSpec.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
 		return err
 	}
 
-	r.setDefaultProbes(&cbContainersHardening.Spec.StateReporterSpec.Probes)
+	setDefaultHTTPProbes(&cbContainersHardening.Spec.StateReporterSpec.Probes)
 
 	if cbContainersHardening.Spec.EventsGatewaySpec.Port == 0 {
 		cbContainersHardening.Spec.EventsGatewaySpec.Port = 443
-	}
-
-	return nil
-}
-
-func (r *CBContainersHardeningReconciler) setDefaultProbes(probesSpec *cbcontainersv1.CBContainersHardeningProbesSpec) {
-	if probesSpec.ReadinessPath == "" {
-		probesSpec.ReadinessPath = "/ready"
-	}
-
-	if probesSpec.LivenessPath == "" {
-		probesSpec.LivenessPath = "/alive"
-	}
-
-	if probesSpec.Port == 0 {
-		probesSpec.Port = 8181
-	}
-
-	if probesSpec.Scheme == "" {
-		probesSpec.Scheme = coreV1.URISchemeHTTP
-	}
-
-	if probesSpec.InitialDelaySeconds == 0 {
-		probesSpec.InitialDelaySeconds = 3
-	}
-
-	if probesSpec.TimeoutSeconds == 0 {
-		probesSpec.TimeoutSeconds = 1
-	}
-
-	if probesSpec.PeriodSeconds == 0 {
-		probesSpec.PeriodSeconds = 30
-	}
-
-	if probesSpec.SuccessThreshold == 0 {
-		probesSpec.SuccessThreshold = 1
-	}
-
-	if probesSpec.FailureThreshold == 0 {
-		probesSpec.FailureThreshold = 3
-	}
-}
-
-func (r *CBContainersHardeningReconciler) setDefaultPrometheus(prometheusSpec *cbcontainersv1.CBContainersHardeningPrometheusSpec) {
-	if prometheusSpec.Enabled == nil {
-		prometheusSpec.Enabled = &falseRef
-	}
-
-	if prometheusSpec.Port == 0 {
-		prometheusSpec.Port = 7071
-	}
-}
-
-func (r *CBContainersHardeningReconciler) setDefaultImage(imageSpec *cbcontainersv1.CBContainersHardeningImageSpec, imageName string) {
-	if imageSpec.Repository == "" {
-		imageSpec.Repository = imageName
-	}
-
-	if imageSpec.PullPolicy == "" {
-		imageSpec.PullPolicy = "Always"
-	}
-}
-
-func (r *CBContainersHardeningReconciler) setDefaultResourceRequirements(resources *coreV1.ResourceRequirements, requestMemory, requestCpu, limitMemory, limitCpu string) error {
-	if resources.Requests == nil {
-		resources.Requests = make(coreV1.ResourceList)
-	}
-
-	if err := r.setDefaultsResourcesList(resources.Requests, requestMemory, requestCpu); err != nil {
-		return err
-	}
-
-	if resources.Limits == nil {
-		resources.Limits = make(coreV1.ResourceList)
-	}
-
-	if err := r.setDefaultsResourcesList(resources.Limits, limitMemory, limitCpu); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *CBContainersHardeningReconciler) setDefaultsResourcesList(list coreV1.ResourceList, memory, cpu string) error {
-	if err := r.setDefaultResource(list, coreV1.ResourceMemory, memory); err != nil {
-		return err
-	}
-
-	if err := r.setDefaultResource(list, coreV1.ResourceCPU, cpu); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *CBContainersHardeningReconciler) setDefaultResource(list coreV1.ResourceList, resourceName coreV1.ResourceName, value string) error {
-	if _, ok := list[resourceName]; !ok {
-		quantity, err := resource.ParseQuantity(value)
-		if err != nil {
-			return err
-		}
-
-		list[resourceName] = quantity
 	}
 
 	return nil

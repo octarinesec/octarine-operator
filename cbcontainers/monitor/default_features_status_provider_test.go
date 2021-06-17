@@ -3,12 +3,13 @@ package monitor_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/test_utils/mocks"
-	"testing"
 )
 
 type SetupAndAssertDefaultFeaturesProvider func(*mocks.MockClient, *monitor.DefaultFeaturesStatusProvider)
@@ -41,7 +42,7 @@ func TestHardeningEnabled(t *testing.T) {
 	t.Run("When Client.List returns 0 items, should return false", func(t *testing.T) {
 		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
 			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersHardeningList{}).
-				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList) {
+				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList, _ ...interface{}) {
 					list.Items = make([]cbcontainersv1.CBContainersHardening, 0)
 				}).
 				Return(nil)
@@ -54,7 +55,7 @@ func TestHardeningEnabled(t *testing.T) {
 	t.Run("When Client.List returns 1 items, should return true", func(t *testing.T) {
 		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
 			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersHardeningList{}).
-				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList) {
+				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersHardeningList, _ ...interface{}) {
 					list.Items = make([]cbcontainersv1.CBContainersHardening, 1)
 				}).
 				Return(nil)
@@ -66,11 +67,45 @@ func TestHardeningEnabled(t *testing.T) {
 }
 
 func TestRuntimeEnabled(t *testing.T) {
-	t.Run("Always return false", func(t *testing.T) {
+	t.Run("When Client.List returns error, should return error", func(t *testing.T) {
 		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
+			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersRuntimeList{}).Return(fmt.Errorf(""))
+			_, err := provider.RuntimeEnabled()
+			require.Error(t, err)
+		})
+	})
+
+	t.Run("When Client.List returns no items, should return error", func(t *testing.T) {
+		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
+			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersRuntimeList{}).Return(nil)
+			_, err := provider.RuntimeEnabled()
+			require.Error(t, err)
+		})
+	})
+
+	t.Run("When Client.List returns 0 items, should return false", func(t *testing.T) {
+		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
+			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersRuntimeList{}).
+				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersRuntimeList, _ ...interface{}) {
+					list.Items = make([]cbcontainersv1.CBContainersRuntime, 0)
+				}).
+				Return(nil)
 			enabled, err := provider.RuntimeEnabled()
 			require.NoError(t, err)
 			require.False(t, enabled)
+		})
+	})
+
+	t.Run("When Client.List returns 1 items, should return true", func(t *testing.T) {
+		testFeatures(t, func(client *mocks.MockClient, provider *monitor.DefaultFeaturesStatusProvider) {
+			client.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersRuntimeList{}).
+				Do(func(ctx context.Context, list *cbcontainersv1.CBContainersRuntimeList, _ ...interface{}) {
+					list.Items = make([]cbcontainersv1.CBContainersRuntime, 1)
+				}).
+				Return(nil)
+			enabled, err := provider.RuntimeEnabled()
+			require.NoError(t, err)
+			require.True(t, enabled)
 		})
 	})
 }

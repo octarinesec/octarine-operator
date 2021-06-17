@@ -25,28 +25,10 @@ import (
 
 // CBContainersClusterSpec defines the desired state of CBContainersCluster
 type CBContainersClusterSpec struct {
-	Account           string                               `json:"account,required"`
-	ClusterName       string                               `json:"clusterName,required"`
-	ApiGatewaySpec    CBContainersClusterApiGatewaySpec    `json:"apiGatewaySpec,required"`
-	EventsGatewaySpec CBContainersClusterEventsGatewaySpec `json:"eventsGatewaySpec,required"`
-}
-
-type CBContainersClusterEventsGatewaySpec struct {
-	Host string `json:"host,required"`
-	// +kubebuilder:default:=443
-	Port int `json:"port,omitempty"`
-}
-
-type CBContainersClusterApiGatewaySpec struct {
-	// +kubebuilder:default:="https"
-	Scheme string `json:"scheme,omitempty"`
-	Host   string `json:"host,required"`
-	// +kubebuilder:default:=443
-	Port int `json:"port,omitempty"`
-	// +kubebuilder:default:="containers"
-	Adapter string `json:"adapter,omitempty"`
-	// +kubebuilder:default:="cbcontainers-access-token"
-	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
+	Account           string                        `json:"account,required"`
+	ClusterName       string                        `json:"clusterName,required"`
+	ApiGatewaySpec    CBContainersApiGatewaySpec    `json:"apiGatewaySpec,required"`
+	EventsGatewaySpec CBContainersEventsGatewaySpec `json:"eventsGatewaySpec,required"`
 }
 
 // CBContainersClusterStatus defines the observed state of CBContainersCluster

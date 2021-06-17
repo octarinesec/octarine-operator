@@ -2,6 +2,9 @@ package cluster_test
 
 import (
 	"context"
+	"reflect"
+	"testing"
+
 	logrTesting "github.com/go-logr/logr/testing"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -16,9 +19,7 @@ import (
 	schedulingV1 "k8s.io/api/scheduling/v1"
 	schedulingV1alpha1 "k8s.io/api/scheduling/v1alpha1"
 	schedulingV1beta1 "k8s.io/api/scheduling/v1beta1"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 const (
@@ -59,7 +60,7 @@ func testClusterStateApplier(t *testing.T, setup ClusterStateApplierTestSetup, k
 		Spec: cbcontainersv1.CBContainersClusterSpec{
 			Account:     Account,
 			ClusterName: Cluster,
-			ApiGatewaySpec: cbcontainersv1.CBContainersClusterApiGatewaySpec{
+			ApiGatewaySpec: cbcontainersv1.CBContainersApiGatewaySpec{
 				Scheme:  ApiGateWayScheme,
 				Host:    ApiGateWayHost,
 				Port:    ApiGateWayPort,

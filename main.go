@@ -20,10 +20,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"os"
+
 	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	coreV1 "k8s.io/api/core/v1"
-	"os"
 
 	clusterProcessors "github.com/vmware/cbcontainers-operator/cbcontainers/processors/cluster"
 
@@ -38,9 +39,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
 	clusterState "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster"
 	hardeningState "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening"
+	runtimeState "github.com/vmware/cbcontainers-operator/cbcontainers/state/runtime"
 	certificatesUtils "github.com/vmware/cbcontainers-operator/cbcontainers/utils/certificates"
 	"github.com/vmware/cbcontainers-operator/controllers"
 	// +kubebuilder:scaffold:imports
@@ -54,7 +56,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(cbcontainersv1.AddToScheme(scheme))
+	utilruntime.Must(operatorcontainerscarbonblackiov1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -124,6 +126,17 @@ func main() {
 		HardeningStateApplier: hardeningState.NewHardeningStateApplier(cbContainersHardeningLogger, k8sVersion, certificatesUtils.NewCertificateCreator(), hardeningState.NewDefaultHardeningChildK8sObjectApplier()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersHardening")
+		os.Exit(1)
+	}
+
+	cbContainersRuntimeLogger := ctrl.Log.WithName("controllers").WithName("CBContainersRuntime")
+	if err = (&controllers.CBContainersRuntimeReconciler{
+		Client:              mgr.GetClient(),
+		Log:                 cbContainersRuntimeLogger,
+		Scheme:              mgr.GetScheme(),
+		RuntimeStateApplier: runtimeState.NewRuntimeStateApplier(cbContainersRuntimeLogger, runtimeState.NewDefaultRuntimeChildK8sObjectApplier()),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "CBContainersRuntime")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

@@ -2,6 +2,7 @@ package objects
 
 import (
 	"fmt"
+
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
@@ -36,7 +37,7 @@ func (obj *EnforcerTlsK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.
 	return types.NamespacedName{Name: EnforcerTlsName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *EnforcerTlsK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
+func (obj *EnforcerTlsK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, _ *cbcontainersv1.CBContainersHardening) error {
 	secret, ok := k8sObject.(*coreV1.Secret)
 	if !ok {
 		return fmt.Errorf("expected Secret K8s object")

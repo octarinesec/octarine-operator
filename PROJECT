@@ -1,5 +1,8 @@
 domain: operator.containers.carbonblack.io
 layout: go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
 projectName: cbcontainers
 repo: github.com/vmware/cbcontainers-operator
 resources:
@@ -7,7 +10,6 @@ resources:
     crdVersion: v1beta1
   controller: true
   domain: operator.containers.carbonblack.io
-  group: 
   kind: CBContainersCluster
   path: github.com/vmware/cbcontainers-operator/api/v1
   version: v1
@@ -15,11 +17,14 @@ resources:
     crdVersion: v1beta1
   controller: true
   domain: operator.containers.carbonblack.io
-  group: 
   kind: CBContainersHardening
   path: github.com/vmware/cbcontainers-operator/api/v1
   version: v1
+- api:
+    crdVersion: v1beta1
+  controller: true
+  domain: operator.containers.carbonblack.io
+  kind: CBContainersRuntime
+  path: github.com/vmware/cbcontainers-operator/api/v1
+  version: v1
 version: "3"
-plugins:
-  manifests.sdk.operatorframework.io/v2: {}
-  scorecard.sdk.operatorframework.io/v2: {}

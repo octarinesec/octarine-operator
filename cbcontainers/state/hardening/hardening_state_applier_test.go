@@ -2,6 +2,9 @@ package hardening_test
 
 import (
 	"context"
+	"reflect"
+	"testing"
+
 	logrTesting "github.com/go-logr/logr/testing"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -16,9 +19,7 @@ import (
 	admissionsV1 "k8s.io/api/admissionregistration/v1beta1"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 const (
@@ -86,7 +87,7 @@ func testHardeningStateApplier(t *testing.T, setup HardeningStateApplierTestSetu
 	cbContainersHardening := &cbcontainersv1.CBContainersHardening{
 		Spec: cbcontainersv1.CBContainersHardeningSpec{
 			Version: Version,
-			EventsGatewaySpec: cbcontainersv1.CBContainersHardeningEventsGatewaySpec{
+			EventsGatewaySpec: cbcontainersv1.CBContainersEventsGatewaySpec{
 				Host: EventsGateWayHost,
 			},
 		},
