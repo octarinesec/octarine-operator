@@ -134,10 +134,7 @@ func (r *CBContainersRuntimeReconciler) setDefaults(cbContainersRuntime *operato
 
 	setDefaultImage(&cbContainersRuntime.Spec.ResolverSpec.Image, "cbartifactory/runtime-kubernetes-resolver")
 
-	if err := setDefaultResourceRequirements(
-		&cbContainersRuntime.Spec.ResolverSpec.Resources,
-		"64Mi", "200m",
-		"1024Mi", "900m"); err != nil {
+	if err := setDefaultResourceRequirements(&cbContainersRuntime.Spec.ResolverSpec.Resources, "64Mi", "200m", "1024Mi", "900m"); err != nil {
 		return err
 	}
 
@@ -163,9 +160,7 @@ func (r *CBContainersRuntimeReconciler) setDefaults(cbContainersRuntime *operato
 
 	setDefaultImage(&cbContainersRuntime.Spec.SensorSpec.Image, "cbartifactory/runtime-kubernetes-sensor")
 
-	if err := setDefaultResourceRequirements(&cbContainersRuntime.Spec.SensorSpec.Resources,
-		"64Mi", "30m",
-		"1024Mi", "400m"); err != nil {
+	if err := setDefaultResourceRequirements(&cbContainersRuntime.Spec.SensorSpec.Resources, "64Mi", "30m", "1024Mi", "100m"); err != nil {
 		return err
 	}
 
