@@ -160,7 +160,7 @@ func (r *CBContainersRuntimeReconciler) setDefaults(cbContainersRuntime *operato
 
 	setDefaultImage(&cbContainersRuntime.Spec.SensorSpec.Image, "cbartifactory/runtime-kubernetes-sensor")
 
-	if err := setDefaultResourceRequirements(&cbContainersRuntime.Spec.SensorSpec.Resources, "64Mi", "30m", "1024Mi", "200m"); err != nil {
+	if err := setDefaultResourceRequirements(&cbContainersRuntime.Spec.SensorSpec.Resources, "64Mi", "30m", "1024Mi", "500m"); err != nil {
 		return err
 	}
 
