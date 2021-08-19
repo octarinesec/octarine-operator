@@ -16,7 +16,8 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/objects"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/test_utils"
 	testUtilsMocks "github.com/vmware/cbcontainers-operator/cbcontainers/test_utils/mocks"
-	admissionsV1 "k8s.io/api/admissionregistration/v1beta1"
+	admissionsV1 "k8s.io/api/admissionregistration/v1"
+	admissionsV1Beta1 "k8s.io/api/admissionregistration/v1beta1"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -121,6 +122,7 @@ func getAppliedAndDeletedObjects(t *testing.T, k8sVersion string, appliedK8sObje
 				k8sObject := childObject.EmptyK8sObject()
 				objType := reflect.TypeOf(k8sObject)
 				objectDetails := K8sObjectDetails{Namespace: namespacedName.Namespace, Name: namespacedName.Name, ObjectType: objType}
+
 				appliedObjects = append(appliedObjects, objectDetails)
 
 				for _, changeAppliedK8sObjects := range appliedK8sObjectsChangers {
@@ -174,17 +176,55 @@ func TestEnforcerDeploymentIsApplied(t *testing.T) {
 }
 
 func TestEnforcerWebhookIsApplied(t *testing.T) {
-	appliedObjects, deletedObjects := getAndAssertAppliedAndDeletedObjects(t, "")
-	require.Contains(t, appliedObjects, EnforcerWebhookDetails)
-	require.NotContains(t, deletedObjects, EnforcerWebhookDetails)
+	assertValidatingWebhookIsApplied := func(t *testing.T, appliedObjects, deletedObjects []K8sObjectDetails, webhookObject K8sObjectDetails) {
+		require.Contains(t, appliedObjects, webhookObject)
+		require.NotContains(t, deletedObjects, webhookObject)
+	}
+
+	t.Run("With empty K8S version, should use `v1` by default", func(t *testing.T) {
+		appliedObjects, deletedObjects := getAndAssertAppliedAndDeletedObjects(t, "")
+		assertValidatingWebhookIsApplied(t, appliedObjects, deletedObjects, EnforcerWebhookDetails)
+	})
+
+	t.Run("With K8S version 1.15 or lower, should use `v1beta1` version of webhook", func(t *testing.T) {
+		appliedObjects, deletedObjects := getAndAssertAppliedAndDeletedObjects(t, "v1.15")
+		legacyWebhookDetails := EnforcerWebhookDetails
+		legacyWebhookDetails.ObjectType = reflect.TypeOf(&admissionsV1Beta1.ValidatingWebhookConfiguration{})
+		assertValidatingWebhookIsApplied(t, appliedObjects, deletedObjects, legacyWebhookDetails)
+	})
+
+	t.Run("With K8S version 1.16 or higher, should use `v1` version of webhook", func(t *testing.T) {
+		appliedObjects, deletedObjects := getAndAssertAppliedAndDeletedObjects(t, "v1.16")
+		assertValidatingWebhookIsApplied(t, appliedObjects, deletedObjects, EnforcerWebhookDetails)
+	})
 }
 
 func TestEnforcerWebhookIsDeleted(t *testing.T) {
-	appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, "", MutateDeploymentToBeWithNoReadyReplica)
-	require.NoError(t, err)
-	require.Len(t, appliedObjects, NumberOfExpectedAppliedObjects-1)
-	require.NotContains(t, appliedObjects, EnforcerWebhookDetails)
-	require.Contains(t, deletedObjects, EnforcerWebhookDetails)
+	assertValidatingWebhookIsDeleted := func(t *testing.T, appliedObjects, deletedObjects []K8sObjectDetails, webhookObject K8sObjectDetails) {
+		require.Len(t, appliedObjects, NumberOfExpectedAppliedObjects-1)
+		require.NotContains(t, appliedObjects, webhookObject)
+		require.Contains(t, deletedObjects, webhookObject)
+	}
+
+	t.Run("With empty K8S version, should use `v1` by default", func(t *testing.T) {
+		appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, "")
+		require.NoError(t, err)
+		assertValidatingWebhookIsDeleted(t, appliedObjects, deletedObjects, EnforcerWebhookDetails)
+	})
+
+	t.Run("With K8S version 1.15 or lower, should use `v1beta1` version of webhook", func(t *testing.T) {
+		appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, "v1.15")
+		require.NoError(t, err)
+		legacyWebhookDetails := EnforcerWebhookDetails
+		legacyWebhookDetails.ObjectType = reflect.TypeOf(&admissionsV1Beta1.ValidatingWebhookConfiguration{})
+		assertValidatingWebhookIsDeleted(t, appliedObjects, deletedObjects, legacyWebhookDetails)
+	})
+
+	t.Run("With K8S version 1.16 or higher, should use `v1` version of webhook", func(t *testing.T) {
+		appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, "v1.16")
+		require.NoError(t, err)
+		assertValidatingWebhookIsDeleted(t, appliedObjects, deletedObjects, EnforcerWebhookDetails)
+	})
 }
 
 func TestStateReporterDeploymentIsApplied(t *testing.T) {
