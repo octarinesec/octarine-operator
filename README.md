@@ -15,7 +15,10 @@ The Carbon Black Cloud Container Operator utilizes the operator-framework to cre
 ## Operator Deployment
 
 ### Prerequisites
-Kubernetes 1.13+ 
+Kubernetes 1.13+ is supported.
+
+By default, the operator utilizes CustomResourceDefinitions v1, which requires Kubernetes 1.16+.
+Deploying an operator with CustomResourceDefinitions v1beta1 (deprecated in Kubernetes 1.16, removed in Kubernetes 1.22) can be done - see <TODO>
 
 ### Create the operator image
 ```
@@ -28,7 +31,7 @@ make docker-build docker-push IMG={IMAGE_NAME}
 make deploy IMG={IMAGE_NAME}
 ```
 
-* View [Developer Guide](docs/developers.md#deploying-the-operator-without-using-an-image) to see how deploy the operator without using an image
+* View [Developer Guide](docs/developers.md) to see how deploy the operator without using an image
 
 ## Data Plane Deployment
 

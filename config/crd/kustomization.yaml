@@ -3,8 +3,11 @@
 # It should be run by config/default
 resources:
 - bases/operator.containers.carbonblack.io_cbcontainersclusters.yaml
+- bases/operator.containers.carbonblack.io_cbcontainersclusters.v1beta1.yaml
 - bases/operator.containers.carbonblack.io_cbcontainershardenings.yaml
+- bases/operator.containers.carbonblack.io_cbcontainershardenings.v1beta1.yaml
 - bases/operator.containers.carbonblack.io_cbcontainersruntimes.yaml
+- bases/operator.containers.carbonblack.io_cbcontainersruntimes.v1beta1.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

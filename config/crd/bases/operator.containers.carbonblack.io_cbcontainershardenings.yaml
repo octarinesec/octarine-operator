@@ -1,6 +1,6 @@
 
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
@@ -15,238 +15,295 @@ spec:
     plural: cbcontainershardenings
     singular: cbcontainershardening
   scope: Cluster
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      description: CBContainersHardening is the Schema for the cbcontainershardenings
-        API
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          properties:
-            accessTokenSecretName:
-              type: string
-            enforcerSpec:
-              properties:
-                deploymentAnnotations:
-                  additionalProperties:
-                    type: string
-                  type: object
-                env:
-                  additionalProperties:
-                    type: string
-                  type: object
-                image:
-                  properties:
-                    pullPolicy:
-                      description: PullPolicy describes a policy for if/when to pull
-                        a container image
-                      type: string
-                    repository:
-                      type: string
-                    tag:
-                      type: string
-                  type: object
-                labels:
-                  additionalProperties:
-                    type: string
-                  type: object
-                podTemplateAnnotations:
-                  additionalProperties:
-                    type: string
-                  type: object
-                probes:
-                  properties:
-                    failureThreshold:
-                      format: int32
-                      type: integer
-                    initialDelaySeconds:
-                      format: int32
-                      type: integer
-                    livenessPath:
-                      type: string
-                    periodSeconds:
-                      format: int32
-                      type: integer
-                    port:
-                      type: integer
-                    readinessPath:
-                      type: string
-                    scheme:
-                      description: URIScheme identifies the scheme used for connection
-                        to a host for Get actions
-                      type: string
-                    successThreshold:
-                      format: int32
-                      type: integer
-                    timeoutSeconds:
-                      format: int32
-                      type: integer
-                  type: object
-                prometheus:
-                  properties:
-                    enabled:
-                      type: boolean
-                    port:
-                      type: integer
-                  type: object
-                replicasCount:
-                  format: int32
-                  type: integer
-                resources:
-                  description: ResourceRequirements describes the compute resource
-                    requirements.
-                  properties:
-                    limits:
-                      additionalProperties:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                      description: 'Limits describes the maximum amount of compute
-                        resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
-                      type: object
-                    requests:
-                      additionalProperties:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                      description: 'Requests describes the minimum amount of compute
-                        resources required. If Requests is omitted for a container,
-                        it defaults to Limits if that is explicitly specified, otherwise
-                        to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
-                      type: object
-                  type: object
-                webhookTimeoutSeconds:
-                  format: int32
-                  type: integer
-              type: object
-            eventsGatewaySpec:
-              properties:
-                host:
-                  type: string
-                port:
-                  type: integer
-              required:
-              - host
-              type: object
-            stateReporterSpec:
-              properties:
-                deploymentAnnotations:
-                  additionalProperties:
-                    type: string
-                  type: object
-                env:
-                  additionalProperties:
-                    type: string
-                  type: object
-                image:
-                  properties:
-                    pullPolicy:
-                      description: PullPolicy describes a policy for if/when to pull
-                        a container image
-                      type: string
-                    repository:
-                      type: string
-                    tag:
-                      type: string
-                  type: object
-                labels:
-                  additionalProperties:
-                    type: string
-                  type: object
-                podTemplateAnnotations:
-                  additionalProperties:
-                    type: string
-                  type: object
-                probes:
-                  properties:
-                    failureThreshold:
-                      format: int32
-                      type: integer
-                    initialDelaySeconds:
-                      format: int32
-                      type: integer
-                    livenessPath:
-                      type: string
-                    periodSeconds:
-                      format: int32
-                      type: integer
-                    port:
-                      type: integer
-                    readinessPath:
-                      type: string
-                    scheme:
-                      description: URIScheme identifies the scheme used for connection
-                        to a host for Get actions
-                      type: string
-                    successThreshold:
-                      format: int32
-                      type: integer
-                    timeoutSeconds:
-                      format: int32
-                      type: integer
-                  type: object
-                resources:
-                  description: ResourceRequirements describes the compute resource
-                    requirements.
-                  properties:
-                    limits:
-                      additionalProperties:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                      description: 'Limits describes the maximum amount of compute
-                        resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
-                      type: object
-                    requests:
-                      additionalProperties:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                      description: 'Requests describes the minimum amount of compute
-                        resources required. If Requests is omitted for a container,
-                        it defaults to Limits if that is explicitly specified, otherwise
-                        to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
-                      type: object
-                  type: object
-              type: object
-            version:
-              type: string
-          required:
-          - eventsGatewaySpec
-          - version
-          type: object
-        status:
-          description: CBContainersHardeningStatus defines the observed state of CBContainersHardening
-          type: object
-      required:
-      - spec
-      type: object
-  version: v1
   versions:
   - name: v1
+    schema:
+      openAPIV3Schema:
+        description: CBContainersHardening is the Schema for the cbcontainershardenings
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              accessTokenSecretName:
+                default: cbcontainers-access-token
+                type: string
+              enforcerSpec:
+                default: <>
+                properties:
+                  deploymentAnnotations:
+                    additionalProperties:
+                      type: string
+                    default: <>
+                    type: object
+                  env:
+                    additionalProperties:
+                      type: string
+                    default: <>
+                    type: object
+                  image:
+                    default:
+                      repository: cbartifactory/guardrails-enforcer
+                    properties:
+                      pullPolicy:
+                        default: Always
+                        description: PullPolicy describes a policy for if/when to
+                          pull a container image
+                        type: string
+                      repository:
+                        type: string
+                      tag:
+                        type: string
+                    type: object
+                  labels:
+                    additionalProperties:
+                      type: string
+                    default: <>
+                    type: object
+                  podTemplateAnnotations:
+                    additionalProperties:
+                      type: string
+                    default: <>
+                    type: object
+                  probes:
+                    default: <>
+                    properties:
+                      failureThreshold:
+                        default: 3
+                        format: int32
+                        type: integer
+                      initialDelaySeconds:
+                        default: 3
+                        format: int32
+                        type: integer
+                      livenessPath:
+                        default: /alive
+                        type: string
+                      periodSeconds:
+                        default: 30
+                        format: int32
+                        type: integer
+                      port:
+                        default: 8181
+                        type: integer
+                      readinessPath:
+                        default: /ready
+                        type: string
+                      scheme:
+                        default: HTTP
+                        description: URIScheme identifies the scheme used for connection
+                          to a host for Get actions
+                        type: string
+                      successThreshold:
+                        default: 1
+                        format: int32
+                        type: integer
+                      timeoutSeconds:
+                        default: 1
+                        format: int32
+                        type: integer
+                    type: object
+                  prometheus:
+                    default: <>
+                    properties:
+                      enabled:
+                        default: false
+                        type: boolean
+                      port:
+                        default: 7071
+                        type: integer
+                    type: object
+                  replicasCount:
+                    default: 1
+                    format: int32
+                    type: integer
+                  resources:
+                    default:
+                      limits:
+                        cpu: 200m
+                        memory: 256Mi
+                      requests:
+                        cpu: 30m
+                        memory: 64Mi
+                    description: ResourceRequirements describes the compute resource
+                      requirements.
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                    type: object
+                  webhookTimeoutSeconds:
+                    default: 5
+                    format: int32
+                    type: integer
+                type: object
+              eventsGatewaySpec:
+                properties:
+                  host:
+                    type: string
+                  port:
+                    default: 443
+                    type: integer
+                required:
+                - host
+                type: object
+              stateReporterSpec:
+                default: <>
+                properties:
+                  deploymentAnnotations:
+                    additionalProperties:
+                      type: string
+                    default: <>
+                    type: object
+                  env:
+                    additionalProperties:
+                      type: string
+                    default: <>
+                    type: object
+                  image:
+                    default:
+                      repository: cbartifactory/guardrails-state-reporter
+                    properties:
+                      pullPolicy:
+                        default: Always
+                        description: PullPolicy describes a policy for if/when to
+                          pull a container image
+                        type: string
+                      repository:
+                        type: string
+                      tag:
+                        type: string
+                    type: object
+                  labels:
+                    additionalProperties:
+                      type: string
+                    default: <>
+                    type: object
+                  podTemplateAnnotations:
+                    additionalProperties:
+                      type: string
+                    default: <>
+                    type: object
+                  probes:
+                    default: <>
+                    properties:
+                      failureThreshold:
+                        default: 3
+                        format: int32
+                        type: integer
+                      initialDelaySeconds:
+                        default: 3
+                        format: int32
+                        type: integer
+                      livenessPath:
+                        default: /alive
+                        type: string
+                      periodSeconds:
+                        default: 30
+                        format: int32
+                        type: integer
+                      port:
+                        default: 8181
+                        type: integer
+                      readinessPath:
+                        default: /ready
+                        type: string
+                      scheme:
+                        default: HTTP
+                        description: URIScheme identifies the scheme used for connection
+                          to a host for Get actions
+                        type: string
+                      successThreshold:
+                        default: 1
+                        format: int32
+                        type: integer
+                      timeoutSeconds:
+                        default: 1
+                        format: int32
+                        type: integer
+                    type: object
+                  resources:
+                    default:
+                      limits:
+                        cpu: 200m
+                        memory: 256Mi
+                      requests:
+                        cpu: 30m
+                        memory: 64Mi
+                    description: ResourceRequirements describes the compute resource
+                      requirements.
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                    type: object
+                type: object
+              version:
+                type: string
+            required:
+            - eventsGatewaySpec
+            - version
+            type: object
+          status:
+            description: CBContainersHardeningStatus defines the observed state of
+              CBContainersHardening
+            type: object
+        required:
+        - spec
+        type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""

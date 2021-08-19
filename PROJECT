@@ -7,21 +7,21 @@ projectName: cbcontainers
 repo: github.com/vmware/cbcontainers-operator
 resources:
 - api:
-    crdVersion: v1beta1
+    crdVersion: v1
   controller: true
   domain: operator.containers.carbonblack.io
   kind: CBContainersCluster
   path: github.com/vmware/cbcontainers-operator/api/v1
   version: v1
 - api:
-    crdVersion: v1beta1
+    crdVersion: v1
   controller: true
   domain: operator.containers.carbonblack.io
   kind: CBContainersHardening
   path: github.com/vmware/cbcontainers-operator/api/v1
   version: v1
 - api:
-    crdVersion: v1beta1
+    crdVersion: v1
   controller: true
   domain: operator.containers.carbonblack.io
   kind: CBContainersRuntime

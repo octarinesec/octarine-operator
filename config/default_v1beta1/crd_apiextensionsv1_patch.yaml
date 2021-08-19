@@ -1,0 +1,22 @@
+# Legacy support for v1beta1 by removing the CRDs that use the newer v1 version
+---
+
+$patch: delete
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: cbcontainersclusters.operator.containers.carbonblack.io
+---
+
+$patch: delete
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: cbcontainershardenings.operator.containers.carbonblack.io
+---
+
+$patch: delete
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: cbcontainersruntimes.operator.containers.carbonblack.io
