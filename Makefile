@@ -58,16 +58,6 @@ manager: generate fmt vet
 run: generate fmt vet manifests
 	go run ./main.go
 
-# TODO: Install and uninstall use both CRD versions - check documentation if these are to be removed
-
-install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
-
-uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl delete -f -
-
-# TODO: Make the version configurable by choosing the path
-
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 create_operator_spec: manifests kustomize
 	rm -f operator.yaml
