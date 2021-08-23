@@ -14,7 +14,6 @@ spec:
     listKind: CBContainersClusterList
     plural: cbcontainersclusters
     singular: cbcontainerscluster
-  preserveUnknownFields: false
   scope: Cluster
   subresources:
     status: {}

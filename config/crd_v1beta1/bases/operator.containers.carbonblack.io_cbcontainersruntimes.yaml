@@ -6,21 +6,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
-  name: cbcontainershardenings.operator.containers.carbonblack.io
+  name: cbcontainersruntimes.operator.containers.carbonblack.io
 spec:
   group: operator.containers.carbonblack.io
   names:
-    kind: CBContainersHardening
-    listKind: CBContainersHardeningList
-    plural: cbcontainershardenings
-    singular: cbcontainershardening
-  preserveUnknownFields: false
+    kind: CBContainersRuntime
+    listKind: CBContainersRuntimeList
+    plural: cbcontainersruntimes
+    singular: cbcontainersruntime
   scope: Cluster
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: CBContainersHardening is the Schema for the cbcontainershardenings
+      description: CBContainersRuntime is the Schema for the cbcontainersruntimes
         API
       properties:
         apiVersion:
@@ -36,10 +35,14 @@ spec:
         metadata:
           type: object
         spec:
+          description: CBContainersRuntimeSpec defines the desired state of CBContainersRuntime
           properties:
             accessTokenSecretName:
               type: string
-            enforcerSpec:
+            internalGrpcPort:
+              format: int32
+              type: integer
+            resolverSpec:
               properties:
                 deploymentAnnotations:
                   additionalProperties:
@@ -48,6 +51,15 @@ spec:
                 env:
                   additionalProperties:
                     type: string
+                  type: object
+                eventsGatewaySpec:
+                  properties:
+                    host:
+                      type: string
+                    port:
+                      type: integer
+                  required:
+                  - host
                   type: object
                 image:
                   properties:
@@ -133,22 +145,12 @@ spec:
                         to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                       type: object
                   type: object
-                webhookTimeoutSeconds:
-                  format: int32
-                  type: integer
-              type: object
-            eventsGatewaySpec:
-              properties:
-                host:
-                  type: string
-                port:
-                  type: integer
               required:
-              - host
+              - eventsGatewaySpec
               type: object
-            stateReporterSpec:
+            sensorSpec:
               properties:
-                deploymentAnnotations:
+                daemonSetAnnotations:
                   additionalProperties:
                     type: string
                   type: object
@@ -188,19 +190,20 @@ spec:
                     periodSeconds:
                       format: int32
                       type: integer
-                    port:
-                      type: integer
                     readinessPath:
-                      type: string
-                    scheme:
-                      description: URIScheme identifies the scheme used for connection
-                        to a host for Get actions
                       type: string
                     successThreshold:
                       format: int32
                       type: integer
                     timeoutSeconds:
                       format: int32
+                      type: integer
+                  type: object
+                prometheus:
+                  properties:
+                    enabled:
+                      type: boolean
+                    port:
                       type: integer
                   type: object
                 resources:
@@ -230,18 +233,17 @@ spec:
                         to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                       type: object
                   type: object
+                verbosity_level:
+                  type: integer
               type: object
             version:
               type: string
           required:
-          - eventsGatewaySpec
           - version
           type: object
         status:
-          description: CBContainersHardeningStatus defines the observed state of CBContainersHardening
+          description: CBContainersRuntimeStatus defines the observed state of CBContainersRuntime
           type: object
-      required:
-      - spec
       type: object
   version: v1
   versions:

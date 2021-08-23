@@ -45,17 +45,16 @@ spec:
                 format: int32
                 type: integer
               resolverSpec:
-                default: <>
                 properties:
                   deploymentAnnotations:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   env:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   eventsGatewaySpec:
                     properties:
@@ -84,7 +83,7 @@ spec:
                   labels:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   podTemplateAnnotations:
                     additionalProperties:
@@ -94,7 +93,7 @@ spec:
                       prometheus.io/scrape: "false"
                     type: object
                   probes:
-                    default: <>
+                    default: {}
                     properties:
                       failureThreshold:
                         default: 3
@@ -132,7 +131,7 @@ spec:
                         type: integer
                     type: object
                   prometheus:
-                    default: <>
+                    default: {}
                     properties:
                       enabled:
                         default: false
@@ -183,17 +182,17 @@ spec:
                 - eventsGatewaySpec
                 type: object
               sensorSpec:
-                default: <>
+                default: {}
                 properties:
                   daemonSetAnnotations:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   env:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   image:
                     default:
@@ -212,7 +211,7 @@ spec:
                   labels:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   podTemplateAnnotations:
                     additionalProperties:
@@ -222,7 +221,7 @@ spec:
                       prometheus.io/scrape: "false"
                     type: object
                   probes:
-                    default: <>
+                    default: {}
                     properties:
                       failureThreshold:
                         default: 3
@@ -252,7 +251,7 @@ spec:
                         type: integer
                     type: object
                   prometheus:
-                    default: <>
+                    default: {}
                     properties:
                       enabled:
                         default: false

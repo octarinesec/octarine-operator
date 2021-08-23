@@ -4,4 +4,6 @@ metadata:
   name: cbcontainershardening-sample
 spec:
   # Add fields here
-  foo: bar
+  version: "21.6"
+  eventsGatewaySpec:
+    host: https://test.com

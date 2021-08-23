@@ -1,6 +1,9 @@
+# IMPORTANT - this file is made for backwards compatibility with K8S 1.15 and below.
+# It should be kept in-sync with the /config/crd version when applicable.
+
 # This kustomization.yaml is not intended to be run by itself,
 # since it depends on service name and namespace that are out of this kustomize package.
-# It should be run by config/default
+# It should be run by config/default_v1beta1c
 resources:
 - bases/operator.containers.carbonblack.io_cbcontainersclusters.yaml
 - bases/operator.containers.carbonblack.io_cbcontainershardenings.yaml

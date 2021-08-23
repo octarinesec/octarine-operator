@@ -40,17 +40,17 @@ spec:
                 default: cbcontainers-access-token
                 type: string
               enforcerSpec:
-                default: <>
+                default: {}
                 properties:
                   deploymentAnnotations:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   env:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   image:
                     default:
@@ -69,15 +69,15 @@ spec:
                   labels:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   podTemplateAnnotations:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   probes:
-                    default: <>
+                    default: {}
                     properties:
                       failureThreshold:
                         default: 3
@@ -115,7 +115,7 @@ spec:
                         type: integer
                     type: object
                   prometheus:
-                    default: <>
+                    default: {}
                     properties:
                       enabled:
                         default: false
@@ -178,17 +178,17 @@ spec:
                 - host
                 type: object
               stateReporterSpec:
-                default: <>
+                default: {}
                 properties:
                   deploymentAnnotations:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   env:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   image:
                     default:
@@ -207,15 +207,15 @@ spec:
                   labels:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   podTemplateAnnotations:
                     additionalProperties:
                       type: string
-                    default: <>
+                    default: {}
                     type: object
                   probes:
-                    default: <>
+                    default: {}
                     properties:
                       failureThreshold:
                         default: 3
