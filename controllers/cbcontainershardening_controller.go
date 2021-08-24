@@ -22,7 +22,7 @@ import (
 
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
-	admissionsV1 "k8s.io/api/admissionregistration/v1beta1"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/adapters"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,6 +42,7 @@ type CBContainersHardeningReconciler struct {
 	Log                   logr.Logger
 	Scheme                *runtime.Scheme
 	HardeningStateApplier HardeningStateApplier
+	K8sVersion            string
 }
 
 func (r *CBContainersHardeningReconciler) getContainersHardeningObject(ctx context.Context) (*cbcontainersv1.CBContainersHardening, error) {
@@ -175,11 +176,12 @@ func (r *CBContainersHardeningReconciler) setDefaults(cbContainersHardening *cbc
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *CBContainersHardeningReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&cbcontainersv1.CBContainersHardening{}).
 		Owns(&coreV1.Secret{}).
 		Owns(&appsV1.Deployment{}).
 		Owns(&coreV1.Service{}).
-		Owns(&admissionsV1.ValidatingWebhookConfiguration{}).
+		Owns(adapters.EmptyValidatingWebhookConfigForVersion(r.K8sVersion)).
 		Complete(r)
 }

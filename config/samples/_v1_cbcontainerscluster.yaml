@@ -1,7 +1,12 @@
 apiVersion: operator.containers.carbonblack.io/v1
 kind: CBContainersCluster
 metadata:
-  name: cbcontainerscluster-sample
+  name: cbcontainers-cluster
 spec:
-  # Add fields here
-  foo: bar
+  account: <ACCOUNT>
+  clusterName: test:cluster
+  apiGatewaySpec:
+    host: <HOST>
+    adapter: <ADAPTER>
+  eventsGatewaySpec:
+    host: <EVENTS_GATEWAY_HOST>

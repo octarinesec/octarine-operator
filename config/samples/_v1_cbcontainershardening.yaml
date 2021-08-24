@@ -1,9 +1,8 @@
 apiVersion: operator.containers.carbonblack.io/v1
 kind: CBContainersHardening
 metadata:
-  name: cbcontainershardening-sample
+  name: cbcontainers-hardening
 spec:
-  # Add fields here
-  version: "21.6"
+  version: <VERSION>
   eventsGatewaySpec:
-    host: https://test.com
+    host: <EVENT_GATEWAY_HOST>
