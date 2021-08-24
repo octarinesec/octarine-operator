@@ -86,3 +86,10 @@ Unfortunately kubebuilder cannot produce that output today.
 Therefore, a special `make` target works around this by replacing all instance of `<>` with `{}` so using `kubebuilder:default=<>` will produce the correct output.
 
 Defaulting is not supported by `v1beta1` versions of CRDs so warnings are expected when generating those since kubebuilder.
+
+## Debugging locally
+
+To debug locally, run `make run-delve` which will build and start a delve debugger in headless mode.
+Then use your editor to start a remote session and connect to the delve instance.
+
+For goland, the built-in `go remote` configuration works fine.

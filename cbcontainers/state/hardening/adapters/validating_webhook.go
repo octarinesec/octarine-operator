@@ -34,6 +34,7 @@ type ValidatingWebhookAdapter interface {
 	SetServiceNamespace(namespace string)
 	SetServiceName(name string)
 	SetServicePath(path *string)
+	GetAdmissionRules() []AdmissionRuleAdapter
 	SetAdmissionRules([]AdmissionRuleAdapter)
 }
 
@@ -205,6 +206,24 @@ func (w *validatingWebhookV1) SetTimeoutSeconds(timeoutSeconds int32) {
 	w.TimeoutSeconds = &timeoutSeconds
 }
 
+func (w *validatingWebhookV1) GetAdmissionRules() []AdmissionRuleAdapter {
+	result := make([]AdmissionRuleAdapter, 0, len(w.Rules))
+	for i := range w.Rules {
+		var ruleAdapter = AdmissionRuleAdapter{
+			Operations:  make([]string, 0, len(w.Rules[i].Operations)),
+			APIGroups:   w.Rules[i].APIGroups,
+			APIVersions: w.Rules[i].APIVersions,
+			Resources:   w.Rules[i].Resources,
+			Scope:       (*string)(w.Rules[i].Scope),
+		}
+		for _, op := range w.Rules[i].Operations {
+			ruleAdapter.Operations = append(ruleAdapter.Operations, string(op))
+		}
+		result = append(result, ruleAdapter)
+	}
+	return result
+}
+
 func (w *validatingWebhookV1) SetAdmissionRules(rules []AdmissionRuleAdapter) {
 	newRules := make([]admissionsV1.RuleWithOperations, 0, len(rules))
 	for _, r := range rules {
@@ -287,6 +306,24 @@ func (w *validatingWebhookV1Beta1) SetServiceName(name string) {
 func (w *validatingWebhookV1Beta1) SetServicePath(path *string) {
 	w.InitializeServiceReference()
 	w.ClientConfig.Service.Path = path
+}
+
+func (w *validatingWebhookV1Beta1) GetAdmissionRules() []AdmissionRuleAdapter {
+	result := make([]AdmissionRuleAdapter, 0, len(w.Rules))
+	for i := range w.Rules {
+		var ruleAdapter = AdmissionRuleAdapter{
+			Operations:  make([]string, 0, len(w.Rules[i].Operations)),
+			APIGroups:   w.Rules[i].APIGroups,
+			APIVersions: w.Rules[i].APIVersions,
+			Resources:   w.Rules[i].Resources,
+			Scope:       (*string)(w.Rules[i].Scope),
+		}
+		for _, op := range w.Rules[i].Operations {
+			ruleAdapter.Operations = append(ruleAdapter.Operations, string(op))
+		}
+		result = append(result, ruleAdapter)
+	}
+	return result
 }
 
 func (w *validatingWebhookV1Beta1) SetAdmissionRules(rules []AdmissionRuleAdapter) {

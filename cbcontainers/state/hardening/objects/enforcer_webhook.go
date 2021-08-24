@@ -6,6 +6,7 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/adapters"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
@@ -85,17 +86,16 @@ func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration adapter
 	}
 
 	if initializeWebhooks {
-		webhooks := []adapters.ValidatingWebhookAdapter{
-			adapters.EmptyValidatingWebhookAdapterForVersion(obj.kubeletVersion),
-			adapters.EmptyValidatingWebhookAdapterForVersion(obj.kubeletVersion),
-		}
-		resourcesWebhookObj = webhooks[0]
-		namespacesWebhookObj = webhooks[1]
-		webhookConfiguration.SetWebhooks(webhooks)
+		resourcesWebhookObj = adapters.EmptyValidatingWebhookAdapterForVersion(obj.kubeletVersion)
+		namespacesWebhookObj = adapters.EmptyValidatingWebhookAdapterForVersion(obj.kubeletVersion)
 	}
 
 	obj.mutateResourcesWebhook(resourcesWebhookObj, cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds)
 	obj.mutateNamespacesWebhook(namespacesWebhookObj, cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds)
+	webhookConfiguration.SetWebhooks([]adapters.ValidatingWebhookAdapter{
+		resourcesWebhookObj,
+		namespacesWebhookObj,
+	})
 }
 
 func (obj *EnforcerWebhookK8sObject) findWebhookByName(webhooks []adapters.ValidatingWebhookAdapter, name string) (adapters.ValidatingWebhookAdapter, bool) {
@@ -167,13 +167,18 @@ func (obj *EnforcerWebhookK8sObject) getResourcesNamespaceSelector(selector *met
 }
 
 func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhooksRules(webhook adapters.ValidatingWebhookAdapter) {
-	rules := []adapters.AdmissionRuleAdapter{
-		{
-			Operations:  []string{adapters.OperationAll},
-			APIGroups:   []string{"*"},
-			APIVersions: []string{"*"},
-			Resources:   obj.getResourcesList(),
-		},
+	rules := webhook.GetAdmissionRules()
+	if rules == nil || len(rules) != 1 {
+		rules = make([]adapters.AdmissionRuleAdapter, 1)
+	}
+
+	rules[0].Operations = []string{adapters.OperationAll}
+	rules[0].APIVersions = []string{"*"}
+	rules[0].APIGroups = []string{"*"}
+
+	expectedResourcesList := obj.getResourcesList()
+	if !utils.StringsSlicesHaveSameItems(rules[0].Resources, expectedResourcesList) {
+		rules[0].Resources = expectedResourcesList
 	}
 	webhook.SetAdmissionRules(rules)
 }
@@ -223,13 +228,14 @@ func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook a
 }
 
 func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhooksRules(webhook adapters.ValidatingWebhookAdapter) {
-	rules := []adapters.AdmissionRuleAdapter{
-		{
-			Operations:  []string{adapters.OperationCreate, adapters.OperationUpdate, adapters.OperationConnect},
-			APIGroups:   []string{"*"},
-			APIVersions: []string{"*"},
-			Resources:   []string{"namespaces"},
-		},
+	rules := webhook.GetAdmissionRules()
+	if rules == nil || len(rules) != 1 {
+		rules = make([]adapters.AdmissionRuleAdapter, 1)
 	}
+
+	rules[0].Operations = []string{adapters.OperationCreate, adapters.OperationUpdate, adapters.OperationConnect}
+	rules[0].APIVersions = []string{"*"}
+	rules[0].APIGroups = []string{"*"}
+	rules[0].Resources = []string{"namespaces"}
 	webhook.SetAdmissionRules(rules)
 }
