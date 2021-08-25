@@ -60,9 +60,9 @@ const (
 func EmptyValidatingWebhookConfigForVersion(k8sVersion string) client.Object {
 	if k8sVersion < "v1.16" {
 		return &admissionsV1Beta1.ValidatingWebhookConfiguration{}
-	} else {
-		return &admissionsV1.ValidatingWebhookConfiguration{}
 	}
+
+	return &admissionsV1.ValidatingWebhookConfiguration{}
 }
 
 // EmptyValidatingWebhookAdapterForVersion creates an empty ValidatingWebhook instance for the given k8s version and returns an adapter that wraps it
