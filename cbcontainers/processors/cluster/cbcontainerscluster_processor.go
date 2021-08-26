@@ -20,11 +20,6 @@ type GatewayCreator interface {
 	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) Gateway
 }
 
-type Monitor interface {
-	Start()
-	Stop()
-}
-
 type CBContainerClusterProcessor struct {
 	gatewayCreator GatewayCreator
 
