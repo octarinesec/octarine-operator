@@ -64,12 +64,10 @@ func (obj *EnforcerWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject cli
 	enforcerSpec := cbContainersHardening.Spec.EnforcerSpec
 
 	webhookConfiguration.SetLabels(enforcerSpec.Labels)
-	obj.mutateWebhooks(webhookConfiguration, cbContainersHardening)
-
-	return nil
+	return obj.mutateWebhooks(webhookConfiguration, cbContainersHardening)
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration adapters.ValidatingWebhookConfigurationAdapter, cbContainersHardening *cbcontainersv1.CBContainersHardening) {
+func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration adapters.ValidatingWebhookConfigurationAdapter, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
 	var resourcesWebhookObj adapters.ValidatingWebhookAdapter
 	var namespacesWebhookObj adapters.ValidatingWebhookAdapter
 
@@ -86,16 +84,22 @@ func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration adapter
 	}
 
 	if initializeWebhooks {
-		resourcesWebhookObj = adapters.EmptyValidatingWebhookAdapterForVersion(obj.kubeletVersion)
-		namespacesWebhookObj = adapters.EmptyValidatingWebhookAdapterForVersion(obj.kubeletVersion)
+		webhooks := []adapters.ValidatingWebhookAdapter{
+			adapters.EmptyValidatingWebhookAdapterForVersion(obj.kubeletVersion),
+			adapters.EmptyValidatingWebhookAdapterForVersion(obj.kubeletVersion),
+		}
+		updatedWebhooks, err := webhookConfiguration.SetWebhooks(webhooks)
+		if err != nil {
+			return err
+		}
+
+		resourcesWebhookObj = updatedWebhooks[0]
+		namespacesWebhookObj = updatedWebhooks[1]
 	}
 
 	obj.mutateResourcesWebhook(resourcesWebhookObj, cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds)
 	obj.mutateNamespacesWebhook(namespacesWebhookObj, cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds)
-	webhookConfiguration.SetWebhooks([]adapters.ValidatingWebhookAdapter{
-		resourcesWebhookObj,
-		namespacesWebhookObj,
-	})
+	return nil
 }
 
 func (obj *EnforcerWebhookK8sObject) findWebhookByName(webhooks []adapters.ValidatingWebhookAdapter, name string) (adapters.ValidatingWebhookAdapter, bool) {

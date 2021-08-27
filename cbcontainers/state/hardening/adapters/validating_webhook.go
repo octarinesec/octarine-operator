@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"fmt"
 	admissionsV1 "k8s.io/api/admissionregistration/v1"
 	admissionsV1Beta1 "k8s.io/api/admissionregistration/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,9 +16,14 @@ type ValidatingWebhookConfigurationAdapter interface {
 	// For adding/removing webhooks to the list, use SetWebhooks
 	GetWebhooks() []ValidatingWebhookAdapter
 	// SetWebhooks will replace the configuration's webhooks with the provided list
-	// Any webhooks that don't match the configuration adapter's API version are ignored
-	// E.g. passing a list of {v1, v1beta1, v1} wrapped webhooks to a v1 ValidatingWebhookAdapter will only set the 2 v1 webhooks and ignore the v1beta1
-	SetWebhooks([]ValidatingWebhookAdapter)
+	//
+	// This method creates copied values of the provided webhooks so any pointers to the passed values will _not_ modify them directly
+	// This method returns adapters for the inner webhooks after replacement to support this use-case
+	// Calling SetXXX() to the returned adapters _will_ reflect the changes into the configuration's webhooks
+	//
+	// If any of the provided webhooks do not match the version of the adapter, an error is returned
+	// E.g. passing a list of {v1, v1beta1, v1} wrapped webhooks to a v1 ValidatingWebhookAdapter will produce an error
+	SetWebhooks([]ValidatingWebhookAdapter) ([]ValidatingWebhookAdapter, error)
 }
 
 type ValidatingWebhookAdapter interface {
@@ -105,17 +111,19 @@ func (webhookConfig *validatingWebhookConfigurationV1) GetWebhooks() []Validatin
 	return result
 }
 
-func (webhookConfig *validatingWebhookConfigurationV1) SetWebhooks(webhooks []ValidatingWebhookAdapter) {
+func (webhookConfig *validatingWebhookConfigurationV1) SetWebhooks(webhooks []ValidatingWebhookAdapter) ([]ValidatingWebhookAdapter, error) {
 	convertedWebhooks := make([]admissionsV1.ValidatingWebhook, 0, len(webhooks))
 	for _, webhookAdapter := range webhooks {
 		convertedToV1Adapter, ok := webhookAdapter.(*validatingWebhookV1)
 		if !ok {
-			continue
+			return nil, fmt.Errorf("this is an adapter for v1 but got a non-v1 webhook: %v", webhookAdapter)
 		}
 		var validatingWebhook = admissionsV1.ValidatingWebhook(*convertedToV1Adapter)
 		convertedWebhooks = append(convertedWebhooks, validatingWebhook)
 	}
 	webhookConfig.Webhooks = convertedWebhooks
+	// Return adapters for the new webhooks to enable direct modifications via the adapter methods
+	return webhookConfig.GetWebhooks(), nil
 }
 
 func (webhookConfig *validatingWebhookConfigurationV1) SetLabels(labels map[string]string) {
@@ -133,17 +141,19 @@ func (webhookConfig *validatingWebhookConfigurationV1Beta1) GetWebhooks() []Vali
 	return result
 }
 
-func (webhookConfig *validatingWebhookConfigurationV1Beta1) SetWebhooks(webhooks []ValidatingWebhookAdapter) {
+func (webhookConfig *validatingWebhookConfigurationV1Beta1) SetWebhooks(webhooks []ValidatingWebhookAdapter) ([]ValidatingWebhookAdapter, error) {
 	convertedWebhooks := make([]admissionsV1Beta1.ValidatingWebhook, 0, len(webhooks))
 	for _, webhookAdapter := range webhooks {
 		convertedToV1Adapter, ok := webhookAdapter.(*validatingWebhookV1Beta1)
 		if !ok {
-			continue
+			return nil, fmt.Errorf("this is an adapter for v1beta1 but got a non-v1beta1 webhook: %v", webhookAdapter)
 		}
 		var validatingWebhook = admissionsV1Beta1.ValidatingWebhook(*convertedToV1Adapter)
 		convertedWebhooks = append(convertedWebhooks, validatingWebhook)
 	}
 	webhookConfig.Webhooks = convertedWebhooks
+	// Return adapters for the new webhooks to enable direct modifications via the adapter methods
+	return webhookConfig.GetWebhooks(), nil
 }
 
 func (webhookConfig *validatingWebhookConfigurationV1Beta1) SetLabels(labels map[string]string) {
