@@ -16,8 +16,16 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 IMG ?= controller:latest
 # Image URL to use all building/pushing image targets
 OPERATOR_REPLICAS ?= 1
-# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1beta1"
+
+CRD_OPTIONS ?= "crd:crdVersions=v1"
+# Produce CRDs that work back to Kubernetes 1.11 (no version conversion) - supported in v1beta1 only
+CRD_OPTIONS_V1BETA1 ?= "crd:trivialVersions=true,crdVersions=v1beta1"
+
+PATH_TO_RELEASE := config/default
+PATH_TO_RELEASE := $(if $(findstring v1beta1, $(CRD_VERSION)), $(PATH_TO_RELEASE)_v1beta1, $(PATH_TO_RELEASE))
+
+PATH_TO_CRDS := config/crd
+PATH_TO_CRDS := $(if $(findstring v1beta1, $(CRD_VERSION)), $(PATH_TO_CRDS)_v1beta1, $(PATH_TO_CRDS))
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -37,6 +45,7 @@ all: build
 OS = $(shell go env GOOS)
 ARCH = $(shell go env GOARCH)
 
+
 # Run tests
 # Set default shell as bash
 SHELL := /bin/bash
@@ -54,17 +63,24 @@ manager: generate fmt vet
 run: generate fmt vet manifests
 	go run ./main.go
 
+# Run with Delve for development purposes against the configured Kubernetes cluster in ~/.kube/config
+# Delve is a debugger for the Go programming language. More info: https://github.com/go-delve/delve
+# Note: use kill -SIGINT $pid to stop delve if it hangs
+run-delve: generate fmt vet manifests
+	go build -gcflags "all=-trimpath=$(shell go env GOPATH) -N -l" -o bin/manager main.go
+	dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec ./bin/manager
+
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
+	$(KUSTOMIZE) build $(PATH_TO_CRDS) | kubectl apply -f -
 
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl delete -f -
+	$(KUSTOMIZE) build $(PATH_TO_CRDS) | kubectl delete -f -
 
-# Deploy controller in the configured Kubernetes cluster in ~/.kube/config
+# Generate and bundle all operator components in a single YAML file
 create_operator_spec: manifests kustomize
 	rm -f operator.yaml
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG} && $(KUSTOMIZE) edit set replicas operator=${OPERATOR_REPLICAS}
-	- $(KUSTOMIZE) build config/default >> operator.yaml
+	- $(KUSTOMIZE) build $(PATH_TO_RELEASE) >> operator.yaml
 	git restore config/manager/kustomization.yaml
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
@@ -80,16 +96,15 @@ undeploy: create_operator_spec
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-
-# Generate manifests e.g. CRD, RBAC etc.
-manifests_with_defaults: controller-gen
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+# This is needed since controller-gen does not support empty object/maps like {} but they are helpful to propagate default values up from nested objects
 	for filename in $$(ls config/crd/bases) ; do \
-        XT=config/crd/bases/$$filename ; \
-        sed 's/default: <>/default: {}/g' $$XT >> $$XT.temp ; \
-        rm -f $$XT ; \
-        mv $$XT.temp $$XT ; \
-    done
+		XT=config/crd/bases/$$filename ; \
+		sed 's/default: <>/default: {}/g' $$XT >> $$XT.temp ; \
+		rm -f $$XT ; \
+		mv $$XT.temp $$XT ; \
+	done
+# The above modification is not needed for v1beta1 as defaults are not supported there at all
+	$(CONTROLLER_GEN) $(CRD_OPTIONS_V1BETA1) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd_v1beta1/bases
 
 # Run go fmt against code
 fmt:

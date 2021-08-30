@@ -64,7 +64,7 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 	if err != nil {
 		return false, err
 	}
-	c.log.Info("Applied enfocer tls secret", "Mutated", mutatedSecret)
+	c.log.Info("Applied enforcer tls secret", "Mutated", mutatedSecret)
 
 	tlsSecret, ok := secretK8sObject.(*coreV1.Secret)
 	if !ok {

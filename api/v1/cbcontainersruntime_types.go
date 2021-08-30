@@ -68,9 +68,8 @@ type CBContainersRuntimeSensorSpec struct {
 type CBContainersRuntimeSpec struct {
 	Version string `json:"version,required"`
 	// +kubebuilder:default:="cbcontainers-access-token"
-	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
-	// +kubebuilder:default:=<>
-	ResolverSpec CBContainersRuntimeResolverSpec `json:"resolverSpec,omitempty"`
+	AccessTokenSecretName string                          `json:"accessTokenSecretName,omitempty"`
+	ResolverSpec          CBContainersRuntimeResolverSpec `json:"resolverSpec,omitempty"`
 	// +kubebuilder:default:=<>
 	SensorSpec CBContainersRuntimeSensorSpec `json:"sensorSpec,omitempty"`
 	// +kubebuilder:default:=443

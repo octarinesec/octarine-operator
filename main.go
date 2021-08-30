@@ -22,8 +22,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/vmware/cbcontainers-operator/cbcontainers/monitor"
-	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	coreV1 "k8s.io/api/core/v1"
 
 	clusterProcessors "github.com/vmware/cbcontainers-operator/cbcontainers/processors/cluster"
@@ -100,18 +98,12 @@ func main() {
 	k8sVersion := nodesList.Items[0].Status.NodeInfo.KubeletVersion
 	setupLog.Info(fmt.Sprintf("K8s version is: %v", k8sVersion))
 
-	defaultMonitorCreator, err := clusterProcessors.NewDefaultMonitorCreator(monitor.NewDefaultHealthChecker(mgr.GetClient(), commonState.DataPlaneNamespaceName), monitor.NewDefaultFeaturesStatusProvider(mgr.GetClient()), ctrl.Log.WithName("monitor"))
-	if err != nil {
-		setupLog.Error(err, "unable to create default monitor creator")
-		os.Exit(1)
-	}
-
 	cbContainersClusterLogger := ctrl.Log.WithName("controllers").WithName("CBContainersCluster")
 	if err = (&controllers.CBContainersClusterReconciler{
 		Client:              mgr.GetClient(),
 		Log:                 cbContainersClusterLogger,
 		Scheme:              mgr.GetScheme(),
-		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator(), defaultMonitorCreator),
+		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator()),
 		ClusterStateApplier: clusterState.NewClusterStateApplier(cbContainersClusterLogger, k8sVersion, clusterState.NewDefaultClusterChildK8sObjectApplier()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
@@ -123,6 +115,7 @@ func main() {
 		Client:                mgr.GetClient(),
 		Log:                   cbContainersHardeningLogger,
 		Scheme:                mgr.GetScheme(),
+		K8sVersion:            k8sVersion,
 		HardeningStateApplier: hardeningState.NewHardeningStateApplier(cbContainersHardeningLogger, k8sVersion, certificatesUtils.NewCertificateCreator(), hardeningState.NewDefaultHardeningChildK8sObjectApplier()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersHardening")

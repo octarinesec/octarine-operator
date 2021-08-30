@@ -7,6 +7,17 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  - discovery.k8s.io
+  resources:
+  - endpoints
+  - endpointslices
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - admissionregistration.k8s.io
   resources:
   - validatingwebhookconfigurations
@@ -83,17 +94,6 @@ rules:
   - list
   - patch
   - update
-  - watch
-- apiGroups:
-  - discovery.k8s.io
-  - ""
-  resources:
-  - services
-  - endpoints
-  - endpointslices
-  verbs:
-  - get
-  - list
   - watch
 - apiGroups:
   - operator.containers.carbonblack.io

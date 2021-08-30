@@ -5,4 +5,4 @@ bases:
   - ../operator
 
 patchesStrategicMerge:
-  - crd_apiextensionsv1beta1_patch.yaml
+  - crd_apiextensionsv1_patch.yaml

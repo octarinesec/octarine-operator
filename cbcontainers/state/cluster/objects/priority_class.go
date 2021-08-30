@@ -3,7 +3,7 @@ package objects
 import (
 	"fmt"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-	clusterStateUtils "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster/utils"
+	clusterStateAdapters "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster/adapters"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	schedulingV1 "k8s.io/api/scheduling/v1"
 	schedulingV1alpha1 "k8s.io/api/scheduling/v1alpha1"
@@ -43,7 +43,7 @@ func (obj *PriorityClassK8sObject) ClusterChildNamespacedName(_ *cbcontainersv1.
 }
 
 func (obj *PriorityClassK8sObject) MutateClusterChildK8sObject(k8sObject client.Object, _ *cbcontainersv1.CBContainersCluster) error {
-	priorityClassSetter, ok := clusterStateUtils.GetPriorityClassSetter(k8sObject)
+	priorityClassSetter, ok := clusterStateAdapters.GetPriorityClassSetter(k8sObject)
 	if !ok {
 		return fmt.Errorf("expected PriorityClass setter K8s object")
 	}
