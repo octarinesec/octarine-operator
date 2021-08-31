@@ -83,7 +83,7 @@ func (r *CBContainersRuntimeReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	if err := r.setDefaults(cbContainersRuntime); err != nil {
-		return ctrl.Result{}, fmt.Errorf("faild to set defaults to CR: %v", err)
+		return ctrl.Result{}, fmt.Errorf("faild to set defaults to runtime CR: %v", err)
 	}
 
 	setOwner := func(controlledResource metav1.Object) error {

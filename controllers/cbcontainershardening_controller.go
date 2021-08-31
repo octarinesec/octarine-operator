@@ -85,7 +85,7 @@ func (r *CBContainersHardeningReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	if err := r.setDefaults(cbContainersHardening); err != nil {
-		return ctrl.Result{}, fmt.Errorf("faild to set defaults to CR: %v", err)
+		return ctrl.Result{}, fmt.Errorf("faild to set defaults to hardening CR: %v", err)
 	}
 
 	setOwner := func(controlledResource metav1.Object) error {
