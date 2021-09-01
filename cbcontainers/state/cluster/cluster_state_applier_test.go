@@ -2,6 +2,8 @@ package cluster_test
 
 import (
 	"context"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster/objects"
+	appsV1 "k8s.io/api/apps/v1"
 	"reflect"
 	"testing"
 
@@ -25,7 +27,7 @@ import (
 const (
 	DefaultKubeletVersion = "v1.20.2"
 
-	NumberOfExpectedAppliedObjects = 3
+	NumberOfExpectedAppliedObjects = 4
 )
 
 var (
@@ -143,4 +145,13 @@ func TestPriorityClassIsApplied(t *testing.T) {
 		testPriorityClassIsApplied(t, reflect.TypeOf(&schedulingV1alpha1.PriorityClass{}), "v1.08")
 	})
 
+}
+
+func TestMonitorDeploymentIsApplied(t *testing.T) {
+	appliedObjects := getAppliedObjects(t, "")
+	require.Contains(t, appliedObjects, AppliedObject{
+		Namespace:  commonState.DataPlaneNamespaceName,
+		Name:       objects.MonitorName,
+		ObjectType: reflect.TypeOf(&appsV1.Deployment{}),
+	})
 }

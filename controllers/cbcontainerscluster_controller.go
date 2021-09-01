@@ -90,7 +90,9 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	r.setDefaults(cbContainersCluster)
+	if err := r.setDefaults(cbContainersCluster); err != nil {
+		return ctrl.Result{}, fmt.Errorf("faild to set defaults to cluster CR: %v", err)
+	}
 
 	setOwner := func(controlledResource metav1.Object) error {
 		return ctrl.SetControllerReference(cbContainersCluster, controlledResource, r.Scheme)
@@ -113,7 +115,7 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
-func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbcontainersv1.CBContainersCluster) {
+func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbcontainersv1.CBContainersCluster) error {
 	if cbContainersCluster.Spec.ApiGatewaySpec.Scheme == "" {
 		cbContainersCluster.Spec.ApiGatewaySpec.Scheme = "https"
 	}
@@ -133,6 +135,32 @@ func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbconta
 	if cbContainersCluster.Spec.EventsGatewaySpec.Port == 0 {
 		cbContainersCluster.Spec.EventsGatewaySpec.Port = 443
 	}
+
+	if cbContainersCluster.Spec.MonitorSpec.Labels == nil {
+		cbContainersCluster.Spec.MonitorSpec.Labels = make(map[string]string)
+	}
+
+	if cbContainersCluster.Spec.MonitorSpec.DeploymentAnnotations == nil {
+		cbContainersCluster.Spec.MonitorSpec.DeploymentAnnotations = make(map[string]string)
+	}
+
+	if cbContainersCluster.Spec.MonitorSpec.PodTemplateAnnotations == nil {
+		cbContainersCluster.Spec.MonitorSpec.PodTemplateAnnotations = make(map[string]string)
+	}
+
+	if cbContainersCluster.Spec.MonitorSpec.Env == nil {
+		cbContainersCluster.Spec.MonitorSpec.Env = make(map[string]string)
+	}
+
+	setDefaultImage(&cbContainersCluster.Spec.MonitorSpec.Image, "cbartifactory/monitor")
+
+	if err := setDefaultResourceRequirements(&cbContainersCluster.Spec.MonitorSpec.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
+		return err
+	}
+
+	setDefaultHTTPProbes(&cbContainersCluster.Spec.MonitorSpec.Probes)
+
+	return nil
 }
 
 func (r *CBContainersClusterReconciler) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) (*models.RegistrySecretValues, error) {

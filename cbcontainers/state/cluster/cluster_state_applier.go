@@ -11,11 +11,12 @@ import (
 )
 
 type ClusterStateApplier struct {
-	desiredConfigMap      *clusterObjects.ConfigurationK8sObject
-	desiredRegistrySecret *clusterObjects.RegistrySecretK8sObject
-	desiredPriorityClass  *clusterObjects.PriorityClassK8sObject
-	childApplier          ClusterChildK8sObjectApplier
-	log                   logr.Logger
+	desiredConfigMap         *clusterObjects.ConfigurationK8sObject
+	desiredRegistrySecret    *clusterObjects.RegistrySecretK8sObject
+	desiredPriorityClass     *clusterObjects.PriorityClassK8sObject
+	desiredMonitorDeployment *clusterObjects.MonitorDeploymentK8sObject
+	childApplier             ClusterChildK8sObjectApplier
+	log                      logr.Logger
 }
 
 type ClusterChildK8sObjectApplier interface {
@@ -58,5 +59,11 @@ func (c *ClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainer
 	}
 	c.log.Info("Applied priority class", "Mutated", mutatedPriorityClass)
 
-	return mutatedConfigmap || mutatedRegistrySecret || mutatedPriorityClass, nil
+	mutatedMonitor, _, err := c.childApplier.ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredMonitorDeployment, applyOptions)
+	if err != nil {
+		return false, err
+	}
+	c.log.Info("Applied Monitor", "Mutated", mutatedMonitor)
+
+	return mutatedConfigmap || mutatedRegistrySecret || mutatedPriorityClass || mutatedMonitor, nil
 }
