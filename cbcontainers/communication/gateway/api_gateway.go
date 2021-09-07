@@ -4,10 +4,16 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/go-resty/resty/v2"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
-	"net/http"
+)
+
+var (
+	ErrGettingCompatibilityMatrix = errors.New("error while getting compatibility matrix")
 )
 
 type ApiGateway struct {
@@ -71,7 +77,8 @@ func (gateway *ApiGateway) RegisterCluster() error {
 
 	if err != nil {
 		return err
-	} else if !resp.IsSuccess() && resp.StatusCode() != http.StatusConflict { // ignore conflict (409) response, which means the domain already exists
+	}
+	if !resp.IsSuccess() && resp.StatusCode() != http.StatusConflict { // ignore conflict (409) response, which means the domain already exists
 		return fmt.Errorf("failed creating cluster %s (%d): %s", gateway.cluster, resp.StatusCode(), resp)
 	}
 
@@ -87,7 +94,8 @@ func (gateway *ApiGateway) GetRegistrySecret() (*models.RegistrySecretValues, er
 
 	if err != nil {
 		return nil, err
-	} else if !resp.IsSuccess() {
+	}
+	if !resp.IsSuccess() {
 		return nil, fmt.Errorf("failed retrieving registry secret (%d): %s", resp.StatusCode(), resp)
 	}
 
@@ -100,4 +108,24 @@ func (gateway *ApiGateway) GetCertificates(name string, privateKey *rsa.PrivateK
 	organizationalUnit := []string{gateway.cluster}
 
 	return gateway.getCertificates(commonName, organizationalUnit, organization, privateKey)
+}
+
+func (gateway *ApiGateway) GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.CompatibilityMatrixEntry, error) {
+	url := gateway.baseUrl("setup/compatibility")
+	resp, err := gateway.baseRequest().
+		SetResult(&models.CompatibilityMatrixEntry{}).
+		SetQueryParam("operator_version", operatorVersion).
+		Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrGettingCompatibilityMatrix, err)
+	}
+	if !resp.IsSuccess() {
+		return nil, fmt.Errorf("%w: status code (%d)", ErrGettingCompatibilityMatrix, resp.StatusCode())
+	}
+	r, ok := resp.Result().(*models.CompatibilityMatrixEntry)
+	if !ok {
+		return nil, fmt.Errorf("malformed response from the backend")
+	}
+
+	return r, nil
 }

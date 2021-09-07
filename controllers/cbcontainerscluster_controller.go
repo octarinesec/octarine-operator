@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/communication/gateway"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
@@ -43,10 +44,21 @@ type ClusterProcessor interface {
 	Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error)
 }
 
+type GatewayCreator interface {
+	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) *gateway.ApiGateway
+}
+
 type CBContainersClusterReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
+
+	// GatewayCreator will be used to create a gateway.ApiGateway
+	GatewayCreator
+	// _apiGateway is a singleton gateway.ApiGateway struct.
+	// It is initialized the first time it is used and reused after that.
+	// It should not be accessed directly, but through the apiGateway method.
+	_apiGateway *gateway.ApiGateway
 
 	ClusterProcessor    ClusterProcessor
 	ClusterStateApplier ClusterStateApplier
@@ -98,8 +110,25 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.SetControllerReference(cbContainersCluster, controlledResource, r.Scheme)
 	}
 
+	accessToken, err := r.getAccessToken(context.Background(), cbContainersCluster)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// TODO: version
+	m, err := r.apiGateway(cbContainersCluster, accessToken).GetCompatibilityMatrixEntryFor("3.1.0")
+	if err == nil {
+		// if there is no error check the compatibility
+		// if there is an error skip the check
+
+		err = m.CheckCompatibility(cbContainersCluster.Spec.Version)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	r.Log.Info("Getting registry secret values")
-	registrySecret, err := r.getRegistrySecretValues(ctx, cbContainersCluster)
+	registrySecret, err := r.getRegistrySecretValues(ctx, cbContainersCluster, accessToken)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -113,6 +142,13 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 	r.Log.Info("Finished reconciling", "Requiring", stateWasChanged)
 	r.Log.Info("\n\n")
 	return ctrl.Result{Requeue: stateWasChanged}, nil
+}
+
+func (r *CBContainersClusterReconciler) apiGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) *gateway.ApiGateway {
+	if r._apiGateway == nil {
+		r._apiGateway = r.GatewayCreator.CreateGateway(cbContainersCluster, accessToken)
+	}
+	return r._apiGateway
 }
 
 func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbcontainersv1.CBContainersCluster) error {
@@ -163,12 +199,7 @@ func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbconta
 	return nil
 }
 
-func (r *CBContainersClusterReconciler) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) (*models.RegistrySecretValues, error) {
-	accessToken, err := r.getAccessToken(ctx, cbContainersCluster)
-	if err != nil {
-		return nil, err
-	}
-
+func (r *CBContainersClusterReconciler) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error) {
 	return r.ClusterProcessor.Process(cbContainersCluster, accessToken)
 }
 

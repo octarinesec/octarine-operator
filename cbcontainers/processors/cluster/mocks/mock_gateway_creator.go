@@ -9,7 +9,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	v1 "github.com/vmware/cbcontainers-operator/api/v1"
-	cluster "github.com/vmware/cbcontainers-operator/cbcontainers/processors/cluster"
+	gateway "github.com/vmware/cbcontainers-operator/cbcontainers/communication/gateway"
 )
 
 // MockGatewayCreator is a mock of GatewayCreator interface.
@@ -36,10 +36,10 @@ func (m *MockGatewayCreator) EXPECT() *MockGatewayCreatorMockRecorder {
 }
 
 // CreateGateway mocks base method.
-func (m *MockGatewayCreator) CreateGateway(arg0 *v1.CBContainersCluster, arg1 string) cluster.Gateway {
+func (m *MockGatewayCreator) CreateGateway(arg0 *v1.CBContainersCluster, arg1 string) *gateway.ApiGateway {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateGateway", arg0, arg1)
-	ret0, _ := ret[0].(cluster.Gateway)
+	ret0, _ := ret[0].(*gateway.ApiGateway)
 	return ret0
 }
 

@@ -4,10 +4,12 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"reflect"
+
 	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/communication/gateway"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
-	"reflect"
 )
 
 type Gateway interface {
@@ -17,7 +19,7 @@ type Gateway interface {
 }
 
 type GatewayCreator interface {
-	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) Gateway
+	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) *gateway.ApiGateway
 }
 
 type CBContainerClusterProcessor struct {

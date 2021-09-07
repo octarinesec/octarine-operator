@@ -98,12 +98,14 @@ func main() {
 	k8sVersion := nodesList.Items[0].Status.NodeInfo.KubeletVersion
 	setupLog.Info(fmt.Sprintf("K8s version is: %v", k8sVersion))
 
+	gatewayCreator := clusterProcessors.NewDefaultGatewayCreator()
 	cbContainersClusterLogger := ctrl.Log.WithName("controllers").WithName("CBContainersCluster")
 	if err = (&controllers.CBContainersClusterReconciler{
 		Client:              mgr.GetClient(),
 		Log:                 cbContainersClusterLogger,
 		Scheme:              mgr.GetScheme(),
-		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator()),
+		GatewayCreator:      gatewayCreator,
+		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, gatewayCreator),
 		ClusterStateApplier: clusterState.NewClusterStateApplier(cbContainersClusterLogger, k8sVersion, clusterState.NewDefaultClusterChildK8sObjectApplier()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
