@@ -2,6 +2,7 @@ package controllers_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -28,6 +29,8 @@ type ClusterControllerTestMocks struct {
 	ClusterProcessor    *mocks.MockClusterProcessor
 	ClusterStateApplier *mocks.MockClusterStateApplier
 	ctx                 context.Context
+	gatewayCreator      *mocks.MockGatewayCreator
+	gateway             *mocks.MockGateway
 }
 
 const (
@@ -40,6 +43,7 @@ var (
 	ClusterCustomResourceItems = []cbcontainersv1.CBContainersCluster{
 		{
 			Spec: cbcontainersv1.CBContainersClusterSpec{
+				Version: "21.7.0",
 				ApiGatewaySpec: cbcontainersv1.CBContainersApiGatewaySpec{
 					AccessTokenSecretName: ClusterAccessTokenSecretName,
 				},
@@ -57,6 +61,8 @@ func testCBContainersClusterController(t *testing.T, setups ...SetupClusterContr
 		client:              testUtilsMocks.NewMockClient(ctrl),
 		ClusterProcessor:    mocks.NewMockClusterProcessor(ctrl),
 		ClusterStateApplier: mocks.NewMockClusterStateApplier(ctrl),
+		gatewayCreator:      mocks.NewMockGatewayCreator(ctrl),
+		gateway:             mocks.NewMockGateway(ctrl),
 	}
 
 	for _, setup := range setups {
@@ -67,6 +73,8 @@ func testCBContainersClusterController(t *testing.T, setups ...SetupClusterContr
 		Client: mocksObjects.client,
 		Log:    &logrTesting.TestLogger{T: t},
 		Scheme: &runtime.Scheme{},
+
+		GatewayCreator: mocksObjects.gatewayCreator,
 
 		ClusterProcessor:    mocksObjects.ClusterProcessor,
 		ClusterStateApplier: mocksObjects.ClusterStateApplier,
@@ -92,6 +100,12 @@ func setUpTokenSecretValues(testMocks *ClusterControllerTestMocks) {
 			}
 		}).
 		Return(nil)
+}
+
+func setUpGateway(testMocks *ClusterControllerTestMocks) {
+	testMocks.gatewayCreator.EXPECT().CreateGateway(gomock.Any(), gomock.Any()).Return(testMocks.gateway)
+	// return error by default, because in that case we skip the compatibility check
+	testMocks.gateway.EXPECT().GetCompatibilityMatrixEntryFor(gomock.Any()).Return(nil, errors.New("error while getting compatibility matrix"))
 }
 
 func TestListClusterResourcesErrorShouldReturnError(t *testing.T) {
@@ -146,7 +160,7 @@ func TestClusterReconcile(t *testing.T) {
 	secretValues := &models.RegistrySecretValues{Data: map[string][]byte{test_utils.RandomString(): {}}}
 
 	t.Run("When processor returns error, reconcile should return error", func(t *testing.T) {
-		_, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+		_, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, setUpGateway, func(testMocks *ClusterControllerTestMocks) {
 			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(nil, fmt.Errorf(""))
 		})
 
@@ -154,7 +168,7 @@ func TestClusterReconcile(t *testing.T) {
 	})
 
 	t.Run("When state applier returns error, reconcile should return error", func(t *testing.T) {
-		_, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+		_, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, setUpGateway, func(testMocks *ClusterControllerTestMocks) {
 			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
 			testMocks.ClusterStateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, testMocks.client, gomock.Any()).Return(false, fmt.Errorf(""))
 		})
@@ -163,7 +177,7 @@ func TestClusterReconcile(t *testing.T) {
 	})
 
 	t.Run("When state applier returns state was changed, reconcile should return Requeue true", func(t *testing.T) {
-		result, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, setUpGateway, func(testMocks *ClusterControllerTestMocks) {
 			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
 			testMocks.ClusterStateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, testMocks.client, gomock.Any()).Return(true, nil)
 		})
@@ -173,12 +187,53 @@ func TestClusterReconcile(t *testing.T) {
 	})
 
 	t.Run("When state applier returns state was not changed, reconcile should return default Requeue", func(t *testing.T) {
-		result, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, setUpGateway, func(testMocks *ClusterControllerTestMocks) {
 			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
 			testMocks.ClusterStateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, testMocks.client, gomock.Any()).Return(false, nil)
 		})
 
 		require.NoError(t, err)
 		require.Equal(t, result, ctrlRuntime.Result{})
+	})
+
+	t.Run("When it gets the compatibility matrix succesfully it should make a compatibility check", func(t *testing.T) {
+		t.Run("When agent version is between min and max it should not return an error", func(t *testing.T) {
+			result, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+				testMocks.gatewayCreator.EXPECT().CreateGateway(gomock.Any(), gomock.Any()).Return(testMocks.gateway)
+
+				// TODO: operator version
+				testMocks.gateway.EXPECT().GetCompatibilityMatrixEntryFor(gomock.Any()).Return(&models.CompatibilityMatrixEntry{Min: "21.6.0", Max: "21.8.0"}, nil)
+
+				testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
+				testMocks.ClusterStateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, testMocks.client, gomock.Any()).Return(false, nil)
+			})
+
+			require.NoError(t, err)
+			require.Equal(t, result, ctrlRuntime.Result{})
+		})
+
+		t.Run("When agent version is smaller than min it should return an error", func(t *testing.T) {
+			result, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+				testMocks.gatewayCreator.EXPECT().CreateGateway(gomock.Any(), gomock.Any()).Return(testMocks.gateway)
+
+				// TODO: operator version
+				testMocks.gateway.EXPECT().GetCompatibilityMatrixEntryFor(gomock.Any()).Return(&models.CompatibilityMatrixEntry{Min: "21.8.0", Max: "latest"}, nil)
+			})
+
+			require.Error(t, err)
+			require.Equal(t, result, ctrlRuntime.Result{})
+		})
+
+		t.Run("When agent version is bigger than max it should return an error", func(t *testing.T) {
+			result, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+				testMocks.gatewayCreator.EXPECT().CreateGateway(gomock.Any(), gomock.Any()).Return(testMocks.gateway)
+
+				// TODO: operator version
+				testMocks.gateway.EXPECT().GetCompatibilityMatrixEntryFor(gomock.Any()).Return(&models.CompatibilityMatrixEntry{Min: "none", Max: "21.6.0"}, nil)
+			})
+
+			require.Error(t, err)
+			require.Equal(t, result, ctrlRuntime.Result{})
+		})
 	})
 }

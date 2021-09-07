@@ -21,7 +21,6 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/communication/gateway"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
@@ -44,8 +43,12 @@ type ClusterProcessor interface {
 	Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error)
 }
 
+type Gateway interface {
+	GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.CompatibilityMatrixEntry, error)
+}
+
 type GatewayCreator interface {
-	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) *gateway.ApiGateway
+	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) Gateway
 }
 
 type CBContainersClusterReconciler struct {
@@ -58,7 +61,7 @@ type CBContainersClusterReconciler struct {
 	// _apiGateway is a singleton gateway.ApiGateway struct.
 	// It is initialized the first time it is used and reused after that.
 	// It should not be accessed directly, but through the apiGateway method.
-	_apiGateway *gateway.ApiGateway
+	_apiGateway Gateway
 
 	ClusterProcessor    ClusterProcessor
 	ClusterStateApplier ClusterStateApplier
@@ -144,7 +147,7 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
-func (r *CBContainersClusterReconciler) apiGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) *gateway.ApiGateway {
+func (r *CBContainersClusterReconciler) apiGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) Gateway {
 	if r._apiGateway == nil {
 		r._apiGateway = r.GatewayCreator.CreateGateway(cbContainersCluster, accessToken)
 	}

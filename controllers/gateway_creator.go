@@ -1,4 +1,4 @@
-package cluster
+package controllers
 
 import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
