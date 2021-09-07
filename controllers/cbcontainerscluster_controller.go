@@ -51,6 +51,10 @@ type GatewayCreator interface {
 	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) Gateway
 }
 
+type OperatorVersionProvider interface {
+	GetOperatorVersion() (string, error)
+}
+
 type CBContainersClusterReconciler struct {
 	client.Client
 	Log    logr.Logger
@@ -62,6 +66,8 @@ type CBContainersClusterReconciler struct {
 	// It is initialized the first time it is used and reused after that.
 	// It should not be accessed directly, but through the apiGateway method.
 	_apiGateway Gateway
+
+	OperatorVersionProvider
 
 	ClusterProcessor    ClusterProcessor
 	ClusterStateApplier ClusterStateApplier
@@ -118,8 +124,12 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 
-	// TODO: version
-	m, err := r.apiGateway(cbContainersCluster, accessToken).GetCompatibilityMatrixEntryFor("3.1.0")
+	operatorVersion, err := r.OperatorVersionProvider.GetOperatorVersion()
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	m, err := r.apiGateway(cbContainersCluster, accessToken).GetCompatibilityMatrixEntryFor(operatorVersion)
 	if err == nil {
 		// if there is no error check the compatibility
 		// if there is an error skip the check
@@ -128,6 +138,8 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 		if err != nil {
 			return ctrl.Result{}, err
 		}
+	} else {
+		r.Log.Error(err, "error while getting compatibility matrix from backend")
 	}
 
 	r.Log.Info("Getting registry secret values")

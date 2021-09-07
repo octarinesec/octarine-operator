@@ -120,7 +120,7 @@ generate: controller-gen
 
 # Build the docker image
 docker-build:
-	docker build -t ${IMG} .
+	docker build -t ${IMG} --build-arg OPERATOR_VERSION=${VERSION} .
 
 # Push the docker image
 docker-push:

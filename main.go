@@ -40,6 +40,7 @@ import (
 	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
 	clusterState "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster"
 	hardeningState "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/operator"
 	runtimeState "github.com/vmware/cbcontainers-operator/cbcontainers/state/runtime"
 	certificatesUtils "github.com/vmware/cbcontainers-operator/cbcontainers/utils/certificates"
 	"github.com/vmware/cbcontainers-operator/controllers"
@@ -100,12 +101,13 @@ func main() {
 
 	cbContainersClusterLogger := ctrl.Log.WithName("controllers").WithName("CBContainersCluster")
 	if err = (&controllers.CBContainersClusterReconciler{
-		Client:              mgr.GetClient(),
-		Log:                 cbContainersClusterLogger,
-		Scheme:              mgr.GetScheme(),
-		GatewayCreator:      controllers.NewDefaultGatewayCreator(),
-		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator()),
-		ClusterStateApplier: clusterState.NewClusterStateApplier(cbContainersClusterLogger, k8sVersion, clusterState.NewDefaultClusterChildK8sObjectApplier()),
+		Client:                  mgr.GetClient(),
+		Log:                     cbContainersClusterLogger,
+		Scheme:                  mgr.GetScheme(),
+		GatewayCreator:          controllers.NewDefaultGatewayCreator(),
+		OperatorVersionProvider: operator.NewEnvVersionProvider(),
+		ClusterProcessor:        clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator()),
+		ClusterStateApplier:     clusterState.NewClusterStateApplier(cbContainersClusterLogger, k8sVersion, clusterState.NewDefaultClusterChildK8sObjectApplier()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
 		os.Exit(1)
