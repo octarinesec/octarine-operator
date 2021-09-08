@@ -210,7 +210,7 @@ func TestClusterReconcile(t *testing.T) {
 
 				operatorVersion := "3.1.0"
 				testMocks.operatorVersionProvider.EXPECT().GetOperatorVersion().Return(operatorVersion, nil)
-				testMocks.gateway.EXPECT().GetCompatibilityMatrixEntryFor(operatorVersion).Return(&models.CompatibilityMatrixEntry{Min: "21.6.0", Max: "21.8.0"}, nil)
+				testMocks.gateway.EXPECT().GetCompatibilityMatrixEntryFor(operatorVersion).Return(&models.OperatorCompatibility{MinAgent: "21.6.0", MaxAgent: "21.8.0"}, nil)
 
 				testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
 				testMocks.ClusterStateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, testMocks.client, gomock.Any()).Return(false, nil)
@@ -226,7 +226,7 @@ func TestClusterReconcile(t *testing.T) {
 
 				operatorVersion := "3.1.0"
 				testMocks.operatorVersionProvider.EXPECT().GetOperatorVersion().Return(operatorVersion, nil)
-				testMocks.gateway.EXPECT().GetCompatibilityMatrixEntryFor(operatorVersion).Return(&models.CompatibilityMatrixEntry{Min: "21.8.0", Max: "latest"}, nil)
+				testMocks.gateway.EXPECT().GetCompatibilityMatrixEntryFor(operatorVersion).Return(&models.OperatorCompatibility{MinAgent: "21.8.0", MaxAgent: "latest"}, nil)
 			})
 
 			require.Error(t, err)
@@ -239,7 +239,7 @@ func TestClusterReconcile(t *testing.T) {
 
 				operatorVersion := "3.1.0"
 				testMocks.operatorVersionProvider.EXPECT().GetOperatorVersion().Return(operatorVersion, nil)
-				testMocks.gateway.EXPECT().GetCompatibilityMatrixEntryFor(operatorVersion).Return(&models.CompatibilityMatrixEntry{Min: "none", Max: "21.6.0"}, nil)
+				testMocks.gateway.EXPECT().GetCompatibilityMatrixEntryFor(operatorVersion).Return(&models.OperatorCompatibility{MinAgent: "none", MaxAgent: "21.6.0"}, nil)
 			})
 
 			require.Error(t, err)

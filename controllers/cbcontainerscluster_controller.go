@@ -44,7 +44,7 @@ type ClusterProcessor interface {
 }
 
 type Gateway interface {
-	GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.CompatibilityMatrixEntry, error)
+	GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.OperatorCompatibility, error)
 }
 
 type GatewayCreator interface {
@@ -61,13 +61,9 @@ type CBContainersClusterReconciler struct {
 	Scheme *runtime.Scheme
 
 	// GatewayCreator will be used to create a gateway.ApiGateway
-	GatewayCreator
-	// _apiGateway is a singleton gateway.ApiGateway struct.
-	// It is initialized the first time it is used and reused after that.
-	// It should not be accessed directly, but through the apiGateway method.
-	_apiGateway Gateway
-
-	OperatorVersionProvider
+	GatewayCreator GatewayCreator
+	// OperatorVersionProvider provides the version of the running operator
+	OperatorVersionProvider OperatorVersionProvider
 
 	ClusterProcessor    ClusterProcessor
 	ClusterStateApplier ClusterStateApplier
@@ -160,10 +156,7 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 }
 
 func (r *CBContainersClusterReconciler) apiGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) Gateway {
-	if r._apiGateway == nil {
-		r._apiGateway = r.GatewayCreator.CreateGateway(cbContainersCluster, accessToken)
-	}
-	return r._apiGateway
+	return r.GatewayCreator.CreateGateway(cbContainersCluster, accessToken)
 }
 
 func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbcontainersv1.CBContainersCluster) error {

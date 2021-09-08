@@ -35,10 +35,10 @@ func (m *MockGateway) EXPECT() *MockGatewayMockRecorder {
 }
 
 // GetCompatibilityMatrixEntryFor mocks base method.
-func (m *MockGateway) GetCompatibilityMatrixEntryFor(arg0 string) (*models.CompatibilityMatrixEntry, error) {
+func (m *MockGateway) GetCompatibilityMatrixEntryFor(arg0 string) (*models.OperatorCompatibility, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCompatibilityMatrixEntryFor", arg0)
-	ret0, _ := ret[0].(*models.CompatibilityMatrixEntry)
+	ret0, _ := ret[0].(*models.OperatorCompatibility)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

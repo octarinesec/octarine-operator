@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ErrGettingCompatibilityMatrix = errors.New("error while getting compatibility matrix")
+	ErrGettingOperatorCompatibility = errors.New("error while getting the operator compatibility")
 )
 
 type ApiGateway struct {
@@ -110,19 +110,19 @@ func (gateway *ApiGateway) GetCertificates(name string, privateKey *rsa.PrivateK
 	return gateway.getCertificates(commonName, organizationalUnit, organization, privateKey)
 }
 
-func (gateway *ApiGateway) GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.CompatibilityMatrixEntry, error) {
+func (gateway *ApiGateway) GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.OperatorCompatibility, error) {
 	url := gateway.baseUrl("setup/compatibility")
 	resp, err := gateway.baseRequest().
-		SetResult(&models.CompatibilityMatrixEntry{}).
+		SetResult(&models.OperatorCompatibility{}).
 		SetQueryParam("operator_version", operatorVersion).
 		Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrGettingCompatibilityMatrix, err)
+		return nil, fmt.Errorf("%w: %v", ErrGettingOperatorCompatibility, err)
 	}
 	if !resp.IsSuccess() {
-		return nil, fmt.Errorf("%w: status code (%d)", ErrGettingCompatibilityMatrix, resp.StatusCode())
+		return nil, fmt.Errorf("%w: status code (%d)", ErrGettingOperatorCompatibility, resp.StatusCode())
 	}
-	r, ok := resp.Result().(*models.CompatibilityMatrixEntry)
+	r, ok := resp.Result().(*models.OperatorCompatibility)
 	if !ok {
 		return nil, fmt.Errorf("malformed response from the backend")
 	}
