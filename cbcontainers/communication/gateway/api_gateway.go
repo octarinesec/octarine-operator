@@ -111,10 +111,10 @@ func (gateway *ApiGateway) GetCertificates(name string, privateKey *rsa.PrivateK
 }
 
 func (gateway *ApiGateway) GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.OperatorCompatibility, error) {
-	url := gateway.baseUrl("setup/compatibility")
+	url := gateway.baseUrl("setup/compatibility/{operatorVersion}")
 	resp, err := gateway.baseRequest().
 		SetResult(&models.OperatorCompatibility{}).
-		SetQueryParam("operator_version", operatorVersion).
+		SetPathParam("operatorVersion", operatorVersion).
 		Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrGettingOperatorCompatibility, err)
