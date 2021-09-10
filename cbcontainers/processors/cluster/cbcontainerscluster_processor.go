@@ -53,6 +53,13 @@ func (processor *CBContainerClusterProcessor) initializeIfNeeded(cbContainersClu
 		return nil
 	}
 
+	if cbContainersCluster.Spec.GatewayTLS.InsecureSkipVerify {
+		processor.log.Info("'tls insecure skip verify' set to true. In this mode, TLS is susceptible to machine-in-the-middle attacks")
+		if len(cbContainersCluster.Spec.GatewayTLS.RootCAsBundle) > 0 {
+			processor.log.Info("root CAs are redundant due to 'tls insecure skip verify' set to true")
+		}
+	}
+
 	processor.log.Info("Initializing CBContainerClusterProcessor components")
 	gateway, err := processor.gatewayCreator.CreateGateway(cbContainersCluster, accessToken)
 	if err != nil {
