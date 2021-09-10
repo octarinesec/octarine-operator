@@ -65,7 +65,7 @@ spec:
               required:
               - host
               type: object
-            gatewayTls:
+            gatewayTLS:
               properties:
                 insecureSkipVerify:
                   type: boolean
@@ -165,7 +165,6 @@ spec:
           - apiGatewaySpec
           - clusterName
           - eventsGatewaySpec
-          - gatewayTls
           - version
           type: object
         status:
