@@ -85,7 +85,7 @@ func (obj *MonitorDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.Pod
 		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
 	}
 
-	commonState.MutateVolumesToIncludeRootCasVolume(templatePodSpec)
+	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
 func (obj *MonitorDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, monitorSpec *cbcontainersv1.CBContainersClusterMonitorSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
@@ -131,5 +131,5 @@ func (obj *MonitorDeploymentK8sObject) mutateVolumesMounts(container *coreV1.Con
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
 
-	commonState.MutateVolumeMountToIncludeRootCasVolumeMount(container)
+	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
 }

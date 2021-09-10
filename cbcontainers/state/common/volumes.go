@@ -7,7 +7,7 @@ const (
 	DesiredTlsRootCAsVolumeMountReadOnly = true
 )
 
-func GetVolumeIndexForName(templatePodSpec *coreV1.PodSpec, name string) int {
+func EnsureAndGetVolumeIndexForName(templatePodSpec *coreV1.PodSpec, name string) int {
 	for i, volume := range templatePodSpec.Volumes {
 		if volume.Name == name {
 			return i
@@ -31,8 +31,8 @@ func MutateVolumeConfigMapItem(configMapSource *coreV1.ConfigMapVolumeSource, ke
 	configMapSource.Items = append(configMapSource.Items, item)
 }
 
-func MutateVolumesToIncludeRootCasVolume(templatePodSpec *coreV1.PodSpec) {
-	rootCAsVolumeIndex := GetVolumeIndexForName(templatePodSpec, DesiredTlsRootCAsVolumeName)
+func MutateVolumesToIncludeRootCAsVolume(templatePodSpec *coreV1.PodSpec) {
+	rootCAsVolumeIndex := EnsureAndGetVolumeIndexForName(templatePodSpec, DesiredTlsRootCAsVolumeName)
 	if templatePodSpec.Volumes[rootCAsVolumeIndex].ConfigMap == nil {
 		templatePodSpec.Volumes[rootCAsVolumeIndex].ConfigMap = &coreV1.ConfigMapVolumeSource{
 			LocalObjectReference: coreV1.LocalObjectReference{Name: DataPlaneConfigmapName},
@@ -44,7 +44,7 @@ func MutateVolumesToIncludeRootCasVolume(templatePodSpec *coreV1.PodSpec) {
 	MutateVolumeConfigMapItem(templatePodSpec.Volumes[rootCAsVolumeIndex].ConfigMap, DataPlaneConfigmapTlsRootCAsFilePath, DataPlaneConfigmapTlsRootCAsFilePath)
 }
 
-func GetVolumeMountIndexForName(container *coreV1.Container, name string) int {
+func EnsureAndGetVolumeMountIndexForName(container *coreV1.Container, name string) int {
 	for i, volumeMount := range container.VolumeMounts {
 		if volumeMount.Name == name {
 			return i
@@ -61,7 +61,7 @@ func MutateVolumeMount(container *coreV1.Container, volumeMountIndex int, mountP
 	container.VolumeMounts[volumeMountIndex].ReadOnly = readOnly
 }
 
-func MutateVolumeMountToIncludeRootCasVolumeMount(container *coreV1.Container) {
-	tlsRootCasVolumeMountIndex := GetVolumeMountIndexForName(container, DesiredTlsRootCAsVolumeName)
+func MutateVolumeMountToIncludeRootCAsVolumeMount(container *coreV1.Container) {
+	tlsRootCasVolumeMountIndex := EnsureAndGetVolumeMountIndexForName(container, DesiredTlsRootCAsVolumeName)
 	MutateVolumeMount(container, tlsRootCasVolumeMountIndex, DataPlaneConfigmapTlsRootCAsDirPath, DesiredTlsRootCAsVolumeMountReadOnly)
 }

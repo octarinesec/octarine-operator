@@ -93,7 +93,7 @@ func (obj *ResolverDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.Po
 		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
 	}
 
-	commonState.MutateVolumesToIncludeRootCasVolume(templatePodSpec)
+	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
 func (obj *ResolverDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Deployment, resolverSpec *cbContainersV1.CBContainersRuntimeResolverSpec) {
@@ -200,5 +200,5 @@ func (obj *ResolverDeploymentK8sObject) mutateVolumesMounts(container *coreV1.Co
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
 
-	commonState.MutateVolumeMountToIncludeRootCasVolumeMount(container)
+	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
 }

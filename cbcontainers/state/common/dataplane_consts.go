@@ -17,7 +17,7 @@ const (
 	DataPlaneConfigmapTlsSkipVerifyKey  = "TLS.SkipVerify"
 	DataPlaneConfigmapTlsRootCAsPathKey = "TLS.RootCAsPath"
 
-	DataPlaneConfigmapTlsRootCAsDirPath = "/etc/gateway-certs"
+	DataPlaneConfigmapTlsRootCAsDirPath  = "/etc/gateway-certs"
 	DataPlaneConfigmapTlsRootCAsFilePath = "root.pem"
 
 	AccessTokenSecretKeyName = "accessToken"

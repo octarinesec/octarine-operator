@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"net/http"
 )
@@ -21,6 +22,13 @@ type ApiGateway struct {
 }
 
 func createClient(tlsInsecureSkipVerify bool, rootCAsBundle []byte) (*resty.Client, error) {
+	if tlsInsecureSkipVerify {
+		logrus.Warnf("'tls insecure skip verify' set to true. In this mode, TLS is susceptible to machine-in-the-middle attacks")
+		if len(rootCAsBundle) > 0 {
+			logrus.Infof("root CAs are redundant due to 'tls insecure skip verify' set to true")
+		}
+	}
+
 	client := resty.New()
 	tlsConfig := tls.Config{
 		InsecureSkipVerify: tlsInsecureSkipVerify,

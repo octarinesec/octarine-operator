@@ -106,7 +106,7 @@ func (obj *EnforcerDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.Po
 		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
 	}
 
-	tlsSecretVolumeIndex := commonState.GetVolumeIndexForName(templatePodSpec, DesiredTlsSecretVolumeName)
+	tlsSecretVolumeIndex := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, DesiredTlsSecretVolumeName)
 	if templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret == nil {
 		templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret = &coreV1.SecretVolumeSource{}
 	}
@@ -114,7 +114,7 @@ func (obj *EnforcerDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.Po
 	templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret.DefaultMode = &DesiredTlsSecretVolumeDecimalDefaultMode
 	templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret.Optional = &DesiredTlsSecretVolumeOptionalValue
 
-	commonState.MutateVolumesToIncludeRootCasVolume(templatePodSpec)
+	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
 func (obj *EnforcerDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
@@ -181,8 +181,8 @@ func (obj *EnforcerDeploymentK8sObject) mutateVolumesMounts(container *coreV1.Co
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
 
-	tlsSecretVolumeMountIndex := commonState.GetVolumeMountIndexForName(container, DesiredTlsSecretVolumeName)
+	tlsSecretVolumeMountIndex := commonState.EnsureAndGetVolumeMountIndexForName(container, DesiredTlsSecretVolumeName)
 	commonState.MutateVolumeMount(container, tlsSecretVolumeMountIndex, DesiredTlsSecretVolumeMountPath, DesiredTlsSecretVolumeMountReadOnly)
 
-	commonState.MutateVolumeMountToIncludeRootCasVolumeMount(container)
+	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
 }
