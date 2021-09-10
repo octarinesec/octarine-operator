@@ -18,6 +18,8 @@ const (
 	apiHostVarName          = "OCTARINE_API_HOST"
 	apiPortVarName          = "OCTARINE_API_PORT"
 	apiAdapterVarName       = "OCTARINE_API_ADAPTER_NAME"
+	tlsSkipVerifyVarName    = "TLS_INSECURE_SKIP_VERIFY"
+	tlsRootCAsPathVarName   = "TLS_ROOT_CAS_PATH"
 )
 
 type EnvVarBuilder struct {
@@ -42,6 +44,11 @@ func (b *EnvVarBuilder) WithEventsGateway(eventsGatewaySpec *cbcontainersv1.CBCo
 	b.envVars[eventGatewayPortVarName] = coreV1.EnvVar{Name: eventGatewayPortVarName, Value: strconv.Itoa(eventsGatewaySpec.Port)}
 
 	return b
+}
+
+func (b *EnvVarBuilder) WithGatewayTLS() *EnvVarBuilder {
+	return b.WithEnvVarFromConfigmap(tlsSkipVerifyVarName, DataPlaneConfigmapTlsSkipVerifyKey).
+		WithEnvVarFromConfigmap(tlsRootCAsPathVarName, DataPlaneConfigmapTlsRootCAsPathKey)
 }
 
 func (b *EnvVarBuilder) WithCustom(customEnvsToAdd ...coreV1.EnvVar) *EnvVarBuilder {
@@ -89,7 +96,8 @@ func (b *EnvVarBuilder) WithCommonDataPlane(accessKeySecretName string) *EnvVarB
 		WithEnvVarFromConfigmap(apiSchemeVarName, DataPlaneConfigmapApiSchemeKey).
 		WithEnvVarFromConfigmap(apiHostVarName, DataPlaneConfigmapApiHostKey).
 		WithEnvVarFromConfigmap(apiPortVarName, DataPlaneConfigmapApiPortKey).
-		WithEnvVarFromConfigmap(apiAdapterVarName, DataPlaneConfigmapApiAdapterKey)
+		WithEnvVarFromConfigmap(apiAdapterVarName, DataPlaneConfigmapApiAdapterKey).
+		WithGatewayTLS()
 }
 
 func (b *EnvVarBuilder) IsEqual(actualEnv []coreV1.EnvVar) bool {

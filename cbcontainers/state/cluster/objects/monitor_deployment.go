@@ -74,9 +74,18 @@ func (obj *MonitorDeploymentK8sObject) MutateClusterChildK8sObject(k8sObject cli
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, monitorSpec.DeploymentAnnotations)
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, monitorSpec.PodTemplateAnnotations)
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
+	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec, &cbContainersCluster.Spec.MonitorSpec, &cbContainersCluster.Spec.EventsGatewaySpec, cbContainersCluster.Spec.Version, cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName)
 
 	return nil
+}
+
+func (obj *MonitorDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.PodSpec) {
+	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != 1 {
+		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
+	}
+
+	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
 func (obj *MonitorDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, monitorSpec *cbcontainersv1.CBContainersClusterMonitorSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
@@ -101,6 +110,7 @@ func (obj *MonitorDeploymentK8sObject) mutateContainer(container *coreV1.Contain
 	commonState.MutateImage(container, monitorSpec.Image, version)
 	commonState.MutateContainerHTTPProbes(container, monitorSpec.Probes)
 	obj.mutateSecurityContext(container)
+	obj.mutateVolumesMounts(container)
 }
 
 func (obj *MonitorDeploymentK8sObject) mutateSecurityContext(container *coreV1.Container) {
@@ -114,4 +124,12 @@ func (obj *MonitorDeploymentK8sObject) mutateSecurityContext(container *coreV1.C
 	container.SecurityContext.Capabilities = &coreV1.Capabilities{
 		Drop: MonitorCapabilitiesToDrop,
 	}
+}
+
+func (obj *MonitorDeploymentK8sObject) mutateVolumesMounts(container *coreV1.Container) {
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != 1 {
+		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
+	}
+
+	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
 }

@@ -1,5 +1,11 @@
 package v1
 
+type CBContainersGatewayTLS struct {
+	// +kubebuilder:default:=false
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+	RootCAsBundle []byte `json:"rootCAsBundle,omitempty"`
+}
+
 type CBContainersEventsGatewaySpec struct {
 	Host string `json:"host,required"`
 	// +kubebuilder:default:=443

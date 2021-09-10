@@ -5,9 +5,6 @@
 package mocks
 
 import (
-	rsa "crypto/rsa"
-	tls "crypto/tls"
-	x509 "crypto/x509"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -35,22 +32,6 @@ func NewMockGateway(ctrl *gomock.Controller) *MockGateway {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockGateway) EXPECT() *MockGatewayMockRecorder {
 	return m.recorder
-}
-
-// GetCertificates mocks base method.
-func (m *MockGateway) GetCertificates(arg0 string, arg1 *rsa.PrivateKey) (*x509.CertPool, *tls.Certificate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCertificates", arg0, arg1)
-	ret0, _ := ret[0].(*x509.CertPool)
-	ret1, _ := ret[1].(*tls.Certificate)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GetCertificates indicates an expected call of GetCertificates.
-func (mr *MockGatewayMockRecorder) GetCertificates(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCertificates", reflect.TypeOf((*MockGateway)(nil).GetCertificates), arg0, arg1)
 }
 
 // GetRegistrySecret mocks base method.

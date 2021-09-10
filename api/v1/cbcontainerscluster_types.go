@@ -32,6 +32,8 @@ type CBContainersClusterSpec struct {
 	ApiGatewaySpec    CBContainersApiGatewaySpec    `json:"apiGatewaySpec,required"`
 	EventsGatewaySpec CBContainersEventsGatewaySpec `json:"eventsGatewaySpec,required"`
 	// +kubebuilder:default:=<>
+	GatewayTLS CBContainersGatewayTLS `json:"gatewayTls,omitempty"`
+	// +kubebuilder:default:=<>
 	MonitorSpec CBContainersClusterMonitorSpec `json:"monitorSpec,omitempty"`
 }
 

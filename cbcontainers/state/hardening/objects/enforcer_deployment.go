@@ -19,8 +19,9 @@ const (
 	DesiredContainerPortName  = "https"
 	DesiredContainerPortValue = 443
 
-	DesiredTlsSecretVolumeName      = "cert"
-	DesiredTlsSecretVolumeMountPath = "/etc/octarine-certificates"
+	DesiredTlsSecretVolumeName          = "cert"
+	DesiredTlsSecretVolumeMountPath     = "/etc/octarine-certificates"
+	DesiredTlsSecretVolumeMountReadOnly = true
 
 	EnforcerLabelKey = "app.kubernetes.io/name"
 )
@@ -101,20 +102,19 @@ func (obj *EnforcerDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Dep
 }
 
 func (obj *EnforcerDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.PodSpec) {
-	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != 1 || templatePodSpec.Volumes[0].Secret == nil {
-		templatePodSpec.Volumes = []coreV1.Volume{
-			{
-				VolumeSource: coreV1.VolumeSource{
-					Secret: &coreV1.SecretVolumeSource{},
-				},
-			},
-		}
+	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != 2 {
+		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
 	}
 
-	templatePodSpec.Volumes[0].Name = DesiredTlsSecretVolumeName
-	templatePodSpec.Volumes[0].Secret.SecretName = EnforcerTlsName
-	templatePodSpec.Volumes[0].Secret.DefaultMode = &DesiredTlsSecretVolumeDecimalDefaultMode
-	templatePodSpec.Volumes[0].Secret.Optional = &DesiredTlsSecretVolumeOptionalValue
+	tlsSecretVolumeIndex := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, DesiredTlsSecretVolumeName)
+	if templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret == nil {
+		templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret = &coreV1.SecretVolumeSource{}
+	}
+	templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret.SecretName = EnforcerTlsName
+	templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret.DefaultMode = &DesiredTlsSecretVolumeDecimalDefaultMode
+	templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret.Optional = &DesiredTlsSecretVolumeOptionalValue
+
+	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
 func (obj *EnforcerDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
@@ -177,10 +177,12 @@ func (obj *EnforcerDeploymentK8sObject) mutateContainerPorts(container *coreV1.C
 }
 
 func (obj *EnforcerDeploymentK8sObject) mutateVolumesMounts(container *coreV1.Container) {
-	if container.VolumeMounts == nil || len(container.VolumeMounts) != 1 {
-		container.VolumeMounts = []coreV1.VolumeMount{{}}
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != 2 {
+		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
 
-	container.VolumeMounts[0].Name = DesiredTlsSecretVolumeName
-	container.VolumeMounts[0].MountPath = DesiredTlsSecretVolumeMountPath
+	tlsSecretVolumeMountIndex := commonState.EnsureAndGetVolumeMountIndexForName(container, DesiredTlsSecretVolumeName)
+	commonState.MutateVolumeMount(container, tlsSecretVolumeMountIndex, DesiredTlsSecretVolumeMountPath, DesiredTlsSecretVolumeMountReadOnly)
+
+	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
 }
