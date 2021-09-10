@@ -12,7 +12,11 @@ func NewDefaultGatewayCreator() *DefaultGatewayCreator {
 	return &DefaultGatewayCreator{}
 }
 
-func (creator *DefaultGatewayCreator) CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) Gateway {
+func (creator *DefaultGatewayCreator) CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (Gateway, error) {
 	spec := cbContainersCluster.Spec
-	return gateway.NewApiGateway(spec.Account, spec.ClusterName, accessToken, spec.ApiGatewaySpec.Scheme, spec.ApiGatewaySpec.Host, spec.ApiGatewaySpec.Port, spec.ApiGatewaySpec.Adapter)
+	return gateway.NewBuilder(spec.Account, spec.ClusterName, accessToken, spec.ApiGatewaySpec.Host).
+		SetURLComponents(spec.ApiGatewaySpec.Scheme, spec.ApiGatewaySpec.Port, spec.ApiGatewaySpec.Adapter).
+		SetTLSInsecureSkipVerify(spec.GatewayTLS.InsecureSkipVerify).
+		SetTLSRootCAsBundle(spec.GatewayTLS.RootCAsBundle).
+		Build()
 }

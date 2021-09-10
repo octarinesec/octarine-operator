@@ -1,9 +1,6 @@
 package cluster
 
 import (
-	"crypto/rsa"
-	"crypto/tls"
-	"crypto/x509"
 	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
@@ -13,11 +10,10 @@ import (
 type Gateway interface {
 	RegisterCluster() error
 	GetRegistrySecret() (*models.RegistrySecretValues, error)
-	GetCertificates(name string, privateKey *rsa.PrivateKey) (*x509.CertPool, *tls.Certificate, error)
 }
 
 type GatewayCreator interface {
-	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) Gateway
+	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (Gateway, error)
 }
 
 type CBContainerClusterProcessor struct {
@@ -58,7 +54,10 @@ func (processor *CBContainerClusterProcessor) initializeIfNeeded(cbContainersClu
 	}
 
 	processor.log.Info("Initializing CBContainerClusterProcessor components")
-	gateway := processor.gatewayCreator.CreateGateway(cbContainersCluster, accessToken)
+	gateway, err := processor.gatewayCreator.CreateGateway(cbContainersCluster, accessToken)
+	if err != nil {
+		return err
+	}
 
 	processor.log.Info("Calling get registry secret")
 	registrySecretValues, err := gateway.GetRegistrySecret()

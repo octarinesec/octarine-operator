@@ -8,12 +8,17 @@ const (
 	DataPlaneServiceAccountName = "cbcontainers-operator"
 	DataPlanePriorityClassName  = "cbcontainers-dataplane-priority-class"
 
-	DataPlaneConfigmapAccountKey    = "Account"
-	DataPlaneConfigmapClusterKey    = "Cluster"
-	DataPlaneConfigmapApiSchemeKey  = "ApiScheme"
-	DataPlaneConfigmapApiHostKey    = "ApiHost"
-	DataPlaneConfigmapApiPortKey    = "ApiPort"
-	DataPlaneConfigmapApiAdapterKey = "ApiAdapter"
+	DataPlaneConfigmapAccountKey        = "Account"
+	DataPlaneConfigmapClusterKey        = "Cluster"
+	DataPlaneConfigmapApiSchemeKey      = "ApiScheme"
+	DataPlaneConfigmapApiHostKey        = "ApiHost"
+	DataPlaneConfigmapApiPortKey        = "ApiPort"
+	DataPlaneConfigmapApiAdapterKey     = "ApiAdapter"
+	DataPlaneConfigmapTlsSkipVerifyKey  = "TLS.SkipVerify"
+	DataPlaneConfigmapTlsRootCAsPathKey = "TLS.RootCAsPath"
+
+	DataPlaneConfigmapTlsRootCAsDirPath = "/etc/gateway-certs"
+	DataPlaneConfigmapTlsRootCAsFilePath = "root.pem"
 
 	AccessTokenSecretKeyName = "accessToken"
 )

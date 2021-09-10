@@ -132,6 +132,10 @@ func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbconta
 		cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName = defaultAccessToken
 	}
 
+	if cbContainersCluster.Spec.GatewayTLS.RootCAsBundle == nil {
+		cbContainersCluster.Spec.GatewayTLS.RootCAsBundle = make([]byte, 0)
+	}
+
 	if cbContainersCluster.Spec.EventsGatewaySpec.Port == 0 {
 		cbContainersCluster.Spec.EventsGatewaySpec.Port = 443
 	}

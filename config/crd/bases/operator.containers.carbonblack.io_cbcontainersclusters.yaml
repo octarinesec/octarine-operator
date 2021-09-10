@@ -70,6 +70,15 @@ spec:
                 required:
                 - host
                 type: object
+              gatewayTls:
+                properties:
+                  insecureSkipVerify:
+                    default: false
+                    type: boolean
+                  rootCAsBundle:
+                    format: byte
+                    type: string
+                type: object
               monitorSpec:
                 default: {}
                 properties:
@@ -187,6 +196,7 @@ spec:
             - apiGatewaySpec
             - clusterName
             - eventsGatewaySpec
+            - gatewayTls
             - version
             type: object
           status:

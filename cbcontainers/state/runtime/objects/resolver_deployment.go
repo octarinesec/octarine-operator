@@ -76,6 +76,7 @@ func (obj *ResolverDeploymentK8sObject) MutateRuntimeChildK8sObject(k8sObject cl
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	obj.mutateAnnotations(deployment, resolverSpec)
+	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec,
 		resolverSpec,
 		&cbContainersRuntime.Spec.ResolverSpec.EventsGatewaySpec,
@@ -85,6 +86,14 @@ func (obj *ResolverDeploymentK8sObject) MutateRuntimeChildK8sObject(k8sObject cl
 	)
 
 	return nil
+}
+
+func (obj *ResolverDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.PodSpec) {
+	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != 1 {
+		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
+	}
+
+	commonState.MutateVolumesToIncludeRootCasVolume(templatePodSpec)
 }
 
 func (obj *ResolverDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Deployment, resolverSpec *cbContainersV1.CBContainersRuntimeResolverSpec) {
@@ -137,6 +146,7 @@ func (obj *ResolverDeploymentK8sObject) mutateContainer(
 	obj.mutateEnvVars(container, resolverSpec, eventsGatewaySpec, accessTokenSecretName, desiredGRPCPortValue)
 	obj.mutateContainerPorts(container, desiredGRPCPortValue)
 	obj.mutateSecurityContext(container)
+	obj.mutateVolumesMounts(container)
 }
 
 func (obj *ResolverDeploymentK8sObject) mutateContainerPorts(container *coreV1.Container, desiredGRPCPortValue int32) {
@@ -183,4 +193,12 @@ func (obj *ResolverDeploymentK8sObject) mutateSecurityContext(container *coreV1.
 		Drop: resolverCapabilitiesToDrop,
 		Add:  resolverCapabilitiesToAdd,
 	}
+}
+
+func (obj *ResolverDeploymentK8sObject) mutateVolumesMounts(container *coreV1.Container) {
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != 1 {
+		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
+	}
+
+	commonState.MutateVolumeMountToIncludeRootCasVolumeMount(container)
 }

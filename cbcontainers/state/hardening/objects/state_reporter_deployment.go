@@ -74,9 +74,18 @@ func (obj *StateReporterDeploymentK8sObject) MutateHardeningChildK8sObject(k8sOb
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, stateReporterSpec.DeploymentAnnotations)
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, stateReporterSpec.PodTemplateAnnotations)
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
+	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec, &cbContainersHardening.Spec.StateReporterSpec, &cbContainersHardening.Spec.EventsGatewaySpec, cbContainersHardening.Spec.Version, cbContainersHardening.Spec.AccessTokenSecretName)
 
 	return nil
+}
+
+func (obj *StateReporterDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.PodSpec) {
+	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != 1 {
+		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
+	}
+
+	commonState.MutateVolumesToIncludeRootCasVolume(templatePodSpec)
 }
 
 func (obj *StateReporterDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, stateReporterSpec *cbContainersV1.CBContainersHardeningStateReporterSpec, eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
@@ -101,6 +110,7 @@ func (obj *StateReporterDeploymentK8sObject) mutateContainer(container *coreV1.C
 	commonState.MutateImage(container, stateReporterSpec.Image, version)
 	commonState.MutateContainerHTTPProbes(container, stateReporterSpec.Probes)
 	obj.mutateSecurityContext(container)
+	obj.mutateVolumesMounts(container)
 }
 
 func (obj *StateReporterDeploymentK8sObject) mutateSecurityContext(container *coreV1.Container) {
@@ -114,4 +124,12 @@ func (obj *StateReporterDeploymentK8sObject) mutateSecurityContext(container *co
 	container.SecurityContext.Capabilities = &coreV1.Capabilities{
 		Drop: StateReporterCapabilitiesToDrop,
 	}
+}
+
+func (obj *StateReporterDeploymentK8sObject) mutateVolumesMounts(container *coreV1.Container) {
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != 1 {
+		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
+	}
+
+	commonState.MutateVolumeMountToIncludeRootCasVolumeMount(container)
 }
