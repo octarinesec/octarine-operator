@@ -38,11 +38,11 @@ func (obj *PriorityClassK8sObject) EmptyK8sObject() client.Object {
 	return &schedulingV1alpha1.PriorityClass{}
 }
 
-func (obj *PriorityClassK8sObject) ClusterChildNamespacedName(_ *cbcontainersv1.CBContainersCluster) types.NamespacedName {
+func (obj *PriorityClassK8sObject) ClusterChildNamespacedName(_ *cbcontainersv1.CBContainersAgent) types.NamespacedName {
 	return types.NamespacedName{Name: commonState.DataPlanePriorityClassName, Namespace: ""}
 }
 
-func (obj *PriorityClassK8sObject) MutateClusterChildK8sObject(k8sObject client.Object, _ *cbcontainersv1.CBContainersCluster) error {
+func (obj *PriorityClassK8sObject) MutateClusterChildK8sObject(k8sObject client.Object, _ *cbcontainersv1.CBContainersAgent) error {
 	priorityClassSetter, ok := clusterStateAdapters.GetPriorityClassSetter(k8sObject)
 	if !ok {
 		return fmt.Errorf("expected PriorityClass setter K8s object")

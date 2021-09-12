@@ -2,7 +2,7 @@ package controllers
 
 import cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 
-func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbcontainersv1.CBContainersCluster) error {
+func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbcontainersv1.CBContainersAgent) error {
 	if cbContainersCluster.Spec.ApiGatewaySpec.Scheme == "" {
 		cbContainersCluster.Spec.ApiGatewaySpec.Scheme = "https"
 	}

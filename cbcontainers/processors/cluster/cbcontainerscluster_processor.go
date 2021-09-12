@@ -17,7 +17,7 @@ type Gateway interface {
 }
 
 type GatewayCreator interface {
-	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) Gateway
+	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) Gateway
 }
 
 type CBContainerClusterProcessor struct {
@@ -25,7 +25,7 @@ type CBContainerClusterProcessor struct {
 
 	lastRegistrySecretValues *models.RegistrySecretValues
 
-	lastProcessedObject *cbcontainersv1.CBContainersCluster
+	lastProcessedObject *cbcontainersv1.CBContainersAgent
 
 	log logr.Logger
 }
@@ -38,7 +38,7 @@ func NewCBContainerClusterProcessor(log logr.Logger, clusterRegistrarCreator Gat
 	}
 }
 
-func (processor *CBContainerClusterProcessor) Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error) {
+func (processor *CBContainerClusterProcessor) Process(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error) {
 	if err := processor.initializeIfNeeded(cbContainersCluster, accessToken); err != nil {
 		return nil, err
 	}
@@ -46,13 +46,13 @@ func (processor *CBContainerClusterProcessor) Process(cbContainersCluster *cbcon
 	return processor.lastRegistrySecretValues, nil
 }
 
-func (processor *CBContainerClusterProcessor) isInitialized(cbContainersCluster *cbcontainersv1.CBContainersCluster) bool {
+func (processor *CBContainerClusterProcessor) isInitialized(cbContainersCluster *cbcontainersv1.CBContainersAgent) bool {
 	return processor.lastRegistrySecretValues != nil &&
 		processor.lastProcessedObject != nil &&
 		reflect.DeepEqual(processor.lastProcessedObject, cbContainersCluster)
 }
 
-func (processor *CBContainerClusterProcessor) initializeIfNeeded(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) error {
+func (processor *CBContainerClusterProcessor) initializeIfNeeded(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) error {
 	if processor.isInitialized(cbContainersCluster) {
 		return nil
 	}

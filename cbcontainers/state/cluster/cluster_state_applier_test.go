@@ -42,7 +42,7 @@ var (
 type ClusterStateApplierTestMocks struct {
 	client              *testUtilsMocks.MockClient
 	childApplier        *mocks.MockClusterChildK8sObjectApplier
-	cbContainersCluster *cbcontainersv1.CBContainersCluster
+	cbContainersCluster *cbcontainersv1.CBContainersAgent
 	kubeletVersion      string
 }
 
@@ -58,7 +58,7 @@ func testClusterStateApplier(t *testing.T, setup ClusterStateApplierTestSetup, k
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	cbContainersCluster := &cbcontainersv1.CBContainersCluster{
+	cbContainersCluster := &cbcontainersv1.CBContainersAgent{
 		Spec: cbcontainersv1.CBContainersAgentSpec{
 			Account:     Account,
 			ClusterName: Cluster,
@@ -92,7 +92,7 @@ func getAppliedObjects(t *testing.T, k8sVersion string) []AppliedObject {
 
 	_, err := testClusterStateApplier(t, func(mocks *ClusterStateApplierTestMocks) {
 		mocks.childApplier.EXPECT().ApplyClusterChildK8sObject(gomock.Any(), mocks.cbContainersCluster, mocks.client, gomock.Any(), gomock.Any()).
-			Do(func(ctx context.Context, cr *cbcontainersv1.CBContainersCluster, client client.Client, obj cluster.ClusterChildK8sObject, options ...*options.ApplyOptions) {
+			Do(func(ctx context.Context, cr *cbcontainersv1.CBContainersAgent, client client.Client, obj cluster.ClusterChildK8sObject, options ...*options.ApplyOptions) {
 				namespacedName := obj.ClusterChildNamespacedName(cr)
 				objType := reflect.TypeOf(obj.EmptyK8sObject())
 				actualAppliedObjects = append(actualAppliedObjects, AppliedObject{Namespace: namespacedName.Namespace, Name: namespacedName.Name, ObjectType: objType})

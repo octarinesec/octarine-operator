@@ -37,7 +37,7 @@ const (
 var (
 	ClusterAccessTokenSecretName = test_utils.RandomString()
 
-	ClusterCustomResourceItems = []cbcontainersv1.CBContainersCluster{
+	ClusterCustomResourceItems = []cbcontainersv1.CBContainersAgent{
 		{
 			Spec: cbcontainersv1.CBContainersAgentSpec{
 				ApiGatewaySpec: cbcontainersv1.CBContainersApiGatewaySpec{
@@ -76,8 +76,8 @@ func testCBContainersClusterController(t *testing.T, setups ...SetupClusterContr
 }
 
 func setupClusterCustomResource(testMocks *ClusterControllerTestMocks) {
-	testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersClusterList{}).
-		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersClusterList, _ ...interface{}) {
+	testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersAgentList{}).
+		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersAgentList, _ ...interface{}) {
 			list.Items = ClusterCustomResourceItems
 		}).
 		Return(nil)
@@ -96,7 +96,7 @@ func setUpTokenSecretValues(testMocks *ClusterControllerTestMocks) {
 
 func TestListClusterResourcesErrorShouldReturnError(t *testing.T) {
 	_, err := testCBContainersClusterController(t, func(testMocks *ClusterControllerTestMocks) {
-		testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersClusterList{}).Return(fmt.Errorf(""))
+		testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersAgentList{}).Return(fmt.Errorf(""))
 	})
 
 	require.Error(t, err)
@@ -104,7 +104,7 @@ func TestListClusterResourcesErrorShouldReturnError(t *testing.T) {
 
 func TestNotFindingAnyClusterResourceShouldReturnNil(t *testing.T) {
 	result, err := testCBContainersClusterController(t, func(testMocks *ClusterControllerTestMocks) {
-		testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersClusterList{}).Return(nil)
+		testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersAgentList{}).Return(nil)
 	})
 
 	require.NoError(t, err)
@@ -113,10 +113,10 @@ func TestNotFindingAnyClusterResourceShouldReturnNil(t *testing.T) {
 
 func TestFindingMoreThanOneClusterResourceShouldReturnError(t *testing.T) {
 	_, err := testCBContainersClusterController(t, func(testMocks *ClusterControllerTestMocks) {
-		testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersClusterList{}).
-			Do(func(ctx context.Context, list *cbcontainersv1.CBContainersClusterList, _ ...interface{}) {
-				list.Items = append(list.Items, cbcontainersv1.CBContainersCluster{})
-				list.Items = append(list.Items, cbcontainersv1.CBContainersCluster{})
+		testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersAgentList{}).
+			Do(func(ctx context.Context, list *cbcontainersv1.CBContainersAgentList, _ ...interface{}) {
+				list.Items = append(list.Items, cbcontainersv1.CBContainersAgent{})
+				list.Items = append(list.Items, cbcontainersv1.CBContainersAgent{})
 			}).
 			Return(nil)
 	})

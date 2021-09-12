@@ -39,7 +39,7 @@ func (m *MockClusterStateApplier) EXPECT() *MockClusterStateApplierMockRecorder 
 }
 
 // ApplyDesiredState mocks base method.
-func (m *MockClusterStateApplier) ApplyDesiredState(arg0 context.Context, arg1 *v1.CBContainersCluster, arg2 *models.RegistrySecretValues, arg3 client.Client, arg4 options.OwnerSetter) (bool, error) {
+func (m *MockClusterStateApplier) ApplyDesiredState(arg0 context.Context, arg1 *v1.CBContainersAgent, arg2 *models.RegistrySecretValues, arg3 client.Client, arg4 options.OwnerSetter) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ApplyDesiredState", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(bool)

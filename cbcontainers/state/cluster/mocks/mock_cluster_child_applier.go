@@ -39,7 +39,7 @@ func (m *MockClusterChildK8sObjectApplier) EXPECT() *MockClusterChildK8sObjectAp
 }
 
 // ApplyClusterChildK8sObject mocks base method.
-func (m *MockClusterChildK8sObjectApplier) ApplyClusterChildK8sObject(arg0 context.Context, arg1 *v1.CBContainersCluster, arg2 client.Client, arg3 cluster.ClusterChildK8sObject, arg4 ...*options.ApplyOptions) (bool, client.Object, error) {
+func (m *MockClusterChildK8sObjectApplier) ApplyClusterChildK8sObject(arg0 context.Context, arg1 *v1.CBContainersAgent, arg2 client.Client, arg3 cluster.ClusterChildK8sObject, arg4 ...*options.ApplyOptions) (bool, client.Object, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1, arg2, arg3}
 	for _, a := range arg4 {

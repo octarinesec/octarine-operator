@@ -36,11 +36,11 @@ func (obj *MonitorDeploymentK8sObject) EmptyK8sObject() client.Object {
 	return &appsV1.Deployment{}
 }
 
-func (obj *MonitorDeploymentK8sObject) ClusterChildNamespacedName(_ *cbcontainersv1.CBContainersCluster) types.NamespacedName {
+func (obj *MonitorDeploymentK8sObject) ClusterChildNamespacedName(_ *cbcontainersv1.CBContainersAgent) types.NamespacedName {
 	return types.NamespacedName{Name: MonitorName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *MonitorDeploymentK8sObject) MutateClusterChildK8sObject(k8sObject client.Object, cbContainersCluster *cbcontainersv1.CBContainersCluster) error {
+func (obj *MonitorDeploymentK8sObject) MutateClusterChildK8sObject(k8sObject client.Object, cbContainersCluster *cbcontainersv1.CBContainersAgent) error {
 	monitorSpec := cbContainersCluster.Spec.ClusterSpec.MonitorSpec
 	deployment, ok := k8sObject.(*appsV1.Deployment)
 	if !ok {

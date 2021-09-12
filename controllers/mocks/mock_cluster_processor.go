@@ -36,7 +36,7 @@ func (m *MockClusterProcessor) EXPECT() *MockClusterProcessorMockRecorder {
 }
 
 // Process mocks base method.
-func (m *MockClusterProcessor) Process(arg0 *v1.CBContainersCluster, arg1 string) (*models.RegistrySecretValues, error) {
+func (m *MockClusterProcessor) Process(arg0 *v1.CBContainersAgent, arg1 string) (*models.RegistrySecretValues, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Process", arg0, arg1)
 	ret0, _ := ret[0].(*models.RegistrySecretValues)

@@ -11,8 +11,8 @@ import (
 )
 
 type ClusterChildK8sObject interface {
-	MutateClusterChildK8sObject(k8sObject client.Object, cbContainersCluster *cbcontainersv1.CBContainersCluster) error
-	ClusterChildNamespacedName(cbContainersCluster *cbcontainersv1.CBContainersCluster) types.NamespacedName
+	MutateClusterChildK8sObject(k8sObject client.Object, cbContainersCluster *cbcontainersv1.CBContainersAgent) error
+	ClusterChildNamespacedName(cbContainersCluster *cbcontainersv1.CBContainersAgent) types.NamespacedName
 	stateTypes.DesiredK8sObjectInitializer
 }
 
@@ -22,17 +22,17 @@ func NewDefaultClusterChildK8sObjectApplier() *DefaultClusterChildK8sObjectAppli
 	return &DefaultClusterChildK8sObjectApplier{}
 }
 
-func (applier *DefaultClusterChildK8sObjectApplier) ApplyClusterChildK8sObject(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client, clusterChildK8sObject ClusterChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
+func (applier *DefaultClusterChildK8sObjectApplier) ApplyClusterChildK8sObject(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, client client.Client, clusterChildK8sObject ClusterChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
 	clusterChildWrapper := NewCBContainersClusterChildK8sObject(cbContainersCluster, clusterChildK8sObject)
 	return applyment.ApplyDesiredK8sObject(ctx, client, clusterChildWrapper, applyOptionsList...)
 }
 
 type CBContainersClusterChildK8sObject struct {
-	cbContainersCluster *cbcontainersv1.CBContainersCluster
+	cbContainersCluster *cbcontainersv1.CBContainersAgent
 	ClusterChildK8sObject
 }
 
-func NewCBContainersClusterChildK8sObject(cbContainersCluster *cbcontainersv1.CBContainersCluster, clusterChildK8sObject ClusterChildK8sObject) *CBContainersClusterChildK8sObject {
+func NewCBContainersClusterChildK8sObject(cbContainersCluster *cbcontainersv1.CBContainersAgent, clusterChildK8sObject ClusterChildK8sObject) *CBContainersClusterChildK8sObject {
 	return &CBContainersClusterChildK8sObject{
 		cbContainersCluster:   cbContainersCluster,
 		ClusterChildK8sObject: clusterChildK8sObject,

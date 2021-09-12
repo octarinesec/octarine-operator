@@ -34,35 +34,35 @@ type CBContainersAgentSpec struct {
 	RuntimeSpec    CBContainersRuntimeSpec    `json:"runtimeSpec,omitempty"`
 }
 
-// CBContainersClusterStatus defines the observed state of CBContainersCluster
-type CBContainersClusterStatus struct {
+// CBContainersAgentStatus defines the observed state of CBContainersAgent
+type CBContainersAgentStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=cbcontainersclusters,scope=Cluster
+// +kubebuilder:resource:path=cbcontainersagents,scope=Cluster
 
-// CBContainersCluster is the Schema for the cbcontainersclusters API
+// CBContainersAgent is the Schema for the cbcontainersagents API
 //+kubebuilder:subresource:status
-type CBContainersCluster struct {
+type CBContainersAgent struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CBContainersAgentSpec     `json:"spec,omitempty"`
-	Status CBContainersClusterStatus `json:"status,omitempty"`
+	Spec   CBContainersAgentSpec   `json:"spec,omitempty"`
+	Status CBContainersAgentStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// CBContainersClusterList contains a list of CBContainersCluster
-type CBContainersClusterList struct {
+// CBContainersAgentList contains a list of CBContainersAgent
+type CBContainersAgentList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CBContainersCluster `json:"items"`
+	Items           []CBContainersAgent `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&CBContainersCluster{}, &CBContainersClusterList{})
+	SchemeBuilder.Register(&CBContainersAgent{}, &CBContainersAgentList{})
 }

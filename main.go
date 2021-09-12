@@ -98,7 +98,7 @@ func main() {
 	k8sVersion := nodesList.Items[0].Status.NodeInfo.KubeletVersion
 	setupLog.Info(fmt.Sprintf("K8s version is: %v", k8sVersion))
 
-	cbContainersClusterLogger := ctrl.Log.WithName("controllers").WithName("CBContainersCluster")
+	cbContainersClusterLogger := ctrl.Log.WithName("controllers").WithName("CBContainersAgent")
 	if err = (&controllers.CBContainersClusterReconciler{
 		Client:                mgr.GetClient(),
 		Log:                   cbContainersClusterLogger,
@@ -109,7 +109,7 @@ func main() {
 		HardeningStateApplier: hardeningState.NewHardeningStateApplier(cbContainersClusterLogger, k8sVersion, certificatesUtils.NewCertificateCreator(), hardeningState.NewDefaultHardeningChildK8sObjectApplier()),
 		RuntimeStateApplier:   runtimeState.NewRuntimeStateApplier(cbContainersClusterLogger, runtimeState.NewDefaultRuntimeChildK8sObjectApplier()),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
+		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")
 		os.Exit(1)
 	}
 

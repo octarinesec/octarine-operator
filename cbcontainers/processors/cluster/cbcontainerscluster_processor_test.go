@@ -47,7 +47,7 @@ func setupValidMocksCalls(testMocks *ClusterProcessorTestMocks, times int) {
 
 func TestProcessorIsNotRecreatingComponentsForSameCR(t *testing.T) {
 	testClusterProcessor(t, func(testMocks *ClusterProcessorTestMocks, processor *cluster.CBContainerClusterProcessor) {
-		clusterCR := &cbcontainersv1.CBContainersCluster{Spec: cbcontainersv1.CBContainersClusterSpec{Account: test_utils.RandomString(), ClusterName: test_utils.RandomString()}}
+		clusterCR := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersClusterSpec{Account: test_utils.RandomString(), ClusterName: test_utils.RandomString()}}
 		setupValidMocksCalls(testMocks, 1)
 
 		values1, err1 := processor.Process(clusterCR, AccessToken)
@@ -62,8 +62,8 @@ func TestProcessorIsNotRecreatingComponentsForSameCR(t *testing.T) {
 
 func TestProcessorIsReCreatingComponentsForDifferentCR(t *testing.T) {
 	testClusterProcessor(t, func(testMocks *ClusterProcessorTestMocks, processor *cluster.CBContainerClusterProcessor) {
-		clusterCR1 := &cbcontainersv1.CBContainersCluster{Spec: cbcontainersv1.CBContainersClusterSpec{Account: test_utils.RandomString(), ClusterName: test_utils.RandomString()}}
-		clusterCR2 := &cbcontainersv1.CBContainersCluster{Spec: cbcontainersv1.CBContainersClusterSpec{Account: test_utils.RandomString(), ClusterName: test_utils.RandomString()}}
+		clusterCR1 := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersClusterSpec{Account: test_utils.RandomString(), ClusterName: test_utils.RandomString()}}
+		clusterCR2 := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersClusterSpec{Account: test_utils.RandomString(), ClusterName: test_utils.RandomString()}}
 		setupValidMocksCalls(testMocks, 2)
 
 		values1, err1 := processor.Process(clusterCR1, AccessToken)
@@ -79,7 +79,7 @@ func TestProcessorIsReCreatingComponentsForDifferentCR(t *testing.T) {
 
 func TestProcessorReturnsErrorWhenCanNotGetRegisterySecret(t *testing.T) {
 	testClusterProcessor(t, func(testMocks *ClusterProcessorTestMocks, processor *cluster.CBContainerClusterProcessor) {
-		clusterCR := &cbcontainersv1.CBContainersCluster{Spec: cbcontainersv1.CBContainersClusterSpec{Account: test_utils.RandomString(), ClusterName: test_utils.RandomString()}}
+		clusterCR := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersClusterSpec{Account: test_utils.RandomString(), ClusterName: test_utils.RandomString()}}
 		testMocks.gatewayCreatorMock.EXPECT().CreateGateway(gomock.Any(), gomock.Any()).Return(testMocks.gatewayMock)
 		testMocks.gatewayMock.EXPECT().GetRegistrySecret().Return(nil, fmt.Errorf(""))
 		_, err := processor.Process(clusterCR, AccessToken)
@@ -89,7 +89,7 @@ func TestProcessorReturnsErrorWhenCanNotGetRegisterySecret(t *testing.T) {
 
 func TestProcessorReturnsErrorWhenCanNotRegisterCluster(t *testing.T) {
 	testClusterProcessor(t, func(testMocks *ClusterProcessorTestMocks, processor *cluster.CBContainerClusterProcessor) {
-		clusterCR := &cbcontainersv1.CBContainersCluster{Spec: cbcontainersv1.CBContainersClusterSpec{Account: test_utils.RandomString(), ClusterName: test_utils.RandomString()}}
+		clusterCR := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersClusterSpec{Account: test_utils.RandomString(), ClusterName: test_utils.RandomString()}}
 		testMocks.gatewayCreatorMock.EXPECT().CreateGateway(gomock.Any(), gomock.Any()).Return(testMocks.gatewayMock)
 		testMocks.gatewayMock.EXPECT().GetRegistrySecret().Return(&models.RegistrySecretValues{}, nil)
 		testMocks.gatewayMock.EXPECT().RegisterCluster().Return(fmt.Errorf(""))

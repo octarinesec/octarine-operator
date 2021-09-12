@@ -20,7 +20,7 @@ type ClusterStateApplier struct {
 }
 
 type ClusterChildK8sObjectApplier interface {
-	ApplyClusterChildK8sObject(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, client client.Client, clusterChildK8sObject ClusterChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error)
+	ApplyClusterChildK8sObject(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, client client.Client, clusterChildK8sObject ClusterChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error)
 }
 
 func NewClusterStateApplier(log logr.Logger, k8sVersion string, childApplier ClusterChildK8sObjectApplier) *ClusterStateApplier {
@@ -37,7 +37,7 @@ func (c *ClusterStateApplier) GetPriorityClassEmptyK8sObject() client.Object {
 	return c.desiredPriorityClass.EmptyK8sObject()
 }
 
-func (c *ClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, registrySecret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
+func (c *ClusterStateApplier) ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, registrySecret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
 	applyOptions := applymentOptions.NewApplyOptions().SetOwnerSetter(setOwner)
 
 	mutatedConfigmap, _, err := c.childApplier.ApplyClusterChildK8sObject(ctx, cbContainersCluster, client, c.desiredConfigMap, applyOptions)

@@ -38,7 +38,7 @@ import (
 
 type ClusterStateApplier interface {
 	GetPriorityClassEmptyK8sObject() client.Object
-	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, secret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
+	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, secret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
 }
 
 type HardeningStateApplier interface {
@@ -50,7 +50,7 @@ type RuntimeStateApplier interface {
 }
 
 type ClusterProcessor interface {
-	Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error)
+	Process(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error)
 }
 
 type CBContainersClusterReconciler struct {
@@ -65,10 +65,10 @@ type CBContainersClusterReconciler struct {
 	K8sVersion            string
 }
 
-func (r *CBContainersClusterReconciler) getContainersClusterObject(ctx context.Context) (*cbcontainersv1.CBContainersCluster, error) {
-	cbContainersClusterList := &cbcontainersv1.CBContainersClusterList{}
+func (r *CBContainersClusterReconciler) getContainersClusterObject(ctx context.Context) (*cbcontainersv1.CBContainersAgent, error) {
+	cbContainersClusterList := &cbcontainersv1.CBContainersAgentList{}
 	if err := r.List(ctx, cbContainersClusterList); err != nil {
-		return nil, fmt.Errorf("couldn't list CBContainersCluster k8s objects: %v", err)
+		return nil, fmt.Errorf("couldn't list CBContainersAgent k8s objects: %v", err)
 	}
 
 	if cbContainersClusterList.Items == nil || len(cbContainersClusterList.Items) == 0 {
@@ -76,7 +76,7 @@ func (r *CBContainersClusterReconciler) getContainersClusterObject(ctx context.C
 	}
 
 	if len(cbContainersClusterList.Items) > 1 {
-		return nil, fmt.Errorf("there is more than 1 CBContainersCluster k8s object, please delete unwanted resources")
+		return nil, fmt.Errorf("there is more than 1 CBContainersAgent k8s object, please delete unwanted resources")
 	}
 
 	return &cbContainersClusterList.Items[0], nil
@@ -97,7 +97,7 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 	r.Log.Info("Got reconcile request", "namespaced name", req.NamespacedName)
 	r.Log.Info("Starting reconciling")
 
-	r.Log.Info("Getting CBContainersCluster object")
+	r.Log.Info("Getting CBContainersAgent object")
 	cbContainersCluster, err := r.getContainersClusterObject(ctx)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -132,7 +132,7 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
-func (r *CBContainersClusterReconciler) applyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, secret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
+func (r *CBContainersClusterReconciler) applyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, secret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
 	coreStateWasChanged, err := r.ClusterStateApplier.ApplyDesiredState(ctx, cbContainersCluster, secret, r.Client, setOwner)
 	if err != nil {
 		return false, err
@@ -151,7 +151,7 @@ func (r *CBContainersClusterReconciler) applyDesiredState(ctx context.Context, c
 	return coreStateWasChanged || hardeningStateWasChanged || runtimeStateWasChanged, nil
 }
 
-func (r *CBContainersClusterReconciler) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) (*models.RegistrySecretValues, error) {
+func (r *CBContainersClusterReconciler) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (*models.RegistrySecretValues, error) {
 	accessToken, err := r.getAccessToken(ctx, cbContainersCluster)
 	if err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func (r *CBContainersClusterReconciler) getRegistrySecretValues(ctx context.Cont
 	return r.ClusterProcessor.Process(cbContainersCluster, accessToken)
 }
 
-func (r *CBContainersClusterReconciler) getAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) (string, error) {
+func (r *CBContainersClusterReconciler) getAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (string, error) {
 	accessTokenSecretNamespacedName := types.NamespacedName{Name: cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName, Namespace: commonState.DataPlaneNamespaceName}
 	accessTokenSecret := &corev1.Secret{}
 	if err := r.Get(ctx, accessTokenSecretNamespacedName, accessTokenSecret); err != nil {
@@ -177,7 +177,7 @@ func (r *CBContainersClusterReconciler) getAccessToken(ctx context.Context, cbCo
 
 func (r *CBContainersClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&cbcontainersv1.CBContainersCluster{}).
+		For(&cbcontainersv1.CBContainersAgent{}).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Secret{}).
 		Owns(r.ClusterStateApplier.GetPriorityClassEmptyK8sObject()).
