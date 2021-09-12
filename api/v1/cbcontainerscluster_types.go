@@ -17,39 +17,21 @@ limitations under the License.
 package v1
 
 import (
-	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// CBContainersClusterSpec defines the desired state of CBContainersCluster
-type CBContainersClusterSpec struct {
-	Account           string                        `json:"account,required"`
-	ClusterName       string                        `json:"clusterName,required"`
-	Version           string                        `json:"version,required"`
-	ApiGatewaySpec    CBContainersApiGatewaySpec    `json:"apiGatewaySpec,required"`
-	EventsGatewaySpec CBContainersEventsGatewaySpec `json:"eventsGatewaySpec,required"`
-	// +kubebuilder:default:=<>
-	MonitorSpec CBContainersClusterMonitorSpec `json:"monitorSpec,omitempty"`
-}
-
-type CBContainersClusterMonitorSpec struct {
-	// +kubebuilder:default:=<>
-	Labels map[string]string `json:"labels,omitempty"`
-	// +kubebuilder:default:=<>
-	DeploymentAnnotations map[string]string `json:"deploymentAnnotations,omitempty"`
-	// +kubebuilder:default:=<>
-	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
-	// +kubebuilder:default:={repository:"cbartifactory/monitor"}
-	Image CBContainersImageSpec `json:"image,omitempty"`
-	// +kubebuilder:default:=<>
-	Env map[string]string `json:"env,omitempty"`
-	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}
-	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
-	// +kubebuilder:default:=<>
-	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
+// CBContainersAgentSpec defines the desired state of CBContainersAgentSpec
+type CBContainersAgentSpec struct {
+	Account        string                     `json:"account,required"`
+	ClusterName    string                     `json:"clusterName,required"`
+	Version        string                     `json:"version,required"`
+	ApiGatewaySpec CBContainersApiGatewaySpec `json:"apiGatewaySpec,required"`
+	ClusterSpec    CBContainersClusterSpec    `json:"clusterSpec,omitempty"`
+	HardeningSpec  CBContainersHardeningSpec  `json:"hardeningSpec,omitempty"`
+	RuntimeSpec    CBContainersRuntimeSpec    `json:"runtimeSpec,omitempty"`
 }
 
 // CBContainersClusterStatus defines the observed state of CBContainersCluster
@@ -68,7 +50,7 @@ type CBContainersCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CBContainersClusterSpec   `json:"spec,omitempty"`
+	Spec   CBContainersAgentSpec     `json:"spec,omitempty"`
 	Status CBContainersClusterStatus `json:"status,omitempty"`
 }
 

@@ -59,7 +59,7 @@ func testClusterStateApplier(t *testing.T, setup ClusterStateApplierTestSetup, k
 	defer ctrl.Finish()
 
 	cbContainersCluster := &cbcontainersv1.CBContainersCluster{
-		Spec: cbcontainersv1.CBContainersClusterSpec{
+		Spec: cbcontainersv1.CBContainersAgentSpec{
 			Account:     Account,
 			ClusterName: Cluster,
 			ApiGatewaySpec: cbcontainersv1.CBContainersApiGatewaySpec{

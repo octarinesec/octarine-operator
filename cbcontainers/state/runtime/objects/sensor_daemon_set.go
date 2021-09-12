@@ -44,12 +44,12 @@ func (obj *SensorDaemonSetK8sObject) EmptyK8sObject() client.Object {
 	return &appsV1.DaemonSet{}
 }
 
-func (obj *SensorDaemonSetK8sObject) RuntimeChildNamespacedName(_ *cbContainersV1.CBContainersRuntime) types.NamespacedName {
+func (obj *SensorDaemonSetK8sObject) RuntimeChildNamespacedName(_ *cbContainersV1.CBContainersRuntimeSpec) types.NamespacedName {
 	return types.NamespacedName{Name: SensorName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *SensorDaemonSetK8sObject) MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntime *cbContainersV1.CBContainersRuntime) error {
-	sensorSpec := &cbContainersRuntime.Spec.SensorSpec
+func (obj *SensorDaemonSetK8sObject) MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntimeSpec *cbContainersV1.CBContainersRuntimeSpec, agentVersion, accessTokenSecretName string) error {
+	sensorSpec := &cbContainersRuntimeSpec.SensorSpec
 	daemonSet, ok := k8sObject.(*appsV1.DaemonSet)
 	if !ok {
 		return fmt.Errorf("expected DaemonSet K8s object")
@@ -87,9 +87,9 @@ func (obj *SensorDaemonSetK8sObject) MutateRuntimeChildK8sObject(k8sObject clien
 	obj.mutateAnnotations(daemonSet, sensorSpec)
 	obj.mutateContainersList(&daemonSet.Spec.Template.Spec,
 		sensorSpec,
-		cbContainersRuntime.Spec.Version,
-		cbContainersRuntime.Spec.AccessTokenSecretName,
-		cbContainersRuntime.Spec.InternalGrpcPort,
+		agentVersion,
+		accessTokenSecretName,
+		cbContainersRuntimeSpec.InternalGrpcPort,
 	)
 
 	return nil

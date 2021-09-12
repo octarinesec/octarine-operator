@@ -23,24 +23,24 @@ func (obj *ResolverServiceK8sObject) EmptyK8sObject() client.Object {
 	return &coreV1.Service{}
 }
 
-func (obj *ResolverServiceK8sObject) RuntimeChildNamespacedName(_ *cbcontainersv1.CBContainersRuntime) types.NamespacedName {
+func (obj *ResolverServiceK8sObject) RuntimeChildNamespacedName(_ *cbcontainersv1.CBContainersRuntimeSpec) types.NamespacedName {
 	return types.NamespacedName{Name: ResolverName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *ResolverServiceK8sObject) MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntime *cbcontainersv1.CBContainersRuntime) error {
+func (obj *ResolverServiceK8sObject) MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntimeSpec *cbcontainersv1.CBContainersRuntimeSpec, agentVersion, accessTokenSecretName string) error {
 	service, ok := k8sObject.(*coreV1.Service)
 	if !ok {
 		return fmt.Errorf("expected Service K8s object")
 	}
 
-	resolverSpec := cbContainersRuntime.Spec.ResolverSpec
+	resolverSpec := cbContainersRuntimeSpec.ResolverSpec
 
 	service.Labels = resolverSpec.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
 	service.Spec.Selector = map[string]string{
 		resolverLabelKey: ResolverName,
 	}
-	obj.mutatePorts(service, cbContainersRuntime.Spec.InternalGrpcPort)
+	obj.mutatePorts(service, cbContainersRuntimeSpec.InternalGrpcPort)
 
 	return nil
 }

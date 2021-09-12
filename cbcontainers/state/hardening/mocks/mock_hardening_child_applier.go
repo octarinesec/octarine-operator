@@ -39,10 +39,10 @@ func (m *MockHardeningChildK8sObjectApplier) EXPECT() *MockHardeningChildK8sObje
 }
 
 // ApplyHardeningChildK8sObject mocks base method.
-func (m *MockHardeningChildK8sObjectApplier) ApplyHardeningChildK8sObject(arg0 context.Context, arg1 *v1.CBContainersHardening, arg2 client.Client, arg3 hardening.HardeningChildK8sObject, arg4 ...*options.ApplyOptions) (bool, client.Object, error) {
+func (m *MockHardeningChildK8sObjectApplier) ApplyHardeningChildK8sObject(arg0 context.Context, arg1 *v1.CBContainersHardeningSpec, arg2 client.Client, arg3 hardening.HardeningChildK8sObject, arg4, arg5 string, arg6 ...*options.ApplyOptions) (bool, client.Object, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{arg0, arg1, arg2, arg3}
-	for _, a := range arg4 {
+	varargs := []interface{}{arg0, arg1, arg2, arg3, arg4, arg5}
+	for _, a := range arg6 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ApplyHardeningChildK8sObject", varargs...)
@@ -53,14 +53,14 @@ func (m *MockHardeningChildK8sObjectApplier) ApplyHardeningChildK8sObject(arg0 c
 }
 
 // ApplyHardeningChildK8sObject indicates an expected call of ApplyHardeningChildK8sObject.
-func (mr *MockHardeningChildK8sObjectApplierMockRecorder) ApplyHardeningChildK8sObject(arg0, arg1, arg2, arg3 interface{}, arg4 ...interface{}) *gomock.Call {
+func (mr *MockHardeningChildK8sObjectApplierMockRecorder) ApplyHardeningChildK8sObject(arg0, arg1, arg2, arg3, arg4, arg5 interface{}, arg6 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{arg0, arg1, arg2, arg3}, arg4...)
+	varargs := append([]interface{}{arg0, arg1, arg2, arg3, arg4, arg5}, arg6...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyHardeningChildK8sObject", reflect.TypeOf((*MockHardeningChildK8sObjectApplier)(nil).ApplyHardeningChildK8sObject), varargs...)
 }
 
 // DeleteK8sObjectIfExists mocks base method.
-func (m *MockHardeningChildK8sObjectApplier) DeleteK8sObjectIfExists(arg0 context.Context, arg1 *v1.CBContainersHardening, arg2 client.Client, arg3 hardening.HardeningChildK8sObject) (bool, error) {
+func (m *MockHardeningChildK8sObjectApplier) DeleteK8sObjectIfExists(arg0 context.Context, arg1 *v1.CBContainersHardeningSpec, arg2 client.Client, arg3 hardening.HardeningChildK8sObject) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteK8sObjectIfExists", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(bool)

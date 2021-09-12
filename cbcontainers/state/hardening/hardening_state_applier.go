@@ -15,8 +15,8 @@ import (
 )
 
 type HardeningChildK8sObjectApplier interface {
-	ApplyHardeningChildK8sObject(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, hardeningChildK8sObject HardeningChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error)
-	DeleteK8sObjectIfExists(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, hardeningChildK8sObject HardeningChildK8sObject) (bool, error)
+	ApplyHardeningChildK8sObject(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec, client client.Client, hardeningChildK8sObject HardeningChildK8sObject, agentVersion, accessTokenSecretName string, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error)
+	DeleteK8sObjectIfExists(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec, client client.Client, hardeningChildK8sObject HardeningChildK8sObject) (bool, error)
 }
 
 type HardeningStateApplier struct {
@@ -41,16 +41,16 @@ func NewHardeningStateApplier(log logr.Logger, k8sVersion string, tlsSecretsValu
 	}
 }
 
-func (c *HardeningStateApplier) ApplyDesiredState(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
+func (c *HardeningStateApplier) ApplyDesiredState(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec, agentVersion, accessTokenSecretName string, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
 	applyOptions := applymentOptions.NewApplyOptions().SetOwnerSetter(setOwner)
 
-	mutatedEnforcer, err := c.applyEnforcer(ctx, cbContainersHardening, client, applyOptions)
+	mutatedEnforcer, err := c.applyEnforcer(ctx, cbContainersHardening, agentVersion, accessTokenSecretName, client, applyOptions)
 	if err != nil {
 		return false, err
 	}
 	c.log.Info("Applied enforcer objects", "Mutated", mutatedEnforcer)
 
-	mutatedStateReporter, err := c.applyStateReporter(ctx, cbContainersHardening, client, applyOptions)
+	mutatedStateReporter, err := c.applyStateReporter(ctx, cbContainersHardening, agentVersion, accessTokenSecretName, client, applyOptions)
 	if err != nil {
 		return false, err
 	}
@@ -59,8 +59,8 @@ func (c *HardeningStateApplier) ApplyDesiredState(ctx context.Context, cbContain
 	return mutatedEnforcer || mutatedStateReporter, nil
 }
 
-func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
-	mutatedSecret, secretK8sObject, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerTlsSecret, applyOptions, applymentOptions.NewApplyOptions().SetCreateOnly(true))
+func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec, agentVersion, accessTokenSecretName string, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
+	mutatedSecret, secretK8sObject, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerTlsSecret, agentVersion, accessTokenSecretName, applyOptions, applymentOptions.NewApplyOptions().SetCreateOnly(true))
 	if err != nil {
 		return false, err
 	}
@@ -71,7 +71,7 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 		return false, fmt.Errorf("expected Secret K8s object")
 	}
 
-	mutatedService, _, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerService, applyOptions)
+	mutatedService, _, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerService, agentVersion, accessTokenSecretName, applyOptions)
 	if err != nil {
 		if deleted, deleteErr := c.childApplier.DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
 			return false, deleteErr
@@ -82,7 +82,7 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 	}
 	c.log.Info("Applied enforcer service", "Mutated", mutatedService)
 
-	mutatedDeployment, deploymentK8sObject, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerDeployment, applyOptions)
+	mutatedDeployment, deploymentK8sObject, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerDeployment, agentVersion, accessTokenSecretName, applyOptions)
 	if err != nil {
 		if deleted, deleteErr := c.childApplier.DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
 			return false, deleteErr
@@ -108,7 +108,7 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 		}
 	} else {
 		c.enforcerWebhook.UpdateTlsSecretValues(models.TlsSecretValuesFromSecretData(tlsSecret.Data))
-		mutatedWebhook, _, err = c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerWebhook, applyOptions)
+		mutatedWebhook, _, err = c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerWebhook, agentVersion, accessTokenSecretName, applyOptions)
 		if err != nil {
 			return false, err
 		}
@@ -118,8 +118,8 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 	return mutatedSecret || mutatedDeployment || mutatedService || mutatedWebhook, nil
 }
 
-func (c *HardeningStateApplier) applyStateReporter(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
-	mutatedDeployment, _, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.stateReporterDeployment, applyOptions)
+func (c *HardeningStateApplier) applyStateReporter(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec, agentVersion, accessTokenSecretName string, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
+	mutatedDeployment, _, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.stateReporterDeployment, agentVersion, accessTokenSecretName, applyOptions)
 	if err != nil {
 		return false, err
 	}

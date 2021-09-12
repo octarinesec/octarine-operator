@@ -24,17 +24,17 @@ func (obj *EnforcerServiceK8sObject) EmptyK8sObject() client.Object {
 	return &coreV1.Service{}
 }
 
-func (obj *EnforcerServiceK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardening) types.NamespacedName {
+func (obj *EnforcerServiceK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardeningSpec) types.NamespacedName {
 	return types.NamespacedName{Name: EnforcerName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *EnforcerServiceK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
+func (obj *EnforcerServiceK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardeningSpec *cbcontainersv1.CBContainersHardeningSpec, agentVersion, accessTokenSecretName string) error {
 	service, ok := k8sObject.(*coreV1.Service)
 	if !ok {
 		return fmt.Errorf("expected Service K8s object")
 	}
 
-	enforcerSpec := cbContainersHardening.Spec.EnforcerSpec
+	enforcerSpec := cbContainersHardeningSpec.EnforcerSpec
 
 	service.Labels = enforcerSpec.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP

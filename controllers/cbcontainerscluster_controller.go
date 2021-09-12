@@ -19,6 +19,8 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/adapters"
+	appsV1 "k8s.io/api/apps/v1"
 
 	"github.com/go-logr/logr"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
@@ -39,6 +41,14 @@ type ClusterStateApplier interface {
 	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, secret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
 }
 
+type HardeningStateApplier interface {
+	ApplyDesiredState(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec, agentVersion, accessTokenSecretName string, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
+}
+
+type RuntimeStateApplier interface {
+	ApplyDesiredState(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntimeSpec, agentVersion, accessTokenSecretName string, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
+}
+
 type ClusterProcessor interface {
 	Process(cbContainersCluster *cbcontainersv1.CBContainersCluster, accessToken string) (*models.RegistrySecretValues, error)
 }
@@ -48,8 +58,11 @@ type CBContainersClusterReconciler struct {
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 
-	ClusterProcessor    ClusterProcessor
-	ClusterStateApplier ClusterStateApplier
+	ClusterProcessor      ClusterProcessor
+	ClusterStateApplier   ClusterStateApplier
+	HardeningStateApplier HardeningStateApplier
+	RuntimeStateApplier   RuntimeStateApplier
+	K8sVersion            string
 }
 
 func (r *CBContainersClusterReconciler) getContainersClusterObject(ctx context.Context) (*cbcontainersv1.CBContainersCluster, error) {
@@ -74,6 +87,10 @@ func (r *CBContainersClusterReconciler) getContainersClusterObject(ctx context.C
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersclusters/finalizers,verbs=update
 // +kubebuilder:rbac:groups=core,resources={configmaps,secrets},verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=scheduling.k8s.io,resources=priorityclasses,verbs=*
+// +kubebuilder:rbac:groups={apps,core},resources={deployments,services,daemonsets},verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=validatingwebhookconfigurations,verbs=*
+// +kubebuilder:rbac:groups={rbac.authorization.k8s.io,networking.k8s.io,apiextensions.k8s.io,extensions,rbac,batch,apps,core},resources={namespaces,clusterrolebindings,services,networkpolicies,ingresses,rolebindings,cronjobs,jobs,replicationcontrollers,statefulsets,daemonsets,deployments,replicasets,pods,nodes,customresourcedefinitions},verbs=get;list;watch
+// +kubebuilder:rbac:groups={discovery.k8s.io,""},resources={services,endpoints,endpointslices},verbs=get;list;watch
 
 func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("\n\n")
@@ -105,7 +122,7 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	r.Log.Info("Applying desired state")
-	stateWasChanged, err := r.ClusterStateApplier.ApplyDesiredState(ctx, cbContainersCluster, registrySecret, r.Client, setOwner)
+	stateWasChanged, err := r.applyDesiredState(ctx, cbContainersCluster, registrySecret, r.Client, setOwner)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -115,52 +132,23 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
-func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbcontainersv1.CBContainersCluster) error {
-	if cbContainersCluster.Spec.ApiGatewaySpec.Scheme == "" {
-		cbContainersCluster.Spec.ApiGatewaySpec.Scheme = "https"
+func (r *CBContainersClusterReconciler) applyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster, secret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
+	coreStateWasChanged, err := r.ClusterStateApplier.ApplyDesiredState(ctx, cbContainersCluster, secret, r.Client, setOwner)
+	if err != nil {
+		return false, err
 	}
 
-	if cbContainersCluster.Spec.ApiGatewaySpec.Port == 0 {
-		cbContainersCluster.Spec.ApiGatewaySpec.Port = 443
+	hardeningStateWasChanged, err := r.HardeningStateApplier.ApplyDesiredState(ctx, &cbContainersCluster.Spec.HardeningSpec, cbContainersCluster.Spec.Version, cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName, r.Client, setOwner)
+	if err != nil {
+		return false, err
 	}
 
-	if cbContainersCluster.Spec.ApiGatewaySpec.Adapter == "" {
-		cbContainersCluster.Spec.ApiGatewaySpec.Adapter = "containers"
+	runtimeStateWasChanged, err := r.RuntimeStateApplier.ApplyDesiredState(ctx, &cbContainersCluster.Spec.RuntimeSpec, cbContainersCluster.Spec.Version, cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName, r.Client, setOwner)
+	if err != nil {
+		return false, err
 	}
 
-	if cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName == "" {
-		cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName = defaultAccessToken
-	}
-
-	if cbContainersCluster.Spec.EventsGatewaySpec.Port == 0 {
-		cbContainersCluster.Spec.EventsGatewaySpec.Port = 443
-	}
-
-	if cbContainersCluster.Spec.MonitorSpec.Labels == nil {
-		cbContainersCluster.Spec.MonitorSpec.Labels = make(map[string]string)
-	}
-
-	if cbContainersCluster.Spec.MonitorSpec.DeploymentAnnotations == nil {
-		cbContainersCluster.Spec.MonitorSpec.DeploymentAnnotations = make(map[string]string)
-	}
-
-	if cbContainersCluster.Spec.MonitorSpec.PodTemplateAnnotations == nil {
-		cbContainersCluster.Spec.MonitorSpec.PodTemplateAnnotations = make(map[string]string)
-	}
-
-	if cbContainersCluster.Spec.MonitorSpec.Env == nil {
-		cbContainersCluster.Spec.MonitorSpec.Env = make(map[string]string)
-	}
-
-	setDefaultImage(&cbContainersCluster.Spec.MonitorSpec.Image, "cbartifactory/monitor")
-
-	if err := setDefaultResourceRequirements(&cbContainersCluster.Spec.MonitorSpec.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
-		return err
-	}
-
-	setDefaultHTTPProbes(&cbContainersCluster.Spec.MonitorSpec.Probes)
-
-	return nil
+	return coreStateWasChanged || hardeningStateWasChanged || runtimeStateWasChanged, nil
 }
 
 func (r *CBContainersClusterReconciler) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersCluster) (*models.RegistrySecretValues, error) {
@@ -193,5 +181,9 @@ func (r *CBContainersClusterReconciler) SetupWithManager(mgr ctrl.Manager) error
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Secret{}).
 		Owns(r.ClusterStateApplier.GetPriorityClassEmptyK8sObject()).
+		Owns(&appsV1.Deployment{}).
+		Owns(&corev1.Service{}).
+		Owns(&appsV1.DaemonSet{}).
+		Owns(adapters.EmptyValidatingWebhookConfigForVersion(r.K8sVersion)).
 		Complete(r)
 }

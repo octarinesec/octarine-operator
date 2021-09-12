@@ -39,10 +39,10 @@ func (m *MockRuntimeChildK8sObjectApplier) EXPECT() *MockRuntimeChildK8sObjectAp
 }
 
 // ApplyRuntimeChildK8sObject mocks base method.
-func (m *MockRuntimeChildK8sObjectApplier) ApplyRuntimeChildK8sObject(arg0 context.Context, arg1 *v1.CBContainersRuntime, arg2 client.Client, arg3 runtime.RuntimeChildK8sObject, arg4 ...*options.ApplyOptions) (bool, client.Object, error) {
+func (m *MockRuntimeChildK8sObjectApplier) ApplyRuntimeChildK8sObject(arg0 context.Context, arg1 *v1.CBContainersRuntimeSpec, arg2, arg3 string, arg4 client.Client, arg5 runtime.RuntimeChildK8sObject, arg6 ...*options.ApplyOptions) (bool, client.Object, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{arg0, arg1, arg2, arg3}
-	for _, a := range arg4 {
+	varargs := []interface{}{arg0, arg1, arg2, arg3, arg4, arg5}
+	for _, a := range arg6 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ApplyRuntimeChildK8sObject", varargs...)
@@ -53,14 +53,14 @@ func (m *MockRuntimeChildK8sObjectApplier) ApplyRuntimeChildK8sObject(arg0 conte
 }
 
 // ApplyRuntimeChildK8sObject indicates an expected call of ApplyRuntimeChildK8sObject.
-func (mr *MockRuntimeChildK8sObjectApplierMockRecorder) ApplyRuntimeChildK8sObject(arg0, arg1, arg2, arg3 interface{}, arg4 ...interface{}) *gomock.Call {
+func (mr *MockRuntimeChildK8sObjectApplierMockRecorder) ApplyRuntimeChildK8sObject(arg0, arg1, arg2, arg3, arg4, arg5 interface{}, arg6 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{arg0, arg1, arg2, arg3}, arg4...)
+	varargs := append([]interface{}{arg0, arg1, arg2, arg3, arg4, arg5}, arg6...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyRuntimeChildK8sObject", reflect.TypeOf((*MockRuntimeChildK8sObjectApplier)(nil).ApplyRuntimeChildK8sObject), varargs...)
 }
 
 // DeleteK8sObjectIfExists mocks base method.
-func (m *MockRuntimeChildK8sObjectApplier) DeleteK8sObjectIfExists(arg0 context.Context, arg1 *v1.CBContainersRuntime, arg2 client.Client, arg3 runtime.RuntimeChildK8sObject) (bool, error) {
+func (m *MockRuntimeChildK8sObjectApplier) DeleteK8sObjectIfExists(arg0 context.Context, arg1 *v1.CBContainersRuntimeSpec, arg2 client.Client, arg3 runtime.RuntimeChildK8sObject) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteK8sObjectIfExists", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(bool)

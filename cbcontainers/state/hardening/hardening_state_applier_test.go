@@ -69,7 +69,7 @@ type HardeningStateApplierTestMocks struct {
 	client                *testUtilsMocks.MockClient
 	secretValuesCreator   *mocks.MockTlsSecretsValuesCreator
 	childApplier          *mocks.MockHardeningChildK8sObjectApplier
-	cbContainersHardening *cbcontainersv1.CBContainersHardening
+	cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec
 	kubeletVersion        string
 }
 
@@ -85,12 +85,9 @@ func testHardeningStateApplier(t *testing.T, setup HardeningStateApplierTestSetu
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	cbContainersHardening := &cbcontainersv1.CBContainersHardening{
-		Spec: cbcontainersv1.CBContainersHardeningSpec{
-			Version: Version,
-			EventsGatewaySpec: cbcontainersv1.CBContainersEventsGatewaySpec{
-				Host: EventsGateWayHost,
-			},
+	cbContainersHardeningSpec := &cbcontainersv1.CBContainersHardeningSpec{
+		EventsGatewaySpec: cbcontainersv1.CBContainersEventsGatewaySpec{
+			Host: EventsGateWayHost,
 		},
 	}
 
@@ -102,13 +99,13 @@ func testHardeningStateApplier(t *testing.T, setup HardeningStateApplierTestSetu
 		client:                testUtilsMocks.NewMockClient(ctrl),
 		secretValuesCreator:   mocks.NewMockTlsSecretsValuesCreator(ctrl),
 		childApplier:          mocks.NewMockHardeningChildK8sObjectApplier(ctrl),
-		cbContainersHardening: cbContainersHardening,
+		cbContainersHardening: cbContainersHardeningSpec,
 		kubeletVersion:        k8sVersion,
 	}
 
 	setup(mockObjects)
 
-	return hardening.NewHardeningStateApplier(&logrTesting.TestLogger{T: t}, k8sVersion, mockObjects.secretValuesCreator, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersHardening, mockObjects.client, nil)
+	return hardening.NewHardeningStateApplier(&logrTesting.TestLogger{T: t}, k8sVersion, mockObjects.secretValuesCreator, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersHardeningSpec, Version, "", mockObjects.client, nil)
 }
 
 func getAppliedAndDeletedObjects(t *testing.T, k8sVersion string, appliedK8sObjectsChangers ...AppliedK8sObjectsChanger) ([]K8sObjectDetails, []K8sObjectDetails, error) {
@@ -116,8 +113,8 @@ func getAppliedAndDeletedObjects(t *testing.T, k8sVersion string, appliedK8sObje
 	deletedObjects := make([]K8sObjectDetails, 0)
 
 	_, err := testHardeningStateApplier(t, func(mocks *HardeningStateApplierTestMocks) {
-		mocks.childApplier.EXPECT().ApplyHardeningChildK8sObject(gomock.Any(), mocks.cbContainersHardening, mocks.client, gomock.Any(), gomock.Any()).
-			DoAndReturn(func(ctx context.Context, cr *cbcontainersv1.CBContainersHardening, client client.Client, childObject hardening.HardeningChildK8sObject, options ...*options.ApplyOptions) (bool, client.Object, error) {
+		mocks.childApplier.EXPECT().ApplyHardeningChildK8sObject(gomock.Any(), mocks.cbContainersHardening, mocks.client, Version, gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, cr *cbcontainersv1.CBContainersHardeningSpec, client client.Client, childObject hardening.HardeningChildK8sObject, options ...*options.ApplyOptions) (bool, client.Object, error) {
 				namespacedName := childObject.HardeningChildNamespacedName(cr)
 				k8sObject := childObject.EmptyK8sObject()
 				objType := reflect.TypeOf(k8sObject)
@@ -133,7 +130,7 @@ func getAppliedAndDeletedObjects(t *testing.T, k8sVersion string, appliedK8sObje
 			}).AnyTimes()
 
 		mocks.childApplier.EXPECT().DeleteK8sObjectIfExists(gomock.Any(), mocks.cbContainersHardening, mocks.client, gomock.Any()).
-			DoAndReturn(func(ctx context.Context, cr *cbcontainersv1.CBContainersHardening, client client.Client, obj hardening.HardeningChildK8sObject) (bool, error) {
+			DoAndReturn(func(ctx context.Context, cr *cbcontainersv1.CBContainersHardeningSpec, client client.Client, obj hardening.HardeningChildK8sObject) (bool, error) {
 				namespacedName := obj.HardeningChildNamespacedName(cr)
 				objType := reflect.TypeOf(obj.EmptyK8sObject())
 				deletedObjects = append(deletedObjects, K8sObjectDetails{Namespace: namespacedName.Namespace, Name: namespacedName.Name, ObjectType: objType})

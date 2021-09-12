@@ -100,38 +100,19 @@ func main() {
 
 	cbContainersClusterLogger := ctrl.Log.WithName("controllers").WithName("CBContainersCluster")
 	if err = (&controllers.CBContainersClusterReconciler{
-		Client:              mgr.GetClient(),
-		Log:                 cbContainersClusterLogger,
-		Scheme:              mgr.GetScheme(),
-		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator()),
-		ClusterStateApplier: clusterState.NewClusterStateApplier(cbContainersClusterLogger, k8sVersion, clusterState.NewDefaultClusterChildK8sObjectApplier()),
+		Client:                mgr.GetClient(),
+		Log:                   cbContainersClusterLogger,
+		Scheme:                mgr.GetScheme(),
+		K8sVersion:            k8sVersion,
+		ClusterProcessor:      clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator()),
+		ClusterStateApplier:   clusterState.NewClusterStateApplier(cbContainersClusterLogger, k8sVersion, clusterState.NewDefaultClusterChildK8sObjectApplier()),
+		HardeningStateApplier: hardeningState.NewHardeningStateApplier(cbContainersClusterLogger, k8sVersion, certificatesUtils.NewCertificateCreator(), hardeningState.NewDefaultHardeningChildK8sObjectApplier()),
+		RuntimeStateApplier:   runtimeState.NewRuntimeStateApplier(cbContainersClusterLogger, runtimeState.NewDefaultRuntimeChildK8sObjectApplier()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
 		os.Exit(1)
 	}
 
-	cbContainersHardeningLogger := ctrl.Log.WithName("controllers").WithName("CBContainersHardening")
-	if err = (&controllers.CBContainersHardeningReconciler{
-		Client:                mgr.GetClient(),
-		Log:                   cbContainersHardeningLogger,
-		Scheme:                mgr.GetScheme(),
-		K8sVersion:            k8sVersion,
-		HardeningStateApplier: hardeningState.NewHardeningStateApplier(cbContainersHardeningLogger, k8sVersion, certificatesUtils.NewCertificateCreator(), hardeningState.NewDefaultHardeningChildK8sObjectApplier()),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "CBContainersHardening")
-		os.Exit(1)
-	}
-
-	cbContainersRuntimeLogger := ctrl.Log.WithName("controllers").WithName("CBContainersRuntime")
-	if err = (&controllers.CBContainersRuntimeReconciler{
-		Client:              mgr.GetClient(),
-		Log:                 cbContainersRuntimeLogger,
-		Scheme:              mgr.GetScheme(),
-		RuntimeStateApplier: runtimeState.NewRuntimeStateApplier(cbContainersRuntimeLogger, runtimeState.NewDefaultRuntimeChildK8sObjectApplier()),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "CBContainersRuntime")
-		os.Exit(1)
-	}
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("health", healthz.Ping); err != nil {

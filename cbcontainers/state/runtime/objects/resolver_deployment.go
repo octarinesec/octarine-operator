@@ -39,12 +39,12 @@ func (obj *ResolverDeploymentK8sObject) EmptyK8sObject() client.Object {
 	return &appsV1.Deployment{}
 }
 
-func (obj *ResolverDeploymentK8sObject) RuntimeChildNamespacedName(_ *cbContainersV1.CBContainersRuntime) types.NamespacedName {
+func (obj *ResolverDeploymentK8sObject) RuntimeChildNamespacedName(_ *cbContainersV1.CBContainersRuntimeSpec) types.NamespacedName {
 	return types.NamespacedName{Name: ResolverName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *ResolverDeploymentK8sObject) MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntime *cbContainersV1.CBContainersRuntime) error {
-	resolverSpec := &cbContainersRuntime.Spec.ResolverSpec
+func (obj *ResolverDeploymentK8sObject) MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntimeSpec *cbContainersV1.CBContainersRuntimeSpec, agentVersion, accessTokenSecretName string) error {
+	resolverSpec := &cbContainersRuntimeSpec.ResolverSpec
 	deployment, ok := k8sObject.(*appsV1.Deployment)
 	if !ok {
 		return fmt.Errorf("expected Deployment K8s object")
@@ -78,10 +78,10 @@ func (obj *ResolverDeploymentK8sObject) MutateRuntimeChildK8sObject(k8sObject cl
 	obj.mutateAnnotations(deployment, resolverSpec)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec,
 		resolverSpec,
-		&cbContainersRuntime.Spec.ResolverSpec.EventsGatewaySpec,
-		cbContainersRuntime.Spec.Version,
-		cbContainersRuntime.Spec.AccessTokenSecretName,
-		cbContainersRuntime.Spec.InternalGrpcPort,
+		&cbContainersRuntimeSpec.ResolverSpec.EventsGatewaySpec,
+		agentVersion,
+		accessTokenSecretName,
+		cbContainersRuntimeSpec.InternalGrpcPort,
 	)
 
 	return nil

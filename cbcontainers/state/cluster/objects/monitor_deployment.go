@@ -41,7 +41,7 @@ func (obj *MonitorDeploymentK8sObject) ClusterChildNamespacedName(_ *cbcontainer
 }
 
 func (obj *MonitorDeploymentK8sObject) MutateClusterChildK8sObject(k8sObject client.Object, cbContainersCluster *cbcontainersv1.CBContainersCluster) error {
-	monitorSpec := cbContainersCluster.Spec.MonitorSpec
+	monitorSpec := cbContainersCluster.Spec.ClusterSpec.MonitorSpec
 	deployment, ok := k8sObject.(*appsV1.Deployment)
 	if !ok {
 		return fmt.Errorf("expected Deployment K8s object")
@@ -74,7 +74,7 @@ func (obj *MonitorDeploymentK8sObject) MutateClusterChildK8sObject(k8sObject cli
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, monitorSpec.DeploymentAnnotations)
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, monitorSpec.PodTemplateAnnotations)
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, &cbContainersCluster.Spec.MonitorSpec, &cbContainersCluster.Spec.EventsGatewaySpec, cbContainersCluster.Spec.Version, cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, &cbContainersCluster.Spec.ClusterSpec.MonitorSpec, &cbContainersCluster.Spec.ClusterSpec.EventsGatewaySpec, cbContainersCluster.Spec.Version, cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName)
 
 	return nil
 }

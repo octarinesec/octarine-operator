@@ -35,7 +35,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: CBContainersClusterSpec defines the desired state of CBContainersCluster
+            description: CBContainersAgentSpec defines the desired state of CBContainersAgentSpec
             properties:
               account:
                 type: string
@@ -60,124 +60,653 @@ spec:
                 type: object
               clusterName:
                 type: string
-              eventsGatewaySpec:
+              clusterSpec:
                 properties:
-                  host:
-                    type: string
-                  port:
-                    default: 443
-                    type: integer
-                required:
-                - host
-                type: object
-              monitorSpec:
-                default: {}
-                properties:
-                  deploymentAnnotations:
-                    additionalProperties:
-                      type: string
-                    default: {}
-                    type: object
-                  env:
-                    additionalProperties:
-                      type: string
-                    default: {}
-                    type: object
-                  image:
-                    default:
-                      repository: cbartifactory/monitor
+                  eventsGatewaySpec:
                     properties:
-                      pullPolicy:
-                        default: Always
-                        description: PullPolicy describes a policy for if/when to
-                          pull a container image
+                      host:
                         type: string
-                      repository:
-                        type: string
-                      tag:
-                        type: string
-                    type: object
-                  labels:
-                    additionalProperties:
-                      type: string
-                    default: {}
-                    type: object
-                  podTemplateAnnotations:
-                    additionalProperties:
-                      type: string
-                    default: {}
-                    type: object
-                  probes:
-                    default: {}
-                    properties:
-                      failureThreshold:
-                        default: 3
-                        format: int32
-                        type: integer
-                      initialDelaySeconds:
-                        default: 3
-                        format: int32
-                        type: integer
-                      livenessPath:
-                        default: /alive
-                        type: string
-                      periodSeconds:
-                        default: 30
-                        format: int32
-                        type: integer
                       port:
-                        default: 8181
+                        default: 443
                         type: integer
-                      readinessPath:
-                        default: /ready
-                        type: string
-                      scheme:
-                        default: HTTP
-                        description: URIScheme identifies the scheme used for connection
-                          to a host for Get actions
-                        type: string
-                      successThreshold:
+                    required:
+                    - host
+                    type: object
+                  monitorSpec:
+                    default: {}
+                    properties:
+                      deploymentAnnotations:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      env:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      image:
+                        default:
+                          repository: cbartifactory/monitor
+                        properties:
+                          pullPolicy:
+                            default: Always
+                            description: PullPolicy describes a policy for if/when
+                              to pull a container image
+                            type: string
+                          repository:
+                            type: string
+                          tag:
+                            type: string
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      podTemplateAnnotations:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      probes:
+                        default: {}
+                        properties:
+                          failureThreshold:
+                            default: 3
+                            format: int32
+                            type: integer
+                          initialDelaySeconds:
+                            default: 3
+                            format: int32
+                            type: integer
+                          livenessPath:
+                            default: /alive
+                            type: string
+                          periodSeconds:
+                            default: 30
+                            format: int32
+                            type: integer
+                          port:
+                            default: 8181
+                            type: integer
+                          readinessPath:
+                            default: /ready
+                            type: string
+                          scheme:
+                            default: HTTP
+                            description: URIScheme identifies the scheme used for
+                              connection to a host for Get actions
+                            type: string
+                          successThreshold:
+                            default: 1
+                            format: int32
+                            type: integer
+                          timeoutSeconds:
+                            default: 1
+                            format: int32
+                            type: integer
+                        type: object
+                      resources:
+                        default:
+                          limits:
+                            cpu: 200m
+                            memory: 256Mi
+                          requests:
+                            cpu: 30m
+                            memory: 64Mi
+                        description: ResourceRequirements describes the compute resource
+                          requirements.
+                        properties:
+                          limits:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Limits describes the maximum amount of compute
+                              resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                            type: object
+                          requests:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Requests describes the minimum amount of
+                              compute resources required. If Requests is omitted for
+                              a container, it defaults to Limits if that is explicitly
+                              specified, otherwise to an implementation-defined value.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                            type: object
+                        type: object
+                    type: object
+                required:
+                - eventsGatewaySpec
+                type: object
+              hardeningSpec:
+                properties:
+                  enforcerSpec:
+                    default: {}
+                    properties:
+                      deploymentAnnotations:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      env:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      image:
+                        default:
+                          repository: cbartifactory/guardrails-enforcer
+                        properties:
+                          pullPolicy:
+                            default: Always
+                            description: PullPolicy describes a policy for if/when
+                              to pull a container image
+                            type: string
+                          repository:
+                            type: string
+                          tag:
+                            type: string
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      podTemplateAnnotations:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      probes:
+                        default: {}
+                        properties:
+                          failureThreshold:
+                            default: 3
+                            format: int32
+                            type: integer
+                          initialDelaySeconds:
+                            default: 3
+                            format: int32
+                            type: integer
+                          livenessPath:
+                            default: /alive
+                            type: string
+                          periodSeconds:
+                            default: 30
+                            format: int32
+                            type: integer
+                          port:
+                            default: 8181
+                            type: integer
+                          readinessPath:
+                            default: /ready
+                            type: string
+                          scheme:
+                            default: HTTP
+                            description: URIScheme identifies the scheme used for
+                              connection to a host for Get actions
+                            type: string
+                          successThreshold:
+                            default: 1
+                            format: int32
+                            type: integer
+                          timeoutSeconds:
+                            default: 1
+                            format: int32
+                            type: integer
+                        type: object
+                      prometheus:
+                        default: {}
+                        properties:
+                          enabled:
+                            default: false
+                            type: boolean
+                          port:
+                            default: 7071
+                            type: integer
+                        type: object
+                      replicasCount:
                         default: 1
                         format: int32
                         type: integer
-                      timeoutSeconds:
-                        default: 1
+                      resources:
+                        default:
+                          limits:
+                            cpu: 200m
+                            memory: 256Mi
+                          requests:
+                            cpu: 30m
+                            memory: 64Mi
+                        description: ResourceRequirements describes the compute resource
+                          requirements.
+                        properties:
+                          limits:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Limits describes the maximum amount of compute
+                              resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                            type: object
+                          requests:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Requests describes the minimum amount of
+                              compute resources required. If Requests is omitted for
+                              a container, it defaults to Limits if that is explicitly
+                              specified, otherwise to an implementation-defined value.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                            type: object
+                        type: object
+                      webhookTimeoutSeconds:
+                        default: 5
                         format: int32
                         type: integer
                     type: object
-                  resources:
-                    default:
-                      limits:
-                        cpu: 200m
-                        memory: 256Mi
-                      requests:
-                        cpu: 30m
-                        memory: 64Mi
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                  eventsGatewaySpec:
                     properties:
-                      limits:
+                      host:
+                        type: string
+                      port:
+                        default: 443
+                        type: integer
+                    required:
+                    - host
+                    type: object
+                  stateReporterSpec:
+                    default: {}
+                    properties:
+                      deploymentAnnotations:
                         additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: 'Limits describes the maximum amount of compute
-                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                          type: string
+                        default: {}
                         type: object
-                      requests:
+                      env:
                         additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: 'Requests describes the minimum amount of compute
-                          resources required. If Requests is omitted for a container,
-                          it defaults to Limits if that is explicitly specified, otherwise
-                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                          type: string
+                        default: {}
                         type: object
+                      image:
+                        default:
+                          repository: cbartifactory/guardrails-state-reporter
+                        properties:
+                          pullPolicy:
+                            default: Always
+                            description: PullPolicy describes a policy for if/when
+                              to pull a container image
+                            type: string
+                          repository:
+                            type: string
+                          tag:
+                            type: string
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      podTemplateAnnotations:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      probes:
+                        default: {}
+                        properties:
+                          failureThreshold:
+                            default: 3
+                            format: int32
+                            type: integer
+                          initialDelaySeconds:
+                            default: 3
+                            format: int32
+                            type: integer
+                          livenessPath:
+                            default: /alive
+                            type: string
+                          periodSeconds:
+                            default: 30
+                            format: int32
+                            type: integer
+                          port:
+                            default: 8181
+                            type: integer
+                          readinessPath:
+                            default: /ready
+                            type: string
+                          scheme:
+                            default: HTTP
+                            description: URIScheme identifies the scheme used for
+                              connection to a host for Get actions
+                            type: string
+                          successThreshold:
+                            default: 1
+                            format: int32
+                            type: integer
+                          timeoutSeconds:
+                            default: 1
+                            format: int32
+                            type: integer
+                        type: object
+                      resources:
+                        default:
+                          limits:
+                            cpu: 200m
+                            memory: 256Mi
+                          requests:
+                            cpu: 30m
+                            memory: 64Mi
+                        description: ResourceRequirements describes the compute resource
+                          requirements.
+                        properties:
+                          limits:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Limits describes the maximum amount of compute
+                              resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                            type: object
+                          requests:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Requests describes the minimum amount of
+                              compute resources required. If Requests is omitted for
+                              a container, it defaults to Limits if that is explicitly
+                              specified, otherwise to an implementation-defined value.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                            type: object
+                        type: object
+                    type: object
+                required:
+                - eventsGatewaySpec
+                type: object
+              runtimeSpec:
+                description: CBContainersRuntimeSpec defines the desired state of
+                  CBContainersRuntime
+                properties:
+                  accessTokenSecretName:
+                    default: cbcontainers-access-token
+                    type: string
+                  internalGrpcPort:
+                    default: 443
+                    format: int32
+                    type: integer
+                  resolverSpec:
+                    properties:
+                      deploymentAnnotations:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      env:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      eventsGatewaySpec:
+                        properties:
+                          host:
+                            type: string
+                          port:
+                            default: 443
+                            type: integer
+                        required:
+                        - host
+                        type: object
+                      image:
+                        default:
+                          repository: cbartifactory/runtime-kubernetes-resolver
+                        properties:
+                          pullPolicy:
+                            default: Always
+                            description: PullPolicy describes a policy for if/when
+                              to pull a container image
+                            type: string
+                          repository:
+                            type: string
+                          tag:
+                            type: string
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      podTemplateAnnotations:
+                        additionalProperties:
+                          type: string
+                        default:
+                          prometheus.io/port: "7071"
+                          prometheus.io/scrape: "false"
+                        type: object
+                      probes:
+                        default: {}
+                        properties:
+                          failureThreshold:
+                            default: 3
+                            format: int32
+                            type: integer
+                          initialDelaySeconds:
+                            default: 3
+                            format: int32
+                            type: integer
+                          livenessPath:
+                            default: /alive
+                            type: string
+                          periodSeconds:
+                            default: 30
+                            format: int32
+                            type: integer
+                          port:
+                            default: 8181
+                            type: integer
+                          readinessPath:
+                            default: /ready
+                            type: string
+                          scheme:
+                            default: HTTP
+                            description: URIScheme identifies the scheme used for
+                              connection to a host for Get actions
+                            type: string
+                          successThreshold:
+                            default: 1
+                            format: int32
+                            type: integer
+                          timeoutSeconds:
+                            default: 1
+                            format: int32
+                            type: integer
+                        type: object
+                      prometheus:
+                        default: {}
+                        properties:
+                          enabled:
+                            default: false
+                            type: boolean
+                          port:
+                            default: 7071
+                            type: integer
+                        type: object
+                      replicasCount:
+                        default: 1
+                        format: int32
+                        type: integer
+                      resources:
+                        default:
+                          limits:
+                            cpu: 900m
+                            memory: 1024Mi
+                          requests:
+                            cpu: 200m
+                            memory: 64Mi
+                        description: ResourceRequirements describes the compute resource
+                          requirements.
+                        properties:
+                          limits:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Limits describes the maximum amount of compute
+                              resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                            type: object
+                          requests:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Requests describes the minimum amount of
+                              compute resources required. If Requests is omitted for
+                              a container, it defaults to Limits if that is explicitly
+                              specified, otherwise to an implementation-defined value.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                            type: object
+                        type: object
+                    required:
+                    - eventsGatewaySpec
+                    type: object
+                  sensorSpec:
+                    default: {}
+                    properties:
+                      daemonSetAnnotations:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      env:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      image:
+                        default:
+                          repository: cbartifactory/runtime-kubernetes-sensor
+                        properties:
+                          pullPolicy:
+                            default: Always
+                            description: PullPolicy describes a policy for if/when
+                              to pull a container image
+                            type: string
+                          repository:
+                            type: string
+                          tag:
+                            type: string
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        default: {}
+                        type: object
+                      podTemplateAnnotations:
+                        additionalProperties:
+                          type: string
+                        default:
+                          prometheus.io/port: "7071"
+                          prometheus.io/scrape: "false"
+                        type: object
+                      probes:
+                        default: {}
+                        properties:
+                          failureThreshold:
+                            default: 3
+                            format: int32
+                            type: integer
+                          initialDelaySeconds:
+                            default: 3
+                            format: int32
+                            type: integer
+                          livenessPath:
+                            default: /tmp/alive
+                            type: string
+                          periodSeconds:
+                            default: 30
+                            format: int32
+                            type: integer
+                          readinessPath:
+                            default: /tmp/ready
+                            type: string
+                          successThreshold:
+                            default: 1
+                            format: int32
+                            type: integer
+                          timeoutSeconds:
+                            default: 1
+                            format: int32
+                            type: integer
+                        type: object
+                      prometheus:
+                        default: {}
+                        properties:
+                          enabled:
+                            default: false
+                            type: boolean
+                          port:
+                            default: 7071
+                            type: integer
+                        type: object
+                      resources:
+                        default:
+                          limits:
+                            cpu: 500m
+                            memory: 1024Mi
+                          requests:
+                            cpu: 30m
+                            memory: 64Mi
+                        description: ResourceRequirements describes the compute resource
+                          requirements.
+                        properties:
+                          limits:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Limits describes the maximum amount of compute
+                              resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                            type: object
+                          requests:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Requests describes the minimum amount of
+                              compute resources required. If Requests is omitted for
+                              a container, it defaults to Limits if that is explicitly
+                              specified, otherwise to an implementation-defined value.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                            type: object
+                        type: object
+                      verbosity_level:
+                        default: 2
+                        type: integer
                     type: object
                 type: object
               version:
@@ -186,7 +715,6 @@ spec:
             - account
             - apiGatewaySpec
             - clusterName
-            - eventsGatewaySpec
             - version
             type: object
           status:

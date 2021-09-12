@@ -33,11 +33,11 @@ func (obj *EnforcerTlsK8sObject) EmptyK8sObject() client.Object {
 	return &coreV1.Secret{}
 }
 
-func (obj *EnforcerTlsK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardening) types.NamespacedName {
+func (obj *EnforcerTlsK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardeningSpec) types.NamespacedName {
 	return types.NamespacedName{Name: EnforcerTlsName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *EnforcerTlsK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, _ *cbcontainersv1.CBContainersHardening) error {
+func (obj *EnforcerTlsK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, _ *cbcontainersv1.CBContainersHardeningSpec, agentVersion, accessTokenSecretName string) error {
 	secret, ok := k8sObject.(*coreV1.Secret)
 	if !ok {
 		return fmt.Errorf("expected Secret K8s object")

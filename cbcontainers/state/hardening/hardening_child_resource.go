@@ -13,8 +13,8 @@ import (
 )
 
 type HardeningChildK8sObject interface {
-	MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error
-	HardeningChildNamespacedName(cbContainersHardening *cbcontainersv1.CBContainersHardening) types.NamespacedName
+	MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardeningSpec *cbcontainersv1.CBContainersHardeningSpec, agentVersion, accessTokenSecretName string) error
+	HardeningChildNamespacedName(cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec) types.NamespacedName
 	stateTypes.DesiredK8sObjectInitializer
 }
 
@@ -24,25 +24,29 @@ func NewDefaultHardeningChildK8sObjectApplier() *DefaultHardeningChildK8sObjectA
 	return &DefaultHardeningChildK8sObjectApplier{}
 }
 
-func (applier *DefaultHardeningChildK8sObjectApplier) ApplyHardeningChildK8sObject(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, hardeningChildK8sObject HardeningChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
-	hardeningChildWrapper := NewCBContainersHardeningChildK8sObject(cbContainersHardening, hardeningChildK8sObject)
+func (applier *DefaultHardeningChildK8sObjectApplier) ApplyHardeningChildK8sObject(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec, client client.Client, hardeningChildK8sObject HardeningChildK8sObject, agentVersion, accessTokenSecretName string, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
+	hardeningChildWrapper := NewCBContainersHardeningChildK8sObject(cbContainersHardening, hardeningChildK8sObject, agentVersion, accessTokenSecretName)
 	return applyment.ApplyDesiredK8sObject(ctx, client, hardeningChildWrapper, applyOptionsList...)
 }
 
-func (applier *DefaultHardeningChildK8sObjectApplier) DeleteK8sObjectIfExists(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, hardeningChildK8sObject HardeningChildK8sObject) (bool, error) {
-	hardeningChildWrapper := NewCBContainersHardeningChildK8sObject(cbContainersHardening, hardeningChildK8sObject)
+func (applier *DefaultHardeningChildK8sObjectApplier) DeleteK8sObjectIfExists(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec, client client.Client, hardeningChildK8sObject HardeningChildK8sObject) (bool, error) {
+	hardeningChildWrapper := NewCBContainersHardeningChildK8sObject(cbContainersHardening, hardeningChildK8sObject, "", "")
 	return applyment.DeleteK8sObjectIfExists(ctx, client, hardeningChildWrapper)
 }
 
 type CBContainersHardeningChildK8sObject struct {
-	cbContainersHardening *cbcontainersv1.CBContainersHardening
+	cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec
 	HardeningChildK8sObject
+	AgentVersion          string
+	AccessTokenSecretName string
 }
 
-func NewCBContainersHardeningChildK8sObject(cbContainersHardening *cbcontainersv1.CBContainersHardening, hardeningChildK8sObject HardeningChildK8sObject) *CBContainersHardeningChildK8sObject {
+func NewCBContainersHardeningChildK8sObject(cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec, hardeningChildK8sObject HardeningChildK8sObject, agentVersion, accessTokenSecretName string) *CBContainersHardeningChildK8sObject {
 	return &CBContainersHardeningChildK8sObject{
 		cbContainersHardening:   cbContainersHardening,
 		HardeningChildK8sObject: hardeningChildK8sObject,
+		AgentVersion:            agentVersion,
+		AccessTokenSecretName:   accessTokenSecretName,
 	}
 }
 
@@ -51,5 +55,5 @@ func (hardeningChildWrapper *CBContainersHardeningChildK8sObject) NamespacedName
 }
 
 func (hardeningChildWrapper *CBContainersHardeningChildK8sObject) MutateK8sObject(k8sObject client.Object) error {
-	return hardeningChildWrapper.MutateHardeningChildK8sObject(k8sObject, hardeningChildWrapper.cbContainersHardening)
+	return hardeningChildWrapper.MutateHardeningChildK8sObject(k8sObject, hardeningChildWrapper.cbContainersHardening, hardeningChildWrapper.AgentVersion, hardeningChildWrapper.AccessTokenSecretName)
 }

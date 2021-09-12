@@ -53,7 +53,7 @@ var (
 type RuntimeStateApplierTestMocks struct {
 	client              *testUtilsMocks.MockClient
 	childApplier        *mocks.MockRuntimeChildK8sObjectApplier
-	cbContainersRuntime *cbcontainersv1.CBContainersRuntime
+	cbContainersRuntime *cbcontainersv1.CBContainersRuntimeSpec
 }
 
 type RuntimeStateApplierTestSetup func(*RuntimeStateApplierTestMocks)
@@ -68,11 +68,7 @@ func testRuntimeStateApplier(t *testing.T, setup RuntimeStateApplierTestSetup) (
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	cbContainersRuntime := &cbcontainersv1.CBContainersRuntime{
-		Spec: cbcontainersv1.CBContainersRuntimeSpec{
-			Version: Version,
-		},
-	}
+	cbContainersRuntime := &cbcontainersv1.CBContainersRuntimeSpec{}
 
 	mockObjects := &RuntimeStateApplierTestMocks{
 		client:              testUtilsMocks.NewMockClient(ctrl),
@@ -82,7 +78,7 @@ func testRuntimeStateApplier(t *testing.T, setup RuntimeStateApplierTestSetup) (
 
 	setup(mockObjects)
 
-	return runtime.NewRuntimeStateApplier(&logrTesting.TestLogger{T: t}, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersRuntime, mockObjects.client, nil)
+	return runtime.NewRuntimeStateApplier(&logrTesting.TestLogger{T: t}, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersRuntime, Version, "", mockObjects.client, nil)
 }
 
 func getAppliedAndDeletedObjects(t *testing.T, appliedK8sObjectsChangers ...AppliedK8sObjectsChanger) ([]K8sObjectDetails, []K8sObjectDetails, error) {
@@ -90,8 +86,8 @@ func getAppliedAndDeletedObjects(t *testing.T, appliedK8sObjectsChangers ...Appl
 	deletedObjects := make([]K8sObjectDetails, 0)
 
 	_, err := testRuntimeStateApplier(t, func(mocks *RuntimeStateApplierTestMocks) {
-		mocks.childApplier.EXPECT().ApplyRuntimeChildK8sObject(gomock.Any(), mocks.cbContainersRuntime, mocks.client, gomock.Any(), gomock.Any()).
-			DoAndReturn(func(ctx context.Context, cr *cbcontainersv1.CBContainersRuntime, client client.Client, childObject runtime.RuntimeChildK8sObject, options ...*options.ApplyOptions) (bool, client.Object, error) {
+		mocks.childApplier.EXPECT().ApplyRuntimeChildK8sObject(gomock.Any(), mocks.cbContainersRuntime, Version, gomock.Any(), mocks.client, gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, cr *cbcontainersv1.CBContainersRuntimeSpec, client client.Client, childObject runtime.RuntimeChildK8sObject, options ...*options.ApplyOptions) (bool, client.Object, error) {
 				namespacedName := childObject.RuntimeChildNamespacedName(cr)
 				k8sObject := childObject.EmptyK8sObject()
 				objType := reflect.TypeOf(k8sObject)
@@ -106,7 +102,7 @@ func getAppliedAndDeletedObjects(t *testing.T, appliedK8sObjectsChangers ...Appl
 			}).AnyTimes()
 
 		mocks.childApplier.EXPECT().DeleteK8sObjectIfExists(gomock.Any(), mocks.cbContainersRuntime, mocks.client, gomock.Any()).
-			DoAndReturn(func(ctx context.Context, cr *cbcontainersv1.CBContainersRuntime, client client.Client, obj runtime.RuntimeChildK8sObject) (bool, error) {
+			DoAndReturn(func(ctx context.Context, cr *cbcontainersv1.CBContainersRuntimeSpec, client client.Client, obj runtime.RuntimeChildK8sObject) (bool, error) {
 				namespacedName := obj.RuntimeChildNamespacedName(cr)
 				objType := reflect.TypeOf(obj.EmptyK8sObject())
 				deletedObjects = append(deletedObjects, K8sObjectDetails{Namespace: namespacedName.Namespace, Name: namespacedName.Name, ObjectType: objType})

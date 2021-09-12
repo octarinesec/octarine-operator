@@ -21,7 +21,7 @@ const (
 var (
 	WebhookFailurePolicy = adapters.FailurePolicyIgnore
 	WebhookPath          = "/validate"
-	// This value's default changes across versions so we want to ensure consistency by setting it explicitly
+	// WebhookMatchPolicy : This value's default changes across versions so we want to ensure consistency by setting it explicitly
 	WebhookMatchPolicy = adapters.MatchPolicyEquivalent
 
 	ResourcesWebhookSideEffect  = adapters.SideEffectClassNoneOnDryRun
@@ -47,11 +47,11 @@ func (obj *EnforcerWebhookK8sObject) EmptyK8sObject() client.Object {
 	return adapters.EmptyValidatingWebhookConfigForVersion(obj.kubeletVersion)
 }
 
-func (obj *EnforcerWebhookK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardening) types.NamespacedName {
+func (obj *EnforcerWebhookK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardeningSpec) types.NamespacedName {
 	return types.NamespacedName{Name: EnforcerName, Namespace: ""}
 }
 
-func (obj *EnforcerWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
+func (obj *EnforcerWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardeningSpec *cbcontainersv1.CBContainersHardeningSpec, _, _ string) error {
 	webhookConfiguration, ok := adapters.TryGetValidatingWebhookConfigurationAdapter(k8sObject)
 	if !ok {
 		return fmt.Errorf("expected a valid instance of ValidatingWebhookConfiguration")
@@ -61,13 +61,13 @@ func (obj *EnforcerWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject cli
 		return fmt.Errorf("tls secret values weren't provided")
 	}
 
-	enforcerSpec := cbContainersHardening.Spec.EnforcerSpec
+	enforcerSpec := cbContainersHardeningSpec.EnforcerSpec
 
 	webhookConfiguration.SetLabels(enforcerSpec.Labels)
-	return obj.mutateWebhooks(webhookConfiguration, cbContainersHardening)
+	return obj.mutateWebhooks(webhookConfiguration, cbContainersHardeningSpec)
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration adapters.ValidatingWebhookConfigurationAdapter, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
+func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration adapters.ValidatingWebhookConfigurationAdapter, cbContainersHardeningSpec *cbcontainersv1.CBContainersHardeningSpec) error {
 	var resourcesWebhookObj adapters.ValidatingWebhookAdapter
 	var namespacesWebhookObj adapters.ValidatingWebhookAdapter
 
@@ -97,8 +97,8 @@ func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration adapter
 		namespacesWebhookObj = updatedWebhooks[1]
 	}
 
-	obj.mutateResourcesWebhook(resourcesWebhookObj, cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds)
-	obj.mutateNamespacesWebhook(namespacesWebhookObj, cbContainersHardening.Spec.EnforcerSpec.WebhookTimeoutSeconds)
+	obj.mutateResourcesWebhook(resourcesWebhookObj, cbContainersHardeningSpec.EnforcerSpec.WebhookTimeoutSeconds)
+	obj.mutateNamespacesWebhook(namespacesWebhookObj, cbContainersHardeningSpec.EnforcerSpec.WebhookTimeoutSeconds)
 	return nil
 }
 

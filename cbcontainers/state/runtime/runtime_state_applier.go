@@ -12,8 +12,8 @@ import (
 )
 
 type RuntimeChildK8sObjectApplier interface {
-	ApplyRuntimeChildK8sObject(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, runtimeChildK8sObject RuntimeChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error)
-	DeleteK8sObjectIfExists(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, runtimeChildK8sObject RuntimeChildK8sObject) (bool, error)
+	ApplyRuntimeChildK8sObject(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntimeSpec, agentVersion, accessTokenSecretName string, client client.Client, runtimeChildK8sObject RuntimeChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error)
+	DeleteK8sObjectIfExists(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntimeSpec, client client.Client, runtimeChildK8sObject RuntimeChildK8sObject) (bool, error)
 }
 
 type RuntimeStateApplier struct {
@@ -34,16 +34,16 @@ func NewRuntimeStateApplier(log logr.Logger, childApplier RuntimeChildK8sObjectA
 	}
 }
 
-func (c *RuntimeStateApplier) ApplyDesiredState(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
+func (c *RuntimeStateApplier) ApplyDesiredState(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntimeSpec, agentVersion, accessTokenSecretName string, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
 	applyOptions := applymentOptions.NewApplyOptions().SetOwnerSetter(setOwner)
 
-	mutatedResolver, err := c.applyResolver(ctx, cbContainersRuntime, client, applyOptions)
+	mutatedResolver, err := c.applyResolver(ctx, cbContainersRuntime, agentVersion, accessTokenSecretName, client, applyOptions)
 	if err != nil {
 		return false, err
 	}
 	c.log.Info("Applied runtime kubernetes resolver objects", "Mutated", mutatedResolver)
 
-	mutatedSensor, err := c.applySensor(ctx, cbContainersRuntime, client, applyOptions)
+	mutatedSensor, err := c.applySensor(ctx, cbContainersRuntime, agentVersion, accessTokenSecretName, client, applyOptions)
 	if err != nil {
 		return false, err
 	}
@@ -52,14 +52,14 @@ func (c *RuntimeStateApplier) ApplyDesiredState(ctx context.Context, cbContainer
 	return mutatedResolver || mutatedSensor, nil
 }
 
-func (c *RuntimeStateApplier) applyResolver(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
-	mutatedService, _, err := c.childApplier.ApplyRuntimeChildK8sObject(ctx, cbContainersRuntime, client, c.resolverService, applyOptions)
+func (c *RuntimeStateApplier) applyResolver(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntimeSpec, agentVersion, accessTokenSecretName string, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
+	mutatedService, _, err := c.childApplier.ApplyRuntimeChildK8sObject(ctx, cbContainersRuntime, agentVersion, accessTokenSecretName, client, c.resolverService, applyOptions)
 	if err != nil {
 		return false, err
 	}
 	c.log.Info("Applied kubernetes resolver service", "Mutated", mutatedService)
 
-	mutatedDeployment, _, err := c.childApplier.ApplyRuntimeChildK8sObject(ctx, cbContainersRuntime, client, c.resolverDeployment, applyOptions)
+	mutatedDeployment, _, err := c.childApplier.ApplyRuntimeChildK8sObject(ctx, cbContainersRuntime, agentVersion, accessTokenSecretName, client, c.resolverDeployment, applyOptions)
 	if err != nil {
 		return false, err
 	}
@@ -67,8 +67,8 @@ func (c *RuntimeStateApplier) applyResolver(ctx context.Context, cbContainersRun
 	return mutatedService || mutatedDeployment, nil
 }
 
-func (c *RuntimeStateApplier) applySensor(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
-	mutatedDaemonSet, _, err := c.childApplier.ApplyRuntimeChildK8sObject(ctx, cbContainersRuntime, client, c.sensorDaemonSet, applyOptions)
+func (c *RuntimeStateApplier) applySensor(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntimeSpec, agentVersion, accessTokenSecretName string, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
+	mutatedDaemonSet, _, err := c.childApplier.ApplyRuntimeChildK8sObject(ctx, cbContainersRuntime, agentVersion, accessTokenSecretName, client, c.sensorDaemonSet, applyOptions)
 	if err != nil {
 		return false, err
 	}

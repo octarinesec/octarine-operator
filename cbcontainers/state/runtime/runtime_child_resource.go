@@ -13,8 +13,8 @@ import (
 )
 
 type RuntimeChildK8sObject interface {
-	MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntime *cbcontainersv1.CBContainersRuntime) error
-	RuntimeChildNamespacedName(cbContainersRuntime *cbcontainersv1.CBContainersRuntime) types.NamespacedName
+	MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntimeSpec *cbcontainersv1.CBContainersRuntimeSpec, agentVersion, accessTokenSecretName string) error
+	RuntimeChildNamespacedName(cbContainersRuntime *cbcontainersv1.CBContainersRuntimeSpec) types.NamespacedName
 	stateTypes.DesiredK8sObjectInitializer
 }
 
@@ -24,32 +24,36 @@ func NewDefaultRuntimeChildK8sObjectApplier() *DefaultRuntimeChildK8sObjectAppli
 	return &DefaultRuntimeChildK8sObjectApplier{}
 }
 
-func (applier *DefaultRuntimeChildK8sObjectApplier) ApplyRuntimeChildK8sObject(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, runtimeChildK8sObject RuntimeChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
-	runtimeChildWrapper := NewCBContainersRuntimeChildK8sObject(cbContainersRuntime, runtimeChildK8sObject)
+func (applier *DefaultRuntimeChildK8sObjectApplier) ApplyRuntimeChildK8sObject(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntimeSpec, agentVersion, accessTokenSecretName string, client client.Client, runtimeChildK8sObject RuntimeChildK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
+	runtimeChildWrapper := NewCBContainersRuntimeChildK8sObject(cbContainersRuntime, runtimeChildK8sObject, agentVersion, accessTokenSecretName)
 	return applyment.ApplyDesiredK8sObject(ctx, client, runtimeChildWrapper, applyOptionsList...)
 }
 
-func (applier *DefaultRuntimeChildK8sObjectApplier) DeleteK8sObjectIfExists(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntime, client client.Client, runtimeChildK8sObject RuntimeChildK8sObject) (bool, error) {
-	runtimeChildWrapper := NewCBContainersRuntimeChildK8sObject(cbContainersRuntime, runtimeChildK8sObject)
+func (applier *DefaultRuntimeChildK8sObjectApplier) DeleteK8sObjectIfExists(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntimeSpec, client client.Client, runtimeChildK8sObject RuntimeChildK8sObject) (bool, error) {
+	runtimeChildWrapper := NewCBContainersRuntimeChildK8sObject(cbContainersRuntime, runtimeChildK8sObject, "", "")
 	return applyment.DeleteK8sObjectIfExists(ctx, client, runtimeChildWrapper)
 }
 
 type CBContainersRuntimeChildK8sObject struct {
-	cbContainersRuntime *cbcontainersv1.CBContainersRuntime
+	cbContainersRuntimeSpec *cbcontainersv1.CBContainersRuntimeSpec
 	RuntimeChildK8sObject
+	AgentVersion          string
+	AccessTokenSecretName string
 }
 
-func NewCBContainersRuntimeChildK8sObject(cbContainersRuntime *cbcontainersv1.CBContainersRuntime, runtimeChildK8sObject RuntimeChildK8sObject) *CBContainersRuntimeChildK8sObject {
+func NewCBContainersRuntimeChildK8sObject(cbContainersRuntimeSpec *cbcontainersv1.CBContainersRuntimeSpec, runtimeChildK8sObject RuntimeChildK8sObject, agentVersion, accessTokenSecretName string) *CBContainersRuntimeChildK8sObject {
 	return &CBContainersRuntimeChildK8sObject{
-		cbContainersRuntime:   cbContainersRuntime,
-		RuntimeChildK8sObject: runtimeChildK8sObject,
+		cbContainersRuntimeSpec: cbContainersRuntimeSpec,
+		RuntimeChildK8sObject:   runtimeChildK8sObject,
+		AgentVersion:            agentVersion,
+		AccessTokenSecretName:   accessTokenSecretName,
 	}
 }
 
 func (runtimeChildWrapper *CBContainersRuntimeChildK8sObject) NamespacedName() types.NamespacedName {
-	return runtimeChildWrapper.RuntimeChildNamespacedName(runtimeChildWrapper.cbContainersRuntime)
+	return runtimeChildWrapper.RuntimeChildNamespacedName(runtimeChildWrapper.cbContainersRuntimeSpec)
 }
 
 func (runtimeChildWrapper *CBContainersRuntimeChildK8sObject) MutateK8sObject(k8sObject client.Object) error {
-	return runtimeChildWrapper.MutateRuntimeChildK8sObject(k8sObject, runtimeChildWrapper.cbContainersRuntime)
+	return runtimeChildWrapper.MutateRuntimeChildK8sObject(k8sObject, runtimeChildWrapper.cbContainersRuntimeSpec, runtimeChildWrapper.AgentVersion, runtimeChildWrapper.AccessTokenSecretName)
 }

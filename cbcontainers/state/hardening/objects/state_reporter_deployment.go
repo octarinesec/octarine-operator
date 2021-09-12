@@ -36,12 +36,12 @@ func (obj *StateReporterDeploymentK8sObject) EmptyK8sObject() client.Object {
 	return &appsV1.Deployment{}
 }
 
-func (obj *StateReporterDeploymentK8sObject) HardeningChildNamespacedName(_ *cbContainersV1.CBContainersHardening) types.NamespacedName {
+func (obj *StateReporterDeploymentK8sObject) HardeningChildNamespacedName(_ *cbContainersV1.CBContainersHardeningSpec) types.NamespacedName {
 	return types.NamespacedName{Name: StateReporterName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *StateReporterDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbContainersV1.CBContainersHardening) error {
-	stateReporterSpec := cbContainersHardening.Spec.StateReporterSpec
+func (obj *StateReporterDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardeningSpec *cbContainersV1.CBContainersHardeningSpec, agentVersion, accessTokenSecretName string) error {
+	stateReporterSpec := cbContainersHardeningSpec.StateReporterSpec
 	deployment, ok := k8sObject.(*appsV1.Deployment)
 	if !ok {
 		return fmt.Errorf("expected Deployment K8s object")
@@ -74,7 +74,7 @@ func (obj *StateReporterDeploymentK8sObject) MutateHardeningChildK8sObject(k8sOb
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, stateReporterSpec.DeploymentAnnotations)
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, stateReporterSpec.PodTemplateAnnotations)
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, &cbContainersHardening.Spec.StateReporterSpec, &cbContainersHardening.Spec.EventsGatewaySpec, cbContainersHardening.Spec.Version, cbContainersHardening.Spec.AccessTokenSecretName)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, &cbContainersHardeningSpec.StateReporterSpec, &cbContainersHardeningSpec.EventsGatewaySpec, agentVersion, accessTokenSecretName)
 
 	return nil
 }
