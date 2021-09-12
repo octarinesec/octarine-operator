@@ -1,4 +1,4 @@
-package cluster_test
+package core_test
 
 import (
 	"context"
@@ -84,7 +84,7 @@ func testClusterStateApplier(t *testing.T, setup ClusterStateApplierTestSetup, k
 
 	setup(mockObjects)
 
-	return cluster.NewClusterStateApplier(&logrTesting.TestLogger{T: t}, k8sVersion, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersCluster, nil, mockObjects.client, nil)
+	return core.NewClusterStateApplier(&logrTesting.TestLogger{T: t}, k8sVersion, mockObjects.childApplier).ApplyDesiredState(context.Background(), cbContainersCluster, nil, mockObjects.client, nil)
 }
 
 func getAppliedObjects(t *testing.T, k8sVersion string) []AppliedObject {
@@ -92,7 +92,7 @@ func getAppliedObjects(t *testing.T, k8sVersion string) []AppliedObject {
 
 	_, err := testClusterStateApplier(t, func(mocks *ClusterStateApplierTestMocks) {
 		mocks.childApplier.EXPECT().ApplyClusterChildK8sObject(gomock.Any(), mocks.cbContainersCluster, mocks.client, gomock.Any(), gomock.Any()).
-			Do(func(ctx context.Context, cr *cbcontainersv1.CBContainersAgent, client client.Client, obj cluster.ClusterChildK8sObject, options ...*options.ApplyOptions) {
+			Do(func(ctx context.Context, cr *cbcontainersv1.CBContainersAgent, client client.Client, obj core.ClusterChildK8sObject, options ...*options.ApplyOptions) {
 				namespacedName := obj.ClusterChildNamespacedName(cr)
 				objType := reflect.TypeOf(obj.EmptyK8sObject())
 				actualAppliedObjects = append(actualAppliedObjects, AppliedObject{Namespace: namespacedName.Namespace, Name: namespacedName.Name, ObjectType: objType})

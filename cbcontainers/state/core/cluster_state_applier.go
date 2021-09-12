@@ -1,4 +1,4 @@
-package cluster
+package core
 
 import (
 	"context"

@@ -28,14 +28,14 @@ func (obj *ConfigurationK8sObject) MutateClusterChildK8sObject(k8sObject client.
 	}
 
 	configMap.Data = map[string]string{
-		commonState.DataPlaneConfigmapAccountKey:    cbContainersCluster.Spec.Account,
-		commonState.DataPlaneConfigmapClusterKey:    cbContainersCluster.Spec.ClusterName,
-		commonState.DataPlaneConfigmapApiSchemeKey:  cbContainersCluster.Spec.ApiGatewaySpec.Scheme,
-		commonState.DataPlaneConfigmapApiHostKey:    cbContainersCluster.Spec.ApiGatewaySpec.Host,
-		commonState.DataPlaneConfigmapApiPortKey:    strconv.Itoa(cbContainersCluster.Spec.ApiGatewaySpec.Port),
-		commonState.DataPlaneConfigmapApiAdapterKey: cbContainersCluster.Spec.ApiGatewaySpec.Adapter,
-		commonState.DataPlaneConfigmapTlsSkipVerifyKey: strconv.FormatBool(cbContainersCluster.Spec.GatewayTLS.InsecureSkipVerify),
-		commonState.DataPlaneConfigmapTlsRootCAsPathKey: path.Join(commonState.DataPlaneConfigmapTlsRootCAsDirPath, commonState.DataPlaneConfigmapTlsRootCAsFilePath),
+		commonState.DataPlaneConfigmapAccountKey:         cbContainersCluster.Spec.Account,
+		commonState.DataPlaneConfigmapClusterKey:         cbContainersCluster.Spec.ClusterName,
+		commonState.DataPlaneConfigmapApiSchemeKey:       cbContainersCluster.Spec.ApiGatewaySpec.Scheme,
+		commonState.DataPlaneConfigmapApiHostKey:         cbContainersCluster.Spec.ApiGatewaySpec.Host,
+		commonState.DataPlaneConfigmapApiPortKey:         strconv.Itoa(cbContainersCluster.Spec.ApiGatewaySpec.Port),
+		commonState.DataPlaneConfigmapApiAdapterKey:      cbContainersCluster.Spec.ApiGatewaySpec.Adapter,
+		commonState.DataPlaneConfigmapTlsSkipVerifyKey:   strconv.FormatBool(cbContainersCluster.Spec.GatewayTLS.InsecureSkipVerify),
+		commonState.DataPlaneConfigmapTlsRootCAsPathKey:  path.Join(commonState.DataPlaneConfigmapTlsRootCAsDirPath, commonState.DataPlaneConfigmapTlsRootCAsFilePath),
 		commonState.DataPlaneConfigmapTlsRootCAsFilePath: string(cbContainersCluster.Spec.GatewayTLS.RootCAsBundle),
 	}
 

@@ -7,14 +7,14 @@ import (
 
 type DesiredK8sObject interface {
 	DesiredK8sObjectInitializer
-	MutatableK8sObject
+	MutableK8sObject
 }
 
 type DesiredK8sObjectInitializer interface {
 	EmptyK8sObject() client.Object
 }
 
-type MutatableK8sObject interface {
+type MutableK8sObject interface {
 	NamespacedName() types.NamespacedName
 	MutateK8sObject(client.Object) error
 }
