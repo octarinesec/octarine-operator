@@ -19,6 +19,10 @@ func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbconta
 		cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName = defaultAccessToken
 	}
 
+	if cbContainersCluster.Spec.GatewayTLS.RootCAsBundle == nil {
+		cbContainersCluster.Spec.GatewayTLS.RootCAsBundle = make([]byte, 0)
+	}
+
 	if err := r.setClusterDefaults(&cbContainersCluster.Spec.CoreSpec); err != nil {
 		return err
 	}
