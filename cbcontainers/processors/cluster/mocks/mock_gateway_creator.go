@@ -36,11 +36,12 @@ func (m *MockGatewayCreator) EXPECT() *MockGatewayCreatorMockRecorder {
 }
 
 // CreateGateway mocks base method.
-func (m *MockGatewayCreator) CreateGateway(arg0 *v1.CBContainersAgent, arg1 string) cluster.Gateway {
+func (m *MockGatewayCreator) CreateGateway(arg0 *v1.CBContainersAgent, arg1 string) (cluster.Gateway, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateGateway", arg0, arg1)
 	ret0, _ := ret[0].(cluster.Gateway)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CreateGateway indicates an expected call of CreateGateway.

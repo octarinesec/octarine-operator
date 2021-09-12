@@ -29,9 +29,11 @@ type CBContainersAgentSpec struct {
 	ClusterName    string                     `json:"clusterName,required"`
 	Version        string                     `json:"version,required"`
 	ApiGatewaySpec CBContainersApiGatewaySpec `json:"apiGatewaySpec,required"`
-	CoreSpec       CBContainersCoreSpec       `json:"coreSpec,omitempty"`
-	HardeningSpec  CBContainersHardeningSpec  `json:"hardeningSpec,omitempty"`
-	RuntimeSpec    CBContainersRuntimeSpec    `json:"runtimeSpec,omitempty"`
+	// +kubebuilder:default:=<>
+	GatewayTLS    CBContainersGatewayTLS    `json:"gatewayTLS,omitempty"`
+	CoreSpec      CBContainersCoreSpec      `json:"coreSpec,omitempty"`
+	HardeningSpec CBContainersHardeningSpec `json:"hardeningSpec,omitempty"`
+	RuntimeSpec   CBContainersRuntimeSpec   `json:"runtimeSpec,omitempty"`
 }
 
 // CBContainersAgentStatus defines the observed state of CBContainersAgent

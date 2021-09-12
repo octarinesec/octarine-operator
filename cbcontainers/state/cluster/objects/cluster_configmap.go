@@ -6,6 +6,7 @@ import (
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"path"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
 )
@@ -33,6 +34,9 @@ func (obj *ConfigurationK8sObject) MutateClusterChildK8sObject(k8sObject client.
 		commonState.DataPlaneConfigmapApiHostKey:    cbContainersCluster.Spec.ApiGatewaySpec.Host,
 		commonState.DataPlaneConfigmapApiPortKey:    strconv.Itoa(cbContainersCluster.Spec.ApiGatewaySpec.Port),
 		commonState.DataPlaneConfigmapApiAdapterKey: cbContainersCluster.Spec.ApiGatewaySpec.Adapter,
+		commonState.DataPlaneConfigmapTlsSkipVerifyKey: strconv.FormatBool(cbContainersCluster.Spec.GatewayTLS.InsecureSkipVerify),
+		commonState.DataPlaneConfigmapTlsRootCAsPathKey: path.Join(commonState.DataPlaneConfigmapTlsRootCAsDirPath, commonState.DataPlaneConfigmapTlsRootCAsFilePath),
+		commonState.DataPlaneConfigmapTlsRootCAsFilePath: string(cbContainersCluster.Spec.GatewayTLS.RootCAsBundle),
 	}
 
 	return nil

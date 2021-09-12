@@ -98,6 +98,24 @@ func TestWithDataPlaneCommonConfig(t *testing.T) {
 				},
 			},
 		},
+		tlsRootCAsPathVarName: {
+			Name: tlsRootCAsPathVarName,
+			ValueFrom: &coreV1.EnvVarSource{
+				ConfigMapKeyRef: &coreV1.ConfigMapKeySelector{
+					LocalObjectReference: coreV1.LocalObjectReference{Name: DataPlaneConfigmapName},
+					Key:                  DataPlaneConfigmapTlsRootCAsPathKey,
+				},
+			},
+		},
+		tlsSkipVerifyVarName: {
+			Name: tlsSkipVerifyVarName,
+			ValueFrom: &coreV1.EnvVarSource{
+				ConfigMapKeyRef: &coreV1.ConfigMapKeySelector{
+					LocalObjectReference: coreV1.LocalObjectReference{Name: DataPlaneConfigmapName},
+					Key:                  DataPlaneConfigmapTlsSkipVerifyKey,
+				},
+			},
+		},
 	}
 	actual := NewEnvVarBuilder().
 		WithCommonDataPlane(accessTokenSecretName).

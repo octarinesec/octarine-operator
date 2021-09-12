@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -21,9 +20,34 @@ type ApiGateway struct {
 	client      *resty.Client
 }
 
-func NewApiGateway(account, cluster string, accessToken string, scheme, host string, port int, adapter string) *ApiGateway {
+func createClient(tlsInsecureSkipVerify bool, rootCAsBundle []byte) (*resty.Client, error) {
 	client := resty.New()
-	client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+	tlsConfig := tls.Config{
+		InsecureSkipVerify: tlsInsecureSkipVerify,
+	}
+
+	if len(rootCAsBundle) > 0 {
+		rootCAs := x509.NewCertPool()
+		ok := rootCAs.AppendCertsFromPEM(rootCAsBundle)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse root certificates")
+		}
+
+		tlsConfig.RootCAs = rootCAs
+	}
+
+	client.SetTLSClientConfig(&tlsConfig)
+	return client, nil
+}
+
+func NewApiGateway(account, cluster string, accessToken string, scheme, host string, port int, adapter string,
+	tlsInsecureSkipVerify bool, rootCAsBundle []byte) (*ApiGateway, error) {
+
+	client, err := createClient(tlsInsecureSkipVerify, rootCAsBundle)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ApiGateway{
 		account:     account,
 		cluster:     cluster,
@@ -33,7 +57,7 @@ func NewApiGateway(account, cluster string, accessToken string, scheme, host str
 		port:        port,
 		adapter:     adapter,
 		client:      client,
-	}
+	}, nil
 }
 
 func (gateway *ApiGateway) baseUrl(postFix string) string {
@@ -92,12 +116,4 @@ func (gateway *ApiGateway) GetRegistrySecret() (*models.RegistrySecretValues, er
 	}
 
 	return resp.Result().(*models.RegistrySecretValues), nil
-}
-
-func (gateway *ApiGateway) GetCertificates(name string, privateKey *rsa.PrivateKey) (*x509.CertPool, *tls.Certificate, error) {
-	commonName := name
-	organization := []string{"Octarine", gateway.account}
-	organizationalUnit := []string{gateway.cluster}
-
-	return gateway.getCertificates(commonName, organizationalUnit, organization, privateKey)
 }
