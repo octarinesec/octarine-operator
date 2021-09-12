@@ -29,7 +29,7 @@ type CBContainersAgentSpec struct {
 	ClusterName    string                     `json:"clusterName,required"`
 	Version        string                     `json:"version,required"`
 	ApiGatewaySpec CBContainersApiGatewaySpec `json:"apiGatewaySpec,required"`
-	ClusterSpec    CBContainersClusterSpec    `json:"clusterSpec,omitempty"`
+	CoreSpec       CBContainersCoreSpec       `json:"coreSpec,omitempty"`
 	HardeningSpec  CBContainersHardeningSpec  `json:"hardeningSpec,omitempty"`
 	RuntimeSpec    CBContainersRuntimeSpec    `json:"runtimeSpec,omitempty"`
 }

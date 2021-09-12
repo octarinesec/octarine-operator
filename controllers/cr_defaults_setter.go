@@ -19,7 +19,7 @@ func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbconta
 		cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName = defaultAccessToken
 	}
 
-	if err := r.setClusterDefaults(&cbContainersCluster.Spec.ClusterSpec); err != nil {
+	if err := r.setClusterDefaults(&cbContainersCluster.Spec.CoreSpec); err != nil {
 		return err
 	}
 
@@ -34,7 +34,7 @@ func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbconta
 	return nil
 }
 
-func (r *CBContainersClusterReconciler) setClusterDefaults(cbContainersClusterSpec *cbcontainersv1.CBContainersClusterSpec) error {
+func (r *CBContainersClusterReconciler) setClusterDefaults(cbContainersClusterSpec *cbcontainersv1.CBContainersCoreSpec) error {
 	if cbContainersClusterSpec.EventsGatewaySpec.Port == 0 {
 		cbContainersClusterSpec.EventsGatewaySpec.Port = 443
 	}

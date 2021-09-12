@@ -6,21 +6,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
-  name: cbcontainersclusters.operator.containers.carbonblack.io
+  name: cbcontainersagents.operator.containers.carbonblack.io
 spec:
   group: operator.containers.carbonblack.io
   names:
-    kind: CBContainersCluster
-    listKind: CBContainersClusterList
-    plural: cbcontainersclusters
-    singular: cbcontainerscluster
+    kind: CBContainersAgent
+    listKind: CBContainersAgentList
+    plural: cbcontainersagents
+    singular: cbcontainersagent
   scope: Cluster
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: CBContainersCluster is the Schema for the cbcontainersclusters
-        API
+      description: CBContainersAgent is the Schema for the cbcontainersagents API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -56,7 +55,7 @@ spec:
               type: object
             clusterName:
               type: string
-            clusterSpec:
+            coreSpec:
               properties:
                 eventsGatewaySpec:
                   properties:
@@ -358,8 +357,6 @@ spec:
             runtimeSpec:
               description: CBContainersRuntimeSpec defines the desired state of CBContainersRuntime
               properties:
-                accessTokenSecretName:
-                  type: string
                 internalGrpcPort:
                   format: int32
                   type: integer
@@ -569,7 +566,7 @@ spec:
           - version
           type: object
         status:
-          description: CBContainersClusterStatus defines the observed state of CBContainersCluster
+          description: CBContainersAgentStatus defines the observed state of CBContainersAgent
           type: object
       type: object
   version: v1
