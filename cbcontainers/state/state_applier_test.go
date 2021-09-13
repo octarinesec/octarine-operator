@@ -170,7 +170,7 @@ func getAppliedAndDeletedObjects(t *testing.T, k8sVersion string, appliedK8sObje
 			}).AnyTimes()
 
 		mocks.componentApplier.EXPECT().Delete(gomock.Any(), gomock.Any(), mocks.agentSpec).
-			DoAndReturn(func(ctx context.Context, obj agent_applyment.AgentComponentBuilder, cr *cbcontainersv1.CBContainersHardeningSpec) (bool, error) {
+			DoAndReturn(func(ctx context.Context, obj agent_applyment.AgentComponentBuilder, cr *cbcontainersv1.CBContainersAgentSpec) (bool, error) {
 				namespacedName := obj.NamespacedName()
 				objType := reflect.TypeOf(obj.EmptyK8sObject())
 				deletedObjects = append(deletedObjects, K8sObjectDetails{Namespace: namespacedName.Namespace, Name: namespacedName.Name, ObjectType: objType})
