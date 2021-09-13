@@ -44,7 +44,7 @@ type ClusterProcessor interface {
 	Process(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error)
 }
 
-type CBContainersClusterReconciler struct {
+type CBContainersAgentController struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
@@ -54,7 +54,7 @@ type CBContainersClusterReconciler struct {
 	K8sVersion       string
 }
 
-func (r *CBContainersClusterReconciler) getContainersAgentObject(ctx context.Context) (*cbcontainersv1.CBContainersAgent, error) {
+func (r *CBContainersAgentController) getContainersAgentObject(ctx context.Context) (*cbcontainersv1.CBContainersAgent, error) {
 	cbContainersAgentsList := &cbcontainersv1.CBContainersAgentList{}
 	if err := r.List(ctx, cbContainersAgentsList); err != nil {
 		return nil, fmt.Errorf("couldn't list CBContainersAgent k8s objects: %v", err)
@@ -81,7 +81,7 @@ func (r *CBContainersClusterReconciler) getContainersAgentObject(ctx context.Con
 // +kubebuilder:rbac:groups={rbac.authorization.k8s.io,networking.k8s.io,apiextensions.k8s.io,extensions,rbac,batch,apps,core},resources={namespaces,clusterrolebindings,services,networkpolicies,ingresses,rolebindings,cronjobs,jobs,replicationcontrollers,statefulsets,daemonsets,deployments,replicasets,pods,nodes,customresourcedefinitions},verbs=get;list;watch
 // +kubebuilder:rbac:groups={discovery.k8s.io,""},resources={services,endpoints,endpointslices},verbs=get;list;watch
 
-func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("\n\n")
 	r.Log.Info("Got reconcile request", "namespaced name", req.NamespacedName)
 	r.Log.Info("Starting reconciling")
@@ -121,7 +121,7 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
-func (r *CBContainersClusterReconciler) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (*models.RegistrySecretValues, error) {
+func (r *CBContainersAgentController) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (*models.RegistrySecretValues, error) {
 	accessToken, err := r.getAccessToken(ctx, cbContainersCluster)
 	if err != nil {
 		return nil, err
@@ -130,7 +130,7 @@ func (r *CBContainersClusterReconciler) getRegistrySecretValues(ctx context.Cont
 	return r.ClusterProcessor.Process(cbContainersCluster, accessToken)
 }
 
-func (r *CBContainersClusterReconciler) getAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (string, error) {
+func (r *CBContainersAgentController) getAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (string, error) {
 	accessTokenSecretNamespacedName := types.NamespacedName{Name: cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName, Namespace: commonState.DataPlaneNamespaceName}
 	accessTokenSecret := &corev1.Secret{}
 	if err := r.Get(ctx, accessTokenSecretNamespacedName, accessTokenSecret); err != nil {
@@ -145,7 +145,7 @@ func (r *CBContainersClusterReconciler) getAccessToken(ctx context.Context, cbCo
 	return accessToken, nil
 }
 
-func (r *CBContainersClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *CBContainersAgentController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&cbcontainersv1.CBContainersAgent{}).
 		Owns(&corev1.ConfigMap{}).

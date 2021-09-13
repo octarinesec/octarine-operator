@@ -2,7 +2,7 @@ package controllers
 
 import cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 
-func (r *CBContainersClusterReconciler) setDefaults(cbContainersAgent *cbcontainersv1.CBContainersAgent) error {
+func (r *CBContainersAgentController) setDefaults(cbContainersAgent *cbcontainersv1.CBContainersAgent) error {
 	if cbContainersAgent.Spec.ApiGatewaySpec.Scheme == "" {
 		cbContainersAgent.Spec.ApiGatewaySpec.Scheme = "https"
 	}
@@ -38,7 +38,7 @@ func (r *CBContainersClusterReconciler) setDefaults(cbContainersAgent *cbcontain
 	return nil
 }
 
-func (r *CBContainersClusterReconciler) setClusterDefaults(cbContainersClusterSpec *cbcontainersv1.CBContainersCoreSpec) error {
+func (r *CBContainersAgentController) setClusterDefaults(cbContainersClusterSpec *cbcontainersv1.CBContainersCoreSpec) error {
 	if cbContainersClusterSpec.EventsGatewaySpec.Port == 0 {
 		cbContainersClusterSpec.EventsGatewaySpec.Port = 443
 	}
@@ -70,7 +70,7 @@ func (r *CBContainersClusterReconciler) setClusterDefaults(cbContainersClusterSp
 	return nil
 }
 
-func (r *CBContainersClusterReconciler) setHardeningDefaults(cbContainersHardeningSpec *cbcontainersv1.CBContainersHardeningSpec) error {
+func (r *CBContainersAgentController) setHardeningDefaults(cbContainersHardeningSpec *cbcontainersv1.CBContainersHardeningSpec) error {
 	if cbContainersHardeningSpec.EnforcerSpec.Labels == nil {
 		cbContainersHardeningSpec.EnforcerSpec.Labels = make(map[string]string)
 	}
@@ -137,7 +137,7 @@ func (r *CBContainersClusterReconciler) setHardeningDefaults(cbContainersHardeni
 	return nil
 }
 
-func (r *CBContainersClusterReconciler) setRuntimeDefaults(cbContainersRuntimeSpec *cbcontainersv1.CBContainersRuntimeSpec) error {
+func (r *CBContainersAgentController) setRuntimeDefaults(cbContainersRuntimeSpec *cbcontainersv1.CBContainersRuntimeSpec) error {
 	if cbContainersRuntimeSpec.ResolverSpec.Labels == nil {
 		cbContainersRuntimeSpec.ResolverSpec.Labels = make(map[string]string)
 	}

@@ -24,10 +24,10 @@ import (
 type SetupClusterControllerTest func(*ClusterControllerTestMocks)
 
 type ClusterControllerTestMocks struct {
-	client              *testUtilsMocks.MockClient
-	ClusterProcessor    *mocks.MockClusterProcessor
-	ClusterStateApplier *mocks.MockClusterStateApplier
-	ctx                 context.Context
+	client           *testUtilsMocks.MockClient
+	ClusterProcessor *mocks.MockClusterProcessor
+	StateApplier     *mocks.MockStateApplier
+	ctx              context.Context
 }
 
 const (
@@ -53,23 +53,23 @@ func testCBContainersClusterController(t *testing.T, setups ...SetupClusterContr
 	defer ctrl.Finish()
 
 	mocksObjects := &ClusterControllerTestMocks{
-		ctx:                 context.TODO(),
-		client:              testUtilsMocks.NewMockClient(ctrl),
-		ClusterProcessor:    mocks.NewMockClusterProcessor(ctrl),
-		ClusterStateApplier: mocks.NewMockClusterStateApplier(ctrl),
+		ctx:              context.TODO(),
+		client:           testUtilsMocks.NewMockClient(ctrl),
+		ClusterProcessor: mocks.NewMockClusterProcessor(ctrl),
+		StateApplier:     mocks.NewMockStateApplier(ctrl),
 	}
 
 	for _, setup := range setups {
 		setup(mocksObjects)
 	}
 
-	controller := &controllers.CBContainersClusterReconciler{
+	controller := &controllers.CBContainersAgentController{
 		Client: mocksObjects.client,
 		Log:    &logrTesting.TestLogger{T: t},
 		Scheme: &runtime.Scheme{},
 
-		ClusterProcessor:    mocksObjects.ClusterProcessor,
-		ClusterStateApplier: mocksObjects.ClusterStateApplier,
+		ClusterProcessor: mocksObjects.ClusterProcessor,
+		StateApplier:     mocksObjects.StateApplier,
 	}
 
 	return controller.Reconcile(mocksObjects.ctx, ctrlRuntime.Request{})
@@ -156,7 +156,7 @@ func TestClusterReconcile(t *testing.T) {
 	t.Run("When state applier returns error, reconcile should return error", func(t *testing.T) {
 		_, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
 			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
-			testMocks.ClusterStateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, testMocks.client, gomock.Any()).Return(false, fmt.Errorf(""))
+			testMocks.StateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, gomock.Any()).Return(false, fmt.Errorf(""))
 		})
 
 		require.Error(t, err)
@@ -165,7 +165,7 @@ func TestClusterReconcile(t *testing.T) {
 	t.Run("When state applier returns state was changed, reconcile should return Requeue true", func(t *testing.T) {
 		result, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
 			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
-			testMocks.ClusterStateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, testMocks.client, gomock.Any()).Return(true, nil)
+			testMocks.StateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, gomock.Any()).Return(true, nil)
 		})
 
 		require.NoError(t, err)
@@ -175,7 +175,7 @@ func TestClusterReconcile(t *testing.T) {
 	t.Run("When state applier returns state was not changed, reconcile should return default Requeue", func(t *testing.T) {
 		result, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
 			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
-			testMocks.ClusterStateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, testMocks.client, gomock.Any()).Return(false, nil)
+			testMocks.StateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, gomock.Any()).Return(false, nil)
 		})
 
 		require.NoError(t, err)

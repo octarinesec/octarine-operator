@@ -99,7 +99,7 @@ func main() {
 	setupLog.Info(fmt.Sprintf("K8s version is: %v", k8sVersion))
 
 	cbContainersAgentLogger := ctrl.Log.WithName("controllers").WithName("CBContainersAgent")
-	if err = (&controllers.CBContainersClusterReconciler{
+	if err = (&controllers.CBContainersAgentController{
 		Client:           mgr.GetClient(),
 		Log:              cbContainersAgentLogger,
 		Scheme:           mgr.GetScheme(),
