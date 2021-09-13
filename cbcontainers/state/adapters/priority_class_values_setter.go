@@ -7,6 +7,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func EmptyPriorityClassForVersion(k8sVersion string) client.Object {
+	if k8sVersion == "" || k8sVersion >= "v1.14" {
+		return &schedulingV1.PriorityClass{}
+	} else if k8sVersion >= "v1.11" {
+		return &schedulingV1beta1.PriorityClass{}
+	}
+
+	return &schedulingV1alpha1.PriorityClass{}
+}
+
 type PriorityClassValuesSetter interface {
 	SetValue(value int32)
 	SetGlobalDefault(globalDefault bool)

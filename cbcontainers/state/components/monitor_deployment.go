@@ -1,4 +1,4 @@
-package objects
+package components
 
 import (
 	"fmt"
@@ -36,12 +36,12 @@ func (obj *MonitorDeploymentK8sObject) EmptyK8sObject() client.Object {
 	return &appsV1.Deployment{}
 }
 
-func (obj *MonitorDeploymentK8sObject) ClusterChildNamespacedName(_ *cbcontainersv1.CBContainersAgent) types.NamespacedName {
+func (obj *MonitorDeploymentK8sObject) NamespacedName() types.NamespacedName {
 	return types.NamespacedName{Name: MonitorName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *MonitorDeploymentK8sObject) MutateClusterChildK8sObject(k8sObject client.Object, cbContainersCluster *cbcontainersv1.CBContainersAgent) error {
-	monitorSpec := cbContainersCluster.Spec.CoreSpec.MonitorSpec
+func (obj *MonitorDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbcontainersv1.CBContainersAgentSpec) error {
+	monitorSpec := agentSpec.CoreSpec.MonitorSpec
 	deployment, ok := k8sObject.(*appsV1.Deployment)
 	if !ok {
 		return fmt.Errorf("expected Deployment K8s object")
@@ -75,7 +75,7 @@ func (obj *MonitorDeploymentK8sObject) MutateClusterChildK8sObject(k8sObject cli
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, monitorSpec.PodTemplateAnnotations)
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, &cbContainersCluster.Spec.CoreSpec.MonitorSpec, &cbContainersCluster.Spec.CoreSpec.EventsGatewaySpec, cbContainersCluster.Spec.Version, cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, &agentSpec.CoreSpec.MonitorSpec, &agentSpec.CoreSpec.EventsGatewaySpec, agentSpec.Version, agentSpec.ApiGatewaySpec.AccessTokenSecretName)
 
 	return nil
 }

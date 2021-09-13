@@ -20,6 +20,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	"os"
 
 	coreV1 "k8s.io/api/core/v1"
@@ -38,9 +41,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
-	clusterState "github.com/vmware/cbcontainers-operator/cbcontainers/state/core"
-	hardeningState "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening"
-	runtimeState "github.com/vmware/cbcontainers-operator/cbcontainers/state/runtime"
 	certificatesUtils "github.com/vmware/cbcontainers-operator/cbcontainers/utils/certificates"
 	"github.com/vmware/cbcontainers-operator/controllers"
 	// +kubebuilder:scaffold:imports
@@ -98,16 +98,14 @@ func main() {
 	k8sVersion := nodesList.Items[0].Status.NodeInfo.KubeletVersion
 	setupLog.Info(fmt.Sprintf("K8s version is: %v", k8sVersion))
 
-	cbContainersClusterLogger := ctrl.Log.WithName("controllers").WithName("CBContainersAgent")
+	cbContainersAgentLogger := ctrl.Log.WithName("controllers").WithName("CBContainersAgent")
 	if err = (&controllers.CBContainersClusterReconciler{
-		Client:                mgr.GetClient(),
-		Log:                   cbContainersClusterLogger,
-		Scheme:                mgr.GetScheme(),
-		K8sVersion:            k8sVersion,
-		ClusterProcessor:      clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator()),
-		ClusterStateApplier:   clusterState.NewClusterStateApplier(cbContainersClusterLogger, k8sVersion, clusterState.NewDefaultClusterChildK8sObjectApplier()),
-		HardeningStateApplier: hardeningState.NewHardeningStateApplier(cbContainersClusterLogger, k8sVersion, certificatesUtils.NewCertificateCreator(), hardeningState.NewDefaultHardeningChildK8sObjectApplier()),
-		RuntimeStateApplier:   runtimeState.NewRuntimeStateApplier(cbContainersClusterLogger, runtimeState.NewDefaultRuntimeChildK8sObjectApplier()),
+		Client:           mgr.GetClient(),
+		Log:              cbContainersAgentLogger,
+		Scheme:           mgr.GetScheme(),
+		K8sVersion:       k8sVersion,
+		ClusterProcessor: clusterProcessors.NewCBContainerClusterProcessor(cbContainersAgentLogger, clusterProcessors.NewDefaultGatewayCreator()),
+		StateApplier:     state.NewStateApplier(agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")
 		os.Exit(1)

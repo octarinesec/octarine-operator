@@ -1,11 +1,11 @@
-package objects
+package components
 
 import (
 	"fmt"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/adapters"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/adapters"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -47,11 +47,11 @@ func (obj *EnforcerWebhookK8sObject) EmptyK8sObject() client.Object {
 	return adapters.EmptyValidatingWebhookConfigForVersion(obj.kubeletVersion)
 }
 
-func (obj *EnforcerWebhookK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardeningSpec) types.NamespacedName {
+func (obj *EnforcerWebhookK8sObject) NamespacedName() types.NamespacedName {
 	return types.NamespacedName{Name: EnforcerName, Namespace: ""}
 }
 
-func (obj *EnforcerWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardeningSpec *cbcontainersv1.CBContainersHardeningSpec, _, _ string) error {
+func (obj *EnforcerWebhookK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbcontainersv1.CBContainersAgentSpec) error {
 	webhookConfiguration, ok := adapters.TryGetValidatingWebhookConfigurationAdapter(k8sObject)
 	if !ok {
 		return fmt.Errorf("expected a valid instance of ValidatingWebhookConfiguration")
@@ -61,10 +61,11 @@ func (obj *EnforcerWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject cli
 		return fmt.Errorf("tls secret values weren't provided")
 	}
 
-	enforcerSpec := cbContainersHardeningSpec.EnforcerSpec
+	hardeningSpec := &agentSpec.HardeningSpec
+	enforcerSpec := &hardeningSpec.EnforcerSpec
 
 	webhookConfiguration.SetLabels(enforcerSpec.Labels)
-	return obj.mutateWebhooks(webhookConfiguration, cbContainersHardeningSpec)
+	return obj.mutateWebhooks(webhookConfiguration, hardeningSpec)
 }
 
 func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration adapters.ValidatingWebhookConfigurationAdapter, cbContainersHardeningSpec *cbcontainersv1.CBContainersHardeningSpec) error {

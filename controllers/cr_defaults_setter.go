@@ -2,36 +2,36 @@ package controllers
 
 import cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 
-func (r *CBContainersClusterReconciler) setDefaults(cbContainersCluster *cbcontainersv1.CBContainersAgent) error {
-	if cbContainersCluster.Spec.ApiGatewaySpec.Scheme == "" {
-		cbContainersCluster.Spec.ApiGatewaySpec.Scheme = "https"
+func (r *CBContainersClusterReconciler) setDefaults(cbContainersAgent *cbcontainersv1.CBContainersAgent) error {
+	if cbContainersAgent.Spec.ApiGatewaySpec.Scheme == "" {
+		cbContainersAgent.Spec.ApiGatewaySpec.Scheme = "https"
 	}
 
-	if cbContainersCluster.Spec.ApiGatewaySpec.Port == 0 {
-		cbContainersCluster.Spec.ApiGatewaySpec.Port = 443
+	if cbContainersAgent.Spec.ApiGatewaySpec.Port == 0 {
+		cbContainersAgent.Spec.ApiGatewaySpec.Port = 443
 	}
 
-	if cbContainersCluster.Spec.ApiGatewaySpec.Adapter == "" {
-		cbContainersCluster.Spec.ApiGatewaySpec.Adapter = "containers"
+	if cbContainersAgent.Spec.ApiGatewaySpec.Adapter == "" {
+		cbContainersAgent.Spec.ApiGatewaySpec.Adapter = "containers"
 	}
 
-	if cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName == "" {
-		cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName = defaultAccessToken
+	if cbContainersAgent.Spec.ApiGatewaySpec.AccessTokenSecretName == "" {
+		cbContainersAgent.Spec.ApiGatewaySpec.AccessTokenSecretName = defaultAccessToken
 	}
 
-	if cbContainersCluster.Spec.GatewayTLS.RootCAsBundle == nil {
-		cbContainersCluster.Spec.GatewayTLS.RootCAsBundle = make([]byte, 0)
+	if cbContainersAgent.Spec.GatewayTLS.RootCAsBundle == nil {
+		cbContainersAgent.Spec.GatewayTLS.RootCAsBundle = make([]byte, 0)
 	}
 
-	if err := r.setClusterDefaults(&cbContainersCluster.Spec.CoreSpec); err != nil {
+	if err := r.setClusterDefaults(&cbContainersAgent.Spec.CoreSpec); err != nil {
 		return err
 	}
 
-	if err := r.setHardeningDefaults(&cbContainersCluster.Spec.HardeningSpec); err != nil {
+	if err := r.setHardeningDefaults(&cbContainersAgent.Spec.HardeningSpec); err != nil {
 		return err
 	}
 
-	if err := r.setRuntimeDefaults(&cbContainersCluster.Spec.RuntimeSpec); err != nil {
+	if err := r.setRuntimeDefaults(&cbContainersAgent.Spec.RuntimeSpec); err != nil {
 		return err
 	}
 

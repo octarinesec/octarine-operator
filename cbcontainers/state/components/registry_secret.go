@@ -1,4 +1,4 @@
-package objects
+package components
 
 import (
 	"fmt"
@@ -22,11 +22,11 @@ func (obj *RegistrySecretK8sObject) UpdateRegistrySecretValues(registrySecretVal
 
 func (obj *RegistrySecretK8sObject) EmptyK8sObject() client.Object { return &coreV1.Secret{} }
 
-func (obj *RegistrySecretK8sObject) ClusterChildNamespacedName(_ *cbcontainersv1.CBContainersAgent) types.NamespacedName {
+func (obj *RegistrySecretK8sObject) NamespacedName() types.NamespacedName {
 	return types.NamespacedName{Name: commonState.RegistrySecretName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *RegistrySecretK8sObject) MutateClusterChildK8sObject(k8sObject client.Object, _ *cbcontainersv1.CBContainersAgent) error {
+func (obj *RegistrySecretK8sObject) MutateK8sObject(k8sObject client.Object, _ *cbcontainersv1.CBContainersAgentSpec) error {
 	secret, ok := k8sObject.(*coreV1.Secret)
 	if !ok {
 		return fmt.Errorf("expected Secret K8s object")

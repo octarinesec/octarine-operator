@@ -19,7 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening/adapters"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/adapters"
 	appsV1 "k8s.io/api/apps/v1"
 
 	"github.com/go-logr/logr"
@@ -36,17 +36,8 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 )
 
-type ClusterStateApplier interface {
-	GetPriorityClassEmptyK8sObject() client.Object
-	ApplyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, secret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
-}
-
-type HardeningStateApplier interface {
-	ApplyDesiredState(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec, agentVersion, accessTokenSecretName string, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
-}
-
-type RuntimeStateApplier interface {
-	ApplyDesiredState(ctx context.Context, cbContainersRuntime *cbcontainersv1.CBContainersRuntimeSpec, agentVersion, accessTokenSecretName string, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error)
+type StateApplier interface {
+	ApplyDesiredState(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, secret *models.RegistrySecretValues, setOwner applymentOptions.OwnerSetter) (bool, error)
 }
 
 type ClusterProcessor interface {
@@ -58,28 +49,26 @@ type CBContainersClusterReconciler struct {
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 
-	ClusterProcessor      ClusterProcessor
-	ClusterStateApplier   ClusterStateApplier
-	HardeningStateApplier HardeningStateApplier
-	RuntimeStateApplier   RuntimeStateApplier
-	K8sVersion            string
+	ClusterProcessor ClusterProcessor
+	StateApplier     StateApplier
+	K8sVersion       string
 }
 
-func (r *CBContainersClusterReconciler) getContainersClusterObject(ctx context.Context) (*cbcontainersv1.CBContainersAgent, error) {
-	cbContainersClusterList := &cbcontainersv1.CBContainersAgentList{}
-	if err := r.List(ctx, cbContainersClusterList); err != nil {
+func (r *CBContainersClusterReconciler) getContainersAgentObject(ctx context.Context) (*cbcontainersv1.CBContainersAgent, error) {
+	cbContainersAgentsList := &cbcontainersv1.CBContainersAgentList{}
+	if err := r.List(ctx, cbContainersAgentsList); err != nil {
 		return nil, fmt.Errorf("couldn't list CBContainersAgent k8s objects: %v", err)
 	}
 
-	if cbContainersClusterList.Items == nil || len(cbContainersClusterList.Items) == 0 {
+	if cbContainersAgentsList.Items == nil || len(cbContainersAgentsList.Items) == 0 {
 		return nil, nil
 	}
 
-	if len(cbContainersClusterList.Items) > 1 {
+	if len(cbContainersAgentsList.Items) > 1 {
 		return nil, fmt.Errorf("there is more than 1 CBContainersAgent k8s object, please delete unwanted resources")
 	}
 
-	return &cbContainersClusterList.Items[0], nil
+	return &cbContainersAgentsList.Items[0], nil
 }
 
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersclusters,verbs=get;list;watch;create;update;patch;delete
@@ -98,31 +87,31 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 	r.Log.Info("Starting reconciling")
 
 	r.Log.Info("Getting CBContainersAgent object")
-	cbContainersCluster, err := r.getContainersClusterObject(ctx)
+	cbContainersAgent, err := r.getContainersAgentObject(ctx)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if cbContainersCluster == nil {
+	if cbContainersAgent == nil {
 		return ctrl.Result{}, nil
 	}
 
-	if err := r.setDefaults(cbContainersCluster); err != nil {
+	if err := r.setDefaults(cbContainersAgent); err != nil {
 		return ctrl.Result{}, fmt.Errorf("faild to set defaults to cluster CR: %v", err)
 	}
 
 	setOwner := func(controlledResource metav1.Object) error {
-		return ctrl.SetControllerReference(cbContainersCluster, controlledResource, r.Scheme)
+		return ctrl.SetControllerReference(cbContainersAgent, controlledResource, r.Scheme)
 	}
 
 	r.Log.Info("Getting registry secret values")
-	registrySecret, err := r.getRegistrySecretValues(ctx, cbContainersCluster)
+	registrySecret, err := r.getRegistrySecretValues(ctx, cbContainersAgent)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	r.Log.Info("Applying desired state")
-	stateWasChanged, err := r.applyDesiredState(ctx, cbContainersCluster, registrySecret, r.Client, setOwner)
+	stateWasChanged, err := r.StateApplier.ApplyDesiredState(ctx, &cbContainersAgent.Spec, registrySecret, setOwner)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -130,25 +119,6 @@ func (r *CBContainersClusterReconciler) Reconcile(ctx context.Context, req ctrl.
 	r.Log.Info("Finished reconciling", "Requiring", stateWasChanged)
 	r.Log.Info("\n\n")
 	return ctrl.Result{Requeue: stateWasChanged}, nil
-}
-
-func (r *CBContainersClusterReconciler) applyDesiredState(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, secret *models.RegistrySecretValues, client client.Client, setOwner applymentOptions.OwnerSetter) (bool, error) {
-	coreStateWasChanged, err := r.ClusterStateApplier.ApplyDesiredState(ctx, cbContainersCluster, secret, r.Client, setOwner)
-	if err != nil {
-		return false, err
-	}
-
-	hardeningStateWasChanged, err := r.HardeningStateApplier.ApplyDesiredState(ctx, &cbContainersCluster.Spec.HardeningSpec, cbContainersCluster.Spec.Version, cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName, r.Client, setOwner)
-	if err != nil {
-		return false, err
-	}
-
-	runtimeStateWasChanged, err := r.RuntimeStateApplier.ApplyDesiredState(ctx, &cbContainersCluster.Spec.RuntimeSpec, cbContainersCluster.Spec.Version, cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName, r.Client, setOwner)
-	if err != nil {
-		return false, err
-	}
-
-	return coreStateWasChanged || hardeningStateWasChanged || runtimeStateWasChanged, nil
 }
 
 func (r *CBContainersClusterReconciler) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (*models.RegistrySecretValues, error) {
@@ -180,7 +150,7 @@ func (r *CBContainersClusterReconciler) SetupWithManager(mgr ctrl.Manager) error
 		For(&cbcontainersv1.CBContainersAgent{}).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Secret{}).
-		Owns(r.ClusterStateApplier.GetPriorityClassEmptyK8sObject()).
+		Owns(adapters.EmptyPriorityClassForVersion(r.K8sVersion)).
 		Owns(&appsV1.Deployment{}).
 		Owns(&corev1.Service{}).
 		Owns(&appsV1.DaemonSet{}).

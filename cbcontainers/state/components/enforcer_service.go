@@ -1,4 +1,4 @@
-package objects
+package components
 
 import (
 	"fmt"
@@ -24,17 +24,18 @@ func (obj *EnforcerServiceK8sObject) EmptyK8sObject() client.Object {
 	return &coreV1.Service{}
 }
 
-func (obj *EnforcerServiceK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardeningSpec) types.NamespacedName {
+func (obj *EnforcerServiceK8sObject) NamespacedName() types.NamespacedName {
 	return types.NamespacedName{Name: EnforcerName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *EnforcerServiceK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardeningSpec *cbcontainersv1.CBContainersHardeningSpec, agentVersion, accessTokenSecretName string) error {
+func (obj *EnforcerServiceK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbcontainersv1.CBContainersAgentSpec) error {
 	service, ok := k8sObject.(*coreV1.Service)
 	if !ok {
 		return fmt.Errorf("expected Service K8s object")
 	}
 
-	enforcerSpec := cbContainersHardeningSpec.EnforcerSpec
+	hardeningSpec := &agentSpec.HardeningSpec
+	enforcerSpec := &hardeningSpec.EnforcerSpec
 
 	service.Labels = enforcerSpec.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP

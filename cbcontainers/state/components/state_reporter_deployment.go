@@ -1,4 +1,4 @@
-package objects
+package components
 
 import (
 	"fmt"
@@ -36,16 +36,18 @@ func (obj *StateReporterDeploymentK8sObject) EmptyK8sObject() client.Object {
 	return &appsV1.Deployment{}
 }
 
-func (obj *StateReporterDeploymentK8sObject) HardeningChildNamespacedName(_ *cbContainersV1.CBContainersHardeningSpec) types.NamespacedName {
+func (obj *StateReporterDeploymentK8sObject) NamespacedName() types.NamespacedName {
 	return types.NamespacedName{Name: StateReporterName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *StateReporterDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardeningSpec *cbContainersV1.CBContainersHardeningSpec, agentVersion, accessTokenSecretName string) error {
-	stateReporterSpec := cbContainersHardeningSpec.StateReporterSpec
+func (obj *StateReporterDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbContainersV1.CBContainersAgentSpec) error {
 	deployment, ok := k8sObject.(*appsV1.Deployment)
 	if !ok {
 		return fmt.Errorf("expected Deployment K8s object")
 	}
+
+	hardeningSpec := &agentSpec.HardeningSpec
+	stateReporterSpec := &hardeningSpec.StateReporterSpec
 
 	desiredLabels := stateReporterSpec.Labels
 	if desiredLabels == nil {
@@ -75,7 +77,7 @@ func (obj *StateReporterDeploymentK8sObject) MutateHardeningChildK8sObject(k8sOb
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, stateReporterSpec.PodTemplateAnnotations)
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, &cbContainersHardeningSpec.StateReporterSpec, &cbContainersHardeningSpec.EventsGatewaySpec, agentVersion, accessTokenSecretName)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, stateReporterSpec, &hardeningSpec.EventsGatewaySpec, agentSpec.Version, agentSpec.ApiGatewaySpec.AccessTokenSecretName)
 
 	return nil
 }

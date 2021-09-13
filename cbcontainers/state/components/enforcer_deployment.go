@@ -1,4 +1,4 @@
-package objects
+package components
 
 import (
 	"fmt"
@@ -47,12 +47,13 @@ func (obj *EnforcerDeploymentK8sObject) EmptyK8sObject() client.Object {
 	return &appsV1.Deployment{}
 }
 
-func (obj *EnforcerDeploymentK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardeningSpec) types.NamespacedName {
+func (obj *EnforcerDeploymentK8sObject) NamespacedName() types.NamespacedName {
 	return types.NamespacedName{Name: EnforcerName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *EnforcerDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardeningSpec *cbcontainersv1.CBContainersHardeningSpec, agentVersion, accessTokenSecretName string) error {
-	enforcerSpec := &cbContainersHardeningSpec.EnforcerSpec
+func (obj *EnforcerDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbcontainersv1.CBContainersAgentSpec) error {
+	hardeningSpec := &agentSpec.HardeningSpec
+	enforcerSpec := &hardeningSpec.EnforcerSpec
 
 	deployment, ok := k8sObject.(*appsV1.Deployment)
 	if !ok {
@@ -78,7 +79,7 @@ func (obj *EnforcerDeploymentK8sObject) MutateHardeningChildK8sObject(k8sObject 
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	obj.mutateAnnotations(deployment, enforcerSpec)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, enforcerSpec, &cbContainersHardeningSpec.EventsGatewaySpec, agentVersion, accessTokenSecretName)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, enforcerSpec, &hardeningSpec.EventsGatewaySpec, agentSpec.Version, agentSpec.ApiGatewaySpec.AccessTokenSecretName)
 
 	return nil
 }

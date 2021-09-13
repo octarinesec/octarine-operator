@@ -11,8 +11,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func DeleteK8sObjectIfExists(ctx context.Context, client client.Client, desiredK8sObject DesiredK8sObject) (bool, error) {
-	k8sObject, objectExists, err := getK8sObject(ctx, client, desiredK8sObject, desiredK8sObject.NamespacedName())
+type ComponentApplier struct {
+	client client.Client
+}
+
+func NewComponentApplier(client client.Client) *ComponentApplier {
+	return &ComponentApplier{client: client}
+}
+
+func (applier *ComponentApplier) Delete(ctx context.Context, desiredK8sObject DesiredK8sObject) (bool, error) {
+	k8sObject, objectExists, err := applier.getK8sObject(ctx, desiredK8sObject, desiredK8sObject.NamespacedName())
 	if err != nil {
 		return false, err
 	}
@@ -21,14 +29,14 @@ func DeleteK8sObjectIfExists(ctx context.Context, client client.Client, desiredK
 		return false, nil
 	}
 
-	return true, client.Delete(ctx, k8sObject)
+	return true, applier.client.Delete(ctx, k8sObject)
 }
 
-func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8sObject DesiredK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
+func (applier *ComponentApplier) Apply(ctx context.Context, desiredK8sObject DesiredK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
 	applyOptions := applymentOptions.MergeApplyOptions(applyOptionsList...)
 	namespacedName := desiredK8sObject.NamespacedName()
 
-	k8sObject, objectExists, err := getK8sObject(ctx, client, desiredK8sObject, namespacedName)
+	k8sObject, objectExists, err := applier.getK8sObject(ctx, desiredK8sObject, namespacedName)
 	if err != nil {
 		return false, nil, err
 	}
@@ -43,14 +51,14 @@ func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8s
 	}
 
 	if !objectExists {
-		if err := createK8sObject(ctx, client, k8sObject, namespacedName, applyOptions); err != nil {
+		if err := applier.createK8sObject(ctx, k8sObject, namespacedName, applyOptions); err != nil {
 			return false, nil, err
 		}
 
 		return true, k8sObject, nil
 	}
 
-	k8sObjectWasChanged, err := updateK8sObject(ctx, client, applyOptions, k8sObject, namespacedName, beforeMutationRaw)
+	k8sObjectWasChanged, err := applier.updateK8sObject(ctx, applyOptions, k8sObject, namespacedName, beforeMutationRaw)
 	if err != nil {
 		return false, nil, err
 	}
@@ -58,10 +66,10 @@ func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8s
 	return k8sObjectWasChanged, k8sObject, nil
 }
 
-func getK8sObject(ctx context.Context, client client.Client, desiredK8sObject DesiredK8sObject, namespacedName types.NamespacedName) (client.Object, bool, error) {
+func (applier *ComponentApplier) getK8sObject(ctx context.Context, desiredK8sObject DesiredK8sObject, namespacedName types.NamespacedName) (client.Object, bool, error) {
 	k8sObject := desiredK8sObject.EmptyK8sObject()
 
-	err := client.Get(ctx, namespacedName, k8sObject)
+	err := applier.client.Get(ctx, namespacedName, k8sObject)
 	if err != nil && !errors.IsNotFound(err) {
 		return nil, false, fmt.Errorf("failed getting K8s object: %v", err)
 	}
@@ -71,7 +79,7 @@ func getK8sObject(ctx context.Context, client client.Client, desiredK8sObject De
 	return k8sObject, objectsExists, nil
 }
 
-func createK8sObject(ctx context.Context, client client.Client, k8sObject client.Object, namespacedName types.NamespacedName, applyOptions *applymentOptions.ApplyOptions) error {
+func (applier *ComponentApplier) createK8sObject(ctx context.Context, k8sObject client.Object, namespacedName types.NamespacedName, applyOptions *applymentOptions.ApplyOptions) error {
 	k8sObject.SetNamespace(namespacedName.Namespace)
 	k8sObject.SetName(namespacedName.Name)
 
@@ -79,14 +87,14 @@ func createK8sObject(ctx context.Context, client client.Client, k8sObject client
 		return err
 	}
 
-	if err := client.Create(ctx, k8sObject); err != nil {
+	if err := applier.client.Create(ctx, k8sObject); err != nil {
 		return fmt.Errorf("failed creating K8s object `%v`: %v", namespacedName, err)
 	}
 
 	return nil
 }
 
-func updateK8sObject(ctx context.Context, client client.Client, applyOptions *applymentOptions.ApplyOptions, k8sObject client.Object, namespacedName types.NamespacedName, beforeMutationRaw []byte) (bool, error) {
+func (applier *ComponentApplier) updateK8sObject(ctx context.Context, applyOptions *applymentOptions.ApplyOptions, k8sObject client.Object, namespacedName types.NamespacedName, beforeMutationRaw []byte) (bool, error) {
 	if err := setOwner(applyOptions, k8sObject, namespacedName); err != nil {
 		return false, err
 	}
@@ -97,7 +105,7 @@ func updateK8sObject(ctx context.Context, client client.Client, applyOptions *ap
 		return false, nil
 	}
 
-	if updateErr := client.Update(ctx, k8sObject); updateErr != nil {
+	if updateErr := applier.client.Update(ctx, k8sObject); updateErr != nil {
 		return false, fmt.Errorf("failed updating exsiting K8s object `%v`: %v", namespacedName, updateErr)
 	}
 

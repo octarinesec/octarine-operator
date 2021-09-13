@@ -1,4 +1,4 @@
-package objects
+package components
 
 import (
 	"fmt"
@@ -44,16 +44,18 @@ func (obj *SensorDaemonSetK8sObject) EmptyK8sObject() client.Object {
 	return &appsV1.DaemonSet{}
 }
 
-func (obj *SensorDaemonSetK8sObject) RuntimeChildNamespacedName(_ *cbContainersV1.CBContainersRuntimeSpec) types.NamespacedName {
+func (obj *SensorDaemonSetK8sObject) NamespacedName() types.NamespacedName {
 	return types.NamespacedName{Name: SensorName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
-func (obj *SensorDaemonSetK8sObject) MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntimeSpec *cbContainersV1.CBContainersRuntimeSpec, agentVersion, accessTokenSecretName string) error {
-	sensorSpec := &cbContainersRuntimeSpec.SensorSpec
+func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbContainersV1.CBContainersAgentSpec) error {
 	daemonSet, ok := k8sObject.(*appsV1.DaemonSet)
 	if !ok {
 		return fmt.Errorf("expected DaemonSet K8s object")
 	}
+
+	runtimeSpec := &agentSpec.RuntimeSpec
+	sensorSpec := &runtimeSpec.SensorSpec
 
 	desiredLabels := sensorSpec.Labels
 	if desiredLabels == nil {
@@ -87,9 +89,9 @@ func (obj *SensorDaemonSetK8sObject) MutateRuntimeChildK8sObject(k8sObject clien
 	obj.mutateAnnotations(daemonSet, sensorSpec)
 	obj.mutateContainersList(&daemonSet.Spec.Template.Spec,
 		sensorSpec,
-		agentVersion,
-		accessTokenSecretName,
-		cbContainersRuntimeSpec.InternalGrpcPort,
+		agentSpec.Version,
+		agentSpec.ApiGatewaySpec.AccessTokenSecretName,
+		runtimeSpec.InternalGrpcPort,
 	)
 
 	return nil

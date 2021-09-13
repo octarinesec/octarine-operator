@@ -12,9 +12,9 @@ type DesiredK8sObject interface {
 
 type DesiredK8sObjectInitializer interface {
 	EmptyK8sObject() client.Object
+	NamespacedName() types.NamespacedName
 }
 
 type MutableK8sObject interface {
-	NamespacedName() types.NamespacedName
 	MutateK8sObject(client.Object) error
 }

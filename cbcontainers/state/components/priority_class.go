@@ -1,14 +1,11 @@
-package objects
+package components
 
 import (
 	"fmt"
 
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/adapters"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
-	clusterStateAdapters "github.com/vmware/cbcontainers-operator/cbcontainers/state/core/adapters"
-	schedulingV1 "k8s.io/api/scheduling/v1"
-	schedulingV1alpha1 "k8s.io/api/scheduling/v1alpha1"
-	schedulingV1beta1 "k8s.io/api/scheduling/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -30,21 +27,15 @@ func NewPriorityClassK8sObject(kubeletVersion string) *PriorityClassK8sObject {
 }
 
 func (obj *PriorityClassK8sObject) EmptyK8sObject() client.Object {
-	if obj.kubeletVersion == "" || obj.kubeletVersion >= "v1.14" {
-		return &schedulingV1.PriorityClass{}
-	} else if obj.kubeletVersion >= "v1.11" {
-		return &schedulingV1beta1.PriorityClass{}
-	}
-
-	return &schedulingV1alpha1.PriorityClass{}
+	return adapters.EmptyPriorityClassForVersion(obj.kubeletVersion)
 }
 
-func (obj *PriorityClassK8sObject) ClusterChildNamespacedName(_ *cbcontainersv1.CBContainersAgent) types.NamespacedName {
+func (obj *PriorityClassK8sObject) NamespacedName() types.NamespacedName {
 	return types.NamespacedName{Name: commonState.DataPlanePriorityClassName, Namespace: ""}
 }
 
-func (obj *PriorityClassK8sObject) MutateClusterChildK8sObject(k8sObject client.Object, _ *cbcontainersv1.CBContainersAgent) error {
-	priorityClassSetter, ok := clusterStateAdapters.GetPriorityClassSetter(k8sObject)
+func (obj *PriorityClassK8sObject) MutateK8sObject(k8sObject client.Object, _ *cbcontainersv1.CBContainersAgentSpec) error {
+	priorityClassSetter, ok := adapters.GetPriorityClassSetter(k8sObject)
 	if !ok {
 		return fmt.Errorf("expected PriorityClass setter K8s object")
 	}
