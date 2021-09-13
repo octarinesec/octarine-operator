@@ -156,7 +156,7 @@ func TestClusterReconcile(t *testing.T) {
 	t.Run("When state applier returns error, reconcile should return error", func(t *testing.T) {
 		_, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
 			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
-			testMocks.StateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, gomock.Any()).Return(false, fmt.Errorf(""))
+			testMocks.StateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0].Spec, secretValues, gomock.Any()).Return(false, fmt.Errorf(""))
 		})
 
 		require.Error(t, err)
@@ -165,7 +165,7 @@ func TestClusterReconcile(t *testing.T) {
 	t.Run("When state applier returns state was changed, reconcile should return Requeue true", func(t *testing.T) {
 		result, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
 			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
-			testMocks.StateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, gomock.Any()).Return(true, nil)
+			testMocks.StateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0].Spec, secretValues, gomock.Any()).Return(true, nil)
 		})
 
 		require.NoError(t, err)
@@ -175,7 +175,7 @@ func TestClusterReconcile(t *testing.T) {
 	t.Run("When state applier returns state was not changed, reconcile should return default Requeue", func(t *testing.T) {
 		result, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
 			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
-			testMocks.StateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0], secretValues, gomock.Any()).Return(false, nil)
+			testMocks.StateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0].Spec, secretValues, gomock.Any()).Return(false, nil)
 		})
 
 		require.NoError(t, err)
