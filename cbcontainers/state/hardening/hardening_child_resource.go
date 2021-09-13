@@ -9,13 +9,12 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
-	stateTypes "github.com/vmware/cbcontainers-operator/cbcontainers/state/types"
 )
 
 type HardeningChildK8sObject interface {
 	MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardeningSpec *cbcontainersv1.CBContainersHardeningSpec, agentVersion, accessTokenSecretName string) error
 	HardeningChildNamespacedName(cbContainersHardening *cbcontainersv1.CBContainersHardeningSpec) types.NamespacedName
-	stateTypes.DesiredK8sObjectInitializer
+	applyment.DesiredK8sObjectInitializer
 }
 
 type DefaultHardeningChildK8sObjectApplier struct{}

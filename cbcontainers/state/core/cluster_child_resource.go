@@ -5,7 +5,6 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
-	stateTypes "github.com/vmware/cbcontainers-operator/cbcontainers/state/types"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -13,7 +12,7 @@ import (
 type ClusterChildK8sObject interface {
 	MutateClusterChildK8sObject(k8sObject client.Object, cbContainersCluster *cbcontainersv1.CBContainersAgent) error
 	ClusterChildNamespacedName(cbContainersCluster *cbcontainersv1.CBContainersAgent) types.NamespacedName
-	stateTypes.DesiredK8sObjectInitializer
+	applyment.DesiredK8sObjectInitializer
 }
 
 type DefaultClusterChildK8sObjectApplier struct{}

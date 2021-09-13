@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
-	stateTypes "github.com/vmware/cbcontainers-operator/cbcontainers/state/types"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func DeleteK8sObjectIfExists(ctx context.Context, client client.Client, desiredK8sObject stateTypes.DesiredK8sObject) (bool, error) {
+func DeleteK8sObjectIfExists(ctx context.Context, client client.Client, desiredK8sObject DesiredK8sObject) (bool, error) {
 	k8sObject, objectExists, err := getK8sObject(ctx, client, desiredK8sObject, desiredK8sObject.NamespacedName())
 	if err != nil {
 		return false, err
@@ -25,7 +24,7 @@ func DeleteK8sObjectIfExists(ctx context.Context, client client.Client, desiredK
 	return true, client.Delete(ctx, k8sObject)
 }
 
-func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8sObject stateTypes.DesiredK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
+func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8sObject DesiredK8sObject, applyOptionsList ...*applymentOptions.ApplyOptions) (bool, client.Object, error) {
 	applyOptions := applymentOptions.MergeApplyOptions(applyOptionsList...)
 	namespacedName := desiredK8sObject.NamespacedName()
 
@@ -59,7 +58,7 @@ func ApplyDesiredK8sObject(ctx context.Context, client client.Client, desiredK8s
 	return k8sObjectWasChanged, k8sObject, nil
 }
 
-func getK8sObject(ctx context.Context, client client.Client, desiredK8sObject stateTypes.DesiredK8sObject, namespacedName types.NamespacedName) (client.Object, bool, error) {
+func getK8sObject(ctx context.Context, client client.Client, desiredK8sObject DesiredK8sObject, namespacedName types.NamespacedName) (client.Object, bool, error) {
 	k8sObject := desiredK8sObject.EmptyK8sObject()
 
 	err := client.Get(ctx, namespacedName, k8sObject)

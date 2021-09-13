@@ -6,7 +6,7 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
-	clusterObjects "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster/objects"
+	clusterObjects "github.com/vmware/cbcontainers-operator/cbcontainers/state/core/objects"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

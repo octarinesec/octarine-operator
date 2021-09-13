@@ -1,4 +1,4 @@
-package types
+package applyment
 
 import (
 	"k8s.io/apimachinery/pkg/types"

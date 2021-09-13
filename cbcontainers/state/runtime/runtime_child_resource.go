@@ -9,13 +9,12 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
-	stateTypes "github.com/vmware/cbcontainers-operator/cbcontainers/state/types"
 )
 
 type RuntimeChildK8sObject interface {
 	MutateRuntimeChildK8sObject(k8sObject client.Object, cbContainersRuntimeSpec *cbcontainersv1.CBContainersRuntimeSpec, agentVersion, accessTokenSecretName string) error
 	RuntimeChildNamespacedName(cbContainersRuntime *cbcontainersv1.CBContainersRuntimeSpec) types.NamespacedName
-	stateTypes.DesiredK8sObjectInitializer
+	applyment.DesiredK8sObjectInitializer
 }
 
 type DefaultRuntimeChildK8sObjectApplier struct{}

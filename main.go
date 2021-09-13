@@ -38,7 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
-	clusterState "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster"
+	clusterState "github.com/vmware/cbcontainers-operator/cbcontainers/state/core"
 	hardeningState "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening"
 	runtimeState "github.com/vmware/cbcontainers-operator/cbcontainers/state/runtime"
 	certificatesUtils "github.com/vmware/cbcontainers-operator/cbcontainers/utils/certificates"

@@ -2,9 +2,10 @@ package objects
 
 import (
 	"fmt"
+
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-	clusterStateAdapters "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster/adapters"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
+	clusterStateAdapters "github.com/vmware/cbcontainers-operator/cbcontainers/state/core/adapters"
 	schedulingV1 "k8s.io/api/scheduling/v1"
 	schedulingV1alpha1 "k8s.io/api/scheduling/v1alpha1"
 	schedulingV1beta1 "k8s.io/api/scheduling/v1beta1"
