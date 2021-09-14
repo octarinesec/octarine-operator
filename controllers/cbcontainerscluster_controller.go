@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	appsV1 "k8s.io/api/apps/v1"
 
 	"github.com/go-logr/logr"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
@@ -196,6 +197,7 @@ func (r *CBContainersClusterReconciler) SetupWithManager(mgr ctrl.Manager) error
 		For(&cbcontainersv1.CBContainersCluster{}).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Secret{}).
+		Owns(&appsV1.Deployment{}).
 		Owns(r.ClusterStateApplier.GetPriorityClassEmptyK8sObject()).
 		Complete(r)
 }
