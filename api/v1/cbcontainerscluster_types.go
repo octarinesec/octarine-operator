@@ -31,13 +31,10 @@ type CBContainersAgentSpec struct {
 	Features       []string                   `json:"features,required"`
 	ApiGatewaySpec CBContainersApiGatewaySpec `json:"apiGatewaySpec,required"`
 	// +kubebuilder:default:=<>
-	GatewayTLS CBContainersGatewayTLS `json:"gatewayTLS,omitempty"`
-	// +kubebuilder:default:=<>
-	CoreSpec CBContainersCoreSpec `json:"coreSpec,omitempty"`
-	// +kubebuilder:default:=<>
-	HardeningSpec CBContainersHardeningSpec `json:"hardeningSpec,omitempty"`
-	// +kubebuilder:default:=<>
-	RuntimeSpec CBContainersRuntimeSpec `json:"runtimeSpec,omitempty"`
+	GatewayTLS    CBContainersGatewayTLS    `json:"gatewayTLS,omitempty"`
+	CoreSpec      CBContainersCoreSpec      `json:"coreSpec,required"`
+	HardeningSpec CBContainersHardeningSpec `json:"hardeningSpec,required"`
+	RuntimeSpec   CBContainersRuntimeSpec   `json:"runtimeSpec"`
 }
 
 // CBContainersAgentStatus defines the observed state of CBContainersAgent

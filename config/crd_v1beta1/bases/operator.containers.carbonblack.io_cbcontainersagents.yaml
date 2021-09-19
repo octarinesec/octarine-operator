@@ -575,7 +575,10 @@ spec:
           - account
           - apiGatewaySpec
           - clusterName
+          - coreSpec
           - features
+          - hardeningSpec
+          - runtimeSpec
           - version
           type: object
         status:
