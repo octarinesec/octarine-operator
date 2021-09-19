@@ -60,6 +60,7 @@ spec:
               clusterName:
                 type: string
               coreSpec:
+                default: {}
                 properties:
                   eventsGatewaySpec:
                     properties:
@@ -185,7 +186,22 @@ spec:
                 required:
                 - eventsGatewaySpec
                 type: object
+              features:
+                items:
+                  type: string
+                type: array
+              gatewayTLS:
+                default: {}
+                properties:
+                  insecureSkipVerify:
+                    default: false
+                    type: boolean
+                  rootCAsBundle:
+                    format: byte
+                    type: string
+                type: object
               hardeningSpec:
+                default: {}
                 properties:
                   enforcerSpec:
                     default: {}
@@ -441,6 +457,7 @@ spec:
                 - eventsGatewaySpec
                 type: object
               runtimeSpec:
+                default: {}
                 description: CBContainersRuntimeSpec defines the desired state of
                   CBContainersRuntime
                 properties:
@@ -711,6 +728,7 @@ spec:
             - account
             - apiGatewaySpec
             - clusterName
+            - features
             - version
             type: object
           status:

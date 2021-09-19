@@ -155,6 +155,18 @@ spec:
               required:
               - eventsGatewaySpec
               type: object
+            features:
+              items:
+                type: string
+              type: array
+            gatewayTLS:
+              properties:
+                insecureSkipVerify:
+                  type: boolean
+                rootCAsBundle:
+                  format: byte
+                  type: string
+              type: object
             hardeningSpec:
               properties:
                 enforcerSpec:
@@ -563,6 +575,7 @@ spec:
           - account
           - apiGatewaySpec
           - clusterName
+          - features
           - version
           type: object
         status:
