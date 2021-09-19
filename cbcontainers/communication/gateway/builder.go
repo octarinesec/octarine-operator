@@ -10,6 +10,7 @@ type Builder struct {
 	account               string
 	cluster               string
 	accessToken           string
+	agentFeatures         []string
 	scheme                string
 	host                  string
 	port                  int
@@ -18,11 +19,12 @@ type Builder struct {
 	tlsRootCAsBundle      []byte
 }
 
-func NewBuilder(account, cluster, accessToken, host string) *Builder {
+func NewBuilder(account, cluster, accessToken, host string, agentFeatures []string) *Builder {
 	return &Builder{
 		account:               account,
 		cluster:               cluster,
 		accessToken:           accessToken,
+		agentFeatures:         agentFeatures,
 		scheme:                DefaultScheme,
 		host:                  host,
 		port:                  DefaultPort,
@@ -54,6 +56,7 @@ func (builder *Builder) Build() (*ApiGateway, error) {
 		builder.account,
 		builder.cluster,
 		builder.accessToken,
+		builder.agentFeatures,
 		builder.scheme,
 		builder.host,
 		builder.port,

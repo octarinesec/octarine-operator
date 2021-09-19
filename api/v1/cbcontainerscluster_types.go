@@ -28,7 +28,7 @@ type CBContainersAgentSpec struct {
 	Account        string                     `json:"account,required"`
 	ClusterName    string                     `json:"clusterName,required"`
 	Version        string                     `json:"version,required"`
-	Features       AgentFeaturesList          `json:"features,required"`
+	Features       []string                   `json:"features,required"`
 	ApiGatewaySpec CBContainersApiGatewaySpec `json:"apiGatewaySpec,required"`
 	// +kubebuilder:default:=<>
 	GatewayTLS CBContainersGatewayTLS `json:"gatewayTLS,omitempty"`
