@@ -34,7 +34,7 @@ type CBContainersAgentSpec struct {
 	GatewayTLS    CBContainersGatewayTLS    `json:"gatewayTLS,omitempty"`
 	CoreSpec      CBContainersCoreSpec      `json:"coreSpec,required"`
 	HardeningSpec CBContainersHardeningSpec `json:"hardeningSpec,required"`
-	RuntimeSpec   CBContainersRuntimeSpec   `json:"runtimeSpec"`
+	RuntimeSpec   CBContainersRuntimeSpec   `json:"runtimeSpec,omitempty"`
 }
 
 // CBContainersAgentStatus defines the observed state of CBContainersAgent

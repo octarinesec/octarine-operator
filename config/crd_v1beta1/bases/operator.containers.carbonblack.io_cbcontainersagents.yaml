@@ -578,7 +578,6 @@ spec:
           - coreSpec
           - features
           - hardeningSpec
-          - runtimeSpec
           - version
           type: object
         status:

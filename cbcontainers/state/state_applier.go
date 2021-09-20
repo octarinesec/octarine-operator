@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
+	"github.com/toolkits/slice"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
@@ -79,17 +80,20 @@ func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbconta
 	}
 	c.log.Info("Applied state reporter objects", "Mutated", mutatedStateReporter)
 
-	mutatedResolver, err := c.applyResolver(ctx, agentSpec, applyOptions)
-	if err != nil {
-		return false, err
-	}
-	c.log.Info("Applied runtime kubernetes resolver objects", "Mutated", mutatedResolver)
+	mutatedResolver, mutatedSensor := false, false
+	if slice.ContainsString(agentSpec.Features, models.AgentFeatureRuntime) {
+		mutatedResolver, err = c.applyResolver(ctx, agentSpec, applyOptions)
+		if err != nil {
+			return false, err
+		}
+		c.log.Info("Applied runtime kubernetes resolver objects", "Mutated", mutatedResolver)
 
-	mutatedSensor, err := c.applySensor(ctx, agentSpec, applyOptions)
-	if err != nil {
-		return false, err
+		mutatedSensor, err = c.applySensor(ctx, agentSpec, applyOptions)
+		if err != nil {
+			return false, err
+		}
+		c.log.Info("Applied runtime kubernetes sensor objects", "Mutated", mutatedSensor)
 	}
-	c.log.Info("Applied runtime kubernetes sensor objects", "Mutated", mutatedSensor)
 
 	return coreMutated || mutatedEnforcer || mutatedStateReporter || mutatedResolver || mutatedSensor, nil
 }

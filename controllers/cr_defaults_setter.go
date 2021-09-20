@@ -1,6 +1,10 @@
 package controllers
 
-import cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+import (
+	"github.com/toolkits/slice"
+	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
+)
 
 func (r *CBContainersAgentController) setDefaults(cbContainersAgent *cbcontainersv1.CBContainersAgent) error {
 	if cbContainersAgent.Spec.ApiGatewaySpec.Scheme == "" {
@@ -31,8 +35,10 @@ func (r *CBContainersAgentController) setDefaults(cbContainersAgent *cbcontainer
 		return err
 	}
 
-	if err := r.setRuntimeDefaults(&cbContainersAgent.Spec.RuntimeSpec); err != nil {
-		return err
+	if slice.ContainsString(cbContainersAgent.Spec.Features, models.AgentFeatureRuntime) {
+		if err := r.setRuntimeDefaults(&cbContainersAgent.Spec.RuntimeSpec); err != nil {
+			return err
+		}
 	}
 
 	return nil
