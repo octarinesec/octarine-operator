@@ -20,24 +20,26 @@ type HardeningChildK8sObjectApplier interface {
 }
 
 type HardeningStateApplier struct {
-	enforcerTlsSecret       *hardeningObjects.EnforcerTlsK8sObject
-	enforcerDeployment      *hardeningObjects.EnforcerDeploymentK8sObject
-	enforcerService         *hardeningObjects.EnforcerServiceK8sObject
-	enforcerWebhook         *hardeningObjects.EnforcerWebhookK8sObject
-	stateReporterDeployment *hardeningObjects.StateReporterDeploymentK8sObject
-	childApplier            HardeningChildK8sObjectApplier
-	log                     logr.Logger
+	enforcerTlsSecret         *hardeningObjects.EnforcerTlsK8sObject
+	enforcerDeployment        *hardeningObjects.EnforcerDeploymentK8sObject
+	enforcerService           *hardeningObjects.EnforcerServiceK8sObject
+	enforcerValidatingWebhook *hardeningObjects.EnforcerValidatingWebhookK8sObject
+	enforcerMutatingWebhook   *hardeningObjects.EnforcerMutatingWebhookK8sObject
+	stateReporterDeployment   *hardeningObjects.StateReporterDeploymentK8sObject
+	childApplier              HardeningChildK8sObjectApplier
+	log                       logr.Logger
 }
 
 func NewHardeningStateApplier(log logr.Logger, k8sVersion string, tlsSecretsValuesCreator hardeningObjects.TlsSecretsValuesCreator, childApplier HardeningChildK8sObjectApplier) *HardeningStateApplier {
 	return &HardeningStateApplier{
-		enforcerTlsSecret:       hardeningObjects.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
-		enforcerDeployment:      hardeningObjects.NewEnforcerDeploymentK8sObject(),
-		enforcerService:         hardeningObjects.NewEnforcerServiceK8sObject(),
-		enforcerWebhook:         hardeningObjects.NewEnforcerWebhookK8sObject(k8sVersion),
-		stateReporterDeployment: hardeningObjects.NewStateReporterDeploymentK8sObject(),
-		childApplier:            childApplier,
-		log:                     log,
+		enforcerTlsSecret:         hardeningObjects.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
+		enforcerDeployment:        hardeningObjects.NewEnforcerDeploymentK8sObject(),
+		enforcerService:           hardeningObjects.NewEnforcerServiceK8sObject(),
+		enforcerValidatingWebhook: hardeningObjects.NewEnforcerValidatingWebhookK8sObject(k8sVersion),
+		enforcerMutatingWebhook:   hardeningObjects.NewEnforcerMutatingWebhookK8sObject(k8sVersion),
+		stateReporterDeployment:   hardeningObjects.NewStateReporterDeploymentK8sObject(),
+		childApplier:              childApplier,
+		log:                       log,
 	}
 }
 
@@ -59,6 +61,44 @@ func (c *HardeningStateApplier) ApplyDesiredState(ctx context.Context, cbContain
 	return mutatedEnforcer || mutatedStateReporter, nil
 }
 
+func (c *HardeningStateApplier) applyEnforcerWebhooks(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, tlsSecret *coreV1.Secret, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
+	tlsSecretValues := models.TlsSecretValuesFromSecretData(tlsSecret.Data)
+
+	c.enforcerValidatingWebhook.UpdateTlsSecretValues(tlsSecretValues)
+	mutatedValidatingWebhook, _, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerValidatingWebhook, applyOptions)
+	if err != nil {
+		return false, err
+	}
+
+	c.enforcerMutatingWebhook.UpdateTlsSecretValues(tlsSecretValues)
+	mutatedMutatingWebhook, _, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerMutatingWebhook, applyOptions)
+	if err != nil {
+		return false, err
+	}
+
+	return mutatedValidatingWebhook || mutatedMutatingWebhook, nil
+}
+
+func (c *HardeningStateApplier) deleteEnforcerWebhooks(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client) (bool, error) {
+	webhookDeleted := false
+
+	if deleted, deleteErr := c.childApplier.DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerValidatingWebhook); deleteErr != nil {
+		return false, deleteErr
+	} else if deleted {
+		webhookDeleted = true
+		c.log.Info("Deleted enforcer validating webhook")
+	}
+
+	if deleted, deleteErr := c.childApplier.DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerMutatingWebhook); deleteErr != nil {
+		return webhookDeleted, deleteErr
+	} else if deleted {
+		webhookDeleted = true
+		c.log.Info("Deleted enforcer mutating webhook")
+	}
+
+	return webhookDeleted, nil
+}
+
 func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
 	mutatedSecret, secretK8sObject, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerTlsSecret, applyOptions, applymentOptions.NewApplyOptions().SetCreateOnly(true))
 	if err != nil {
@@ -73,22 +113,20 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 
 	mutatedService, _, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerService, applyOptions)
 	if err != nil {
-		if deleted, deleteErr := c.childApplier.DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
+		if _, deleteErr := c.deleteEnforcerWebhooks(ctx, cbContainersHardening, client); deleteErr != nil {
 			return false, deleteErr
-		} else if deleted {
-			c.log.Info("Deleted enforcer webhook")
 		}
+
 		return false, err
 	}
 	c.log.Info("Applied enforcer service", "Mutated", mutatedService)
 
 	mutatedDeployment, deploymentK8sObject, err := c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerDeployment, applyOptions)
 	if err != nil {
-		if deleted, deleteErr := c.childApplier.DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
+		if _, deleteErr := c.deleteEnforcerWebhooks(ctx, cbContainersHardening, client); deleteErr != nil {
 			return false, deleteErr
-		} else if deleted {
-			c.log.Info("Deleted enforcer webhook")
 		}
+
 		return false, err
 	}
 	c.log.Info("Applied enforcer deployment", "Mutated", mutatedDeployment)
@@ -98,24 +136,22 @@ func (c *HardeningStateApplier) applyEnforcer(ctx context.Context, cbContainersH
 		return false, fmt.Errorf("expected Deployment K8s object")
 	}
 
-	mutatedWebhook := false
+	mutatedWebhooks := false
 	if enforcerDeployment.Status.ReadyReplicas < 1 {
-		if deleted, deleteErr := c.childApplier.DeleteK8sObjectIfExists(ctx, cbContainersHardening, client, c.enforcerWebhook); deleteErr != nil {
+		if deleted, deleteErr := c.deleteEnforcerWebhooks(ctx, cbContainersHardening, client); deleteErr != nil {
 			return false, deleteErr
 		} else if deleted {
-			mutatedWebhook = true
-			c.log.Info("Deleted enforcer webhook")
+			mutatedWebhooks = true
 		}
 	} else {
-		c.enforcerWebhook.UpdateTlsSecretValues(models.TlsSecretValuesFromSecretData(tlsSecret.Data))
-		mutatedWebhook, _, err = c.childApplier.ApplyHardeningChildK8sObject(ctx, cbContainersHardening, client, c.enforcerWebhook, applyOptions)
+		mutatedWebhooks, err = c.applyEnforcerWebhooks(ctx, cbContainersHardening, client, tlsSecret, applyOptions)
 		if err != nil {
 			return false, err
 		}
-		c.log.Info("Applied enforcer webhook", "Mutated", mutatedWebhook)
+		c.log.Info("Applied enforcer webhooks", "Mutated", mutatedWebhooks)
 	}
 
-	return mutatedSecret || mutatedDeployment || mutatedService || mutatedWebhook, nil
+	return mutatedSecret || mutatedDeployment || mutatedService || mutatedWebhooks, nil
 }
 
 func (c *HardeningStateApplier) applyStateReporter(ctx context.Context, cbContainersHardening *cbcontainersv1.CBContainersHardening, client client.Client, applyOptions *applymentOptions.ApplyOptions) (bool, error) {

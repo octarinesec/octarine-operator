@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	ResourcesWebhookName  = "resources.validating-webhook.cbcontainers"
-	NamespacesWebhookName = "namespaces.validating-webhook.cbcontainers"
+	ValidatingResourcesWebhookName  = "resources.validating-webhook.cbcontainers"
+	ValidatingNamespacesWebhookName = "namespaces.validating-webhook.cbcontainers"
 )
 
 var (
@@ -28,30 +28,30 @@ var (
 	NamespacesWebhookSideEffect = adapters.SideEffectsClassNone
 )
 
-type EnforcerWebhookK8sObject struct {
+type EnforcerValidatingWebhookK8sObject struct {
 	tlsSecretValues *models.TlsSecretValues
 	kubeletVersion  string
 }
 
-func NewEnforcerWebhookK8sObject(kubeletVersion string) *EnforcerWebhookK8sObject {
-	return &EnforcerWebhookK8sObject{
+func NewEnforcerValidatingWebhookK8sObject(kubeletVersion string) *EnforcerValidatingWebhookK8sObject {
+	return &EnforcerValidatingWebhookK8sObject{
 		kubeletVersion: kubeletVersion,
 	}
 }
 
-func (obj *EnforcerWebhookK8sObject) UpdateTlsSecretValues(tlsSecretValues models.TlsSecretValues) {
+func (obj *EnforcerValidatingWebhookK8sObject) UpdateTlsSecretValues(tlsSecretValues models.TlsSecretValues) {
 	obj.tlsSecretValues = &tlsSecretValues
 }
 
-func (obj *EnforcerWebhookK8sObject) EmptyK8sObject() client.Object {
+func (obj *EnforcerValidatingWebhookK8sObject) EmptyK8sObject() client.Object {
 	return adapters.EmptyValidatingWebhookConfigForVersion(obj.kubeletVersion)
 }
 
-func (obj *EnforcerWebhookK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardening) types.NamespacedName {
+func (obj *EnforcerValidatingWebhookK8sObject) HardeningChildNamespacedName(_ *cbcontainersv1.CBContainersHardening) types.NamespacedName {
 	return types.NamespacedName{Name: EnforcerName, Namespace: ""}
 }
 
-func (obj *EnforcerWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
+func (obj *EnforcerValidatingWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject client.Object, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
 	webhookConfiguration, ok := adapters.TryGetValidatingWebhookConfigurationAdapter(k8sObject)
 	if !ok {
 		return fmt.Errorf("expected a valid instance of ValidatingWebhookConfiguration")
@@ -67,24 +67,24 @@ func (obj *EnforcerWebhookK8sObject) MutateHardeningChildK8sObject(k8sObject cli
 	return obj.mutateWebhooks(webhookConfiguration, cbContainersHardening)
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration adapters.ValidatingWebhookConfigurationAdapter, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
-	var resourcesWebhookObj adapters.ValidatingWebhookAdapter
-	var namespacesWebhookObj adapters.ValidatingWebhookAdapter
+func (obj *EnforcerValidatingWebhookK8sObject) mutateWebhooks(webhookConfiguration adapters.WebhookConfigurationAdapter, cbContainersHardening *cbcontainersv1.CBContainersHardening) error {
+	var resourcesWebhookObj adapters.WebhookAdapter
+	var namespacesWebhookObj adapters.WebhookAdapter
 
 	initializeWebhooks := false
 	webhooks := webhookConfiguration.GetWebhooks()
 	if webhooks == nil || len(webhooks) != 2 {
 		initializeWebhooks = true
 	} else {
-		resourcesWebhook, resourcesWebhookFound := obj.findWebhookByName(webhooks, ResourcesWebhookName)
+		resourcesWebhook, resourcesWebhookFound := obj.findWebhookByName(webhooks, ValidatingResourcesWebhookName)
 		resourcesWebhookObj = resourcesWebhook
-		namespacesWebhook, namespacesWebhookFound := obj.findWebhookByName(webhooks, NamespacesWebhookName)
+		namespacesWebhook, namespacesWebhookFound := obj.findWebhookByName(webhooks, ValidatingNamespacesWebhookName)
 		namespacesWebhookObj = namespacesWebhook
 		initializeWebhooks = !resourcesWebhookFound || !namespacesWebhookFound
 	}
 
 	if initializeWebhooks {
-		webhooks := []adapters.ValidatingWebhookAdapter{
+		webhooks := []adapters.WebhookAdapter{
 			adapters.EmptyValidatingWebhookAdapterForVersion(obj.kubeletVersion),
 			adapters.EmptyValidatingWebhookAdapterForVersion(obj.kubeletVersion),
 		}
@@ -102,7 +102,7 @@ func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration adapter
 	return nil
 }
 
-func (obj *EnforcerWebhookK8sObject) findWebhookByName(webhooks []adapters.ValidatingWebhookAdapter, name string) (adapters.ValidatingWebhookAdapter, bool) {
+func (obj *EnforcerValidatingWebhookK8sObject) findWebhookByName(webhooks []adapters.WebhookAdapter, name string) (adapters.WebhookAdapter, bool) {
 	for idx, webhook := range webhooks {
 		if webhook.GetName() == name {
 			return webhooks[idx], true
@@ -112,8 +112,8 @@ func (obj *EnforcerWebhookK8sObject) findWebhookByName(webhooks []adapters.Valid
 	return nil, false
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook adapters.ValidatingWebhookAdapter, timeoutSeconds int32) {
-	resourcesWebhook.SetName(ResourcesWebhookName)
+func (obj *EnforcerValidatingWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook adapters.WebhookAdapter, timeoutSeconds int32) {
+	resourcesWebhook.SetName(ValidatingResourcesWebhookName)
 	resourcesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
 	resourcesWebhook.SetFailurePolicy(WebhookFailurePolicy)
 	resourcesWebhook.SetSideEffects(ResourcesWebhookSideEffect)
@@ -130,7 +130,7 @@ func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook ada
 	resourcesWebhook.SetServicePath(&WebhookPath)
 }
 
-func (obj *EnforcerWebhookK8sObject) getResourcesNamespaceSelector(selector *metav1.LabelSelector) *metav1.LabelSelector {
+func (obj *EnforcerValidatingWebhookK8sObject) getResourcesNamespaceSelector(selector *metav1.LabelSelector) *metav1.LabelSelector {
 	octarineIgnore := metav1.LabelSelectorRequirement{
 		Key:      "octarine",
 		Operator: metav1.LabelSelectorOpNotIn,
@@ -170,7 +170,7 @@ func (obj *EnforcerWebhookK8sObject) getResourcesNamespaceSelector(selector *met
 
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhooksRules(webhook adapters.ValidatingWebhookAdapter) {
+func (obj *EnforcerValidatingWebhookK8sObject) mutateResourcesWebhooksRules(webhook adapters.WebhookAdapter) {
 	rules := webhook.GetAdmissionRules()
 	if rules == nil || len(rules) != 1 {
 		rules = make([]adapters.AdmissionRuleAdapter, 1)
@@ -187,7 +187,7 @@ func (obj *EnforcerWebhookK8sObject) mutateResourcesWebhooksRules(webhook adapte
 	webhook.SetAdmissionRules(rules)
 }
 
-func (obj *EnforcerWebhookK8sObject) getResourcesList() []string {
+func (obj *EnforcerValidatingWebhookK8sObject) getResourcesList() []string {
 	return []string{
 		"pods/portforward",
 		"pods/exec",
@@ -211,8 +211,8 @@ func (obj *EnforcerWebhookK8sObject) getResourcesList() []string {
 	}
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook adapters.ValidatingWebhookAdapter, timeoutSeconds int32) {
-	namespacesWebhook.SetName(NamespacesWebhookName)
+func (obj *EnforcerValidatingWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook adapters.WebhookAdapter, timeoutSeconds int32) {
+	namespacesWebhook.SetName(ValidatingNamespacesWebhookName)
 	namespacesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
 	namespacesWebhook.SetFailurePolicy(WebhookFailurePolicy)
 	namespacesWebhook.SetMatchPolicy(WebhookMatchPolicy)
@@ -231,7 +231,7 @@ func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook a
 
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateNamespacesWebhooksRules(webhook adapters.ValidatingWebhookAdapter) {
+func (obj *EnforcerValidatingWebhookK8sObject) mutateNamespacesWebhooksRules(webhook adapters.WebhookAdapter) {
 	rules := webhook.GetAdmissionRules()
 	if rules == nil || len(rules) != 1 {
 		rules = make([]adapters.AdmissionRuleAdapter, 1)
