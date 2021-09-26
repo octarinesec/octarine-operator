@@ -26,7 +26,7 @@ import (
 const (
 	DefaultKubeletVersion = "v1.20.2"
 
-	NumberOfExpectedAppliedObjects = 5
+	NumberOfExpectedAppliedObjects = 6
 )
 
 type AppliedK8sObjectsChanger func(K8sObjectDetails, client.Object)
@@ -201,7 +201,7 @@ func TestEnforcerWebhookIsApplied(t *testing.T) {
 
 func TestEnforcerWebhookIsDeleted(t *testing.T) {
 	assertValidatingWebhookIsDeleted := func(t *testing.T, appliedObjects, deletedObjects []K8sObjectDetails, webhookObject K8sObjectDetails) {
-		require.Len(t, appliedObjects, NumberOfExpectedAppliedObjects-1)
+		require.Len(t, appliedObjects, NumberOfExpectedAppliedObjects-2)
 		require.NotContains(t, appliedObjects, webhookObject)
 		require.Contains(t, deletedObjects, webhookObject)
 	}
