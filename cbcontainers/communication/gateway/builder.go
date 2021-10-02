@@ -12,7 +12,7 @@ type Builder struct {
 	account               string
 	cluster               string
 	accessToken           string
-	agentFeatures         []string
+	agentComponents       []string
 	scheme                string
 	host                  string
 	port                  int
@@ -53,7 +53,7 @@ func (builder *Builder) SetTLSRootCAsBundle(rootCAsBundle []byte) *Builder {
 }
 
 func (builder *Builder) WithRuntimeProtection() *Builder {
-	builder.agentFeatures = append(builder.agentFeatures, models.AgentComponentRuntimeProtection)
+	builder.agentComponents = append(builder.agentComponents, models.AgentComponentRuntimeProtection)
 	return builder
 }
 
@@ -62,7 +62,7 @@ func (builder *Builder) Build() (*ApiGateway, error) {
 		builder.account,
 		builder.cluster,
 		builder.accessToken,
-		builder.agentFeatures,
+		builder.agentComponents,
 		builder.scheme,
 		builder.host,
 		builder.port,

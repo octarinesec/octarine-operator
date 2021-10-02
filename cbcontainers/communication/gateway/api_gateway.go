@@ -10,15 +10,15 @@ import (
 )
 
 type ApiGateway struct {
-	account       string
-	cluster       string
-	accessToken   string
-	agentFeatures []string
-	scheme        string
-	host          string
-	port          int
-	adapter       string
-	client        *resty.Client
+	account         string
+	cluster         string
+	accessToken     string
+	agentComponents []string
+	scheme          string
+	host            string
+	port            int
+	adapter         string
+	client          *resty.Client
 }
 
 func createClient(tlsInsecureSkipVerify bool, rootCAsBundle []byte) (*resty.Client, error) {
@@ -41,7 +41,7 @@ func createClient(tlsInsecureSkipVerify bool, rootCAsBundle []byte) (*resty.Clie
 	return client, nil
 }
 
-func NewApiGateway(account, cluster string, accessToken string, agentFeatures []string, scheme, host string, port int, adapter string,
+func NewApiGateway(account, cluster string, accessToken string, agentComponents []string, scheme, host string, port int, adapter string,
 	tlsInsecureSkipVerify bool, rootCAsBundle []byte) (*ApiGateway, error) {
 
 	client, err := createClient(tlsInsecureSkipVerify, rootCAsBundle)
@@ -50,15 +50,15 @@ func NewApiGateway(account, cluster string, accessToken string, agentFeatures []
 	}
 
 	return &ApiGateway{
-		account:       account,
-		cluster:       cluster,
-		accessToken:   accessToken,
-		agentFeatures: agentFeatures,
-		scheme:        scheme,
-		host:          host,
-		port:          port,
-		adapter:       adapter,
-		client:        client,
+		account:         account,
+		cluster:         cluster,
+		accessToken:     accessToken,
+		agentComponents: agentComponents,
+		scheme:          scheme,
+		host:            host,
+		port:            port,
+		adapter:         adapter,
+		client:          client,
 	}, nil
 }
 
@@ -90,7 +90,7 @@ func (gateway *ApiGateway) RegisterCluster() error {
 	resp, err := gateway.baseRequest().
 		SetBody(map[string]interface{}{
 			"name":           gateway.cluster,
-			"agent_features": gateway.agentFeatures,
+			"components":     gateway.agentComponents,
 			"labels":         map[string]string{},
 			"inbounddefault": "allow",
 		}).
