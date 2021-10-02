@@ -1,5 +1,7 @@
 package gateway
 
+import "github.com/vmware/cbcontainers-operator/cbcontainers/models"
+
 const (
 	DefaultScheme  = "https"
 	DefaultPort    = 443
@@ -10,6 +12,7 @@ type Builder struct {
 	account               string
 	cluster               string
 	accessToken           string
+	agentComponents       []string
 	scheme                string
 	host                  string
 	port                  int
@@ -49,11 +52,17 @@ func (builder *Builder) SetTLSRootCAsBundle(rootCAsBundle []byte) *Builder {
 	return builder
 }
 
+func (builder *Builder) WithRuntimeProtection() *Builder {
+	builder.agentComponents = append(builder.agentComponents, models.AgentComponentRuntimeProtection)
+	return builder
+}
+
 func (builder *Builder) Build() (*ApiGateway, error) {
 	return NewApiGateway(
 		builder.account,
 		builder.cluster,
 		builder.accessToken,
+		builder.agentComponents,
 		builder.scheme,
 		builder.host,
 		builder.port,

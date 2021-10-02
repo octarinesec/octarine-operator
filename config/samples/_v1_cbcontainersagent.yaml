@@ -1,0 +1,14 @@
+apiVersion: operator.containers.carbonblack.io/v1
+kind: CBContainersAgent
+metadata:
+  name: cbcontainers-agent
+spec:
+  account: <ACCOUNT>
+  clusterName: <CLUSTER_NAME>
+  version: <VERSION>
+  apiGatewaySpec:
+    host: <HOST>
+    adapter: <ADAPTER>
+  coreSpec:
+    eventsGatewaySpec:
+      host: <EVENTS_GATEWAY_HOST>

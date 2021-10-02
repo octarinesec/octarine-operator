@@ -83,3 +83,4 @@ bin
 testbin
 
 operator.yaml
+/cbcontainers-operator

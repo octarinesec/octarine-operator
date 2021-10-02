@@ -58,7 +58,7 @@ func testApplyDesiredK8sObject(t *testing.T, setup ApplierTestSetup, applyOption
 
 	mockObjects := createMocks(ctrl, setup)
 
-	return ApplyDesiredK8sObject(context.Background(), mockObjects.client, mockObjects.desiredK8sObject, applyOptionsList...)
+	return NewComponentApplier(mockObjects.client).Apply(context.Background(), mockObjects.desiredK8sObject, applyOptionsList...)
 }
 
 func testDeleteK8sObjectIfExists(t *testing.T, setup ApplierTestSetup) (bool, error) {
@@ -67,7 +67,7 @@ func testDeleteK8sObjectIfExists(t *testing.T, setup ApplierTestSetup) (bool, er
 
 	mockObjects := createMocks(ctrl, setup)
 
-	return DeleteK8sObjectIfExists(context.Background(), mockObjects.client, mockObjects.desiredK8sObject)
+	return NewComponentApplier(mockObjects.client).Delete(context.Background(), mockObjects.desiredK8sObject)
 }
 
 func TestApplyFailsWhenGetFails(t *testing.T) {

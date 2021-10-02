@@ -20,11 +20,14 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	"os"
 
 	coreV1 "k8s.io/api/core/v1"
 
-	clusterProcessors "github.com/vmware/cbcontainers-operator/cbcontainers/processors/cluster"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/processors"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -38,9 +41,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
-	clusterState "github.com/vmware/cbcontainers-operator/cbcontainers/state/cluster"
-	hardeningState "github.com/vmware/cbcontainers-operator/cbcontainers/state/hardening"
-	runtimeState "github.com/vmware/cbcontainers-operator/cbcontainers/state/runtime"
 	certificatesUtils "github.com/vmware/cbcontainers-operator/cbcontainers/utils/certificates"
 	"github.com/vmware/cbcontainers-operator/controllers"
 	// +kubebuilder:scaffold:imports
@@ -98,40 +98,19 @@ func main() {
 	k8sVersion := nodesList.Items[0].Status.NodeInfo.KubeletVersion
 	setupLog.Info(fmt.Sprintf("K8s version is: %v", k8sVersion))
 
-	cbContainersClusterLogger := ctrl.Log.WithName("controllers").WithName("CBContainersCluster")
-	if err = (&controllers.CBContainersClusterReconciler{
-		Client:              mgr.GetClient(),
-		Log:                 cbContainersClusterLogger,
-		Scheme:              mgr.GetScheme(),
-		ClusterProcessor:    clusterProcessors.NewCBContainerClusterProcessor(cbContainersClusterLogger, clusterProcessors.NewDefaultGatewayCreator()),
-		ClusterStateApplier: clusterState.NewClusterStateApplier(cbContainersClusterLogger, k8sVersion, clusterState.NewDefaultClusterChildK8sObjectApplier()),
+	cbContainersAgentLogger := ctrl.Log.WithName("controllers").WithName("CBContainersAgent")
+	if err = (&controllers.CBContainersAgentController{
+		Client:           mgr.GetClient(),
+		Log:              cbContainersAgentLogger,
+		Scheme:           mgr.GetScheme(),
+		K8sVersion:       k8sVersion,
+		ClusterProcessor: processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator()),
+		StateApplier:     state.NewStateApplier(agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "CBContainersCluster")
+		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")
 		os.Exit(1)
 	}
 
-	cbContainersHardeningLogger := ctrl.Log.WithName("controllers").WithName("CBContainersHardening")
-	if err = (&controllers.CBContainersHardeningReconciler{
-		Client:                mgr.GetClient(),
-		Log:                   cbContainersHardeningLogger,
-		Scheme:                mgr.GetScheme(),
-		K8sVersion:            k8sVersion,
-		HardeningStateApplier: hardeningState.NewHardeningStateApplier(cbContainersHardeningLogger, k8sVersion, certificatesUtils.NewCertificateCreator(), hardeningState.NewDefaultHardeningChildK8sObjectApplier()),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "CBContainersHardening")
-		os.Exit(1)
-	}
-
-	cbContainersRuntimeLogger := ctrl.Log.WithName("controllers").WithName("CBContainersRuntime")
-	if err = (&controllers.CBContainersRuntimeReconciler{
-		Client:              mgr.GetClient(),
-		Log:                 cbContainersRuntimeLogger,
-		Scheme:              mgr.GetScheme(),
-		RuntimeStateApplier: runtimeState.NewRuntimeStateApplier(cbContainersRuntimeLogger, runtimeState.NewDefaultRuntimeChildK8sObjectApplier()),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "CBContainersRuntime")
-		os.Exit(1)
-	}
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("health", healthz.Ping); err != nil {

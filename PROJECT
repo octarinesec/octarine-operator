@@ -10,21 +10,7 @@ resources:
     crdVersion: v1
   controller: true
   domain: operator.containers.carbonblack.io
-  kind: CBContainersCluster
-  path: github.com/vmware/cbcontainers-operator/api/v1
-  version: v1
-- api:
-    crdVersion: v1
-  controller: true
-  domain: operator.containers.carbonblack.io
-  kind: CBContainersHardening
-  path: github.com/vmware/cbcontainers-operator/api/v1
-  version: v1
-- api:
-    crdVersion: v1
-  controller: true
-  domain: operator.containers.carbonblack.io
-  kind: CBContainersRuntime
+  kind: CBContainersAgent
   path: github.com/vmware/cbcontainers-operator/api/v1
   version: v1
 version: "3"

@@ -1,5 +1,4 @@
 ## Append samples you want in your CSV to this file as resources ##
 resources:
-- _v1_cbcontainerscluster.yaml
-- _v1_cbcontainershardening.yaml
+- _v1_cbcontainersagent.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples
