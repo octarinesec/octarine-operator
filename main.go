@@ -27,7 +27,7 @@ import (
 
 	coreV1 "k8s.io/api/core/v1"
 
-	clusterProcessors "github.com/vmware/cbcontainers-operator/cbcontainers/processors/cluster"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/processors"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -104,7 +104,7 @@ func main() {
 		Log:              cbContainersAgentLogger,
 		Scheme:           mgr.GetScheme(),
 		K8sVersion:       k8sVersion,
-		ClusterProcessor: clusterProcessors.NewCBContainerClusterProcessor(cbContainersAgentLogger, clusterProcessors.NewDefaultGatewayCreator()),
+		ClusterProcessor: processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator()),
 		StateApplier:     state.NewStateApplier(agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")

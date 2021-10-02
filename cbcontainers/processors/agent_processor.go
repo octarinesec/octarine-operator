@@ -1,4 +1,4 @@
-package cluster
+package processors
 
 import (
 	"github.com/go-logr/logr"
@@ -7,17 +7,17 @@ import (
 	"reflect"
 )
 
-type Gateway interface {
+type APIGateway interface {
 	RegisterCluster() error
 	GetRegistrySecret() (*models.RegistrySecretValues, error)
 }
 
-type GatewayCreator interface {
-	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (Gateway, error)
+type APIGatewayCreator interface {
+	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (APIGateway, error)
 }
 
-type CBContainerClusterProcessor struct {
-	gatewayCreator GatewayCreator
+type AgentProcessor struct {
+	gatewayCreator APIGatewayCreator
 
 	lastRegistrySecretValues *models.RegistrySecretValues
 
@@ -26,29 +26,29 @@ type CBContainerClusterProcessor struct {
 	log logr.Logger
 }
 
-func NewCBContainerClusterProcessor(log logr.Logger, clusterRegistrarCreator GatewayCreator) *CBContainerClusterProcessor {
-	return &CBContainerClusterProcessor{
+func NewAgentProcessor(log logr.Logger, clusterRegistrarCreator APIGatewayCreator) *AgentProcessor {
+	return &AgentProcessor{
 		gatewayCreator:      clusterRegistrarCreator,
 		lastProcessedObject: nil,
 		log:                 log,
 	}
 }
 
-func (processor *CBContainerClusterProcessor) Process(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error) {
-	if err := processor.initializeIfNeeded(cbContainersCluster, accessToken); err != nil {
+func (processor *AgentProcessor) Process(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error) {
+	if err := processor.initializeIfNeeded(cbContainersAgent, accessToken); err != nil {
 		return nil, err
 	}
 
 	return processor.lastRegistrySecretValues, nil
 }
 
-func (processor *CBContainerClusterProcessor) isInitialized(cbContainersCluster *cbcontainersv1.CBContainersAgent) bool {
+func (processor *AgentProcessor) isInitialized(cbContainersCluster *cbcontainersv1.CBContainersAgent) bool {
 	return processor.lastRegistrySecretValues != nil &&
 		processor.lastProcessedObject != nil &&
 		reflect.DeepEqual(processor.lastProcessedObject, cbContainersCluster)
 }
 
-func (processor *CBContainerClusterProcessor) initializeIfNeeded(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) error {
+func (processor *AgentProcessor) initializeIfNeeded(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) error {
 	if processor.isInitialized(cbContainersCluster) {
 		return nil
 	}
@@ -60,7 +60,7 @@ func (processor *CBContainerClusterProcessor) initializeIfNeeded(cbContainersClu
 		}
 	}
 
-	processor.log.Info("Initializing CBContainerClusterProcessor components")
+	processor.log.Info("Initializing AgentProcessor components")
 	gateway, err := processor.gatewayCreator.CreateGateway(cbContainersCluster, accessToken)
 	if err != nil {
 		return err

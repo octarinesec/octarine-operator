@@ -40,9 +40,7 @@ var (
 	ClusterCustomResourceItems = []cbcontainersv1.CBContainersAgent{
 		{
 			Spec: cbcontainersv1.CBContainersAgentSpec{
-				ApiGatewaySpec: cbcontainersv1.CBContainersApiGatewaySpec{
-					AccessTokenSecretName: ClusterAccessTokenSecretName,
-				},
+				AccessTokenSecretName: ClusterAccessTokenSecretName,
 			},
 		},
 	}

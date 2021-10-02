@@ -1,4 +1,4 @@
-package cluster
+package processors
 
 import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
@@ -12,7 +12,7 @@ func NewDefaultGatewayCreator() *DefaultGatewayCreator {
 	return &DefaultGatewayCreator{}
 }
 
-func (creator *DefaultGatewayCreator) CreateGateway(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) (Gateway, error) {
+func (creator *DefaultGatewayCreator) CreateGateway(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) (APIGateway, error) {
 	spec := cbContainersAgent.Spec
 	builder := gateway.NewBuilder(spec.Account, spec.ClusterName, accessToken, spec.Gateways.ApiGateway.Host).
 		SetURLComponents(spec.Gateways.ApiGateway.Scheme, spec.Gateways.ApiGateway.Port, spec.Gateways.ApiGateway.Adapter).

@@ -40,8 +40,8 @@ type StateApplier interface {
 	ApplyDesiredState(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, secret *models.RegistrySecretValues, setOwner applymentOptions.OwnerSetter) (bool, error)
 }
 
-type ClusterProcessor interface {
-	Process(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error)
+type AgentProcessor interface {
+	Process(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error)
 }
 
 type CBContainersAgentController struct {
@@ -49,7 +49,7 @@ type CBContainersAgentController struct {
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 
-	ClusterProcessor ClusterProcessor
+	ClusterProcessor AgentProcessor
 	StateApplier     StateApplier
 	K8sVersion       string
 }
