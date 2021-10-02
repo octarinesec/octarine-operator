@@ -516,7 +516,7 @@ spec:
               type: object
             gateways:
               properties:
-                apiGatewaySpec:
+                apiGateway:
                   properties:
                     adapter:
                       type: string
@@ -565,7 +565,7 @@ spec:
                   - host
                   type: object
               required:
-              - apiGatewaySpec
+              - apiGateway
               - coreEventsGateway
               - hardeningEventsGateway
               - runtimeEventsGateway
@@ -575,7 +575,6 @@ spec:
           required:
           - account
           - clusterName
-          - components
           - gateways
           - version
           type: object

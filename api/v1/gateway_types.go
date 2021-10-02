@@ -3,7 +3,7 @@ package v1
 type CBContainersGatewaysSpec struct {
 	// +kubebuilder:default:=<>
 	GatewayTLS             CBContainersGatewayTLS        `json:"gatewayTLS,omitempty"`
-	ApiGateway             CBContainersApiGatewaySpec    `json:"apiGatewaySpec,required"`
+	ApiGateway             CBContainersApiGatewaySpec    `json:"apiGateway,required"`
 	CoreEventsGateway      CBContainersEventsGatewaySpec `json:"coreEventsGateway,required"`
 	HardeningEventsGateway CBContainersEventsGatewaySpec `json:"hardeningEventsGateway,required"`
 	RuntimeEventsGateway   CBContainersEventsGatewaySpec `json:"runtimeEventsGateway,required"`

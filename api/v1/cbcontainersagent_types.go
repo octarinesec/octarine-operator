@@ -25,13 +25,14 @@ import (
 
 // CBContainersAgentSpec defines the desired state of CBContainersAgentSpec
 type CBContainersAgentSpec struct {
-	Account     string `json:"account,required"`
-	ClusterName string `json:"clusterName,required"`
-	Version     string `json:"version,required"`
+	Account     string                   `json:"account,required"`
+	ClusterName string                   `json:"clusterName,required"`
+	Version     string                   `json:"version,required"`
+	Gateways    CBContainersGatewaysSpec `json:"gateways,required"`
 	// +kubebuilder:default:="cbcontainers-access-token"
-	AccessTokenSecretName string                     `json:"accessTokenSecretName,omitempty"`
-	Gateways              CBContainersGatewaysSpec   `json:"gateways,required"`
-	Components            CBContainersComponentsSpec `json:"components,required"`
+	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
+	// +kubebuilder:default:=<>
+	Components CBContainersComponentsSpec `json:"components,omitempty"`
 }
 
 type CBContainersComponentsSpec struct {
