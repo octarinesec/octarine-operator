@@ -79,7 +79,8 @@ func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbconta
 	}
 	c.log.Info("Applied state reporter objects", "Mutated", mutatedStateReporter)
 
-	mutatedResolver, mutatedSensor := false, false
+	mutatedResolver, mutatedSensor, runtimeDeleted := false, false, false
+	var deleteErr error = nil
 	if agentSpec.Components.RuntimeProtection.Enabled != nil && *agentSpec.Components.RuntimeProtection.Enabled {
 		mutatedResolver, err = c.applyResolver(ctx, agentSpec, applyOptions)
 		if err != nil {
@@ -92,9 +93,14 @@ func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbconta
 			return false, err
 		}
 		c.log.Info("Applied runtime kubernetes sensor objects", "Mutated", mutatedSensor)
+	} else {
+		runtimeDeleted, deleteErr = c.deleteRuntime(ctx, agentSpec)
+		if deleteErr != nil {
+			return false, deleteErr
+		}
 	}
 
-	return coreMutated || mutatedEnforcer || mutatedStateReporter || mutatedResolver || mutatedSensor, nil
+	return coreMutated || mutatedEnforcer || mutatedStateReporter || mutatedResolver || mutatedSensor || runtimeDeleted, nil
 }
 
 func (c *StateApplier) applyCoreComponents(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, registrySecret *models.RegistrySecretValues, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
@@ -216,4 +222,29 @@ func (c *StateApplier) applySensor(ctx context.Context, agentSpec *cbcontainersv
 	}
 	c.log.Info("Applied runtime kubernetes sensor daemon set", "Mutated", mutatedDaemonSet)
 	return mutatedDaemonSet, nil
+}
+
+func (c *StateApplier) deleteRuntime(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec) (bool, error) {
+	resolverServiceDeleted, deleteErr := c.applier.Delete(ctx, c.resolverService, agentSpec)
+	if deleteErr != nil {
+		return false, deleteErr
+	} else if resolverServiceDeleted {
+		c.log.Info("Deleted resolver service")
+	}
+
+	resolverDeploymentDeleted, deleteErr := c.applier.Delete(ctx, c.resolverDeployment, agentSpec)
+	if deleteErr != nil {
+		return false, deleteErr
+	} else if resolverDeploymentDeleted {
+		c.log.Info("Deleted resolver deployment")
+	}
+
+	sensorDaemonSetDeleted, deleteErr := c.applier.Delete(ctx, c.sensorDaemonSet, agentSpec)
+	if deleteErr != nil {
+		return false, deleteErr
+	} else if sensorDaemonSetDeleted {
+		c.log.Info("Deleted sensor daemonset")
+	}
+
+	return resolverServiceDeleted || resolverDeploymentDeleted || sensorDaemonSetDeleted, nil
 }
