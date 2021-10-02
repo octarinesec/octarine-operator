@@ -1,13 +1,13 @@
-# permissions for end users to view cbcontainersruntimes.
+# permissions for end users to view cbcontainersagents.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: cbcontainersruntime-viewer-role
+  name: cbcontainersagent-viewer-role
 rules:
 - apiGroups:
   - operator.containers.carbonblack.io
   resources:
-  - cbcontainersruntimes
+  - cbcontainersagents
   verbs:
   - get
   - list
@@ -15,6 +15,6 @@ rules:
 - apiGroups:
   - operator.containers.carbonblack.io
   resources:
-  - cbcontainersruntimes/status
+  - cbcontainersclusters/status
   verbs:
   - get
