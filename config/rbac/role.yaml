@@ -84,7 +84,7 @@ rules:
 - apiGroups:
   - operator.containers.carbonblack.io
   resources:
-  - cbcontainersclusters
+  - cbcontainersagents
   verbs:
   - create
   - delete
@@ -96,13 +96,13 @@ rules:
 - apiGroups:
   - operator.containers.carbonblack.io
   resources:
-  - cbcontainersclusters/finalizers
+  - cbcontainersagents/finalizers
   verbs:
   - update
 - apiGroups:
   - operator.containers.carbonblack.io
   resources:
-  - cbcontainersclusters/status
+  - cbcontainersagents/status
   verbs:
   - get
   - patch

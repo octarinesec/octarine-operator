@@ -71,9 +71,9 @@ func (r *CBContainersAgentController) getContainersAgentObject(ctx context.Conte
 	return &cbContainersAgentsList.Items[0], nil
 }
 
-// +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersclusters,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersclusters/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersclusters/finalizers,verbs=update
+// +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersagents,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersagents/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersagents/finalizers,verbs=update
 // +kubebuilder:rbac:groups=core,resources={configmaps,secrets},verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=scheduling.k8s.io,resources=priorityclasses,verbs=*
 // +kubebuilder:rbac:groups={apps,core},resources={deployments,services,daemonsets},verbs=get;list;watch;create;update;patch;delete
