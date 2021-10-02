@@ -41,13 +41,13 @@ func (obj *MonitorDeploymentK8sObject) NamespacedName() types.NamespacedName {
 }
 
 func (obj *MonitorDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbcontainersv1.CBContainersAgentSpec) error {
-	monitorSpec := agentSpec.CoreSpec.MonitorSpec
+	monitor := agentSpec.Components.Basic.Monitor
 	deployment, ok := k8sObject.(*appsV1.Deployment)
 	if !ok {
 		return fmt.Errorf("expected Deployment K8s object")
 	}
 
-	desiredLabels := monitorSpec.Labels
+	desiredLabels := monitor.Labels
 	if desiredLabels == nil {
 		desiredLabels = make(map[string]string)
 	}
@@ -71,11 +71,11 @@ func (obj *MonitorDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, 
 	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
-	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, monitorSpec.DeploymentAnnotations)
-	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, monitorSpec.PodTemplateAnnotations)
+	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, monitor.DeploymentAnnotations)
+	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, monitor.PodTemplateAnnotations)
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, &agentSpec.CoreSpec.MonitorSpec, &agentSpec.CoreSpec.EventsGatewaySpec, agentSpec.Version, agentSpec.ApiGatewaySpec.AccessTokenSecretName)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, &monitor, &agentSpec.Gateways.CoreEventsGateway, agentSpec.Version, agentSpec.AccessTokenSecretName)
 
 	return nil
 }
@@ -88,7 +88,7 @@ func (obj *MonitorDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.Pod
 	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
-func (obj *MonitorDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, monitorSpec *cbcontainersv1.CBContainersClusterMonitorSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *MonitorDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, monitorSpec *cbcontainersv1.CBContainersMonitorSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
 	if len(templatePodSpec.Containers) != 1 {
 		container := coreV1.Container{}
 		templatePodSpec.Containers = []coreV1.Container{container}
@@ -97,7 +97,7 @@ func (obj *MonitorDeploymentK8sObject) mutateContainersList(templatePodSpec *cor
 	obj.mutateContainer(&templatePodSpec.Containers[0], monitorSpec, eventsGatewaySpec, version, accessTokenSecretName)
 }
 
-func (obj *MonitorDeploymentK8sObject) mutateContainer(container *coreV1.Container, monitorSpec *cbcontainersv1.CBContainersClusterMonitorSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *MonitorDeploymentK8sObject) mutateContainer(container *coreV1.Container, monitorSpec *cbcontainersv1.CBContainersMonitorSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
 	container.Name = MonitorName
 	container.Resources = monitorSpec.Resources
 

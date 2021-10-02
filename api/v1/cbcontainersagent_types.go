@@ -25,16 +25,19 @@ import (
 
 // CBContainersAgentSpec defines the desired state of CBContainersAgentSpec
 type CBContainersAgentSpec struct {
-	Account        string                     `json:"account,required"`
-	ClusterName    string                     `json:"clusterName,required"`
-	Version        string                     `json:"version,required"`
-	Features       []string                   `json:"features,required"`
-	ApiGatewaySpec CBContainersApiGatewaySpec `json:"apiGatewaySpec,required"`
+	Account     string `json:"account,required"`
+	ClusterName string `json:"clusterName,required"`
+	Version     string `json:"version,required"`
+	// +kubebuilder:default:="cbcontainers-access-token"
+	AccessTokenSecretName string                     `json:"accessTokenSecretName,omitempty"`
+	Gateways              CBContainersGatewaysSpec   `json:"gateways,required"`
+	Components            CBContainersComponentsSpec `json:"components,required"`
+}
+
+type CBContainersComponentsSpec struct {
 	// +kubebuilder:default:=<>
-	GatewayTLS    CBContainersGatewayTLS    `json:"gatewayTLS,omitempty"`
-	CoreSpec      CBContainersCoreSpec      `json:"coreSpec,required"`
-	HardeningSpec CBContainersHardeningSpec `json:"hardeningSpec,required"`
-	RuntimeSpec   CBContainersRuntimeSpec   `json:"runtimeSpec,omitempty"`
+	Basic             CBContainersBasicSpec             `json:"basic,omitempty"`
+	RuntimeProtection CBContainersRuntimeProtectionSpec `json:"runtimeProtection,omitempty"`
 }
 
 // CBContainersAgentStatus defines the observed state of CBContainersAgent

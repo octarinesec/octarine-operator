@@ -42,7 +42,9 @@ var (
 	ApiGateWayHost             = test_utils.RandomString()
 	ApiGateWayPort             = 4206
 	ApiGateWayAdapter          = test_utils.RandomString()
+	CoreEventsGateWayHost      = test_utils.RandomString()
 	HardeningEventsGateWayHost = test_utils.RandomString()
+	RuntimeEventsGateWayHost   = test_utils.RandomString()
 
 	EnforcerDeploymentDetails = K8sObjectDetails{
 		Namespace:  commonState.DataPlaneNamespaceName,
@@ -117,15 +119,21 @@ func testStateApplier(t *testing.T, setup StateApplierTestSetup, k8sVersion stri
 	agentSpec := &cbcontainersv1.CBContainersAgentSpec{
 		Account:     Account,
 		ClusterName: Cluster,
-		ApiGatewaySpec: cbcontainersv1.CBContainersApiGatewaySpec{
-			Scheme:  ApiGateWayScheme,
-			Host:    ApiGateWayHost,
-			Port:    ApiGateWayPort,
-			Adapter: ApiGateWayAdapter,
-		},
-		HardeningSpec: cbcontainersv1.CBContainersHardeningSpec{
-			EventsGatewaySpec: cbcontainersv1.CBContainersEventsGatewaySpec{
+		Gateways: cbcontainersv1.CBContainersGatewaysSpec{
+			ApiGateway: cbcontainersv1.CBContainersApiGatewaySpec{
+				Scheme:  ApiGateWayScheme,
+				Host:    ApiGateWayHost,
+				Port:    ApiGateWayPort,
+				Adapter: ApiGateWayAdapter,
+			},
+			CoreEventsGateway: cbcontainersv1.CBContainersEventsGatewaySpec{
+				Host: CoreEventsGateWayHost,
+			},
+			HardeningEventsGateway: cbcontainersv1.CBContainersEventsGatewaySpec{
 				Host: HardeningEventsGateWayHost,
+			},
+			RuntimeEventsGateway: cbcontainersv1.CBContainersEventsGatewaySpec{
+				Host: RuntimeEventsGateWayHost,
 			},
 		},
 	}

@@ -49,10 +49,10 @@ func (obj *ResolverDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 		return fmt.Errorf("expected Deployment K8s object")
 	}
 
-	runtimeSpec := &agentSpec.RuntimeSpec
-	resolverSpec := &runtimeSpec.ResolverSpec
+	runtimeProtection := &agentSpec.Components.RuntimeProtection
+	resolver := &runtimeProtection.Resolver
 
-	desiredLabels := resolverSpec.Labels
+	desiredLabels := resolver.Labels
 	if desiredLabels == nil {
 		desiredLabels = make(map[string]string)
 	}
@@ -70,21 +70,21 @@ func (obj *ResolverDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 		deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
 
-	deployment.Spec.Replicas = resolverSpec.ReplicasCount
+	deployment.Spec.Replicas = resolver.ReplicasCount
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels
 	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
-	obj.mutateAnnotations(deployment, resolverSpec)
+	obj.mutateAnnotations(deployment, resolver)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec,
-		resolverSpec,
-		&runtimeSpec.ResolverSpec.EventsGatewaySpec,
+		resolver,
+		&agentSpec.Gateways.RuntimeEventsGateway,
 		agentSpec.Version,
-		agentSpec.ApiGatewaySpec.AccessTokenSecretName,
-		runtimeSpec.InternalGrpcPort,
+		agentSpec.AccessTokenSecretName,
+		runtimeProtection.InternalGrpcPort,
 	)
 
 	return nil

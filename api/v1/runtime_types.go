@@ -5,7 +5,6 @@ import (
 )
 
 type CBContainersRuntimeResolverSpec struct {
-	EventsGatewaySpec CBContainersEventsGatewaySpec `json:"eventsGatewaySpec,required"`
 	// +kubebuilder:default:=<>
 	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
@@ -47,11 +46,13 @@ type CBContainersRuntimeSensorSpec struct {
 	VerbosityLevel *int `json:"verbosity_level,omitempty"`
 }
 
-// CBContainersRuntimeSpec defines the desired state of CBContainersRuntime
-type CBContainersRuntimeSpec struct {
-	ResolverSpec CBContainersRuntimeResolverSpec `json:"resolverSpec,omitempty"`
+// CBContainersRuntimeProtectionSpec defines the desired state of CBContainersRuntime
+type CBContainersRuntimeProtectionSpec struct {
+	// +kubebuilder:default:=true
+	Enabled  *bool                           `json:"enabled,omitempty"`
+	Resolver CBContainersRuntimeResolverSpec `json:"resolver,omitempty"`
 	// +kubebuilder:default:=<>
-	SensorSpec CBContainersRuntimeSensorSpec `json:"sensorSpec,omitempty"`
+	Sensor CBContainersRuntimeSensorSpec `json:"sensor,omitempty"`
 	// +kubebuilder:default:=443
 	InternalGrpcPort int32 `json:"internalGrpcPort,omitempty"`
 }

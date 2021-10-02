@@ -96,7 +96,7 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, nil
 	}
 
-	if err := r.setDefaults(cbContainersAgent); err != nil {
+	if err := r.setAgentDefaults(&cbContainersAgent.Spec); err != nil {
 		return ctrl.Result{}, fmt.Errorf("faild to set defaults to cluster CR: %v", err)
 	}
 
@@ -131,7 +131,7 @@ func (r *CBContainersAgentController) getRegistrySecretValues(ctx context.Contex
 }
 
 func (r *CBContainersAgentController) getAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (string, error) {
-	accessTokenSecretNamespacedName := types.NamespacedName{Name: cbContainersCluster.Spec.ApiGatewaySpec.AccessTokenSecretName, Namespace: commonState.DataPlaneNamespaceName}
+	accessTokenSecretNamespacedName := types.NamespacedName{Name: cbContainersCluster.Spec.AccessTokenSecretName, Namespace: commonState.DataPlaneNamespaceName}
 	accessTokenSecret := &corev1.Secret{}
 	if err := r.Get(ctx, accessTokenSecretNamespacedName, accessTokenSecret); err != nil {
 		return "", fmt.Errorf("couldn't find access token secret k8s object: %v", err)

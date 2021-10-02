@@ -61,14 +61,13 @@ func (obj *EnforcerWebhookK8sObject) MutateK8sObject(k8sObject client.Object, ag
 		return fmt.Errorf("tls secret values weren't provided")
 	}
 
-	hardeningSpec := &agentSpec.HardeningSpec
-	enforcerSpec := &hardeningSpec.EnforcerSpec
+	enforcer := &agentSpec.Components.Basic.Enforcer
 
-	webhookConfiguration.SetLabels(enforcerSpec.Labels)
-	return obj.mutateWebhooks(webhookConfiguration, hardeningSpec)
+	webhookConfiguration.SetLabels(enforcer.Labels)
+	return obj.mutateWebhooks(webhookConfiguration, enforcer)
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration adapters.ValidatingWebhookConfigurationAdapter, cbContainersHardeningSpec *cbcontainersv1.CBContainersHardeningSpec) error {
+func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration adapters.ValidatingWebhookConfigurationAdapter, enforcer *cbcontainersv1.CBContainersEnforcerSpec) error {
 	var resourcesWebhookObj adapters.ValidatingWebhookAdapter
 	var namespacesWebhookObj adapters.ValidatingWebhookAdapter
 
@@ -98,8 +97,8 @@ func (obj *EnforcerWebhookK8sObject) mutateWebhooks(webhookConfiguration adapter
 		namespacesWebhookObj = updatedWebhooks[1]
 	}
 
-	obj.mutateResourcesWebhook(resourcesWebhookObj, cbContainersHardeningSpec.EnforcerSpec.WebhookTimeoutSeconds)
-	obj.mutateNamespacesWebhook(namespacesWebhookObj, cbContainersHardeningSpec.EnforcerSpec.WebhookTimeoutSeconds)
+	obj.mutateResourcesWebhook(resourcesWebhookObj, enforcer.WebhookTimeoutSeconds)
+	obj.mutateNamespacesWebhook(namespacesWebhookObj, enforcer.WebhookTimeoutSeconds)
 	return nil
 }
 

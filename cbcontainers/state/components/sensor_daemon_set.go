@@ -54,10 +54,10 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 		return fmt.Errorf("expected DaemonSet K8s object")
 	}
 
-	runtimeSpec := &agentSpec.RuntimeSpec
-	sensorSpec := &runtimeSpec.SensorSpec
+	runtimeProtection := &agentSpec.Components.RuntimeProtection
+	sensor := &runtimeProtection.Sensor
 
-	desiredLabels := sensorSpec.Labels
+	desiredLabels := sensor.Labels
 	if desiredLabels == nil {
 		desiredLabels = make(map[string]string)
 	}
@@ -86,12 +86,12 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	daemonSet.Spec.Template.Spec.HostNetwork = sensorHostNetwork
 	daemonSet.Spec.Template.Spec.HostPID = sensorHostPID
 
-	obj.mutateAnnotations(daemonSet, sensorSpec)
+	obj.mutateAnnotations(daemonSet, sensor)
 	obj.mutateContainersList(&daemonSet.Spec.Template.Spec,
-		sensorSpec,
+		sensor,
 		agentSpec.Version,
-		agentSpec.ApiGatewaySpec.AccessTokenSecretName,
-		runtimeSpec.InternalGrpcPort,
+		agentSpec.AccessTokenSecretName,
+		runtimeProtection.InternalGrpcPort,
 	)
 
 	return nil

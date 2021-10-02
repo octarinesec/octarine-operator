@@ -10,6 +10,7 @@ const (
 	defaultAccessToken = "cbcontainers-access-token"
 )
 
+var trueRef = true
 var falseRef = false
 
 func setDefaultProbesCommon(probesSpec *v1.CBContainersCommonProbesSpec) {

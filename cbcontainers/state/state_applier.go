@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
-	"github.com/toolkits/slice"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
@@ -81,7 +80,7 @@ func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbconta
 	c.log.Info("Applied state reporter objects", "Mutated", mutatedStateReporter)
 
 	mutatedResolver, mutatedSensor := false, false
-	if slice.ContainsString(agentSpec.Features, models.AgentFeatureRuntime) {
+	if agentSpec.Components.RuntimeProtection.Enabled != nil && *agentSpec.Components.RuntimeProtection.Enabled {
 		mutatedResolver, err = c.applyResolver(ctx, agentSpec, applyOptions)
 		if err != nil {
 			return false, err

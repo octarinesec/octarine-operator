@@ -34,10 +34,9 @@ func (obj *EnforcerServiceK8sObject) MutateK8sObject(k8sObject client.Object, ag
 		return fmt.Errorf("expected Service K8s object")
 	}
 
-	hardeningSpec := &agentSpec.HardeningSpec
-	enforcerSpec := &hardeningSpec.EnforcerSpec
+	enforcer := &agentSpec.Components.Basic.Enforcer
 
-	service.Labels = enforcerSpec.Labels
+	service.Labels = enforcer.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
 	service.Spec.Selector = map[string]string{
 		EnforcerLabelKey: EnforcerName,

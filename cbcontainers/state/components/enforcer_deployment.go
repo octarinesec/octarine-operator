@@ -52,15 +52,14 @@ func (obj *EnforcerDeploymentK8sObject) NamespacedName() types.NamespacedName {
 }
 
 func (obj *EnforcerDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbcontainersv1.CBContainersAgentSpec) error {
-	hardeningSpec := &agentSpec.HardeningSpec
-	enforcerSpec := &hardeningSpec.EnforcerSpec
+	enforcer := &agentSpec.Components.Basic.Enforcer
 
 	deployment, ok := k8sObject.(*appsV1.Deployment)
 	if !ok {
 		return fmt.Errorf("expected Deployment K8s object")
 	}
 
-	desiredLabels := enforcerSpec.Labels
+	desiredLabels := enforcer.Labels
 	if desiredLabels == nil {
 		desiredLabels = make(map[string]string)
 	}
@@ -70,21 +69,21 @@ func (obj *EnforcerDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 		deployment.Spec.Selector = &metav1.LabelSelector{}
 	}
 
-	deployment.Spec.Replicas = enforcerSpec.ReplicasCount
+	deployment.Spec.Replicas = enforcer.ReplicasCount
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels
 	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
-	obj.mutateAnnotations(deployment, enforcerSpec)
+	obj.mutateAnnotations(deployment, enforcer)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, enforcerSpec, &hardeningSpec.EventsGatewaySpec, agentSpec.Version, agentSpec.ApiGatewaySpec.AccessTokenSecretName)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, enforcer, &agentSpec.Gateways.HardeningEventsGateway, agentSpec.Version, agentSpec.AccessTokenSecretName)
 
 	return nil
 }
 
-func (obj *EnforcerDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Deployment, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec) {
+func (obj *EnforcerDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Deployment, enforcerSpec *cbcontainersv1.CBContainersEnforcerSpec) {
 	if deployment.ObjectMeta.Annotations == nil {
 		deployment.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -118,7 +117,7 @@ func (obj *EnforcerDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.Po
 	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
-func (obj *EnforcerDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *EnforcerDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, enforcerSpec *cbcontainersv1.CBContainersEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
 	if len(templatePodSpec.Containers) != 1 {
 		container := coreV1.Container{}
 		templatePodSpec.Containers = []coreV1.Container{container}
@@ -127,7 +126,7 @@ func (obj *EnforcerDeploymentK8sObject) mutateContainersList(templatePodSpec *co
 	obj.mutateContainer(&templatePodSpec.Containers[0], enforcerSpec, eventsGatewaySpec, version, accessTokenSecretName)
 }
 
-func (obj *EnforcerDeploymentK8sObject) mutateContainer(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *EnforcerDeploymentK8sObject) mutateContainer(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
 	container.Name = EnforcerName
 	container.Resources = enforcerSpec.Resources
 	obj.mutateEnforcerEnvVars(container, enforcerSpec, accessTokenSecretName, eventsGatewaySpec)
@@ -138,7 +137,7 @@ func (obj *EnforcerDeploymentK8sObject) mutateContainer(container *coreV1.Contai
 	obj.mutateVolumesMounts(container)
 }
 
-func (obj *EnforcerDeploymentK8sObject) mutateEnforcerEnvVars(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersHardeningEnforcerSpec, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec) {
+func (obj *EnforcerDeploymentK8sObject) mutateEnforcerEnvVars(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersEnforcerSpec, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec) {
 	customEnvs := []coreV1.EnvVar{
 		{Name: "GUARDRAILS_ENFORCER_KEY_FILE_PATH", Value: fmt.Sprintf("%s/key", DesiredTlsSecretVolumeMountPath)},
 		{Name: "GUARDRAILS_ENFORCER_CERT_FILE_PATH", Value: fmt.Sprintf("%s/signed_cert", DesiredTlsSecretVolumeMountPath)},

@@ -30,13 +30,13 @@ func (obj *ConfigurationK8sObject) MutateK8sObject(k8sObject client.Object, agen
 	configMap.Data = map[string]string{
 		commonState.DataPlaneConfigmapAccountKey:         agentSpec.Account,
 		commonState.DataPlaneConfigmapClusterKey:         agentSpec.ClusterName,
-		commonState.DataPlaneConfigmapApiSchemeKey:       agentSpec.ApiGatewaySpec.Scheme,
-		commonState.DataPlaneConfigmapApiHostKey:         agentSpec.ApiGatewaySpec.Host,
-		commonState.DataPlaneConfigmapApiPortKey:         strconv.Itoa(agentSpec.ApiGatewaySpec.Port),
-		commonState.DataPlaneConfigmapApiAdapterKey:      agentSpec.ApiGatewaySpec.Adapter,
-		commonState.DataPlaneConfigmapTlsSkipVerifyKey:   strconv.FormatBool(agentSpec.GatewayTLS.InsecureSkipVerify),
+		commonState.DataPlaneConfigmapApiSchemeKey:       agentSpec.Gateways.ApiGateway.Scheme,
+		commonState.DataPlaneConfigmapApiHostKey:         agentSpec.Gateways.ApiGateway.Host,
+		commonState.DataPlaneConfigmapApiPortKey:         strconv.Itoa(agentSpec.Gateways.ApiGateway.Port),
+		commonState.DataPlaneConfigmapApiAdapterKey:      agentSpec.Gateways.ApiGateway.Adapter,
+		commonState.DataPlaneConfigmapTlsSkipVerifyKey:   strconv.FormatBool(agentSpec.Gateways.GatewayTLS.InsecureSkipVerify),
 		commonState.DataPlaneConfigmapTlsRootCAsPathKey:  path.Join(commonState.DataPlaneConfigmapTlsRootCAsDirPath, commonState.DataPlaneConfigmapTlsRootCAsFilePath),
-		commonState.DataPlaneConfigmapTlsRootCAsFilePath: string(agentSpec.GatewayTLS.RootCAsBundle),
+		commonState.DataPlaneConfigmapTlsRootCAsFilePath: string(agentSpec.Gateways.GatewayTLS.RootCAsBundle),
 	}
 
 	return nil

@@ -1,5 +1,7 @@
 package gateway
 
+import "github.com/vmware/cbcontainers-operator/cbcontainers/models"
+
 const (
 	DefaultScheme  = "https"
 	DefaultPort    = 443
@@ -19,12 +21,11 @@ type Builder struct {
 	tlsRootCAsBundle      []byte
 }
 
-func NewBuilder(account, cluster, accessToken, host string, agentFeatures []string) *Builder {
+func NewBuilder(account, cluster, accessToken, host string) *Builder {
 	return &Builder{
 		account:               account,
 		cluster:               cluster,
 		accessToken:           accessToken,
-		agentFeatures:         agentFeatures,
 		scheme:                DefaultScheme,
 		host:                  host,
 		port:                  DefaultPort,
@@ -48,6 +49,11 @@ func (builder *Builder) SetTLSInsecureSkipVerify(insecureSkipVerify bool) *Build
 
 func (builder *Builder) SetTLSRootCAsBundle(rootCAsBundle []byte) *Builder {
 	builder.tlsRootCAsBundle = rootCAsBundle
+	return builder
+}
+
+func (builder *Builder) WithRuntimeProtection() *Builder {
+	builder.agentFeatures = append(builder.agentFeatures, models.AgentComponentRuntimeProtection)
 	return builder
 }
 

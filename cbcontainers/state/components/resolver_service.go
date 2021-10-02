@@ -33,15 +33,15 @@ func (obj *ResolverServiceK8sObject) MutateK8sObject(k8sObject client.Object, ag
 		return fmt.Errorf("expected Service K8s object")
 	}
 
-	runtimeSpec := &agentSpec.RuntimeSpec
-	resolverSpec := &runtimeSpec.ResolverSpec
+	runtimeProtection := &agentSpec.Components.RuntimeProtection
+	resolver := &runtimeProtection.Resolver
 
-	service.Labels = resolverSpec.Labels
+	service.Labels = resolver.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
 	service.Spec.Selector = map[string]string{
 		resolverLabelKey: ResolverName,
 	}
-	obj.mutatePorts(service, runtimeSpec.InternalGrpcPort)
+	obj.mutatePorts(service, runtimeProtection.InternalGrpcPort)
 
 	return nil
 }
