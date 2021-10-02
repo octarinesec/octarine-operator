@@ -36,6 +36,8 @@ const (
 type AppliedK8sObjectsChanger func(K8sObjectDetails, client.Object)
 
 var (
+	trueRef bool = true
+
 	Account                    = test_utils.RandomString()
 	Cluster                    = test_utils.RandomString()
 	ApiGateWayScheme           = test_utils.RandomString()
@@ -134,6 +136,11 @@ func testStateApplier(t *testing.T, setup StateApplierTestSetup, k8sVersion stri
 			},
 			RuntimeEventsGateway: cbcontainersv1.CBContainersEventsGatewaySpec{
 				Host: RuntimeEventsGateWayHost,
+			},
+		},
+		Components: cbcontainersv1.CBContainersComponentsSpec{
+			RuntimeProtection: cbcontainersv1.CBContainersRuntimeProtectionSpec{
+				Enabled: &trueRef,
 			},
 		},
 	}
