@@ -19,6 +19,8 @@ package controllers
 import (
 	"context"
 	"fmt"
+
+	"github.com/vmware/cbcontainers-operator/cbcontainers/processors"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/adapters"
 	appsV1 "k8s.io/api/apps/v1"
 
@@ -44,12 +46,8 @@ type AgentProcessor interface {
 	Process(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error)
 }
 
-type Gateway interface {
-	GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.OperatorCompatibility, error)
-}
-
 type GatewayCreator interface {
-	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) Gateway
+	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (processors.APIGateway, error)
 }
 
 type OperatorVersionProvider interface {
@@ -131,17 +129,9 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	m, err := r.apiGateway(cbContainersAgent, accessToken).GetCompatibilityMatrixEntryFor(operatorVersion)
-	if err == nil {
-		// if there is no error check the compatibility
-		// if there is an error skip the check
-
-		err = m.CheckCompatibility(cbContainersAgent.Spec.Version)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-	} else {
-		r.Log.Error(err, "error while getting compatibility matrix from backend")
+	r.Log.Info("Checking agent compatibility")
+	if err = r.checkCompatibility(cbContainersAgent, accessToken, operatorVersion); err != nil {
+		return ctrl.Result{}, err
 	}
 
 	r.Log.Info("Getting registry secret values")
@@ -161,7 +151,34 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
-func (r *CBContainersAgentController) apiGateway(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) Gateway {
+// checkCompatibility makes a backend call to check whether the given
+// operatorVersion is compatible with the desired agent version.
+//
+// If we fail to build the API Gateway or the API call fails
+// we will skip the compatibility check and not block the instalation
+// (even in that case, if the operator and agent are not compatibility that will be seen later).
+//
+// This method will only return an error if we succesfully fetch the compatibility matrix and
+// see that the operator is not compatible with the agent.
+func (r *CBContainersAgentController) checkCompatibility(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string, operatorVersion string) error {
+	gateway, err := r.apiGateway(cbContainersAgent, accessToken)
+	if err != nil {
+		r.Log.Error(err, "error while building API gateway")
+		// if there is an error while building the gateway log it and skip the check
+		return nil
+	}
+	m, err := gateway.GetCompatibilityMatrixEntryFor(operatorVersion)
+	if err != nil {
+		// if there is an error while getting the compatibility matrix log it and skip the check
+		r.Log.Error(err, "error while getting compatibility matrix from backend")
+		return nil
+	}
+
+	// if there is no error check the compatibility and return the result
+	return m.CheckCompatibility(cbContainersAgent.Spec.Version)
+}
+
+func (r *CBContainersAgentController) apiGateway(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) (processors.APIGateway, error) {
 	return r.GatewayCreator.CreateGateway(cbContainersAgent, accessToken)
 }
 

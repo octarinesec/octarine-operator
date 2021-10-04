@@ -11,6 +11,7 @@ import (
 type APIGateway interface {
 	RegisterCluster() error
 	GetRegistrySecret() (*models.RegistrySecretValues, error)
+	GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.OperatorCompatibility, error)
 }
 
 type APIGatewayCreator interface {

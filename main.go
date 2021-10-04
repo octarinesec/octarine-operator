@@ -106,7 +106,7 @@ func main() {
 		Log:                     cbContainersAgentLogger,
 		Scheme:                  mgr.GetScheme(),
 		K8sVersion:              k8sVersion,
-		GatewayCreator:          controllers.NewDefaultGatewayCreator(),
+		GatewayCreator:          processors.NewDefaultGatewayCreator(),
 		OperatorVersionProvider: operator.NewEnvVersionProvider(),
 		ClusterProcessor:        processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator()),
 		StateApplier:            state.NewStateApplier(agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
