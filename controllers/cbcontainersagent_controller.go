@@ -44,10 +44,27 @@ type AgentProcessor interface {
 	Process(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error)
 }
 
+type Gateway interface {
+	GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.OperatorCompatibility, error)
+}
+
+type GatewayCreator interface {
+	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) Gateway
+}
+
+type OperatorVersionProvider interface {
+	GetOperatorVersion() (string, error)
+}
+
 type CBContainersAgentController struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
+
+	// GatewayCreator will be used to create a gateway.ApiGateway
+	GatewayCreator GatewayCreator
+	// OperatorVersionProvider provides the version of the running operator
+	OperatorVersionProvider OperatorVersionProvider
 
 	ClusterProcessor AgentProcessor
 	StateApplier     StateApplier
@@ -104,8 +121,31 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.SetControllerReference(cbContainersAgent, controlledResource, r.Scheme)
 	}
 
+	accessToken, err := r.getAccessToken(context.Background(), cbContainersAgent)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	operatorVersion, err := r.OperatorVersionProvider.GetOperatorVersion()
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	m, err := r.apiGateway(cbContainersAgent, accessToken).GetCompatibilityMatrixEntryFor(operatorVersion)
+	if err == nil {
+		// if there is no error check the compatibility
+		// if there is an error skip the check
+
+		err = m.CheckCompatibility(cbContainersAgent.Spec.Version)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	} else {
+		r.Log.Error(err, "error while getting compatibility matrix from backend")
+	}
+
 	r.Log.Info("Getting registry secret values")
-	registrySecret, err := r.getRegistrySecretValues(ctx, cbContainersAgent)
+	registrySecret, err := r.getRegistrySecretValues(ctx, cbContainersAgent, accessToken)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -121,12 +161,11 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
-func (r *CBContainersAgentController) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (*models.RegistrySecretValues, error) {
-	accessToken, err := r.getAccessToken(ctx, cbContainersCluster)
-	if err != nil {
-		return nil, err
-	}
+func (r *CBContainersAgentController) apiGateway(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) Gateway {
+	return r.GatewayCreator.CreateGateway(cbContainersAgent, accessToken)
+}
 
+func (r *CBContainersAgentController) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error) {
 	return r.ClusterProcessor.Process(cbContainersCluster, accessToken)
 }
 
