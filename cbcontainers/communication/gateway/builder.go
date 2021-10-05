@@ -57,6 +57,11 @@ func (builder *Builder) WithRuntimeProtection() *Builder {
 	return builder
 }
 
+func (builder *Builder) WithClusterScanning() *Builder {
+	builder.agentComponents = append(builder.agentComponents, models.AgentComponentClusterScanning)
+	return builder
+}
+
 func (builder *Builder) Build() (*ApiGateway, error) {
 	return NewApiGateway(
 		builder.account,
