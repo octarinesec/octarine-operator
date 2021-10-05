@@ -49,7 +49,8 @@ type CBContainersRuntimeSensorSpec struct {
 // CBContainersRuntimeProtectionSpec defines the desired state of CBContainersRuntime
 type CBContainersRuntimeProtectionSpec struct {
 	// +kubebuilder:default:=true
-	Enabled  *bool                           `json:"enabled,omitempty"`
+	Enabled *bool `json:"enabled,omitempty"`
+	// +kubebuilder:default:=<>
 	Resolver CBContainersRuntimeResolverSpec `json:"resolver,omitempty"`
 	// +kubebuilder:default:=<>
 	Sensor CBContainersRuntimeSensorSpec `json:"sensor,omitempty"`
