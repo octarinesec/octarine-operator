@@ -18,10 +18,12 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/vmware/cbcontainers-operator/cbcontainers/processors"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/adapters"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/operator"
 	appsV1 "k8s.io/api/apps/v1"
 
 	"github.com/go-logr/logr"
@@ -124,13 +126,8 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	operatorVersion, err := r.OperatorVersionProvider.GetOperatorVersion()
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
 	r.Log.Info("Checking agent compatibility")
-	if err = r.checkCompatibility(cbContainersAgent, accessToken, operatorVersion); err != nil {
+	if err = r.checkCompatibility(cbContainersAgent, accessToken); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -160,17 +157,25 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 //
 // This method will only return an error if we succesfully fetch the compatibility matrix and
 // see that the operator is not compatible with the agent.
-func (r *CBContainersAgentController) checkCompatibility(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string, operatorVersion string) error {
+func (r *CBContainersAgentController) checkCompatibility(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) error {
+	operatorVersion, err := r.OperatorVersionProvider.GetOperatorVersion()
+	if err != nil {
+		if errors.Is(err, operator.ErrNotSemVer) {
+			r.Log.Info("skipping compatibility check, operator version is not a semantic version: %v", err)
+			return nil
+		}
+		return err
+	}
 	gateway, err := r.apiGateway(cbContainersAgent, accessToken)
 	if err != nil {
-		r.Log.Error(err, "error while building API gateway")
+		r.Log.Error(err, "skipping compatibility check, error while building API gateway")
 		// if there is an error while building the gateway log it and skip the check
 		return nil
 	}
 	m, err := gateway.GetCompatibilityMatrixEntryFor(operatorVersion)
 	if err != nil {
 		// if there is an error while getting the compatibility matrix log it and skip the check
-		r.Log.Error(err, "error while getting compatibility matrix from backend")
+		r.Log.Error(err, "skipping compatibility check, error while getting compatibility matrix from backend")
 		return nil
 	}
 
