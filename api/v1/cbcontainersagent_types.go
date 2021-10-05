@@ -37,7 +37,8 @@ type CBContainersAgentSpec struct {
 
 type CBContainersComponentsSpec struct {
 	// +kubebuilder:default:=<>
-	Basic             CBContainersBasicSpec             `json:"basic,omitempty"`
+	Basic CBContainersBasicSpec `json:"basic,omitempty"`
+	// +kubebuilder:default:=<>
 	RuntimeProtection CBContainersRuntimeProtectionSpec `json:"runtimeProtection,omitempty"`
 }
 
