@@ -40,6 +40,8 @@ type CBContainersComponentsSpec struct {
 	Basic CBContainersBasicSpec `json:"basic,omitempty"`
 	// +kubebuilder:default:=<>
 	RuntimeProtection CBContainersRuntimeProtectionSpec `json:"runtimeProtection,omitempty"`
+	// +kubebuilder:default:=<>
+	ClusterScanning CBContainersClusterScanningSpec `json:"clusterScanning,omitempty"`
 }
 
 // CBContainersAgentStatus defines the observed state of CBContainersAgent
