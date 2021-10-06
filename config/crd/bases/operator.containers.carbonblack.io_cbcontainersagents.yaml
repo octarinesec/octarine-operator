@@ -424,7 +424,7 @@ spec:
                             type: object
                           image:
                             default:
-                              repository: cbartifactory/cluster-scanner-gateway
+                              repository: cbartifactory/image-scanning-reporter
                             properties:
                               pullPolicy:
                                 default: Always
