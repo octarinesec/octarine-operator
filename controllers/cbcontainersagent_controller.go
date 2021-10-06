@@ -18,12 +18,9 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/vmware/cbcontainers-operator/cbcontainers/processors"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/adapters"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/state/operator"
 	appsV1 "k8s.io/api/apps/v1"
 
 	"github.com/go-logr/logr"
@@ -48,23 +45,10 @@ type AgentProcessor interface {
 	Process(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error)
 }
 
-type GatewayCreator interface {
-	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (processors.APIGateway, error)
-}
-
-type OperatorVersionProvider interface {
-	GetOperatorVersion() (string, error)
-}
-
 type CBContainersAgentController struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
-
-	// GatewayCreator will be used to create a gateway.ApiGateway
-	GatewayCreator GatewayCreator
-	// OperatorVersionProvider provides the version of the running operator
-	OperatorVersionProvider OperatorVersionProvider
 
 	ClusterProcessor AgentProcessor
 	StateApplier     StateApplier
@@ -126,11 +110,6 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	r.Log.Info("Checking agent compatibility")
-	if err = r.checkCompatibility(cbContainersAgent, accessToken); err != nil {
-		return ctrl.Result{}, err
-	}
-
 	r.Log.Info("Getting registry secret values")
 	registrySecret, err := r.getRegistrySecretValues(ctx, cbContainersAgent, accessToken)
 	if err != nil {
@@ -146,45 +125,6 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 	r.Log.Info("Finished reconciling", "Requiring", stateWasChanged)
 	r.Log.Info("\n\n")
 	return ctrl.Result{Requeue: stateWasChanged}, nil
-}
-
-// checkCompatibility makes a backend call to check whether the given
-// operatorVersion is compatible with the desired agent version.
-//
-// If we fail to build the API Gateway or the API call fails
-// we will skip the compatibility check and not block the instalation
-// (even in that case, if the operator and agent are not compatibility that will be seen later).
-//
-// This method will only return an error if we succesfully fetch the compatibility matrix and
-// see that the operator is not compatible with the agent.
-func (r *CBContainersAgentController) checkCompatibility(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) error {
-	operatorVersion, err := r.OperatorVersionProvider.GetOperatorVersion()
-	if err != nil {
-		if errors.Is(err, operator.ErrNotSemVer) {
-			r.Log.Info("skipping compatibility check, operator version is not a semantic version: %v", err)
-			return nil
-		}
-		return err
-	}
-	gateway, err := r.apiGateway(cbContainersAgent, accessToken)
-	if err != nil {
-		r.Log.Error(err, "skipping compatibility check, error while building API gateway")
-		// if there is an error while building the gateway log it and skip the check
-		return nil
-	}
-	m, err := gateway.GetCompatibilityMatrixEntryFor(operatorVersion)
-	if err != nil {
-		// if there is an error while getting the compatibility matrix log it and skip the check
-		r.Log.Error(err, "skipping compatibility check, error while getting compatibility matrix from backend")
-		return nil
-	}
-
-	// if there is no error check the compatibility and return the result
-	return m.CheckCompatibility(cbContainersAgent.Spec.Version)
-}
-
-func (r *CBContainersAgentController) apiGateway(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) (processors.APIGateway, error) {
-	return r.GatewayCreator.CreateGateway(cbContainersAgent, accessToken)
 }
 
 func (r *CBContainersAgentController) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error) {

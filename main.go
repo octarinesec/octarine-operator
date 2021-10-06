@@ -102,14 +102,12 @@ func main() {
 
 	cbContainersAgentLogger := ctrl.Log.WithName("controllers").WithName("CBContainersAgent")
 	if err = (&controllers.CBContainersAgentController{
-		Client:                  mgr.GetClient(),
-		Log:                     cbContainersAgentLogger,
-		Scheme:                  mgr.GetScheme(),
-		K8sVersion:              k8sVersion,
-		GatewayCreator:          processors.NewDefaultGatewayCreator(),
-		OperatorVersionProvider: operator.NewEnvVersionProvider(),
-		ClusterProcessor:        processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator()),
-		StateApplier:            state.NewStateApplier(agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
+		Client:           mgr.GetClient(),
+		Log:              cbContainersAgentLogger,
+		Scheme:           mgr.GetScheme(),
+		K8sVersion:       k8sVersion,
+		ClusterProcessor: processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator(), operator.NewEnvVersionProvider()),
+		StateApplier:     state.NewStateApplier(agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")
 		os.Exit(1)
