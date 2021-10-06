@@ -34,6 +34,21 @@ func (m *MockAPIGateway) EXPECT() *MockAPIGatewayMockRecorder {
 	return m.recorder
 }
 
+// GetCompatibilityMatrixEntryFor mocks base method.
+func (m *MockAPIGateway) GetCompatibilityMatrixEntryFor(arg0 string) (*models.OperatorCompatibility, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCompatibilityMatrixEntryFor", arg0)
+	ret0, _ := ret[0].(*models.OperatorCompatibility)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCompatibilityMatrixEntryFor indicates an expected call of GetCompatibilityMatrixEntryFor.
+func (mr *MockAPIGatewayMockRecorder) GetCompatibilityMatrixEntryFor(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCompatibilityMatrixEntryFor", reflect.TypeOf((*MockAPIGateway)(nil).GetCompatibilityMatrixEntryFor), arg0)
+}
+
 // GetRegistrySecret mocks base method.
 func (m *MockAPIGateway) GetRegistrySecret() (*models.RegistrySecretValues, error) {
 	m.ctrl.T.Helper()

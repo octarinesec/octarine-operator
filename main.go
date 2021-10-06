@@ -20,10 +20,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"os"
+
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
-	"os"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/operator"
 
 	coreV1 "k8s.io/api/core/v1"
 
@@ -104,7 +106,7 @@ func main() {
 		Log:              cbContainersAgentLogger,
 		Scheme:           mgr.GetScheme(),
 		K8sVersion:       k8sVersion,
-		ClusterProcessor: processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator()),
+		ClusterProcessor: processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator(), operator.NewEnvVersionProvider()),
 		StateApplier:     state.NewStateApplier(agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")

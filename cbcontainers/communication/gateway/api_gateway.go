@@ -3,10 +3,16 @@ package gateway
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/go-resty/resty/v2"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
-	"net/http"
+)
+
+var (
+	ErrGettingOperatorCompatibility = errors.New("error while getting the operator compatibility")
 )
 
 type ApiGateway struct {
@@ -119,4 +125,24 @@ func (gateway *ApiGateway) GetRegistrySecret() (*models.RegistrySecretValues, er
 	}
 
 	return resp.Result().(*models.RegistrySecretValues), nil
+}
+
+func (gateway *ApiGateway) GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.OperatorCompatibility, error) {
+	url := gateway.baseUrl("setup/compatibility/{operatorVersion}")
+	resp, err := gateway.baseRequest().
+		SetResult(&models.OperatorCompatibility{}).
+		SetPathParam("operatorVersion", operatorVersion).
+		Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrGettingOperatorCompatibility, err)
+	}
+	if !resp.IsSuccess() {
+		return nil, fmt.Errorf("%w: status code (%d)", ErrGettingOperatorCompatibility, resp.StatusCode())
+	}
+	r, ok := resp.Result().(*models.OperatorCompatibility)
+	if !ok {
+		return nil, fmt.Errorf("malformed response from the backend")
+	}
+
+	return r, nil
 }

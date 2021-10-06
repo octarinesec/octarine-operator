@@ -40,6 +40,7 @@ var (
 	ClusterCustomResourceItems = []cbcontainersv1.CBContainersAgent{
 		{
 			Spec: cbcontainersv1.CBContainersAgentSpec{
+				Version:               "21.7.0",
 				AccessTokenSecretName: ClusterAccessTokenSecretName,
 			},
 		},
