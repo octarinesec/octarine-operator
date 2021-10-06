@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/adapters"
 	appsV1 "k8s.io/api/apps/v1"
 
@@ -104,8 +105,13 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.SetControllerReference(cbContainersAgent, controlledResource, r.Scheme)
 	}
 
+	accessToken, err := r.getAccessToken(context.Background(), cbContainersAgent)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	r.Log.Info("Getting registry secret values")
-	registrySecret, err := r.getRegistrySecretValues(ctx, cbContainersAgent)
+	registrySecret, err := r.getRegistrySecretValues(ctx, cbContainersAgent, accessToken)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -121,12 +127,7 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
 
-func (r *CBContainersAgentController) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (*models.RegistrySecretValues, error) {
-	accessToken, err := r.getAccessToken(ctx, cbContainersCluster)
-	if err != nil {
-		return nil, err
-	}
-
+func (r *CBContainersAgentController) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error) {
 	return r.ClusterProcessor.Process(cbContainersCluster, accessToken)
 }
 
