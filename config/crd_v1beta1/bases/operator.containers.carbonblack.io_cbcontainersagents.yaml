@@ -322,7 +322,9 @@ spec:
                   description: CBContainersClusterScanningSpec defines the desired
                     state of CBContainersClusterScanning
                   properties:
-                    controlPlaneGateway:
+                    enabled:
+                      type: boolean
+                    imageScanningReporter:
                       properties:
                         deploymentAnnotations:
                           additionalProperties:
@@ -418,8 +420,6 @@ spec:
                               type: object
                           type: object
                       type: object
-                    enabled:
-                      type: boolean
                   type: object
                 runtimeProtection:
                   description: CBContainersRuntimeProtectionSpec defines the desired

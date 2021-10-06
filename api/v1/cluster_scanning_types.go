@@ -2,7 +2,7 @@ package v1
 
 import coreV1 "k8s.io/api/core/v1"
 
-type CBContainersClusterScanningCPGatewaySpec struct {
+type CBContainersImageScanningReporterSpec struct {
 	// +kubebuilder:default:=<>
 	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
@@ -13,7 +13,7 @@ type CBContainersClusterScanningCPGatewaySpec struct {
 	ReplicasCount *int32 `json:"replicasCount,omitempty"`
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
-	// +kubebuilder:default:={repository:"cbartifactory/cluster-scanner-gateway"}
+	// +kubebuilder:default:={repository:"cbartifactory/image-scanning-reporter"}
 	Image CBContainersImageSpec `json:"image,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "1024Mi", cpu: "900m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
@@ -28,5 +28,5 @@ type CBContainersClusterScanningSpec struct {
 	// +kubebuilder:default:=false
 	Enabled *bool `json:"enabled,omitempty"`
 	// +kubebuilder:default:=<>
-	ControlPlaneGateway CBContainersClusterScanningCPGatewaySpec `json:"controlPlaneGateway,omitempty"`
+	ImageScanningReporter CBContainersImageScanningReporterSpec `json:"imageScanningReporter,omitempty"`
 }
