@@ -101,9 +101,14 @@ func (obj *MonitorDeploymentK8sObject) mutateContainer(container *coreV1.Contain
 	container.Name = MonitorName
 	container.Resources = monitorSpec.Resources
 
+	customEnvs := []coreV1.EnvVar{
+		{Name: "MONITOR_AGENT_VERSION", Value: version},
+	}
+
 	envVarBuilder := commonState.NewEnvVarBuilder().
 		WithCommonDataPlane(accessTokenSecretName).
 		WithEventsGateway(eventsGatewaySpec).
+		WithCustom(customEnvs...).
 		WithSpec(monitorSpec.Env)
 	commonState.MutateEnvVars(container, envVarBuilder)
 
