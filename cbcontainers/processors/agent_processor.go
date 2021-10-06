@@ -110,7 +110,7 @@ func (processor *AgentProcessor) checkCompatibility(cbContainersAgent *cbcontain
 	operatorVersion, err := processor.operatorVersionProvider.GetOperatorVersion()
 	if err != nil {
 		if errors.Is(err, operator.ErrNotSemVer) {
-			processor.log.Info("skipping compatibility check, operator version is not a semantic version: %v", err)
+			processor.log.Info("skipping compatibility check, operator version is not a semantic version:", "version error", err)
 			return nil
 		}
 		return err
