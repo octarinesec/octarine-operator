@@ -32,7 +32,6 @@ type StateApplier struct {
 	resolverDeployment              *components.ResolverDeploymentK8sObject
 	resolverService                 *components.ResolverServiceK8sObject
 	sensorDaemonSet                 *components.SensorDaemonSetK8sObject
-	imageScanningReporterTlsSecret  *components.ImageScanningReporterTlsK8sObject
 	imageScanningReporterDeployment *components.ImageScanningReporterDeploymentK8sObject
 	imageScanningReporterService    *components.ImageScanningReporterServiceK8sObject
 	applier                         AgentComponentApplier
@@ -53,7 +52,6 @@ func NewStateApplier(agentComponentApplier AgentComponentApplier, k8sVersion str
 		resolverDeployment:              components.NewResolverDeploymentK8sObject(),
 		resolverService:                 components.NewResolverServiceK8sObject(),
 		sensorDaemonSet:                 components.NewSensorDaemonSetK8sObject(),
-		imageScanningReporterTlsSecret:  components.NewImageScanningReporterTlsK8sObject(tlsSecretsValuesCreator),
 		imageScanningReporterDeployment: components.NewImageScanningReporterDeploymentK8sObject(),
 		imageScanningReporterService:    components.NewImageScanningReporterServiceK8sObject(),
 		applier:                         agentComponentApplier,
@@ -271,12 +269,6 @@ func (c *StateApplier) deleteRuntime(ctx context.Context, agentSpec *cbcontainer
 }
 
 func (c *StateApplier) applyImageScanningReporter(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
-	mutatedSecret, _, err := c.applier.Apply(ctx, c.imageScanningReporterTlsSecret, agentSpec, applyOptions, applymentOptions.NewApplyOptions().SetCreateOnly(true))
-	if err != nil {
-		return false, err
-	}
-	c.log.Info("Applied image scanning reporter tls secret", "Mutated", mutatedSecret)
-
 	mutatedService, _, err := c.applier.Apply(ctx, c.imageScanningReporterService, agentSpec, applyOptions)
 	if err != nil {
 		return false, err
@@ -289,17 +281,10 @@ func (c *StateApplier) applyImageScanningReporter(ctx context.Context, agentSpec
 	}
 	c.log.Info("Applied image scanning reporter deployment", "Mutated", mutatedDeployment)
 
-	return mutatedSecret || mutatedService || mutatedDeployment, nil
+	return mutatedService || mutatedDeployment, nil
 }
 
 func (c *StateApplier) deleteImageScanningReporter(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec) (bool, error) {
-	imageScanningReporterTlsSecretDeleted, deleteErr := c.applier.Delete(ctx, c.imageScanningReporterTlsSecret, agentSpec)
-	if deleteErr != nil {
-		return false, deleteErr
-	} else if imageScanningReporterTlsSecretDeleted {
-		c.log.Info("Deleted image scanning reporter tls secret")
-	}
-
 	imageScanningReporterServiceDeleted, deleteErr := c.applier.Delete(ctx, c.imageScanningReporterService, agentSpec)
 	if deleteErr != nil {
 		return false, deleteErr
@@ -314,5 +299,5 @@ func (c *StateApplier) deleteImageScanningReporter(ctx context.Context, agentSpe
 		c.log.Info("Deleted image scanning reporter deployment")
 	}
 
-	return imageScanningReporterTlsSecretDeleted || imageScanningReporterServiceDeleted || imageScanningReporterDeploymentDeleted, nil
+	return imageScanningReporterServiceDeleted || imageScanningReporterDeploymentDeleted, nil
 }

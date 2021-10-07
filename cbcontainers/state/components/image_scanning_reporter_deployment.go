@@ -19,16 +19,9 @@ const (
 
 	ImageScanningReporterDesiredContainerPortName  = "https"
 	ImageScanningReporterDesiredContainerPortValue = 443
-
-	desiredTlsSecretVolumeName          = "cert"
-	desiredTlsSecretVolumeMountPath     = "/etc/octarine-certificates"
-	desiredTlsSecretVolumeMountReadOnly = true
 )
 
 var (
-	desiredTlsSecretVolumeDecimalDefaultMode int32 = 420 // 644 in octal
-	desiredTlsSecretVolumeOptionalValue            = true
-
 	ImageScanningReporterAllowPrivilegeEscalation       = false
 	ImageScanningReporterReadOnlyRootFilesystem         = true
 	ImageScanningReporterRunAsUser                int64 = 0
@@ -115,15 +108,6 @@ func (obj *ImageScanningReporterDeploymentK8sObject) mutateVolumes(templatePodSp
 		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
 	}
 
-	// mutate tls secret volume, for cp backend gateway
-	tlsSecretVolumeIndex := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, desiredTlsSecretVolumeName)
-	if templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret == nil {
-		templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret = &coreV1.SecretVolumeSource{}
-	}
-	templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret.SecretName = ImageScanningReporterTlsName
-	templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret.DefaultMode = &desiredTlsSecretVolumeDecimalDefaultMode
-	templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret.Optional = &desiredTlsSecretVolumeOptionalValue
-
 	// mutate root-cas volume, for https server certificates
 	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
@@ -190,10 +174,6 @@ func (obj *ImageScanningReporterDeploymentK8sObject) mutateVolumesMounts(contain
 	if container.VolumeMounts == nil || len(container.VolumeMounts) != 2 {
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
-
-	// mutate mount for tls secret volume, for cp backend gateway
-	tlsSecretVolumeMountIndex := commonState.EnsureAndGetVolumeMountIndexForName(container, desiredTlsSecretVolumeName)
-	commonState.MutateVolumeMount(container, tlsSecretVolumeMountIndex, desiredTlsSecretVolumeMountPath, desiredTlsSecretVolumeMountReadOnly)
 
 	// mutate mount for root-cas volume, for https server certificates
 	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
