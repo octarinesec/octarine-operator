@@ -23,5 +23,9 @@ func (creator *DefaultGatewayCreator) CreateGateway(cbContainersAgent *cbcontain
 		builder.WithRuntimeProtection()
 	}
 
+	if spec.Components.ClusterScanning.Enabled != nil && *spec.Components.ClusterScanning.Enabled {
+		builder.WithClusterScanning()
+	}
+
 	return builder.Build()
 }
