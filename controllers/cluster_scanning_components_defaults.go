@@ -15,11 +15,6 @@ func (r *CBContainersAgentController) setClusterScanningComponentsDefaults(clust
 		return err
 	}
 
-	// TODO - check if the clusterScanning should have InternalGrpcPort as param
-	//if clusterScanning.InternalGrpcPort == 0 {
-	//	clusterScanning.InternalGrpcPort = 443
-	//}
-
 	return nil
 }
 
@@ -53,8 +48,7 @@ func (r *CBContainersAgentController) setImageScanningReporterDefaults(imageScan
 		return err
 	}
 
-	// TODO - check if the sevice uses the same default liveness and readiness
-	//setDefaultHTTPProbes(&imageScanningReporter.Probes)
+	setDefaultHTTPProbes(&imageScanningReporter.Probes)
 
 	return nil
 }

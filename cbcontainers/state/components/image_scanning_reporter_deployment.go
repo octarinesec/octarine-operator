@@ -142,8 +142,7 @@ func (obj *ImageScanningReporterDeploymentK8sObject) mutateContainer(container *
 	container.Resources = imageScanningReporterSpec.Resources
 	obj.mutateImageScanningReporterEnvVars(container, imageScanningReporterSpec, accessTokenSecretName, eventsGatewaySpec)
 	commonState.MutateImage(container, imageScanningReporterSpec.Image, version)
-	// TODO - check if the http probes should be insert from the default values
-	//commonState.MutateContainerHTTPProbes(container, imageScanningReporterSpec.Probes)
+	commonState.MutateContainerHTTPProbes(container, imageScanningReporterSpec.Probes)
 	obj.mutateSecurityContext(container)
 	obj.mutateContainerPorts(container)
 	obj.mutateVolumesMounts(container)
@@ -151,9 +150,6 @@ func (obj *ImageScanningReporterDeploymentK8sObject) mutateContainer(container *
 
 func (obj *ImageScanningReporterDeploymentK8sObject) mutateImageScanningReporterEnvVars(container *coreV1.Container, imageScanningReporterSpec *cbcontainersv1.CBContainersImageScanningReporterSpec, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec) {
 	customEnvs := []coreV1.EnvVar{
-		// TODO - check if this env vars are required for cluster-scanner-gateway
-		//{Name: "IMAGE_SCANNING_REPORTER_KEY_FILE_PATH", Value: fmt.Sprintf("%s/key", desiredTlsSecretVolumeMountPath)},
-		//{Name: "IMAGE_SCANNING_REPORTER_FILE_PATH", Value: fmt.Sprintf("%s/signed_cert", desiredTlsSecretVolumeMountPath)},
 		{Name: "IMAGE_SCANNING_REPORTER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", imageScanningReporterSpec.Prometheus.Port)},
 		{Name: "GIN_MODE", Value: "release"},
 	}
