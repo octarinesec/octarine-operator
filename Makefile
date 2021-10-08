@@ -68,7 +68,7 @@ run: generate fmt vet manifests
 # Note: use kill -SIGINT $pid to stop delve if it hangs
 run-delve: generate fmt vet manifests
 	go build -gcflags "all=-trimpath=$(shell go env GOPATH) -N -l" -o bin/manager main.go
-	dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec ./bin/manager
+	OPERATOR_VERSION=${VERSION} dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec ./bin/manager
 
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build $(PATH_TO_CRDS) | kubectl apply -f -
