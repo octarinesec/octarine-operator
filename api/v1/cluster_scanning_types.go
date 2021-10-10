@@ -23,10 +23,33 @@ type CBContainersImageScanningReporterSpec struct {
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 }
 
+type CBContainersClusterScanningSensorSpec struct {
+	// +kubebuilder:default:=<>
+	Labels map[string]string `json:"labels,omitempty"`
+	// +kubebuilder:default:=<>
+	DaemonSetAnnotations map[string]string `json:"daemonSetAnnotations,omitempty"`
+	// +kubebuilder:default:={prometheus.io/scrape: "false", prometheus.io/port: "7071"}
+	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
+	// +kubebuilder:default:=<>
+	Env map[string]string `json:"env,omitempty"`
+	// +kubebuilder:default:={repository:"cbartifactory/cluster-scanner"}
+	Image CBContainersImageSpec `json:"image,omitempty"`
+	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "1024Mi", cpu: "500m"}}
+	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
+	// +kubebuilder:default:=<>
+	Probes CBContainersFileProbesSpec `json:"probes,omitempty"`
+	// +kubebuilder:default:=<>
+	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
+	// +kubebuilder:default:=2
+	VerbosityLevel *int `json:"verbosity_level,omitempty"`
+}
+
 // CBContainersClusterScanningSpec defines the desired state of CBContainersClusterScanning
 type CBContainersClusterScanningSpec struct {
 	// +kubebuilder:default:=false
 	Enabled *bool `json:"enabled,omitempty"`
 	// +kubebuilder:default:=<>
 	ImageScanningReporter CBContainersImageScanningReporterSpec `json:"imageScanningReporter,omitempty"`
+	// +kubebuilder:default:=<>
+	ClusterScanningSensor CBContainersClusterScanningSensorSpec `json:"clusterScanningSensor,omitempty"`
 }
