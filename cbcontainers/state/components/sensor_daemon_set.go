@@ -27,13 +27,21 @@ const (
 	runtimeSensorHostPID     = true
 
 	desiredConnectionTimeoutSeconds = 60
+	containerdRuntimeEndpoint       = "/var/run/containerd/containerd.sock"
+	dockerRuntimeEndpoint           = "/var/run/dockershim.sock"
+	crioRuntimeEndpoint             = "/var/run/crio/crio.sock"
 )
 
 var (
 	sensorIsPrivileged       = true
 	sensorRunAsUser    int64 = 0
 
-	resolverAddress = fmt.Sprintf("%s.%s.svc.cluster.local", ResolverName, commonState.DataPlaneNamespaceName)
+	resolverAddress            = fmt.Sprintf("%s.%s.svc.cluster.local", ResolverName, commonState.DataPlaneNamespaceName)
+	supportedContainerRuntimes = map[string]string{
+		"containerd": containerdRuntimeEndpoint,
+		"docker":     dockerRuntimeEndpoint,
+		"crio":       crioRuntimeEndpoint,
+	}
 )
 
 type SensorDaemonSetK8sObject struct{}
@@ -294,23 +302,26 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec
 	// mutate root-cas volume, for https certificates
 	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 
-	// mutate /var/run for cluster-scanner unix sockets
-	varRunVolumeIndex := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, "varrun")
-	if templatePodSpec.Volumes[varRunVolumeIndex].HostPath == nil {
-		templatePodSpec.Volumes[varRunVolumeIndex].HostPath = &coreV1.HostPathVolumeSource{Path: "/var/run"}
+	// mutate container-runtimes unix sockets files for the cluster-scanner CRI
+	for name, path := range supportedContainerRuntimes {
+		routeIndex := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, name)
+		if templatePodSpec.Volumes[routeIndex].HostPath == nil {
+			templatePodSpec.Volumes[routeIndex].HostPath = &coreV1.HostPathVolumeSource{Path: path}
+		}
 	}
-
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container *coreV1.Container) {
-	if container.VolumeMounts == nil || len(container.VolumeMounts) != 2 {
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != len(supportedContainerRuntimes)+1 {
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
 
 	// mutate mount for root-cas volume, for https server certificates
 	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
 
-	// mutate mount /var/run
-	index := commonState.EnsureAndGetVolumeMountIndexForName(container, "varrun")
-	commonState.MutateVolumeMount(container, index, "/var/run", true)
+	// mutate mount for container-runtimes unix sockets files for the cluster-scanner CRI
+	for name, mountPath := range supportedContainerRuntimes {
+		index := commonState.EnsureAndGetVolumeMountIndexForName(container, name)
+		commonState.MutateVolumeMount(container, index, mountPath, true)
+	}
 }
