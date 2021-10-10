@@ -14,15 +14,17 @@ import (
 )
 
 const (
-	SensorName     = "cbcontainers-runtime-sensor"
-	sensorLabelKey = "app.kubernetes.io/name"
+	DaemonSetName       = "cbcontainers-sensor"
+	RuntimeSensorName   = "cbcontainers-runtime-sensor"
+	ClusterScanningName = "cbcontainers-cluster-scanner"
+	daemonSetLabelKey   = "app.kubernetes.io/name"
 
-	sensorVerbosityFlag = "-v"
-	sensorRunCommand    = "/run_sensor.sh"
+	runtimeSensorVerbosityFlag = "-v"
+	runtimeSensorRunCommand    = "/run_sensor.sh"
 
-	sensorDNSPolicy   = coreV1.DNSClusterFirstWithHostNet
-	sensorHostNetwork = true
-	sensorHostPID     = true
+	runtimeSensorDNSPolicy   = coreV1.DNSClusterFirstWithHostNet
+	runtimeSensorHostNetwork = true
+	runtimeSensorHostPID     = true
 
 	desiredConnectionTimeoutSeconds = 60
 )
@@ -45,7 +47,7 @@ func (obj *SensorDaemonSetK8sObject) EmptyK8sObject() client.Object {
 }
 
 func (obj *SensorDaemonSetK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: SensorName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: DaemonSetName, Namespace: commonState.DataPlaneNamespaceName}
 }
 
 func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbContainersV1.CBContainersAgentSpec) error {
@@ -55,14 +57,53 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	}
 
 	runtimeProtection := &agentSpec.Components.RuntimeProtection
-	sensor := &runtimeProtection.Sensor
+	runtimeSensor := &runtimeProtection.Sensor
 
-	desiredLabels := sensor.Labels
-	if desiredLabels == nil {
-		desiredLabels = make(map[string]string)
+	clusterScanning := &agentSpec.Components.ClusterScanning
+	clusterScannerSensor := &clusterScanning.ClusterScanningSensor
+
+	obj.initiateDamonSet(daemonSet)
+
+	desiredLabels := make(map[string]string)
+	desiredLabels[daemonSetLabelKey] = DaemonSetName
+
+	if commonState.IsEnabled(runtimeProtection.Enabled) {
+		daemonSet.Spec.Template.Spec.DNSPolicy = runtimeSensorDNSPolicy
+		daemonSet.Spec.Template.Spec.HostNetwork = runtimeSensorHostNetwork
+		daemonSet.Spec.Template.Spec.HostPID = runtimeSensorHostPID
+		applyment.EnforceMapContains(desiredLabels, runtimeSensor.Labels)
+	} else {
+		// disable runtime special requirements that cluster-scanning doesn't need.
+		// in case the cluster scanner was enabled after the runtime time was disabled (the values exists in the ds)
+		daemonSet.Spec.Template.Spec.DNSPolicy = ""
+		daemonSet.Spec.Template.Spec.HostNetwork = false
+		daemonSet.Spec.Template.Spec.HostPID = false
 	}
-	desiredLabels[sensorLabelKey] = SensorName
 
+	if commonState.IsEnabled(clusterScanning.Enabled) {
+		applyment.EnforceMapContains(desiredLabels, clusterScannerSensor.Labels)
+		obj.mutateClusterScannerVolumes(&daemonSet.Spec.Template.Spec)
+	} else {
+		// clean cluster-scanner volumes
+		daemonSet.Spec.Template.Spec.Volumes = nil
+	}
+
+	daemonSet.ObjectMeta.Labels = desiredLabels
+	daemonSet.Spec.Selector.MatchLabels = desiredLabels
+	daemonSet.Spec.Template.ObjectMeta.Labels = desiredLabels
+
+	obj.mutateAnnotations(daemonSet, agentSpec)
+	obj.mutateContainersList(&daemonSet.Spec.Template.Spec,
+		agentSpec,
+		agentSpec.Version,
+		agentSpec.AccessTokenSecretName,
+		runtimeProtection.InternalGrpcPort,
+	)
+
+	return nil
+}
+
+func (obj *SensorDaemonSetK8sObject) initiateDamonSet(daemonSet *appsV1.DaemonSet) {
 	if daemonSet.Spec.Selector == nil {
 		daemonSet.Spec.Selector = &metav1.LabelSelector{}
 	}
@@ -75,82 +116,121 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 		daemonSet.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
 
-	daemonSet.ObjectMeta.Labels = desiredLabels
-	daemonSet.Spec.Selector.MatchLabels = desiredLabels
-	daemonSet.Spec.Template.ObjectMeta.Labels = desiredLabels
 	daemonSet.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
 	daemonSet.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	daemonSet.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
-
-	daemonSet.Spec.Template.Spec.DNSPolicy = sensorDNSPolicy
-	daemonSet.Spec.Template.Spec.HostNetwork = sensorHostNetwork
-	daemonSet.Spec.Template.Spec.HostPID = sensorHostPID
-
-	obj.mutateAnnotations(daemonSet, sensor)
-	obj.mutateContainersList(&daemonSet.Spec.Template.Spec,
-		sensor,
-		agentSpec.Version,
-		agentSpec.AccessTokenSecretName,
-		runtimeProtection.InternalGrpcPort,
-	)
-
-	return nil
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonSet, sensorSpec *cbContainersV1.CBContainersRuntimeSensorSpec) {
-	if daemonSet.ObjectMeta.Annotations == nil {
-		daemonSet.ObjectMeta.Annotations = make(map[string]string)
+func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+	var prometheusEnabled bool
+	var prometheusPort int
+
+	if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
+		runtimeSensor := agentSpec.Components.RuntimeProtection.Sensor
+		applyment.EnforceMapContains(daemonSet.ObjectMeta.Annotations, runtimeSensor.DaemonSetAnnotations)
+		applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, runtimeSensor.PodTemplateAnnotations)
+		prometheusEnabled = *runtimeSensor.Prometheus.Enabled
+		prometheusPort = runtimeSensor.Prometheus.Port
+
 	}
 
-	applyment.EnforceMapContains(daemonSet.ObjectMeta.Annotations, sensorSpec.DaemonSetAnnotations)
-
-	if daemonSet.Spec.Template.ObjectMeta.Annotations == nil {
-		daemonSet.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
+	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
+		clusterScanner := agentSpec.Components.ClusterScanning.ClusterScanningSensor
+		applyment.EnforceMapContains(daemonSet.ObjectMeta.Annotations, clusterScanner.DaemonSetAnnotations)
+		applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, clusterScanner.PodTemplateAnnotations)
+		if commonState.IsDisabled(agentSpec.Components.RuntimeProtection.Enabled) {
+			prometheusEnabled = *clusterScanner.Prometheus.Enabled
+			prometheusPort = clusterScanner.Prometheus.Port
+		}
 	}
 
 	applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, map[string]string{
-		"prometheus.io/scrape": fmt.Sprint(*sensorSpec.Prometheus.Enabled),
-		"prometheus.io/port":   fmt.Sprint(sensorSpec.Prometheus.Port),
+		"prometheus.io/scrape": fmt.Sprint(prometheusEnabled),
+		"prometheus.io/port":   fmt.Sprint(prometheusPort),
 	})
-	applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, sensorSpec.PodTemplateAnnotations)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateContainersList(
 	templatePodSpec *coreV1.PodSpec,
-	sensorSpec *cbContainersV1.CBContainersRuntimeSensorSpec,
+	agentSpec *cbContainersV1.CBContainersAgentSpec,
 	version,
 	accessTokenSecretName string,
 	desiredGRPCPortValue int32) {
+	containers := make([]coreV1.Container, 0, 2)
 
-	if len(templatePodSpec.Containers) != 1 {
-		container := coreV1.Container{}
-		templatePodSpec.Containers = []coreV1.Container{container}
+	if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
+		containers = append(containers, coreV1.Container{Name: RuntimeSensorName})
 	}
 
-	obj.mutateContainer(&templatePodSpec.Containers[0], sensorSpec, version, accessTokenSecretName, desiredGRPCPortValue)
+	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
+		containers = append(containers, coreV1.Container{Name: ClusterScanningName})
+	}
+
+	if len(templatePodSpec.Containers) != len(containers) || obj.componentsWereSwitched(agentSpec, templatePodSpec, containers) {
+		templatePodSpec.Containers = containers
+	}
+
+	if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
+		obj.mutateRuntimeContainer(
+			&templatePodSpec.Containers[obj.findContainerLocationByName(templatePodSpec.Containers, RuntimeSensorName)],
+			&agentSpec.Components.RuntimeProtection.Sensor, version, desiredGRPCPortValue)
+	}
+
+	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
+		obj.mutateClusterScannerContainer(
+			&templatePodSpec.Containers[obj.findContainerLocationByName(templatePodSpec.Containers, ClusterScanningName)],
+			&agentSpec.Components.ClusterScanning.ClusterScanningSensor, version, accessTokenSecretName,
+			&agentSpec.Gateways.HardeningEventsGateway)
+	}
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateContainer(
+// In case one enabled feature was off, and the other was on, and they were switched (first is now on, and second off),
+// the containers count is the same (1), but the container name is wrong for the mutate containers methods, which will lead to
+// index out of range error in finding the container by name.
+// componentsWereSwitched checks if this scenario happened, and return boolean answer.
+func (obj *SensorDaemonSetK8sObject) componentsWereSwitched(agentSpec *cbContainersV1.CBContainersAgentSpec, templatePodSpec *coreV1.PodSpec, containers []coreV1.Container) bool {
+	if len(templatePodSpec.Containers) == 1 {
+		if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
+			return templatePodSpec.Containers[0].Name != RuntimeSensorName
+		}
+
+		if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
+			return templatePodSpec.Containers[0].Name != ClusterScanningName
+		}
+	}
+
+	return false
+}
+
+func (obj *SensorDaemonSetK8sObject) findContainerLocationByName(containers []coreV1.Container, name string) int {
+	for location, container := range containers {
+		if container.Name == name {
+			return location
+		}
+	}
+
+	return -1
+}
+
+func (obj *SensorDaemonSetK8sObject) mutateRuntimeContainer(
 	container *coreV1.Container,
 	sensorSpec *cbContainersV1.CBContainersRuntimeSensorSpec,
-	version,
-	accessTokenSecretName string,
+	version string,
 	desiredGRPCPortValue int32) {
 
-	container.Name = SensorName
+	container.Name = RuntimeSensorName
 	container.Resources = sensorSpec.Resources
-	container.Args = []string{sensorVerbosityFlag, fmt.Sprintf("%d", *sensorSpec.VerbosityLevel)}
-	container.Command = []string{sensorRunCommand}
+	container.Args = []string{runtimeSensorVerbosityFlag, fmt.Sprintf("%d", *sensorSpec.VerbosityLevel)}
+	container.Command = []string{runtimeSensorRunCommand}
 	commonState.MutateImage(container, sensorSpec.Image, version)
 	commonState.MutateContainerFileProbes(container, sensorSpec.Probes)
-	obj.mutateEnvVars(container, sensorSpec, accessTokenSecretName, desiredGRPCPortValue)
+	obj.mutateRuntimeEnvVars(container, sensorSpec, desiredGRPCPortValue)
 	obj.mutateSecurityContext(container)
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateEnvVars(
+func (obj *SensorDaemonSetK8sObject) mutateRuntimeEnvVars(
 	container *coreV1.Container,
 	sensorSpec *cbContainersV1.CBContainersRuntimeSensorSpec,
-	accessTokenSecretName string,
 	desiredGRPCPortValue int32) {
 	customEnvs := []coreV1.EnvVar{
 		{Name: "RUNTIME_KUBERNETES_SENSOR_GRPC_PORT", Value: fmt.Sprintf("%d", desiredGRPCPortValue)},
@@ -173,4 +253,64 @@ func (obj *SensorDaemonSetK8sObject) mutateSecurityContext(container *coreV1.Con
 
 	container.SecurityContext.Privileged = &sensorIsPrivileged
 	container.SecurityContext.RunAsUser = &sensorRunAsUser
+}
+
+func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(
+	container *coreV1.Container,
+	clusterScannerSpec *cbContainersV1.CBContainersClusterScanningSensorSpec,
+	version string,
+	accessTokenSecretName string,
+	eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec) {
+	container.Name = ClusterScanningName
+	container.Resources = clusterScannerSpec.Resources
+	commonState.MutateImage(container, clusterScannerSpec.Image, version)
+	commonState.MutateContainerHTTPProbes(container, clusterScannerSpec.Probes)
+	obj.mutateClusterScannerEnvVars(container, clusterScannerSpec, accessTokenSecretName, eventsGatewaySpec)
+	obj.mutateClusterScannerVolumesMounts(container)
+	obj.mutateSecurityContext(container)
+}
+
+func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *coreV1.Container,
+	clusterScannerSpec *cbContainersV1.CBContainersClusterScanningSensorSpec,
+	accessTokenSecretName string, eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec) {
+	customEnvs := []coreV1.EnvVar{
+		{Name: "CLUSTER_SCANNER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", clusterScannerSpec.Prometheus.Port)},
+	}
+
+	envVarBuilder := commonState.NewEnvVarBuilder().
+		WithCommonDataPlane(accessTokenSecretName).
+		WithEventsGateway(eventsGatewaySpec).
+		WithCustom(customEnvs...).
+		WithSpec(clusterScannerSpec.Env).
+		WithGatewayTLS()
+	commonState.MutateEnvVars(container, envVarBuilder)
+}
+
+func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec *coreV1.PodSpec) {
+	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != 2 {
+		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
+	}
+
+	// mutate root-cas volume, for https certificates
+	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
+
+	// mutate /var/run for cluster-scanner unix sockets
+	varRunVolumeIndex := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, "varrun")
+	if templatePodSpec.Volumes[varRunVolumeIndex].HostPath == nil {
+		templatePodSpec.Volumes[varRunVolumeIndex].HostPath = &coreV1.HostPathVolumeSource{Path: "/var/run"}
+	}
+
+}
+
+func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container *coreV1.Container) {
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != 2 {
+		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
+	}
+
+	// mutate mount for root-cas volume, for https server certificates
+	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
+
+	// mutate mount /var/run
+	index := commonState.EnsureAndGetVolumeMountIndexForName(container, "varrun")
+	commonState.MutateVolumeMount(container, index, "/var/run", true)
 }

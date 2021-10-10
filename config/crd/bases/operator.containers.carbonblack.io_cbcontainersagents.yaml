@@ -406,6 +406,129 @@ spec:
                     description: CBContainersClusterScanningSpec defines the desired
                       state of CBContainersClusterScanning
                     properties:
+                      clusterScanningSensor:
+                        default: {}
+                        properties:
+                          daemonSetAnnotations:
+                            additionalProperties:
+                              type: string
+                            default: {}
+                            type: object
+                          env:
+                            additionalProperties:
+                              type: string
+                            default: {}
+                            type: object
+                          image:
+                            default:
+                              repository: cbartifactory/cluster-scanner
+                            properties:
+                              pullPolicy:
+                                default: Always
+                                description: PullPolicy describes a policy for if/when
+                                  to pull a container image
+                                type: string
+                              repository:
+                                type: string
+                              tag:
+                                type: string
+                            type: object
+                          labels:
+                            additionalProperties:
+                              type: string
+                            default: {}
+                            type: object
+                          podTemplateAnnotations:
+                            additionalProperties:
+                              type: string
+                            default:
+                              prometheus.io/port: "7071"
+                              prometheus.io/scrape: "false"
+                            type: object
+                          probes:
+                            default: {}
+                            properties:
+                              failureThreshold:
+                                default: 3
+                                format: int32
+                                type: integer
+                              initialDelaySeconds:
+                                default: 3
+                                format: int32
+                                type: integer
+                              livenessPath:
+                                default: /alive
+                                type: string
+                              periodSeconds:
+                                default: 30
+                                format: int32
+                                type: integer
+                              port:
+                                default: 8181
+                                type: integer
+                              readinessPath:
+                                default: /ready
+                                type: string
+                              scheme:
+                                default: HTTP
+                                description: URIScheme identifies the scheme used
+                                  for connection to a host for Get actions
+                                type: string
+                              successThreshold:
+                                default: 1
+                                format: int32
+                                type: integer
+                              timeoutSeconds:
+                                default: 1
+                                format: int32
+                                type: integer
+                            type: object
+                          prometheus:
+                            default: {}
+                            properties:
+                              enabled:
+                                default: false
+                                type: boolean
+                              port:
+                                default: 7071
+                                type: integer
+                            type: object
+                          resources:
+                            default:
+                              limits:
+                                cpu: 500m
+                                memory: 1024Mi
+                              requests:
+                                cpu: 30m
+                                memory: 64Mi
+                            description: ResourceRequirements describes the compute
+                              resource requirements.
+                            properties:
+                              limits:
+                                additionalProperties:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                description: 'Limits describes the maximum amount
+                                  of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                                type: object
+                              requests:
+                                additionalProperties:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                description: 'Requests describes the minimum amount
+                                  of compute resources required. If Requests is omitted
+                                  for a container, it defaults to Limits if that is
+                                  explicitly specified, otherwise to an implementation-defined
+                                  value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                                type: object
+                            type: object
+                        type: object
                       enabled:
                         default: false
                         type: boolean
