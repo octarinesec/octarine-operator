@@ -15,6 +15,10 @@ func (r *CBContainersAgentController) setClusterScanningComponentsDefaults(clust
 		return err
 	}
 
+	if err := r.setClusterScanningSensorDefaults(&clusterScanning.ClusterScanningSensor); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -49,6 +53,41 @@ func (r *CBContainersAgentController) setImageScanningReporterDefaults(imageScan
 	}
 
 	setDefaultHTTPProbes(&imageScanningReporter.Probes)
+
+	return nil
+}
+
+func (r *CBContainersAgentController) setClusterScanningSensorDefaults(clusterScanningSensor *cbcontainersv1.CBContainersClusterScanningSensorSpec) error {
+	if clusterScanningSensor.Labels == nil {
+		clusterScanningSensor.Labels = make(map[string]string)
+	}
+
+	if clusterScanningSensor.DaemonSetAnnotations == nil {
+		clusterScanningSensor.DaemonSetAnnotations = make(map[string]string)
+	}
+
+	if clusterScanningSensor.PodTemplateAnnotations == nil {
+		clusterScanningSensor.PodTemplateAnnotations = make(map[string]string)
+	}
+
+	if clusterScanningSensor.Env == nil {
+		clusterScanningSensor.Env = make(map[string]string)
+	}
+
+	setDefaultPrometheus(&clusterScanningSensor.Prometheus)
+
+	setDefaultImage(&clusterScanningSensor.Image, "cbartifactory/cluster-scanner")
+
+	if err := setDefaultResourceRequirements(&clusterScanningSensor.Resources, "64Mi", "30m", "1024Mi", "500m"); err != nil {
+		return err
+	}
+
+	setDefaultFileProbes(&clusterScanningSensor.Probes)
+
+	if clusterScanningSensor.VerbosityLevel == nil {
+		defaultVerbosity := 2
+		clusterScanningSensor.VerbosityLevel = &defaultVerbosity
+	}
 
 	return nil
 }
