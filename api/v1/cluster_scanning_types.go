@@ -37,11 +37,9 @@ type CBContainersClusterScanningSensorSpec struct {
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "1024Mi", cpu: "500m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
-	Probes CBContainersFileProbesSpec `json:"probes,omitempty"`
+	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
 	// +kubebuilder:default:=<>
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
-	// +kubebuilder:default:=2
-	VerbosityLevel *int `json:"verbosity_level,omitempty"`
 }
 
 // CBContainersClusterScanningSpec defines the desired state of CBContainersClusterScanning

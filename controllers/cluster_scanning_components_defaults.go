@@ -82,12 +82,7 @@ func (r *CBContainersAgentController) setClusterScanningSensorDefaults(clusterSc
 		return err
 	}
 
-	setDefaultFileProbes(&clusterScanningSensor.Probes)
-
-	if clusterScanningSensor.VerbosityLevel == nil {
-		defaultVerbosity := 2
-		clusterScanningSensor.VerbosityLevel = &defaultVerbosity
-	}
+	setDefaultHTTPProbes(&clusterScanningSensor.Probes)
 
 	return nil
 }
