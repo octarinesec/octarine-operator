@@ -171,7 +171,7 @@ func (obj *ImageScanningReporterDeploymentK8sObject) mutateContainerPorts(contai
 }
 
 func (obj *ImageScanningReporterDeploymentK8sObject) mutateVolumesMounts(container *coreV1.Container) {
-	if container.VolumeMounts == nil || len(container.VolumeMounts) != 2 {
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != 1 {
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
 
