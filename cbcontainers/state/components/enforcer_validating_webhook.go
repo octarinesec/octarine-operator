@@ -243,7 +243,7 @@ func (obj *EnforcerValidatingWebhookK8sObject) mutateNamespacesWebhooksRules(web
 	webhook.SetAdmissionRules(rules)
 }
 
-func (obj *EnforcerWebhookK8sObject) mutateWebhookConfigurationLabels(webhook adapters.ValidatingWebhookConfigurationAdapter, enforcerSpec *cbcontainersv1.CBContainersEnforcerSpec) {
+func (obj *EnforcerValidatingWebhookK8sObject) mutateWebhookConfigurationLabels(webhook adapters.WebhookConfigurationAdapter, enforcerSpec *cbcontainersv1.CBContainersEnforcerSpec) {
 	labels := enforcerSpec.Labels
 
 	// AKS-specific label

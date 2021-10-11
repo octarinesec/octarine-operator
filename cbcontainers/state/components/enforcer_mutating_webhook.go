@@ -60,8 +60,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) MutateK8sObject(k8sObject client.Ob
 	}
 
 	enforcer := &agentSpec.Components.Basic.Enforcer
-
-	webhookConfiguration.SetLabels(enforcer.Labels)
+	obj.mutateWebhookConfigurationLabels(webhookConfiguration, enforcer)
 	return obj.mutateWebhooks(webhookConfiguration, enforcer)
 }
 
@@ -199,4 +198,21 @@ func (obj *EnforcerMutatingWebhookK8sObject) getResourcesList() []string {
 		"ingresses",
 		"customresourcedefinitions",
 	}
+}
+
+func (obj *EnforcerMutatingWebhookK8sObject) mutateWebhookConfigurationLabels(webhook adapters.WebhookConfigurationAdapter, enforcerSpec *cbcontainersv1.CBContainersEnforcerSpec) {
+	labels := enforcerSpec.Labels
+
+	// AKS-specific label
+	// AKS has a built-in Admission controller (Admission Enforcer) that tries to prevent affecting system namespaces (e.g. kube-system)
+	// In practice, it modifies all validating/mutating webhooks and adds a matcher that ignores any namespaces with the `control-plane` label
+	// AKS itself maintains which namespaces have the `control-plane` label but other products might use it as well by chance (e.g. kubeflow)
+	// This would prevent us from doing our job as security product and open up system namespaces for attacks since we "silently" ignore anything in them without knowing it
+	// Therefore we ask that our webhooks are excluded from this feature and can monitor all namespaces
+	// References:
+	//	https://docs.microsoft.com/en-us/azure/aks/faq#can-admission-controller-webhooks-impact-kube-system-and-internal-aks-namespaces
+	//	https://github.com/Azure/AKS/issues/1771
+	labels["admissions.enforcer/disabled"] = "true"
+
+	webhook.SetLabels(labels)
 }
