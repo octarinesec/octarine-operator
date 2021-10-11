@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= 3.3.0
+VERSION ?= 4.0.0
 IMAGE_TAG_BASE ?= cbartifactory/octarine-operator
 # Default bundle image tag
 BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
