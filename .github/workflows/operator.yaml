@@ -7,7 +7,6 @@ on:
   pull_request:
     branches:
       - "*"
-      -
 
 jobs:
   build:
@@ -36,4 +35,4 @@ jobs:
       - run: make manifests
       - run: make test
       - name: Build and push
-        run: make docker-build docker-push IMG=cbartifactory/octarine-operator:${{ steps.docker-tag.outputs.tag }}
+        run: make docker-build docker-push IMG=cbartifactory/octarine-operator:${{ steps.docker-tag.outputs.tag }} VERSION=${{ steps.docker-tag.outputs.tag }}
