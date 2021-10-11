@@ -65,21 +65,13 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	}
 
 	runtimeProtection := &agentSpec.Components.RuntimeProtection
-	runtimeSensor := &runtimeProtection.Sensor
-
-	clusterScanning := &agentSpec.Components.ClusterScanning
-	clusterScannerSensor := &clusterScanning.ClusterScanningSensor
 
 	obj.initiateDamonSet(daemonSet)
-
-	desiredLabels := make(map[string]string)
-	desiredLabels[daemonSetLabelKey] = DaemonSetName
 
 	if commonState.IsEnabled(runtimeProtection.Enabled) {
 		daemonSet.Spec.Template.Spec.DNSPolicy = runtimeSensorDNSPolicy
 		daemonSet.Spec.Template.Spec.HostNetwork = runtimeSensorHostNetwork
 		daemonSet.Spec.Template.Spec.HostPID = runtimeSensorHostPID
-		applyment.EnforceMapContains(desiredLabels, runtimeSensor.Labels)
 	} else {
 		// disable runtime special requirements that cluster-scanning doesn't need.
 		// in case the cluster scanner was enabled after the runtime time was disabled (the values exists in the ds)
@@ -88,19 +80,9 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 		daemonSet.Spec.Template.Spec.HostPID = false
 	}
 
-	if commonState.IsEnabled(clusterScanning.Enabled) {
-		applyment.EnforceMapContains(desiredLabels, clusterScannerSensor.Labels)
-		obj.mutateClusterScannerVolumes(&daemonSet.Spec.Template.Spec)
-	} else {
-		// clean cluster-scanner volumes
-		daemonSet.Spec.Template.Spec.Volumes = nil
-	}
-
-	daemonSet.ObjectMeta.Labels = desiredLabels
-	daemonSet.Spec.Selector.MatchLabels = desiredLabels
-	daemonSet.Spec.Template.ObjectMeta.Labels = desiredLabels
-
+	obj.mutateLabels(daemonSet, agentSpec)
 	obj.mutateAnnotations(daemonSet, agentSpec)
+	obj.mutateVolumes(daemonSet, agentSpec)
 	obj.mutateContainersList(&daemonSet.Spec.Template.Spec,
 		agentSpec,
 		agentSpec.Version,
@@ -129,6 +111,22 @@ func (obj *SensorDaemonSetK8sObject) initiateDamonSet(daemonSet *appsV1.DaemonSe
 	daemonSet.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 }
 
+func (obj *SensorDaemonSetK8sObject) mutateLabels(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+	desiredLabels := make(map[string]string)
+	desiredLabels[daemonSetLabelKey] = DaemonSetName
+	if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
+		applyment.EnforceMapContains(desiredLabels, agentSpec.Components.RuntimeProtection.Sensor.Labels)
+	}
+
+	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
+		applyment.EnforceMapContains(desiredLabels, agentSpec.Components.ClusterScanning.ClusterScanningSensor.Labels)
+	}
+
+	daemonSet.ObjectMeta.Labels = desiredLabels
+	daemonSet.Spec.Selector.MatchLabels = desiredLabels
+	daemonSet.Spec.Template.ObjectMeta.Labels = desiredLabels
+}
+
 func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {
 	var prometheusEnabled bool
 	var prometheusPort int
@@ -139,7 +137,6 @@ func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonS
 		applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, runtimeSensor.PodTemplateAnnotations)
 		prometheusEnabled = *runtimeSensor.Prometheus.Enabled
 		prometheusPort = runtimeSensor.Prometheus.Port
-
 	}
 
 	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
@@ -156,6 +153,15 @@ func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonS
 		"prometheus.io/scrape": fmt.Sprint(prometheusEnabled),
 		"prometheus.io/port":   fmt.Sprint(prometheusPort),
 	})
+}
+
+func (obj *SensorDaemonSetK8sObject) mutateVolumes(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
+		obj.mutateClusterScannerVolumes(&daemonSet.Spec.Template.Spec)
+	} else {
+		// clean cluster-scanner volumes
+		daemonSet.Spec.Template.Spec.Volumes = nil
+	}
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateContainersList(
@@ -298,7 +304,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec *coreV1.PodSpec) {
-	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != 2 {
+	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != len(supportedContainerRuntimes) + 1 {
 		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
 	}
 
