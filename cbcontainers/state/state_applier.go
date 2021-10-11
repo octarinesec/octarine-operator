@@ -121,9 +121,7 @@ func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbconta
 			return false, err
 		}
 		c.log.Info("Applied featured components daemon set objects", "Mutated", mutatedComponentsDaemonSet)
-	}
-
-	if common.IsDisabled(agentSpec.Components.ClusterScanning.Enabled) && common.IsDisabled(agentSpec.Components.RuntimeProtection.Enabled) {
+	} else {
 		componentsDamonSetDeleted, err = c.deleteComponentsDamonSet(ctx, agentSpec)
 		if err != nil {
 			return false, err
