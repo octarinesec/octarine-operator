@@ -497,7 +497,7 @@ spec:
                             default:
                               limits:
                                 cpu: 500m
-                                memory: 1024Mi
+                                memory: 4Gi
                               requests:
                                 cpu: 30m
                                 memory: 64Mi

@@ -78,7 +78,7 @@ func (r *CBContainersAgentController) setClusterScanningSensorDefaults(clusterSc
 
 	setDefaultImage(&clusterScanningSensor.Image, "cbartifactory/cluster-scanner")
 
-	if err := setDefaultResourceRequirements(&clusterScanningSensor.Resources, "64Mi", "30m", "1024Mi", "500m"); err != nil {
+	if err := setDefaultResourceRequirements(&clusterScanningSensor.Resources, "64Mi", "30m", "4Gi", "500m"); err != nil {
 		return err
 	}
 
