@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	DaemonSetName       = "cbcontainers-sensor"
-	RuntimeSensorName   = "cbcontainers-runtime-sensor"
+	DaemonSetName       = "cbcontainers--node-agent"
+	RuntimeSensorName   = "cbcontainers-runtime"
 	ClusterScanningName = "cbcontainers-cluster-scanner"
 	daemonSetLabelKey   = "app.kubernetes.io/name"
 
