@@ -30,7 +30,7 @@ import (
 const (
 	DefaultKubeletVersion = "v1.20.2"
 
-	NumberOfExpectedAppliedObjects = 13
+	NumberOfExpectedAppliedObjects = 12
 )
 
 type AppliedK8sObjectsChanger func(K8sObjectDetails, client.Object)
@@ -169,11 +169,14 @@ func testStateApplier(t *testing.T, setup StateApplierTestSetup, k8sVersion stri
 	return stateApplier.ApplyDesiredState(context.Background(), agentSpec, nil, nil)
 }
 
-func getAppliedAndDeletedObjects(t *testing.T, k8sVersion string, appliedK8sObjectsChangers ...AppliedK8sObjectsChanger) ([]K8sObjectDetails, []K8sObjectDetails, error) {
+func getAppliedAndDeletedObjects(t *testing.T, k8sVersion string, setup StateApplierTestSetup, appliedK8sObjectsChangers ...AppliedK8sObjectsChanger) ([]K8sObjectDetails, []K8sObjectDetails, error) {
 	appliedObjects := make([]K8sObjectDetails, 0)
 	deletedObjects := make([]K8sObjectDetails, 0)
 
 	_, err := testStateApplier(t, func(mocks *StateApplierTestMocks) {
+		if setup != nil {
+			setup(mocks)
+		}
 		mocks.componentApplier.EXPECT().Apply(gomock.Any(), gomock.Any(), mocks.agentSpec, gomock.Any()).
 			DoAndReturn(func(ctx context.Context, obj agent_applyment.AgentComponentBuilder, cr *cbcontainersv1.CBContainersAgentSpec, options ...*options.ApplyOptions) (bool, client.Object, error) {
 				namespacedName := obj.NamespacedName()
@@ -202,8 +205,8 @@ func getAppliedAndDeletedObjects(t *testing.T, k8sVersion string, appliedK8sObje
 	return appliedObjects, deletedObjects, err
 }
 
-func getAndAssertAppliedAndDeletedObjects(t *testing.T, k8sVersion string) ([]K8sObjectDetails, []K8sObjectDetails) {
-	appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, k8sVersion, MutateDeploymentsToBeWithReadyReplica(EnforcerDeploymentDetails, ResolverDeploymentDetails))
+func getAndAssertAppliedAndDeletedObjects(t *testing.T, k8sVersion string, setup StateApplierTestSetup) ([]K8sObjectDetails, []K8sObjectDetails) {
+	appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, k8sVersion, setup, MutateDeploymentsToBeWithReadyReplica(EnforcerDeploymentDetails, ResolverDeploymentDetails))
 
 	require.NoError(t, err)
 	require.Len(t, appliedObjects, NumberOfExpectedAppliedObjects)
@@ -211,7 +214,7 @@ func getAndAssertAppliedAndDeletedObjects(t *testing.T, k8sVersion string) ([]K8
 }
 
 func TestConfigMapIsApplied(t *testing.T) {
-	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "")
+	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "", nil)
 	require.Contains(t, appliedObjects, K8sObjectDetails{
 		Namespace:  commonState.DataPlaneNamespaceName,
 		Name:       commonState.DataPlaneConfigmapName,
@@ -220,7 +223,7 @@ func TestConfigMapIsApplied(t *testing.T) {
 }
 
 func TestSecretIsApplied(t *testing.T) {
-	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "")
+	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "", nil)
 	require.Contains(t, appliedObjects, K8sObjectDetails{
 		Namespace:  commonState.DataPlaneNamespaceName,
 		Name:       commonState.RegistrySecretName,
@@ -230,7 +233,7 @@ func TestSecretIsApplied(t *testing.T) {
 
 func TestPriorityClassIsApplied(t *testing.T) {
 	testPriorityClassIsApplied := func(t *testing.T, objType reflect.Type, k8sVersion string) {
-		appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, k8sVersion)
+		appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, k8sVersion, nil)
 		require.Contains(t, appliedObjects, K8sObjectDetails{
 			Namespace:  "",
 			Name:       commonState.DataPlanePriorityClassName,
@@ -253,7 +256,7 @@ func TestPriorityClassIsApplied(t *testing.T) {
 }
 
 func TestMonitorDeploymentIsApplied(t *testing.T) {
-	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "")
+	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "", nil)
 	require.Contains(t, appliedObjects, K8sObjectDetails{
 		Namespace:  commonState.DataPlaneNamespaceName,
 		Name:       components.MonitorName,
@@ -262,7 +265,7 @@ func TestMonitorDeploymentIsApplied(t *testing.T) {
 }
 
 func TestTlsSecretIsApplied(t *testing.T) {
-	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "")
+	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "", nil)
 	require.Contains(t, appliedObjects, K8sObjectDetails{
 		Namespace:  commonState.DataPlaneNamespaceName,
 		Name:       components.EnforcerTlsName,
@@ -271,7 +274,7 @@ func TestTlsSecretIsApplied(t *testing.T) {
 }
 
 func TestEnforcerServiceIsApplied(t *testing.T) {
-	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "")
+	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "", nil)
 	require.Contains(t, appliedObjects, K8sObjectDetails{
 		Namespace:  commonState.DataPlaneNamespaceName,
 		Name:       components.EnforcerName,
@@ -280,51 +283,72 @@ func TestEnforcerServiceIsApplied(t *testing.T) {
 }
 
 func TestEnforcerDeploymentIsApplied(t *testing.T) {
-	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "")
+	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "", nil)
 	require.Contains(t, appliedObjects, EnforcerDeploymentDetails)
 }
 
 func TestEnforcerWebhooksAreApplied(t *testing.T) {
-	assertWebhooksAreApplied := func(t *testing.T, appliedObjects, deletedObjects []K8sObjectDetails, webhookObjects ...K8sObjectDetails) {
-		require.Subset(t, appliedObjects, webhookObjects)
-		require.NotSubset(t, deletedObjects, webhookObjects)
+	webhooksAreAppliedTestsForVersion := func(t *testing.T, k8sVersion string, validatingWebhook K8sObjectDetails, mutatingWebhook K8sObjectDetails) {
+		t.Helper()
+
+		withMutatingWebhook := func(mocks *StateApplierTestMocks) {
+			mocks.agentSpec.Components.Basic.Enforcer.EnableEnforcementFeature = true
+		}
+
+		t.Run("With default spec, should apply the validating webhook and delete the mutating webhook", func(t *testing.T) {
+			appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, k8sVersion, nil, MutateDeploymentsToBeWithReadyReplica(EnforcerDeploymentDetails, ResolverDeploymentDetails))
+			require.NoError(t, err)
+			require.Contains(t, appliedObjects, validatingWebhook)
+			require.NotContains(t, appliedObjects, mutatingWebhook)
+			require.NotContains(t, deletedObjects, validatingWebhook)
+			require.Contains(t, deletedObjects, mutatingWebhook)
+		})
+
+		t.Run("With enforcing webhook enabled, should apply both webhooks", func(t *testing.T) {
+			appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, k8sVersion, withMutatingWebhook, MutateDeploymentsToBeWithReadyReplica(EnforcerDeploymentDetails, ResolverDeploymentDetails))
+			require.NoError(t, err)
+			require.Contains(t, appliedObjects, validatingWebhook)
+			require.Contains(t, appliedObjects, mutatingWebhook)
+			require.NotContains(t, deletedObjects, validatingWebhook)
+			require.NotContains(t, deletedObjects, mutatingWebhook)
+		})
 	}
 
 	t.Run("With empty K8S version, should use `v1` by default", func(t *testing.T) {
-		appliedObjects, deletedObjects := getAndAssertAppliedAndDeletedObjects(t, "")
-		assertWebhooksAreApplied(t, appliedObjects, deletedObjects, EnforcerValidatingWebhookDetails, EnforcerMutatingWebhookDetails)
+		k8sVersion := ""
+		webhooksAreAppliedTestsForVersion(t, k8sVersion, EnforcerValidatingWebhookDetails, EnforcerMutatingWebhookDetails)
 	})
 
 	t.Run("With K8S version 1.15 or lower, should use `v1beta1` version of webhook", func(t *testing.T) {
-		appliedObjects, deletedObjects := getAndAssertAppliedAndDeletedObjects(t, "v1.15")
+		k8sVersion := "v1.15"
 		legacyValidatingWebhook := EnforcerValidatingWebhookDetails
 		legacyValidatingWebhook.ObjectType = reflect.TypeOf(&admissionsV1Beta1.ValidatingWebhookConfiguration{})
 		legacyMutatingWebhook := EnforcerMutatingWebhookDetails
 		legacyMutatingWebhook.ObjectType = reflect.TypeOf(&admissionsV1Beta1.MutatingWebhookConfiguration{})
-		assertWebhooksAreApplied(t, appliedObjects, deletedObjects, legacyValidatingWebhook, legacyMutatingWebhook)
+
+		webhooksAreAppliedTestsForVersion(t, k8sVersion, legacyValidatingWebhook, legacyMutatingWebhook)
 	})
 
 	t.Run("With K8S version 1.16 or higher, should use `v1` version of webhook", func(t *testing.T) {
-		appliedObjects, deletedObjects := getAndAssertAppliedAndDeletedObjects(t, "v1.16")
-		assertWebhooksAreApplied(t, appliedObjects, deletedObjects, EnforcerValidatingWebhookDetails, EnforcerMutatingWebhookDetails)
+		k8sVersion := "v1.16"
+		webhooksAreAppliedTestsForVersion(t, k8sVersion, EnforcerValidatingWebhookDetails, EnforcerMutatingWebhookDetails)
 	})
 }
 
 func TestEnforcerWebhooksAreDeleted(t *testing.T) {
 	assertWebhooksAreDeleted := func(t *testing.T, appliedObjects, deletedObjects []K8sObjectDetails, webhookObjects ...K8sObjectDetails) {
-		require.Len(t, appliedObjects, NumberOfExpectedAppliedObjects-2) // 2 == Mutating & Validating webhooks
 		require.NotSubset(t, appliedObjects, webhookObjects)
 		require.Subset(t, deletedObjects, webhookObjects)
 	}
 
 	t.Run("With empty K8S version, should use `v1` by default", func(t *testing.T) {
-		appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, "")
+		appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, "", nil)
 		require.NoError(t, err)
 		assertWebhooksAreDeleted(t, appliedObjects, deletedObjects, EnforcerValidatingWebhookDetails, EnforcerMutatingWebhookDetails)
 	})
 
 	t.Run("With K8S version 1.15 or lower, should use `v1beta1` version of webhook", func(t *testing.T) {
-		appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, "v1.15")
+		appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, "v1.15", nil)
 		require.NoError(t, err)
 		legacyValidatingWebhook := EnforcerValidatingWebhookDetails
 		legacyValidatingWebhook.ObjectType = reflect.TypeOf(&admissionsV1Beta1.ValidatingWebhookConfiguration{})
@@ -334,14 +358,14 @@ func TestEnforcerWebhooksAreDeleted(t *testing.T) {
 	})
 
 	t.Run("With K8S version 1.16 or higher, should use `v1` version of webhook", func(t *testing.T) {
-		appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, "v1.16")
+		appliedObjects, deletedObjects, err := getAppliedAndDeletedObjects(t, "v1.16", nil)
 		require.NoError(t, err)
 		assertWebhooksAreDeleted(t, appliedObjects, deletedObjects, EnforcerValidatingWebhookDetails, EnforcerMutatingWebhookDetails)
 	})
 }
 
 func TestStateReporterDeploymentIsApplied(t *testing.T) {
-	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "")
+	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "", nil)
 	require.Contains(t, appliedObjects, K8sObjectDetails{
 		Namespace:  commonState.DataPlaneNamespaceName,
 		Name:       components.StateReporterName,
@@ -350,7 +374,7 @@ func TestStateReporterDeploymentIsApplied(t *testing.T) {
 }
 
 func TestResolverServiceIsApplied(t *testing.T) {
-	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "")
+	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "", nil)
 	require.Contains(t, appliedObjects, K8sObjectDetails{
 		Namespace:  commonState.DataPlaneNamespaceName,
 		Name:       components.ResolverName,
@@ -359,12 +383,12 @@ func TestResolverServiceIsApplied(t *testing.T) {
 }
 
 func TestResolverDeploymentIsApplied(t *testing.T) {
-	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "")
+	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "", nil)
 	require.Contains(t, appliedObjects, ResolverDeploymentDetails)
 }
 
 func TestSensorDaemonsetIsApplied(t *testing.T) {
-	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "")
+	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "", nil)
 	require.Contains(t, appliedObjects, K8sObjectDetails{
 		Namespace:  commonState.DataPlaneNamespaceName,
 		Name:       components.SensorName,

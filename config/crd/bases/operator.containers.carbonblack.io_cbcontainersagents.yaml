@@ -57,6 +57,8 @@ spec:
                               type: string
                             default: {}
                             type: object
+                          enableEnforcementFeature:
+                            type: boolean
                           env:
                             additionalProperties:
                               type: string
