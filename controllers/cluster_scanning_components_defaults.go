@@ -82,7 +82,7 @@ func (r *CBContainersAgentController) setClusterScanningSensorDefaults(clusterSc
 		return err
 	}
 
-	setDefaultHTTPProbes(&clusterScanningSensor.Probes)
+	setDefaultFileProbes(&clusterScanningSensor.Probes)
 
 	return nil
 }

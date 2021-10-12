@@ -457,22 +457,14 @@ spec:
                                 format: int32
                                 type: integer
                               livenessPath:
-                                default: /alive
+                                default: /tmp/alive
                                 type: string
                               periodSeconds:
                                 default: 30
                                 format: int32
                                 type: integer
-                              port:
-                                default: 8181
-                                type: integer
                               readinessPath:
-                                default: /ready
-                                type: string
-                              scheme:
-                                default: HTTP
-                                description: URIScheme identifies the scheme used
-                                  for connection to a host for Get actions
+                                default: /tmp/ready
                                 type: string
                               successThreshold:
                                 default: 1

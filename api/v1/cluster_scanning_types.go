@@ -37,7 +37,7 @@ type CBContainersClusterScannerAgentSpec struct {
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "4Gi", cpu: "500m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
-	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
+	Probes CBContainersFileProbesSpec `json:"probes,omitempty"`
 	// +kubebuilder:default:=<>
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 }

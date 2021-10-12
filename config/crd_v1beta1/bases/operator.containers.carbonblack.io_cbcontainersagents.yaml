@@ -364,13 +364,7 @@ spec:
                             periodSeconds:
                               format: int32
                               type: integer
-                            port:
-                              type: integer
                             readinessPath:
-                              type: string
-                            scheme:
-                              description: URIScheme identifies the scheme used for
-                                connection to a host for Get actions
                               type: string
                             successThreshold:
                               format: int32

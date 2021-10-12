@@ -21,10 +21,10 @@ const (
 
 	runtimeSensorVerbosityFlag = "-v"
 	runtimeSensorRunCommand    = "/run_sensor.sh"
-	dnsPolicyDefault = coreV1.DNSDefault
-	runtimeSensorDNSPolicy   = coreV1.DNSClusterFirstWithHostNet
-	runtimeSensorHostNetwork = true
-	runtimeSensorHostPID     = true
+	dnsPolicyDefault           = coreV1.DNSDefault
+	runtimeSensorDNSPolicy     = coreV1.DNSClusterFirstWithHostNet
+	runtimeSensorHostNetwork   = true
+	runtimeSensorHostPID       = true
 
 	desiredConnectionTimeoutSeconds = 60
 	containerdRuntimeEndpoint       = "/var/run/containerd/containerd.sock"
@@ -148,7 +148,6 @@ func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonS
 			prometheusPort = clusterScanner.Prometheus.Port
 		}
 	}
-
 
 	applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, map[string]string{
 		"prometheus.io/scrape": fmt.Sprint(prometheusEnabled),
@@ -279,8 +278,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(
 	container.Name = ClusterScanningName
 	container.Resources = clusterScannerSpec.Resources
 	commonState.MutateImage(container, clusterScannerSpec.Image, version)
-	// todo - mutate file probes
-	commonState.MutateContainerHTTPProbes(container, clusterScannerSpec.Probes)
+	commonState.MutateContainerFileProbes(container, clusterScannerSpec.Probes)
 	obj.mutateClusterScannerEnvVars(container, clusterScannerSpec, accessTokenSecretName, eventsGatewaySpec)
 	obj.mutateClusterScannerVolumesMounts(container)
 	obj.mutateSecurityContext(container)
@@ -294,6 +292,8 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_HOST", Value: ImageScanningReporterName},
 		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_PORT", Value: fmt.Sprintf("%d", ImageScanningReporterDesiredContainerPortValue)},
 		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_SCHEME", Value: ImageScanningReporterDesiredContainerPortName},
+		{Name: "CLUSTER_SCANNER_LIVENESS_PATH", Value: clusterScannerSpec.Probes.LivenessPath},
+		{Name: "CLUSTER_SCANNER_READINESS_PATH", Value: clusterScannerSpec.Probes.ReadinessPath},
 	}
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
@@ -306,7 +306,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec *coreV1.PodSpec) {
-	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != len(supportedContainerRuntimes) + 1 {
+	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != len(supportedContainerRuntimes)+1 {
 		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
 	}
 
