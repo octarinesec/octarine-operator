@@ -406,7 +406,7 @@ spec:
                     description: CBContainersClusterScanningSpec defines the desired
                       state of CBContainersClusterScanning
                     properties:
-                      clusterScanningSensor:
+                      clusterScanner:
                         default: {}
                         properties:
                           daemonSetAnnotations:

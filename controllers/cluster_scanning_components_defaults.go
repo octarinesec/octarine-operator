@@ -57,7 +57,7 @@ func (r *CBContainersAgentController) setImageScanningReporterDefaults(imageScan
 	return nil
 }
 
-func (r *CBContainersAgentController) setClusterScanningSensorDefaults(clusterScanningSensor *cbcontainersv1.CBContainersClusterScanningSensorSpec) error {
+func (r *CBContainersAgentController) setClusterScanningSensorDefaults(clusterScanningSensor *cbcontainersv1.CBContainersClusterScannerAgentSpec) error {
 	if clusterScanningSensor.Labels == nil {
 		clusterScanningSensor.Labels = make(map[string]string)
 	}

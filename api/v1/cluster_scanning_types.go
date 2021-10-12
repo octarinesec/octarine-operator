@@ -23,7 +23,7 @@ type CBContainersImageScanningReporterSpec struct {
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 }
 
-type CBContainersClusterScanningSensorSpec struct {
+type CBContainersClusterScannerAgentSpec struct {
 	// +kubebuilder:default:=<>
 	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
@@ -49,5 +49,5 @@ type CBContainersClusterScanningSpec struct {
 	// +kubebuilder:default:=<>
 	ImageScanningReporter CBContainersImageScanningReporterSpec `json:"imageScanningReporter,omitempty"`
 	// +kubebuilder:default:=<>
-	ClusterScanningSensor CBContainersClusterScanningSensorSpec `json:"clusterScanningSensor,omitempty"`
+	ClusterScanningSensor CBContainersClusterScannerAgentSpec `json:"clusterScanner,omitempty"`
 }

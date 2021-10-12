@@ -21,7 +21,7 @@ const (
 
 	runtimeSensorVerbosityFlag = "-v"
 	runtimeSensorRunCommand    = "/run_sensor.sh"
-
+	dnsPolicyDefault = coreV1.DNSDefault
 	runtimeSensorDNSPolicy   = coreV1.DNSClusterFirstWithHostNet
 	runtimeSensorHostNetwork = true
 	runtimeSensorHostPID     = true
@@ -75,7 +75,7 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	} else {
 		// disable runtime special requirements that cluster-scanning doesn't need.
 		// in case the cluster scanner was enabled after the runtime time was disabled (the values exists in the ds)
-		daemonSet.Spec.Template.Spec.DNSPolicy = ""
+		daemonSet.Spec.Template.Spec.DNSPolicy = dnsPolicyDefault
 		daemonSet.Spec.Template.Spec.HostNetwork = false
 		daemonSet.Spec.Template.Spec.HostPID = false
 	}
@@ -148,6 +148,7 @@ func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonS
 			prometheusPort = clusterScanner.Prometheus.Port
 		}
 	}
+
 
 	applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, map[string]string{
 		"prometheus.io/scrape": fmt.Sprint(prometheusEnabled),
@@ -271,13 +272,14 @@ func (obj *SensorDaemonSetK8sObject) mutateSecurityContext(container *coreV1.Con
 
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(
 	container *coreV1.Container,
-	clusterScannerSpec *cbContainersV1.CBContainersClusterScanningSensorSpec,
+	clusterScannerSpec *cbContainersV1.CBContainersClusterScannerAgentSpec,
 	version string,
 	accessTokenSecretName string,
 	eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec) {
 	container.Name = ClusterScanningName
 	container.Resources = clusterScannerSpec.Resources
 	commonState.MutateImage(container, clusterScannerSpec.Image, version)
+	// todo - mutate file probes
 	commonState.MutateContainerHTTPProbes(container, clusterScannerSpec.Probes)
 	obj.mutateClusterScannerEnvVars(container, clusterScannerSpec, accessTokenSecretName, eventsGatewaySpec)
 	obj.mutateClusterScannerVolumesMounts(container)
@@ -285,7 +287,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *coreV1.Container,
-	clusterScannerSpec *cbContainersV1.CBContainersClusterScanningSensorSpec,
+	clusterScannerSpec *cbContainersV1.CBContainersClusterScannerAgentSpec,
 	accessTokenSecretName string, eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec) {
 	customEnvs := []coreV1.EnvVar{
 		{Name: "CLUSTER_SCANNER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", clusterScannerSpec.Prometheus.Port)},
