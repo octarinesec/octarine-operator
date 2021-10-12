@@ -41,5 +41,6 @@ type CBContainersEnforcerSpec struct {
 	// +kubebuilder:default:=<>
 	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
 	// +kubebuilder:default:=5
-	WebhookTimeoutSeconds int32 `json:"webhookTimeoutSeconds,omitempty"`
+	WebhookTimeoutSeconds  int32 `json:"webhookTimeoutSeconds,omitempty"`
+	EnableEnforcingWebhook bool  `json:"enableEnforcingWebhook,omitempty"`
 }

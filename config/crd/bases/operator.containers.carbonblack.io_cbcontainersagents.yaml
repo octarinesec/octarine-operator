@@ -57,6 +57,8 @@ spec:
                               type: string
                             default: {}
                             type: object
+                          enableEnforcingWebhook:
+                            type: boolean
                           env:
                             additionalProperties:
                               type: string

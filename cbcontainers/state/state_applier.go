@@ -256,31 +256,40 @@ func (c *StateApplier) applyEnforcerWebhooks(ctx context.Context, agentSpec *cbc
 		return false, err
 	}
 
-	c.enforcerMutatingWebhook.UpdateTlsSecretValues(tlsSecretValues)
-	mutatedMutatingWebhook, _, err := c.applier.Apply(ctx, c.enforcerMutatingWebhook, agentSpec, applyOptions)
-	if err != nil {
-		return false, err
+	mutatedMutatingWebhook := false
+	if agentSpec.Components.Basic.Enforcer.EnableEnforcingWebhook {
+		c.enforcerMutatingWebhook.UpdateTlsSecretValues(tlsSecretValues)
+		mutatedMutatingWebhook, _, err = c.applier.Apply(ctx, c.enforcerMutatingWebhook, agentSpec, applyOptions)
+		if err != nil {
+			return false, err
+		}
+	} else {
+		// Note that if someone changes the flag in sequence false -> true -> false, we should delete the webhook again
+		deletedWebhookDueToDisabledFlag, deleteErr := c.deleteSingleEnforcerWebhook(ctx, agentSpec, c.enforcerMutatingWebhook)
+		if deleteErr != nil {
+			return false, deleteErr
+		}
+		mutatedMutatingWebhook = deletedWebhookDueToDisabledFlag
 	}
 
 	return mutatedValidatingWebhook || mutatedMutatingWebhook, nil
 }
 
 func (c *StateApplier) deleteEnforcerWebhooks(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec) (bool, error) {
-	webhookDeleted := false
+	return c.deleteSingleEnforcerWebhook(ctx, agentSpec, c.enforcerValidatingWebhook, c.enforcerMutatingWebhook)
+}
 
-	if deleted, deleteErr := c.applier.Delete(ctx, c.enforcerValidatingWebhook, agentSpec); deleteErr != nil {
-		return false, deleteErr
-	} else if deleted {
-		webhookDeleted = true
-		c.log.Info("Deleted enforcer validating webhook")
+func (c *StateApplier) deleteSingleEnforcerWebhook(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, webhooks ...agent_applyment.AgentComponentBuilder) (bool, error) {
+	deletedAnything := false
+
+	for _, webhook := range webhooks {
+		if deleted, deleteErr := c.applier.Delete(ctx, webhook, agentSpec); deleteErr != nil {
+			return false, deleteErr
+		} else if deleted {
+			c.log.Info("Deleted webhook", "webhook-name", webhook.NamespacedName())
+			deletedAnything = true
+		}
 	}
 
-	if deleted, deleteErr := c.applier.Delete(ctx, c.enforcerMutatingWebhook, agentSpec); deleteErr != nil {
-		return webhookDeleted, deleteErr
-	} else if deleted {
-		webhookDeleted = true
-		c.log.Info("Deleted enforcer mutating webhook")
-	}
-
-	return webhookDeleted, nil
+	return deletedAnything, nil
 }
