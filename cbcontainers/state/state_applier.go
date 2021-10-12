@@ -148,7 +148,7 @@ func (c *StateApplier) applyEnforcer(ctx context.Context, agentSpec *cbcontainer
 
 	mutatedService, _, err := c.applier.Apply(ctx, c.enforcerService, agentSpec, applyOptions)
 	if err != nil {
-		if _, deleteErr := c.deleteEnforcerWebhooks(ctx, agentSpec); deleteErr != nil {
+		if _, deleteErr := c.deleteAllEnforcerWebhooks(ctx, agentSpec); deleteErr != nil {
 			return false, deleteErr
 		}
 
@@ -158,7 +158,7 @@ func (c *StateApplier) applyEnforcer(ctx context.Context, agentSpec *cbcontainer
 
 	mutatedDeployment, deploymentK8sObject, err := c.applier.Apply(ctx, c.enforcerDeployment, agentSpec, applyOptions)
 	if err != nil {
-		if _, deleteErr := c.deleteEnforcerWebhooks(ctx, agentSpec); deleteErr != nil {
+		if _, deleteErr := c.deleteAllEnforcerWebhooks(ctx, agentSpec); deleteErr != nil {
 			return false, deleteErr
 		}
 
@@ -173,7 +173,7 @@ func (c *StateApplier) applyEnforcer(ctx context.Context, agentSpec *cbcontainer
 
 	mutatedWebhooks := false
 	if enforcerDeployment.Status.ReadyReplicas < 1 {
-		if deleted, deleteErr := c.deleteEnforcerWebhooks(ctx, agentSpec); deleteErr != nil {
+		if deleted, deleteErr := c.deleteAllEnforcerWebhooks(ctx, agentSpec); deleteErr != nil {
 			return false, deleteErr
 		} else if deleted {
 			mutatedWebhooks = true
@@ -257,7 +257,7 @@ func (c *StateApplier) applyEnforcerWebhooks(ctx context.Context, agentSpec *cbc
 	}
 
 	mutatedMutatingWebhook := false
-	if agentSpec.Components.Basic.Enforcer.EnableEnforcingWebhook {
+	if agentSpec.Components.Basic.Enforcer.EnableEnforcementFeature {
 		c.enforcerMutatingWebhook.UpdateTlsSecretValues(tlsSecretValues)
 		mutatedMutatingWebhook, _, err = c.applier.Apply(ctx, c.enforcerMutatingWebhook, agentSpec, applyOptions)
 		if err != nil {
@@ -265,7 +265,7 @@ func (c *StateApplier) applyEnforcerWebhooks(ctx context.Context, agentSpec *cbc
 		}
 	} else {
 		// Note that if someone changes the flag in sequence false -> true -> false, we should delete the webhook again
-		deletedWebhookDueToDisabledFlag, deleteErr := c.deleteSingleEnforcerWebhook(ctx, agentSpec, c.enforcerMutatingWebhook)
+		deletedWebhookDueToDisabledFlag, deleteErr := c.deleteEnforcerWebhook(ctx, agentSpec, c.enforcerMutatingWebhook)
 		if deleteErr != nil {
 			return false, deleteErr
 		}
@@ -275,11 +275,11 @@ func (c *StateApplier) applyEnforcerWebhooks(ctx context.Context, agentSpec *cbc
 	return mutatedValidatingWebhook || mutatedMutatingWebhook, nil
 }
 
-func (c *StateApplier) deleteEnforcerWebhooks(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec) (bool, error) {
-	return c.deleteSingleEnforcerWebhook(ctx, agentSpec, c.enforcerValidatingWebhook, c.enforcerMutatingWebhook)
+func (c *StateApplier) deleteAllEnforcerWebhooks(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec) (bool, error) {
+	return c.deleteEnforcerWebhook(ctx, agentSpec, c.enforcerValidatingWebhook, c.enforcerMutatingWebhook)
 }
 
-func (c *StateApplier) deleteSingleEnforcerWebhook(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, webhooks ...agent_applyment.AgentComponentBuilder) (bool, error) {
+func (c *StateApplier) deleteEnforcerWebhook(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, webhooks ...agent_applyment.AgentComponentBuilder) (bool, error) {
 	deletedAnything := false
 
 	for _, webhook := range webhooks {

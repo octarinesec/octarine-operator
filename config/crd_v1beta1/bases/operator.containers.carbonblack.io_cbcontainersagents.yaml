@@ -52,7 +52,7 @@ spec:
                           additionalProperties:
                             type: string
                           type: object
-                        enableEnforcingWebhook:
+                        enableEnforcementFeature:
                           type: boolean
                         env:
                           additionalProperties:

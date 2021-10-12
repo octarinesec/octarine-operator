@@ -292,7 +292,7 @@ func TestEnforcerWebhooksAreApplied(t *testing.T) {
 		t.Helper()
 
 		withMutatingWebhook := func(mocks *StateApplierTestMocks) {
-			mocks.agentSpec.Components.Basic.Enforcer.EnableEnforcingWebhook = true
+			mocks.agentSpec.Components.Basic.Enforcer.EnableEnforcementFeature = true
 		}
 
 		t.Run("With default spec, should apply the validating webhook and delete the mutating webhook", func(t *testing.T) {
