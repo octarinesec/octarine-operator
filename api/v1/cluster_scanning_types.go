@@ -49,5 +49,5 @@ type CBContainersClusterScanningSpec struct {
 	// +kubebuilder:default:=<>
 	ImageScanningReporter CBContainersImageScanningReporterSpec `json:"imageScanningReporter,omitempty"`
 	// +kubebuilder:default:=<>
-	ClusterScanningSensor CBContainersClusterScannerAgentSpec `json:"clusterScanner,omitempty"`
+	ClusterScannerAgent CBContainersClusterScannerAgentSpec `json:"clusterScanner,omitempty"`
 }

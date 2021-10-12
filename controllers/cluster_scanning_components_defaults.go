@@ -15,7 +15,7 @@ func (r *CBContainersAgentController) setClusterScanningComponentsDefaults(clust
 		return err
 	}
 
-	if err := r.setClusterScanningSensorDefaults(&clusterScanning.ClusterScanningSensor); err != nil {
+	if err := r.setClusterScannerAgentDefaults(&clusterScanning.ClusterScannerAgent); err != nil {
 		return err
 	}
 
@@ -57,32 +57,32 @@ func (r *CBContainersAgentController) setImageScanningReporterDefaults(imageScan
 	return nil
 }
 
-func (r *CBContainersAgentController) setClusterScanningSensorDefaults(clusterScanningSensor *cbcontainersv1.CBContainersClusterScannerAgentSpec) error {
-	if clusterScanningSensor.Labels == nil {
-		clusterScanningSensor.Labels = make(map[string]string)
+func (r *CBContainersAgentController) setClusterScannerAgentDefaults(clusterScannerAgent *cbcontainersv1.CBContainersClusterScannerAgentSpec) error {
+	if clusterScannerAgent.Labels == nil {
+		clusterScannerAgent.Labels = make(map[string]string)
 	}
 
-	if clusterScanningSensor.DaemonSetAnnotations == nil {
-		clusterScanningSensor.DaemonSetAnnotations = make(map[string]string)
+	if clusterScannerAgent.DaemonSetAnnotations == nil {
+		clusterScannerAgent.DaemonSetAnnotations = make(map[string]string)
 	}
 
-	if clusterScanningSensor.PodTemplateAnnotations == nil {
-		clusterScanningSensor.PodTemplateAnnotations = make(map[string]string)
+	if clusterScannerAgent.PodTemplateAnnotations == nil {
+		clusterScannerAgent.PodTemplateAnnotations = make(map[string]string)
 	}
 
-	if clusterScanningSensor.Env == nil {
-		clusterScanningSensor.Env = make(map[string]string)
+	if clusterScannerAgent.Env == nil {
+		clusterScannerAgent.Env = make(map[string]string)
 	}
 
-	setDefaultPrometheus(&clusterScanningSensor.Prometheus)
+	setDefaultPrometheus(&clusterScannerAgent.Prometheus)
 
-	setDefaultImage(&clusterScanningSensor.Image, "cbartifactory/cluster-scanner")
+	setDefaultImage(&clusterScannerAgent.Image, "cbartifactory/cluster-scanner")
 
-	if err := setDefaultResourceRequirements(&clusterScanningSensor.Resources, "64Mi", "30m", "4Gi", "500m"); err != nil {
+	if err := setDefaultResourceRequirements(&clusterScannerAgent.Resources, "64Mi", "30m", "4Gi", "500m"); err != nil {
 		return err
 	}
 
-	setDefaultFileProbes(&clusterScanningSensor.Probes)
+	setDefaultFileProbes(&clusterScannerAgent.Probes)
 
 	return nil
 }

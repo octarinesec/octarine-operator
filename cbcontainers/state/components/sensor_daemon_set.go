@@ -119,7 +119,7 @@ func (obj *SensorDaemonSetK8sObject) mutateLabels(daemonSet *appsV1.DaemonSet, a
 	}
 
 	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
-		applyment.EnforceMapContains(desiredLabels, agentSpec.Components.ClusterScanning.ClusterScanningSensor.Labels)
+		applyment.EnforceMapContains(desiredLabels, agentSpec.Components.ClusterScanning.ClusterScannerAgent.Labels)
 	}
 
 	daemonSet.ObjectMeta.Labels = desiredLabels
@@ -140,7 +140,7 @@ func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonS
 	}
 
 	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
-		clusterScanner := agentSpec.Components.ClusterScanning.ClusterScanningSensor
+		clusterScanner := agentSpec.Components.ClusterScanning.ClusterScannerAgent
 		applyment.EnforceMapContains(daemonSet.ObjectMeta.Annotations, clusterScanner.DaemonSetAnnotations)
 		applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, clusterScanner.PodTemplateAnnotations)
 		if commonState.IsDisabled(agentSpec.Components.RuntimeProtection.Enabled) {
@@ -180,7 +180,7 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(
 		containers = append(containers, coreV1.Container{Name: ClusterScanningName})
 	}
 
-	if len(templatePodSpec.Containers) != len(containers) || obj.componentsWereSwitched(agentSpec, templatePodSpec, containers) {
+	if len(templatePodSpec.Containers) != len(containers) || obj.componentsWereSwitched(agentSpec, templatePodSpec) {
 		templatePodSpec.Containers = containers
 	}
 
@@ -193,7 +193,7 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(
 	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
 		obj.mutateClusterScannerContainer(
 			&templatePodSpec.Containers[obj.findContainerLocationByName(templatePodSpec.Containers, ClusterScanningName)],
-			&agentSpec.Components.ClusterScanning.ClusterScanningSensor, version, accessTokenSecretName,
+			&agentSpec.Components.ClusterScanning.ClusterScannerAgent, version, accessTokenSecretName,
 			&agentSpec.Gateways.HardeningEventsGateway)
 	}
 }
@@ -202,7 +202,7 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(
 // the containers count is the same (1), but the container name is wrong for the mutate containers methods, which will lead to
 // index out of range error in finding the container by name.
 // componentsWereSwitched checks if this scenario happened, and return boolean answer.
-func (obj *SensorDaemonSetK8sObject) componentsWereSwitched(agentSpec *cbContainersV1.CBContainersAgentSpec, templatePodSpec *coreV1.PodSpec, containers []coreV1.Container) bool {
+func (obj *SensorDaemonSetK8sObject) componentsWereSwitched(agentSpec *cbContainersV1.CBContainersAgentSpec, templatePodSpec *coreV1.PodSpec) bool {
 	if len(templatePodSpec.Containers) == 1 {
 		if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
 			return templatePodSpec.Containers[0].Name != RuntimeSensorName
