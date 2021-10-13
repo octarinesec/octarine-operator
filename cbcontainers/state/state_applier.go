@@ -20,38 +20,40 @@ type AgentComponentApplier interface {
 }
 
 type StateApplier struct {
-	desiredConfigMap         *components.ConfigurationK8sObject
-	desiredRegistrySecret    *components.RegistrySecretK8sObject
-	desiredPriorityClass     *components.PriorityClassK8sObject
-	desiredMonitorDeployment *components.MonitorDeploymentK8sObject
-	enforcerTlsSecret        *components.EnforcerTlsK8sObject
-	enforcerDeployment       *components.EnforcerDeploymentK8sObject
-	enforcerService          *components.EnforcerServiceK8sObject
-	enforcerWebhook          *components.EnforcerWebhookK8sObject
-	stateReporterDeployment  *components.StateReporterDeploymentK8sObject
-	resolverDeployment       *components.ResolverDeploymentK8sObject
-	resolverService          *components.ResolverServiceK8sObject
-	sensorDaemonSet          *components.SensorDaemonSetK8sObject
-	applier                  AgentComponentApplier
-	log                      logr.Logger
+	desiredConfigMap          *components.ConfigurationK8sObject
+	desiredRegistrySecret     *components.RegistrySecretK8sObject
+	desiredPriorityClass      *components.PriorityClassK8sObject
+	desiredMonitorDeployment  *components.MonitorDeploymentK8sObject
+	enforcerTlsSecret         *components.EnforcerTlsK8sObject
+	enforcerDeployment        *components.EnforcerDeploymentK8sObject
+	enforcerService           *components.EnforcerServiceK8sObject
+	enforcerValidatingWebhook *components.EnforcerValidatingWebhookK8sObject
+	enforcerMutatingWebhook   *components.EnforcerMutatingWebhookK8sObject
+	stateReporterDeployment   *components.StateReporterDeploymentK8sObject
+	resolverDeployment        *components.ResolverDeploymentK8sObject
+	resolverService           *components.ResolverServiceK8sObject
+	sensorDaemonSet           *components.SensorDaemonSetK8sObject
+	applier                   AgentComponentApplier
+	log                       logr.Logger
 }
 
 func NewStateApplier(agentComponentApplier AgentComponentApplier, k8sVersion string, tlsSecretsValuesCreator components.TlsSecretsValuesCreator, log logr.Logger) *StateApplier {
 	return &StateApplier{
-		desiredConfigMap:         components.NewConfigurationK8sObject(),
-		desiredRegistrySecret:    components.NewRegistrySecretK8sObject(),
-		desiredPriorityClass:     components.NewPriorityClassK8sObject(k8sVersion),
-		desiredMonitorDeployment: components.NewMonitorDeploymentK8sObject(),
-		enforcerTlsSecret:        components.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
-		enforcerDeployment:       components.NewEnforcerDeploymentK8sObject(),
-		enforcerService:          components.NewEnforcerServiceK8sObject(),
-		enforcerWebhook:          components.NewEnforcerWebhookK8sObject(k8sVersion),
-		stateReporterDeployment:  components.NewStateReporterDeploymentK8sObject(),
-		resolverDeployment:       components.NewResolverDeploymentK8sObject(),
-		resolverService:          components.NewResolverServiceK8sObject(),
-		sensorDaemonSet:          components.NewSensorDaemonSetK8sObject(),
-		applier:                  agentComponentApplier,
-		log:                      log,
+		desiredConfigMap:          components.NewConfigurationK8sObject(),
+		desiredRegistrySecret:     components.NewRegistrySecretK8sObject(),
+		desiredPriorityClass:      components.NewPriorityClassK8sObject(k8sVersion),
+		desiredMonitorDeployment:  components.NewMonitorDeploymentK8sObject(),
+		enforcerTlsSecret:         components.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
+		enforcerDeployment:        components.NewEnforcerDeploymentK8sObject(),
+		enforcerService:           components.NewEnforcerServiceK8sObject(),
+		enforcerValidatingWebhook: components.NewEnforcerValidatingWebhookK8sObject(k8sVersion),
+		enforcerMutatingWebhook:   components.NewEnforcerMutatingWebhookK8sObject(k8sVersion),
+		stateReporterDeployment:   components.NewStateReporterDeploymentK8sObject(),
+		resolverDeployment:        components.NewResolverDeploymentK8sObject(),
+		resolverService:           components.NewResolverServiceK8sObject(),
+		sensorDaemonSet:           components.NewSensorDaemonSetK8sObject(),
+		applier:                   agentComponentApplier,
+		log:                       log,
 	}
 }
 
@@ -146,23 +148,25 @@ func (c *StateApplier) applyEnforcer(ctx context.Context, agentSpec *cbcontainer
 
 	mutatedService, _, err := c.applier.Apply(ctx, c.enforcerService, agentSpec, applyOptions)
 	if err != nil {
-		if deleted, deleteErr := c.applier.Delete(ctx, c.enforcerWebhook, agentSpec); deleteErr != nil {
-			return false, deleteErr
-		} else if deleted {
-			c.log.Info("Deleted enforcer webhook")
+		deleted, deleteErr := c.deleteAllEnforcerWebhooks(ctx, agentSpec)
+		c.log.Info("Deleted enforcer webhooks because of an error while applying enforcer service", "deleted", deleted, "deletion-error", deleteErr)
+		if deleteErr != nil {
+			return deleted, deleteErr
 		}
-		return false, err
+
+		return deleted, err
 	}
 	c.log.Info("Applied enforcer service", "Mutated", mutatedService)
 
 	mutatedDeployment, deploymentK8sObject, err := c.applier.Apply(ctx, c.enforcerDeployment, agentSpec, applyOptions)
 	if err != nil {
-		if deleted, deleteErr := c.applier.Delete(ctx, c.enforcerWebhook, agentSpec); deleteErr != nil {
-			return false, deleteErr
-		} else if deleted {
-			c.log.Info("Deleted enforcer webhook")
+		deleted, deleteErr := c.deleteAllEnforcerWebhooks(ctx, agentSpec)
+		c.log.Info("Deleted enforcer webhooks because of an error while applying enforcer deployment", "deleted", deleted, "deletion-error", deleteErr)
+		if deleteErr != nil {
+			return deleted, deleteErr
 		}
-		return false, err
+
+		return deleted, err
 	}
 	c.log.Info("Applied enforcer deployment", "Mutated", mutatedDeployment)
 
@@ -171,24 +175,22 @@ func (c *StateApplier) applyEnforcer(ctx context.Context, agentSpec *cbcontainer
 		return false, fmt.Errorf("expected Deployment K8s object")
 	}
 
-	mutatedWebhook := false
+	mutatedWebhooks := false
 	if enforcerDeployment.Status.ReadyReplicas < 1 {
-		if deleted, deleteErr := c.applier.Delete(ctx, c.enforcerWebhook, agentSpec); deleteErr != nil {
+		if deleted, deleteErr := c.deleteAllEnforcerWebhooks(ctx, agentSpec); deleteErr != nil {
 			return false, deleteErr
 		} else if deleted {
-			mutatedWebhook = true
-			c.log.Info("Deleted enforcer webhook")
+			mutatedWebhooks = true
 		}
 	} else {
-		c.enforcerWebhook.UpdateTlsSecretValues(models.TlsSecretValuesFromSecretData(tlsSecret.Data))
-		mutatedWebhook, _, err = c.applier.Apply(ctx, c.enforcerWebhook, agentSpec, applyOptions)
+		mutatedWebhooks, err = c.applyEnforcerWebhooks(ctx, agentSpec, tlsSecret, applyOptions)
 		if err != nil {
 			return false, err
 		}
-		c.log.Info("Applied enforcer webhook", "Mutated", mutatedWebhook)
+		c.log.Info("Applied enforcer webhooks", "Mutated", mutatedWebhooks)
 	}
 
-	return mutatedSecret || mutatedDeployment || mutatedService || mutatedWebhook, nil
+	return mutatedSecret || mutatedDeployment || mutatedService || mutatedWebhooks, nil
 }
 
 func (c *StateApplier) applyStateReporter(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
@@ -247,4 +249,51 @@ func (c *StateApplier) deleteRuntime(ctx context.Context, agentSpec *cbcontainer
 	}
 
 	return resolverServiceDeleted || resolverDeploymentDeleted || sensorDaemonSetDeleted, nil
+}
+
+func (c *StateApplier) applyEnforcerWebhooks(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, tlsSecret *coreV1.Secret, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
+	tlsSecretValues := models.TlsSecretValuesFromSecretData(tlsSecret.Data)
+
+	c.enforcerValidatingWebhook.UpdateTlsSecretValues(tlsSecretValues)
+	mutatedValidatingWebhook, _, err := c.applier.Apply(ctx, c.enforcerValidatingWebhook, agentSpec, applyOptions)
+	if err != nil {
+		return false, err
+	}
+
+	mutatedMutatingWebhook := false
+	if agentSpec.Components.Basic.Enforcer.EnableEnforcementFeature {
+		c.enforcerMutatingWebhook.UpdateTlsSecretValues(tlsSecretValues)
+		mutatedMutatingWebhook, _, err = c.applier.Apply(ctx, c.enforcerMutatingWebhook, agentSpec, applyOptions)
+		if err != nil {
+			return false, err
+		}
+	} else {
+		// Note that if someone changes the flag in sequence false -> true -> false, we should delete the webhook again
+		deletedWebhookDueToDisabledFlag, deleteErr := c.deleteEnforcerWebhook(ctx, agentSpec, c.enforcerMutatingWebhook)
+		if deleteErr != nil {
+			return false, deleteErr
+		}
+		mutatedMutatingWebhook = deletedWebhookDueToDisabledFlag
+	}
+
+	return mutatedValidatingWebhook || mutatedMutatingWebhook, nil
+}
+
+func (c *StateApplier) deleteAllEnforcerWebhooks(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec) (bool, error) {
+	return c.deleteEnforcerWebhook(ctx, agentSpec, c.enforcerValidatingWebhook, c.enforcerMutatingWebhook)
+}
+
+func (c *StateApplier) deleteEnforcerWebhook(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, webhooks ...agent_applyment.AgentComponentBuilder) (bool, error) {
+	deletedAnything := false
+
+	for _, webhook := range webhooks {
+		if deleted, deleteErr := c.applier.Delete(ctx, webhook, agentSpec); deleteErr != nil {
+			return false, deleteErr
+		} else if deleted {
+			c.log.Info("Deleted webhook", "webhook-name", webhook.NamespacedName())
+			deletedAnything = true
+		}
+	}
+
+	return deletedAnything, nil
 }
