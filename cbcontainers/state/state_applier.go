@@ -148,21 +148,25 @@ func (c *StateApplier) applyEnforcer(ctx context.Context, agentSpec *cbcontainer
 
 	mutatedService, _, err := c.applier.Apply(ctx, c.enforcerService, agentSpec, applyOptions)
 	if err != nil {
-		if _, deleteErr := c.deleteAllEnforcerWebhooks(ctx, agentSpec); deleteErr != nil {
-			return false, deleteErr
+		deleted, deleteErr := c.deleteAllEnforcerWebhooks(ctx, agentSpec)
+		c.log.Info("Deleted enforcer webhooks because of an error while applying enforcer service", "deleted", deleted, "deletion-error", deleteErr)
+		if deleteErr != nil {
+			return deleted, deleteErr
 		}
 
-		return false, err
+		return deleted, err
 	}
 	c.log.Info("Applied enforcer service", "Mutated", mutatedService)
 
 	mutatedDeployment, deploymentK8sObject, err := c.applier.Apply(ctx, c.enforcerDeployment, agentSpec, applyOptions)
 	if err != nil {
-		if _, deleteErr := c.deleteAllEnforcerWebhooks(ctx, agentSpec); deleteErr != nil {
-			return false, deleteErr
+		deleted, deleteErr := c.deleteAllEnforcerWebhooks(ctx, agentSpec)
+		c.log.Info("Deleted enforcer webhooks because of an error while applying enforcer deployment", "deleted", deleted, "deletion-error", deleteErr)
+		if deleteErr != nil {
+			return deleted, deleteErr
 		}
 
-		return false, err
+		return deleted, err
 	}
 	c.log.Info("Applied enforcer deployment", "Mutated", mutatedDeployment)
 
