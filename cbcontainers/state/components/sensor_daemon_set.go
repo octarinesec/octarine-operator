@@ -21,7 +21,7 @@ const (
 
 	runtimeSensorVerbosityFlag = "-v"
 	runtimeSensorRunCommand    = "/run_sensor.sh"
-	dnsPolicyDefault           = coreV1.DNSDefault
+	defaultDnsPolicy           = coreV1.DNSClusterFirst
 	runtimeSensorDNSPolicy     = coreV1.DNSClusterFirstWithHostNet
 	runtimeSensorHostNetwork   = true
 	runtimeSensorHostPID       = true
@@ -75,7 +75,7 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	} else {
 		// disable runtime special requirements that cluster-scanning doesn't need.
 		// in case the cluster scanner was enabled after the runtime time was disabled (the values exists in the ds)
-		daemonSet.Spec.Template.Spec.DNSPolicy = dnsPolicyDefault
+		daemonSet.Spec.Template.Spec.DNSPolicy = defaultDnsPolicy
 		daemonSet.Spec.Template.Spec.HostNetwork = false
 		daemonSet.Spec.Template.Spec.HostPID = false
 	}
