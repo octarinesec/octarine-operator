@@ -18,7 +18,6 @@ const (
 )
 
 var (
-	MutatingWebhookFailurePolicy = adapters.FailurePolicyIgnore
 	MutatingWebhookPath          = "/mutate"
 	// This value's default changes across versions so we want to ensure consistency by setting it explicitly
 	MutatingWebhookMatchPolicy = adapters.MatchPolicyEquivalent
@@ -89,7 +88,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) mutateWebhooks(webhookConfiguration
 		resourcesWebhookObj = updatedWebhooks[0]
 	}
 
-	obj.mutateResourcesWebhook(resourcesWebhookObj, enforcer.WebhookTimeoutSeconds)
+	obj.mutateResourcesWebhook(resourcesWebhookObj, enforcer.WebhookTimeoutSeconds, enforcer.FailurePolicy)
 	return nil
 }
 
@@ -103,10 +102,10 @@ func (obj *EnforcerMutatingWebhookK8sObject) findWebhookByName(webhooks []adapte
 	return nil, false
 }
 
-func (obj *EnforcerMutatingWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook adapters.WebhookAdapter, timeoutSeconds int32) {
+func (obj *EnforcerMutatingWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook adapters.WebhookAdapter, timeoutSeconds int32, failurePolicy string) {
 	resourcesWebhook.SetName(MutatingWebhookName)
 	resourcesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
-	resourcesWebhook.SetFailurePolicy(MutatingWebhookFailurePolicy)
+	resourcesWebhook.SetFailurePolicy(failurePolicy)
 	resourcesWebhook.SetSideEffects(MutatingWebhookSideEffect)
 	resourcesWebhook.SetMatchPolicy(MutatingWebhookMatchPolicy)
 	namespaceSelector := obj.getResourcesNamespaceSelector(resourcesWebhook.GetNamespaceSelector())

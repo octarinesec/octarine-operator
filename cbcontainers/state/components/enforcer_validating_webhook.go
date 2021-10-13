@@ -19,7 +19,6 @@ const (
 )
 
 var (
-	WebhookFailurePolicy = adapters.FailurePolicyIgnore
 	WebhookPath          = "/validate"
 	// WebhookMatchPolicy : This value's default changes across versions so we want to ensure consistency by setting it explicitly
 	WebhookMatchPolicy = adapters.MatchPolicyEquivalent
@@ -96,8 +95,8 @@ func (obj *EnforcerValidatingWebhookK8sObject) mutateWebhooks(webhookConfigurati
 		namespacesWebhookObj = updatedWebhooks[1]
 	}
 
-	obj.mutateResourcesWebhook(resourcesWebhookObj, enforcer.WebhookTimeoutSeconds)
-	obj.mutateNamespacesWebhook(namespacesWebhookObj, enforcer.WebhookTimeoutSeconds)
+	obj.mutateResourcesWebhook(resourcesWebhookObj, enforcer.WebhookTimeoutSeconds, enforcer.FailurePolicy)
+	obj.mutateNamespacesWebhook(namespacesWebhookObj, enforcer.WebhookTimeoutSeconds, enforcer.FailurePolicy)
 	return nil
 }
 
@@ -111,10 +110,10 @@ func (obj *EnforcerValidatingWebhookK8sObject) findWebhookByName(webhooks []adap
 	return nil, false
 }
 
-func (obj *EnforcerValidatingWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook adapters.WebhookAdapter, timeoutSeconds int32) {
+func (obj *EnforcerValidatingWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook adapters.WebhookAdapter, timeoutSeconds int32, failurePolicy string) {
 	resourcesWebhook.SetName(ValidatingResourcesWebhookName)
 	resourcesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
-	resourcesWebhook.SetFailurePolicy(WebhookFailurePolicy)
+	resourcesWebhook.SetFailurePolicy(failurePolicy)
 	resourcesWebhook.SetSideEffects(ResourcesWebhookSideEffect)
 	resourcesWebhook.SetMatchPolicy(WebhookMatchPolicy)
 	namespaceSelector := obj.getResourcesNamespaceSelector(resourcesWebhook.GetNamespaceSelector())
@@ -210,10 +209,10 @@ func (obj *EnforcerValidatingWebhookK8sObject) getResourcesList() []string {
 	}
 }
 
-func (obj *EnforcerValidatingWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook adapters.WebhookAdapter, timeoutSeconds int32) {
+func (obj *EnforcerValidatingWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook adapters.WebhookAdapter, timeoutSeconds int32, failurePolicy string) {
 	namespacesWebhook.SetName(ValidatingNamespacesWebhookName)
 	namespacesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
-	namespacesWebhook.SetFailurePolicy(WebhookFailurePolicy)
+	namespacesWebhook.SetFailurePolicy(failurePolicy)
 	namespacesWebhook.SetMatchPolicy(WebhookMatchPolicy)
 	namespacesWebhook.SetSideEffects(NamespacesWebhookSideEffect)
 	namespacesWebhook.SetNamespaceSelector(&metav1.LabelSelector{})
