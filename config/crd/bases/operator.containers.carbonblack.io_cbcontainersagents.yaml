@@ -64,6 +64,12 @@ spec:
                               type: string
                             default: {}
                             type: object
+                          failurePolicy:
+                            default: Ignore
+                            enum:
+                            - Ignore
+                            - Fail
+                            type: string
                           image:
                             default:
                               repository: cbartifactory/guardrails-enforcer

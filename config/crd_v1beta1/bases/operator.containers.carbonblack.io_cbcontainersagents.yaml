@@ -58,6 +58,11 @@ spec:
                           additionalProperties:
                             type: string
                           type: object
+                        failurePolicy:
+                          enum:
+                          - Ignore
+                          - Fail
+                          type: string
                         image:
                           properties:
                             pullPolicy:
