@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	SensorName     = "cbcontainers-runtime-sensor"
-	sensorLabelKey = "app.kubernetes.io/name"
+	SensorName           = "cbcontainers-node-agent"
+	RuntimeContainerName = "cbcontainers-runtime"
+	sensorLabelKey       = "app.kubernetes.io/name"
 
 	sensorVerbosityFlag = "-v"
 	sensorRunCommand    = "/run_sensor.sh"
@@ -137,7 +138,7 @@ func (obj *SensorDaemonSetK8sObject) mutateContainer(
 	accessTokenSecretName string,
 	desiredGRPCPortValue int32) {
 
-	container.Name = SensorName
+	container.Name = RuntimeContainerName
 	container.Resources = sensorSpec.Resources
 	container.Args = []string{sensorVerbosityFlag, fmt.Sprintf("%d", *sensorSpec.VerbosityLevel)}
 	container.Command = []string{sensorRunCommand}
