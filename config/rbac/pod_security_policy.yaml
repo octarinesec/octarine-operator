@@ -1,0 +1,23 @@
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: manager-psp
+spec:
+  privileged: true
+  hostPID: true
+  hostIPC: true
+  hostNetwork: true
+  allowedCapabilities:
+  - NET_BIND_SERVICE
+  - SYS_ADMIN
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  runAsUser:
+    rule: RunAsAny
+  fsGroup:
+    rule: RunAsAny
+  volumes:
+  - '*'
