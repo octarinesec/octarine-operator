@@ -142,8 +142,7 @@ func (obj *ImageScanningReporterDeploymentK8sObject) mutateImageScanningReporter
 		WithCommonDataPlane(accessTokenSecretName).
 		WithEventsGateway(eventsGatewaySpec).
 		WithCustom(customEnvs...).
-		WithSpec(imageScanningReporterSpec.Env).
-		WithGatewayTLS() // to run https server with octarine certificates
+		WithSpec(imageScanningReporterSpec.Env)
 	commonState.MutateEnvVars(container, envVarBuilder)
 }
 
