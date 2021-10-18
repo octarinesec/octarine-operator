@@ -114,11 +114,3 @@ rules:
   - priorityclasses
   verbs:
   - '*'
-- apiGroups:
-  - policy
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
-  resourceNames:
-  - manager-psp
