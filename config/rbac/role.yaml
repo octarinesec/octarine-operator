@@ -109,6 +109,14 @@ rules:
   - patch
   - update
 - apiGroups:
+  - policy
+  resourceNames:
+  - manager-psp
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+- apiGroups:
   - scheduling.k8s.io
   resources:
   - priorityclasses
