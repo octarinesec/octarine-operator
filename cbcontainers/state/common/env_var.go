@@ -1,7 +1,9 @@
 package common
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
+	"sort"
 	"strconv"
 
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
@@ -55,6 +57,22 @@ func (b *EnvVarBuilder) WithCustom(customEnvsToAdd ...coreV1.EnvVar) *EnvVarBuil
 	for _, customEnvVar := range customEnvsToAdd {
 		b.envVars[customEnvVar.Name] = customEnvVar
 	}
+
+	return b
+}
+
+func (b *EnvVarBuilder) WithEnvVarFromResource(envName, containerName, resourcePath string) *EnvVarBuilder {
+	envVar := coreV1.EnvVar{
+		Name: envName,
+		ValueFrom: &coreV1.EnvVarSource{
+			ResourceFieldRef: &coreV1.ResourceFieldSelector{
+				ContainerName: containerName,
+				Resource:      resourcePath,
+				Divisor:       resource.Quantity{Format: resource.DecimalExponent},
+			},
+		},
+	}
+	b.envVars[envName] = envVar
 
 	return b
 }
@@ -117,8 +135,16 @@ func (b *EnvVarBuilder) IsEqual(actualEnv []coreV1.EnvVar) bool {
 
 func (b *EnvVarBuilder) Build() []coreV1.EnvVar {
 	envVarsToReturn := make([]coreV1.EnvVar, 0, len(b.envVars))
-	for _, desiredEnvVar := range b.envVars {
-		envVarsToReturn = append(envVarsToReturn, desiredEnvVar)
+	envVarNames := make([]string, 0)
+
+	for name := range b.envVars {
+		envVarNames = append(envVarNames, name)
+	}
+
+	sort.Strings(envVarNames)
+
+	for _, name := range envVarNames {
+		envVarsToReturn = append(envVarsToReturn, b.envVars[name])
 	}
 
 	return envVarsToReturn
