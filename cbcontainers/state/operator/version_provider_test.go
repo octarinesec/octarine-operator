@@ -2,6 +2,7 @@ package operator
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -64,7 +65,38 @@ func TestGetOperatorVersionSemVer(t *testing.T) {
 		"1.2.3----RC-SNAPSHOT.12.9.1--.12":     true,
 		"1.0.0+0.build.1-rc.10000aaa-kk-0.1":   true,
 		"99999999999999999999999.999999999999999999.99999999999999999": true,
-		"1.0.0-0A.is.legal": true,
+		"1.0.0-0A.is.legal":      true,
+		"v0.0.4":                 true,
+		"v1.2.3":                 true,
+		"v10.20.30":              true,
+		"v1.1.2-prerelease+meta": true,
+		"v1.1.2+meta":            true,
+		"v1.1.2+meta-valid":      true,
+		"v1.0.0-alpha":           true,
+		"v1.0.0-beta":            true,
+		"v1.0.0-alpha.beta":      true,
+		"v1.0.0-alpha.beta.1":    true,
+		"v1.0.0-alpha.1":         true,
+		"v1.0.0-alpha0.valid":    true,
+		"v1.0.0-alpha.0valid":    true,
+		"v1.0.0-alpha-a.b-c-somethinglong+build.1-aef.1-its-okay": true,
+		"v1.0.0-rc.1+build.1":                   true,
+		"v2.0.0-rc.1+build.123":                 true,
+		"v1.2.3-beta":                           true,
+		"v10.2.3-DEV-SNAPSHOT":                  true,
+		"v1.2.3-SNAPSHOT-123":                   true,
+		"v1.0.0":                                true,
+		"v2.0.0":                                true,
+		"v1.1.7":                                true,
+		"v2.0.0+build.1848":                     true,
+		"v2.0.1-alpha.1227":                     true,
+		"v1.0.0-alpha+beta":                     true,
+		"v1.2.3----RC-SNAPSHOT.12.9.1--.12+788": true,
+		"v1.2.3----R-S.12.9.1--.12+meta":        true,
+		"v1.2.3----RC-SNAPSHOT.12.9.1--.12":     true,
+		"v1.0.0+0.build.1-rc.10000aaa-kk-0.1":   true,
+		"v99999999999999999999999.999999999999999999.99999999999999999": true,
+		"v1.0.0-0A.is.legal": true,
 
 		"1":                   false,
 		"1.2":                 false,
@@ -122,7 +154,7 @@ func testSemVer(t *testing.T, version string, isSemVer bool) {
 
 	if isSemVer {
 		require.NoError(t, err)
-		require.Equal(t, version, v)
+		require.Equal(t, strings.TrimPrefix(version, "v"), v)
 	} else {
 		require.Error(t, err)
 		require.Equal(t, "", v)
