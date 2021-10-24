@@ -3,7 +3,6 @@ package common
 import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
-	"sort"
 	"strconv"
 
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
@@ -68,7 +67,7 @@ func (b *EnvVarBuilder) WithEnvVarFromResource(envName, containerName, resourceP
 			ResourceFieldRef: &coreV1.ResourceFieldSelector{
 				ContainerName: containerName,
 				Resource:      resourcePath,
-				Divisor:       resource.Quantity{Format: resource.DecimalExponent},
+				Divisor:       resource.Quantity{Format: resource.DecimalSI},
 			},
 		},
 	}
@@ -125,7 +124,15 @@ func (b *EnvVarBuilder) IsEqual(actualEnv []coreV1.EnvVar) bool {
 
 	for _, actualEnvVar := range actualEnv {
 		desiredEnvVar, ok := b.envVars[actualEnvVar.Name]
-		if !ok || !reflect.DeepEqual(actualEnvVar, desiredEnvVar) {
+		if !ok {
+			return false
+		}
+
+		if desiredEnvVar.ValueFrom != nil && desiredEnvVar.ValueFrom.ResourceFieldRef != nil {
+			if !b.isResourceFieldRefEquals(desiredEnvVar.ValueFrom.ResourceFieldRef, actualEnvVar.ValueFrom.ResourceFieldRef) {
+				return false
+			}
+		} else if!reflect.DeepEqual(actualEnvVar, desiredEnvVar) {
 			return false
 		}
 	}
@@ -133,18 +140,21 @@ func (b *EnvVarBuilder) IsEqual(actualEnv []coreV1.EnvVar) bool {
 	return true
 }
 
-func (b *EnvVarBuilder) Build() []coreV1.EnvVar {
-	envVarsToReturn := make([]coreV1.EnvVar, 0, len(b.envVars))
-	envVarNames := make([]string, 0)
-
-	for name := range b.envVars {
-		envVarNames = append(envVarNames, name)
+func (b *EnvVarBuilder) isResourceFieldRefEquals(desiredResourceFieldRef, actualResourceFieldRef *coreV1.ResourceFieldSelector)  bool{
+	if desiredResourceFieldRef.ContainerName != actualResourceFieldRef.ContainerName {
+		return false
+	}
+	if desiredResourceFieldRef.Resource != actualResourceFieldRef.Resource  {
+		return false
 	}
 
-	sort.Strings(envVarNames)
+	return true
+}
 
-	for _, name := range envVarNames {
-		envVarsToReturn = append(envVarsToReturn, b.envVars[name])
+func (b *EnvVarBuilder) Build() []coreV1.EnvVar {
+	envVarsToReturn := make([]coreV1.EnvVar, 0, len(b.envVars))
+	for _, desiredEnvVar := range b.envVars {
+		envVarsToReturn = append(envVarsToReturn, desiredEnvVar)
 	}
 
 	return envVarsToReturn
