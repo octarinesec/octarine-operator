@@ -111,7 +111,7 @@ rules:
 - apiGroups:
   - policy
   resourceNames:
-  - manager-psp
+  - cbcontainers-manager-psp
   resources:
   - podsecuritypolicies
   verbs:
