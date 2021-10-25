@@ -17,18 +17,22 @@ The Carbon Black Cloud Container Operator utilizes the operator-framework to cre
 ### Prerequisites
 Kubernetes 1.13+ is supported.
 
-By default, the operator utilizes CustomResourceDefinitions v1, which requires Kubernetes 1.16+.
-Deploying an operator with CustomResourceDefinitions v1beta1 (deprecated in Kubernetes 1.16, removed in Kubernetes 1.22) can be done - see the relevant section below.
+### From script:
+```
+export OPERATOR_VERSION=v4.0.0
+export OPERATOR_SCRIPT_URL=https://setup.containers.carbonblack.io/operator-$OPERATOR_VERSION-apply.sh
+curl -s $OPERATOR_SCRIPT_URL | bash
+```
 
-### From Link:
-```
-curl -s https://setup.dev.containers.carbonblack.io/operator-{OEPRATOR_VERSION}-apply.sh | bash
-```
-{OEPRATOR_VERSION} is of the format "v{VERSION}"
+{OPERATOR_VERSION} is of the format "v{VERSION}"
+
 Versions list: [Releases](https://github.com/octarinesec/octarine-operator/releases)
 
 ### From Source Code
-Clone the git project and deploy the operator from the source code:
+Clone the git project and deploy the operator from the source code
+
+By default, the operator utilizes CustomResourceDefinitions v1, which requires Kubernetes 1.16+.
+Deploying an operator with CustomResourceDefinitions v1beta1 (deprecated in Kubernetes 1.16, removed in Kubernetes 1.22) can be done - see the relevant section below.
 
 #### Create the operator image
 ```
@@ -61,7 +65,7 @@ The operator implements controllers for the Carbon Black Container custom resour
 #### 2.1 Apply the Carbon Black Container Agent CR
 <u>cbcontainersagents.operator.containers.carbonblack.io</u>
 
-This is the CR you'll need to deploy in order to signal the operator to deploy the data plane components.
+This is the CR you'll need to deploy in order to trigger the operator to deploy the data plane components.
 
 ```sh
 apiVersion: operator.containers.carbonblack.io/v1
@@ -74,8 +78,7 @@ spec:
   version: {AGENT_VERSION}
   gateways:
     apiGateway:
-      host: defense-dev01.cbdtest.io
-      adapter: containers
+      host: {API_HOST}
     coreEventsGateway:
       host: {CORE_EVENTS_HOST}
     hardeningEventsGateway:
