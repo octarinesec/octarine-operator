@@ -135,6 +135,7 @@ func (obj *ImageScanningReporterDeploymentK8sObject) mutateContainer(container *
 func (obj *ImageScanningReporterDeploymentK8sObject) mutateImageScanningReporterEnvVars(container *coreV1.Container, imageScanningReporterSpec *cbcontainersv1.CBContainersImageScanningReporterSpec, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec) {
 	customEnvs := []coreV1.EnvVar{
 		{Name: "IMAGE_SCANNING_REPORTER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", imageScanningReporterSpec.Prometheus.Port)},
+		{Name: "IMAGE_SCANNING_REPORTER_PROVES_PORT", Value: fmt.Sprintf("%d", imageScanningReporterSpec.Probes.Port)},
 		{Name: "GIN_MODE", Value: "release"},
 	}
 
