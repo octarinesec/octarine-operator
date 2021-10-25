@@ -7,7 +7,7 @@ The operator implements controllers for the Carbon Black Container custom resour
 ### 1. Carbon Black Container Agent CR
 <u>cbcontainersagents.operator.containers.carbonblack.io</u>
 
-This is the CR you'll need to deploy in order to signal the operator to deploy the data plane components.
+This is the CR you'll need to deploy in order to trigger the operator to deploy the data plane components.
 
 ### Required parameters
 
