@@ -23,7 +23,7 @@ const (
 
 var (
 	ImageScanningReporterAllowPrivilegeEscalation       = false
-	ImageScanningReporterReadOnlyRootFilesystem         = true
+	ImageScanningReporterReadOnlyRootFilesystem         = false
 	ImageScanningReporterRunAsUser                int64 = 0
 	ImageScanningReporterCapabilitiesToAdd              = []coreV1.Capability{"NET_BIND_SERVICE"}
 	ImageScanningReporterCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
