@@ -492,7 +492,7 @@ spec:
                                 memory: 4Gi
                               requests:
                                 cpu: 30m
-                                memory: 64Mi
+                                memory: 256Mi
                             description: ResourceRequirements describes the compute
                               resource requirements.
                             properties:
