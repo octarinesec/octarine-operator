@@ -29,6 +29,7 @@ const (
 	desiredConnectionTimeoutSeconds = 60
 	containerdRuntimeEndpoint       = "/var/run/containerd/containerd.sock"
 	dockerRuntimeEndpoint           = "/var/run/dockershim.sock"
+	dockerSock                      = "/var/run/docker.sock"
 	crioRuntimeEndpoint             = "/var/run/crio/crio.sock"
 )
 
@@ -41,6 +42,7 @@ var (
 		"containerd": containerdRuntimeEndpoint,
 		"docker":     dockerRuntimeEndpoint,
 		"crio":       crioRuntimeEndpoint,
+		"dockersock": dockerSock,
 	}
 )
 
