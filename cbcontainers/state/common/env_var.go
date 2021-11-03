@@ -76,6 +76,21 @@ func (b *EnvVarBuilder) WithEnvVarFromResource(envName, containerName, resourceP
 	return b
 }
 
+func (b *EnvVarBuilder) WithEnvVarFromField(envName, fieldPath, apiVersion string) *EnvVarBuilder {
+	envVar := coreV1.EnvVar{
+		Name: envName,
+		ValueFrom: &coreV1.EnvVarSource{
+			FieldRef: &coreV1.ObjectFieldSelector{
+				FieldPath:  fieldPath,
+				APIVersion: apiVersion,
+			},
+		},
+	}
+	b.envVars[envName] = envVar
+
+	return b
+}
+
 func (b *EnvVarBuilder) WithEnvVarFromSecret(envName, accessKeySecretName string) *EnvVarBuilder {
 	envVar := coreV1.EnvVar{
 		Name: envName,
@@ -132,7 +147,7 @@ func (b *EnvVarBuilder) IsEqual(actualEnv []coreV1.EnvVar) bool {
 			if !b.isResourceFieldRefEquals(desiredEnvVar.ValueFrom.ResourceFieldRef, actualEnvVar.ValueFrom.ResourceFieldRef) {
 				return false
 			}
-		} else if!reflect.DeepEqual(actualEnvVar, desiredEnvVar) {
+		} else if !reflect.DeepEqual(actualEnvVar, desiredEnvVar) {
 			return false
 		}
 	}
@@ -140,11 +155,11 @@ func (b *EnvVarBuilder) IsEqual(actualEnv []coreV1.EnvVar) bool {
 	return true
 }
 
-func (b *EnvVarBuilder) isResourceFieldRefEquals(desiredResourceFieldRef, actualResourceFieldRef *coreV1.ResourceFieldSelector)  bool{
+func (b *EnvVarBuilder) isResourceFieldRefEquals(desiredResourceFieldRef, actualResourceFieldRef *coreV1.ResourceFieldSelector) bool {
 	if desiredResourceFieldRef.ContainerName != actualResourceFieldRef.ContainerName {
 		return false
 	}
-	if desiredResourceFieldRef.Resource != actualResourceFieldRef.Resource  {
+	if desiredResourceFieldRef.Resource != actualResourceFieldRef.Resource {
 		return false
 	}
 
