@@ -304,6 +304,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 		WithCustom(customEnvs...).
 		WithEnvVarFromResource("CLUSTER_SCANNER_LIMITS_MEMORY", ClusterScanningName, "limits.memory").
 		WithEnvVarFromResource("CLUSTER_SCANNER_REQUESTS_MEMORY", ClusterScanningName, "requests.memory").
+		WithEnvVarFromField("CLUSTER_SCANNER_NODE_NAME", "spec.nodeName", "v1").
 		WithSpec(clusterScannerSpec.Env).
 		WithGatewayTLS()
 
