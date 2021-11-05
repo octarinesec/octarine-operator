@@ -19,6 +19,13 @@ spec:
         ports:
         - containerPort: 8443
           name: https
+        resources:
+          limits:
+            cpu: 100m
+            memory: 64Mi
+          requests:
+            cpu: 20m
+            memory: 16Mi
       - name: manager
         args:
         - "--health-probe-bind-address=:8081"
