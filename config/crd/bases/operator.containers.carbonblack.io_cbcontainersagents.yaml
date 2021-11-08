@@ -417,7 +417,7 @@ spec:
                         default: true
                         type: boolean
                       internalGrpcPort:
-                        default: 443
+                        default: 8080
                         format: int32
                         type: integer
                       resolver:
