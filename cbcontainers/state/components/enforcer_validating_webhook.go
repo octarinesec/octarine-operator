@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	WebhookPath          = "/validate"
+	WebhookPath = "/validate"
 	// WebhookMatchPolicy : This value's default changes across versions so we want to ensure consistency by setting it explicitly
 	WebhookMatchPolicy = adapters.MatchPolicyEquivalent
 
