@@ -23,6 +23,7 @@ var (
 	StateReporterAllowPrivilegeEscalation       = false
 	StateReporterReadOnlyRootFilesystem         = true
 	StateReporterRunAsUser                int64 = 1500
+	StateReporterRunAsNonRoot                   = true
 	StateReporterCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
 )
 
@@ -121,6 +122,7 @@ func (obj *StateReporterDeploymentK8sObject) mutateSecurityContext(container *co
 
 	container.SecurityContext.AllowPrivilegeEscalation = &StateReporterAllowPrivilegeEscalation
 	container.SecurityContext.ReadOnlyRootFilesystem = &StateReporterReadOnlyRootFilesystem
+	container.SecurityContext.RunAsNonRoot = &StateReporterRunAsNonRoot
 	container.SecurityContext.RunAsUser = &StateReporterRunAsUser
 	container.SecurityContext.Capabilities = &coreV1.Capabilities{
 		Drop: StateReporterCapabilitiesToDrop,
