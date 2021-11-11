@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	WebhookPath          = "/validate"
+	WebhookPath = "/validate"
 	// WebhookMatchPolicy : This value's default changes across versions so we want to ensure consistency by setting it explicitly
 	WebhookMatchPolicy = adapters.MatchPolicyEquivalent
 
@@ -189,7 +189,6 @@ func (obj *EnforcerValidatingWebhookK8sObject) getResourcesList() []string {
 	return []string{
 		"pods/portforward",
 		"pods/exec",
-		"namespaces",
 		"pods",
 		"replicasets",
 		"services",
@@ -235,7 +234,7 @@ func (obj *EnforcerValidatingWebhookK8sObject) mutateNamespacesWebhooksRules(web
 		rules = make([]adapters.AdmissionRuleAdapter, 1)
 	}
 
-	rules[0].Operations = []string{adapters.OperationCreate, adapters.OperationUpdate, adapters.OperationConnect}
+	rules[0].Operations = []string{adapters.OperationAll}
 	rules[0].APIVersions = []string{"*"}
 	rules[0].APIGroups = []string{"*"}
 	rules[0].Resources = []string{"namespaces"}
