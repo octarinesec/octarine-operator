@@ -34,7 +34,7 @@ type CBContainersClusterScannerAgentSpec struct {
 	Env map[string]string `json:"env,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/cluster-scanner"}
 	Image CBContainersImageSpec `json:"image,omitempty"`
-	// +kubebuilder:default:={requests: {memory: "256Mi", cpu: "30m"}, limits: {memory: "4Gi", cpu: "500m"}}
+	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "4Gi", cpu: "2000m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes CBContainersFileProbesSpec `json:"probes,omitempty"`
