@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	DaemonSetName       = "cbcontainers-node-agent"
-	RuntimeSensorName   = "cbcontainers-runtime"
-	ClusterScanningName = "cbcontainers-cluster-scanner"
-	daemonSetLabelKey   = "app.kubernetes.io/name"
+	DaemonSetName                = "cbcontainers-node-agent"
+	RuntimeContainerName         = "cbcontainers-runtime"
+	ClusterScanningContainerName = "cbcontainers-cluster-scanner"
+	daemonSetLabelKey            = "app.kubernetes.io/name"
 
 	runtimeSensorVerbosityFlag = "-v"
 	runtimeSensorRunCommand    = "/run_sensor.sh"
@@ -175,11 +175,11 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(
 	containers := make([]coreV1.Container, 0, 2)
 
 	if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
-		containers = append(containers, coreV1.Container{Name: RuntimeSensorName})
+		containers = append(containers, coreV1.Container{Name: RuntimeContainerName})
 	}
 
 	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
-		containers = append(containers, coreV1.Container{Name: ClusterScanningName})
+		containers = append(containers, coreV1.Container{Name: ClusterScanningContainerName})
 	}
 
 	if len(templatePodSpec.Containers) != len(containers) || obj.componentsWereSwitched(agentSpec, templatePodSpec) {
@@ -188,13 +188,13 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(
 
 	if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
 		obj.mutateRuntimeContainer(
-			&templatePodSpec.Containers[obj.findContainerLocationByName(templatePodSpec.Containers, RuntimeSensorName)],
+			&templatePodSpec.Containers[obj.findContainerLocationByName(templatePodSpec.Containers, RuntimeContainerName)],
 			&agentSpec.Components.RuntimeProtection.Sensor, version, desiredGRPCPortValue)
 	}
 
 	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
 		obj.mutateClusterScannerContainer(
-			&templatePodSpec.Containers[obj.findContainerLocationByName(templatePodSpec.Containers, ClusterScanningName)],
+			&templatePodSpec.Containers[obj.findContainerLocationByName(templatePodSpec.Containers, ClusterScanningContainerName)],
 			&agentSpec.Components.ClusterScanning.ClusterScannerAgent, version, accessTokenSecretName,
 			&agentSpec.Gateways.HardeningEventsGateway)
 	}
@@ -207,11 +207,11 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(
 func (obj *SensorDaemonSetK8sObject) componentsWereSwitched(agentSpec *cbContainersV1.CBContainersAgentSpec, templatePodSpec *coreV1.PodSpec) bool {
 	if len(templatePodSpec.Containers) == 1 {
 		if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
-			return templatePodSpec.Containers[0].Name != RuntimeSensorName
+			return templatePodSpec.Containers[0].Name != RuntimeContainerName
 		}
 
 		if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
-			return templatePodSpec.Containers[0].Name != ClusterScanningName
+			return templatePodSpec.Containers[0].Name != ClusterScanningContainerName
 		}
 	}
 
@@ -234,7 +234,7 @@ func (obj *SensorDaemonSetK8sObject) mutateRuntimeContainer(
 	version string,
 	desiredGRPCPortValue int32) {
 
-	container.Name = RuntimeSensorName
+	container.Name = RuntimeContainerName
 	container.Resources = sensorSpec.Resources
 	container.Args = []string{runtimeSensorVerbosityFlag, fmt.Sprintf("%d", *sensorSpec.VerbosityLevel)}
 	container.Command = []string{runtimeSensorRunCommand}
@@ -277,7 +277,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(
 	version string,
 	accessTokenSecretName string,
 	eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec) {
-	container.Name = ClusterScanningName
+	container.Name = ClusterScanningContainerName
 	container.Resources = clusterScannerSpec.Resources
 	commonState.MutateImage(container, clusterScannerSpec.Image, version)
 	commonState.MutateContainerFileProbes(container, clusterScannerSpec.Probes)
@@ -302,8 +302,8 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 		WithCommonDataPlane(accessTokenSecretName).
 		WithEventsGateway(eventsGatewaySpec).
 		WithCustom(customEnvs...).
-		WithEnvVarFromResource("CLUSTER_SCANNER_LIMITS_MEMORY", ClusterScanningName, "limits.memory").
-		WithEnvVarFromResource("CLUSTER_SCANNER_REQUESTS_MEMORY", ClusterScanningName, "requests.memory").
+		WithEnvVarFromResource("CLUSTER_SCANNER_LIMITS_MEMORY", ClusterScanningContainerName, "limits.memory").
+		WithEnvVarFromResource("CLUSTER_SCANNER_REQUESTS_MEMORY", ClusterScanningContainerName, "requests.memory").
 		WithEnvVarFromField("CLUSTER_SCANNER_NODE_NAME", "spec.nodeName", "v1").
 		WithSpec(clusterScannerSpec.Env).
 		WithGatewayTLS()
