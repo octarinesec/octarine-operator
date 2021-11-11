@@ -4,7 +4,7 @@ import cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 
 func (r *CBContainersAgentController) setClusterScanningComponentsDefaults(clusterScanning *cbcontainersv1.CBContainersClusterScanningSpec) error {
 	if clusterScanning.Enabled == nil {
-		clusterScanning.Enabled = &falseRef
+		clusterScanning.Enabled = &trueRef
 	}
 
 	if !(*clusterScanning.Enabled) {

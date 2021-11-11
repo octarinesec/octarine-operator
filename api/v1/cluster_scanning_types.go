@@ -44,7 +44,7 @@ type CBContainersClusterScannerAgentSpec struct {
 
 // CBContainersClusterScanningSpec defines the desired state of CBContainersClusterScanning
 type CBContainersClusterScanningSpec struct {
-	// +kubebuilder:default:=false
+	// +kubebuilder:default:=true
 	Enabled *bool `json:"enabled,omitempty"`
 	// +kubebuilder:default:=<>
 	ImageScanningReporter CBContainersImageScanningReporterSpec `json:"imageScanningReporter,omitempty"`
