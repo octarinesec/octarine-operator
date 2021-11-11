@@ -20,6 +20,7 @@ rules:
 - apiGroups:
   - admissionregistration.k8s.io
   resources:
+  - mutatingwebhookconfigurations
   - validatingwebhookconfigurations
   verbs:
   - '*'
@@ -107,6 +108,14 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - policy
+  resourceNames:
+  - cbcontainers-manager-psp
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
 - apiGroups:
   - scheduling.k8s.io
   resources:

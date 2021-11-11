@@ -78,9 +78,10 @@ func (r *CBContainersAgentController) getContainersAgentObject(ctx context.Conte
 // +kubebuilder:rbac:groups=core,resources={configmaps,secrets},verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=scheduling.k8s.io,resources=priorityclasses,verbs=*
 // +kubebuilder:rbac:groups={apps,core},resources={deployments,services,daemonsets},verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=validatingwebhookconfigurations,verbs=*
+// +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources={validatingwebhookconfigurations,mutatingwebhookconfigurations},verbs=*
 // +kubebuilder:rbac:groups={rbac.authorization.k8s.io,networking.k8s.io,apiextensions.k8s.io,extensions,rbac,batch,apps,core},resources={namespaces,clusterrolebindings,services,networkpolicies,ingresses,rolebindings,cronjobs,jobs,replicationcontrollers,statefulsets,daemonsets,deployments,replicasets,pods,nodes,customresourcedefinitions},verbs=get;list;watch
 // +kubebuilder:rbac:groups={discovery.k8s.io,""},resources={services,endpoints,endpointslices},verbs=get;list;watch
+// +kubebuilder:rbac:groups={policy},resources={podsecuritypolicies},verbs=use,resourceNames={cbcontainers-manager-psp}
 
 func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("\n\n")

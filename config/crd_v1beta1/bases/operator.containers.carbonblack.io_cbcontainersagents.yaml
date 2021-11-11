@@ -52,10 +52,17 @@ spec:
                           additionalProperties:
                             type: string
                           type: object
+                        enableEnforcementFeature:
+                          type: boolean
                         env:
                           additionalProperties:
                             type: string
                           type: object
+                        failurePolicy:
+                          enum:
+                          - Ignore
+                          - Fail
+                          type: string
                         image:
                           properties:
                             pullPolicy:

@@ -17,16 +17,29 @@ The Carbon Black Cloud Container Operator utilizes the operator-framework to cre
 ### Prerequisites
 Kubernetes 1.13+ is supported.
 
+### From script:
+```
+export OPERATOR_VERSION=v4.0.0
+export OPERATOR_SCRIPT_URL=https://setup.containers.carbonblack.io/operator-$OPERATOR_VERSION-apply.sh
+curl -s $OPERATOR_SCRIPT_URL | bash
+```
+
+{OPERATOR_VERSION} is of the format "v{VERSION}"
+
+Versions list: [Releases](https://github.com/octarinesec/octarine-operator/releases)
+
+### From Source Code
+Clone the git project and deploy the operator from the source code
+
 By default, the operator utilizes CustomResourceDefinitions v1, which requires Kubernetes 1.16+.
 Deploying an operator with CustomResourceDefinitions v1beta1 (deprecated in Kubernetes 1.16, removed in Kubernetes 1.22) can be done - see the relevant section below.
 
-### Create the operator image
+#### Create the operator image
 ```
 make docker-build docker-push IMG={IMAGE_NAME}
 ```
-* or use the latest official image: ```cbartifactory/octarine-operator:3.0.1```
 
-### Deploy the operator resources
+#### Deploy the operator resources
 ```
 make deploy IMG={IMAGE_NAME}
 ```
@@ -43,59 +56,39 @@ kubectl create secret generic cbcontainers-access-token \
 {API_Secret_Key}/{API_ID}
 ```
 
-### 2. Apply the Carbon Black Container Custom Resources
+### 2. Apply the Carbon Black Container Agent Custom Resource
 
 The operator implements controllers for the Carbon Black Container custom resources definitions
 
 [Full Custom Resources Definitions Documentation](docs/crds.md)
 
-#### 2.1 Apply the Carbon Black Container Cluster CR
-<u>cbcontainersclusters.operator.containers.carbonblack.io</u>
+#### 2.1 Apply the Carbon Black Container Agent CR
+<u>cbcontainersagents.operator.containers.carbonblack.io</u>
 
-This is the first CR you'll need to deploy in order to initialize the data plane components.
-This will create the data plane Configmap, Registry Secret and PriorityClass.
+This is the CR you'll need to deploy in order to trigger the operator to deploy the data plane components.
 
 ```sh
 apiVersion: operator.containers.carbonblack.io/v1
-kind: CBContainersCluster
+kind: CBContainersAgent
 metadata:
-  name: cbcontainerscluster-sample
+  name: cbcontainers-agent
 spec:
   account: {ORG_KEY}
-  apiGatewaySpec:
-    host: {API_HOST}
   clusterName: {CLUSTER_GROUP}:{CLUSTER_NAME}
-  eventsGatewaySpec:
-    host: {EVENTS_HOST}
+  version: {AGENT_VERSION}
+  gateways:
+    apiGateway:
+      host: {API_HOST}
+    coreEventsGateway:
+      host: {CORE_EVENTS_HOST}
+    hardeningEventsGateway:
+      host: {HARDENING_EVENTS_HOST}
+    runtimeEventsGateway:
+      host: {RUNTIME_EVENTS_HOST}
 ```
 
 * notice that without applying the api token secret, the operator will return the error:
 `couldn't find access token secret k8s object`
-
-#### 2.2 Apply the Carbon Black Container Hardening CR
-<u>cbcontainershardenings.operator.containers.carbonblack.io</u>
-
-This is the CR you'll need to deploy in order to install the Carbon Black Container Hardening feature components.
-This will install the Hardening Enforcer components that are responsible for enforcing the configured policies and
-the State Reporter components that are responsible for reporting the cluster state.
-
-* Notice that without the first CR, the Hardening components won't be able to work. 
-
-```yaml
-apiVersion: operator.containers.carbonblack.io/v1
-kind: CBContainersHardening
-metadata:
-  name: cbcontainershardening-sample
-spec:
-  version: {HARDENING_VERSION}
-  eventsGatewaySpec:
-    host: {EVENTS_HOST}
-```
-
-#### 2.3 Apply the Carbon Black Container Runtime CR
-<u>cbcontainersruntimes.operator.containers.carbonblack.io</u>
-
-TODO
 
 ### Uninstalling the Carbon Black Cloud Container Operator
 ```sh
@@ -170,16 +163,18 @@ update the Hardening CR using the proxy environment variables:
 
 ```yaml
 spec:
-  enforcerSpec:
-    env:
-      HTTP_PROXY: "<proxy-url>"
-      HTTPS_PROXY: "<proxy-url>"
-      NO_PROXY: "<kubernetes-api-server-ip>/<range>"
-  stateReporterSpec:
-    env:
-      HTTP_PROXY: "<proxy-url>"
-      HTTPS_PROXY: "<proxy-url>"
-      NO_PROXY: "<kubernetes-api-server-ip>/<range>"
+  components:
+    basic:
+      enforcer:
+        env:
+          HTTP_PROXY: "<proxy-url>"
+          HTTPS_PROXY: "<proxy-url>"
+          NO_PROXY: "<kubernetes-api-server-ip>/<range>"
+      stateReporter:
+        env:
+          HTTP_PROXY: "<proxy-url>"
+          HTTPS_PROXY: "<proxy-url>"
+          NO_PROXY: "<kubernetes-api-server-ip>/<range>"
 ```
 
 It is very important to configure the NO_PROXY environment variable with the value of the Kubernetes API server IP.

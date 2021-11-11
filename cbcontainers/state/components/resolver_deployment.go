@@ -24,9 +24,9 @@ const (
 var (
 	resolverAllowPrivilegeEscalation       = false
 	resolverReadOnlyRootFilesystem         = true
-	resolverRunAsUser                int64 = 0
+	resolverRunAsUser                int64 = 1500
+	resolverRunAsNonRoot                   = true
 	resolverCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
-	resolverCapabilitiesToAdd              = []coreV1.Capability{"NET_BIND_SERVICE"}
 )
 
 type ResolverDeploymentK8sObject struct{}
@@ -190,10 +190,10 @@ func (obj *ResolverDeploymentK8sObject) mutateSecurityContext(container *coreV1.
 
 	container.SecurityContext.AllowPrivilegeEscalation = &resolverAllowPrivilegeEscalation
 	container.SecurityContext.ReadOnlyRootFilesystem = &resolverReadOnlyRootFilesystem
+	container.SecurityContext.RunAsNonRoot = &resolverRunAsNonRoot
 	container.SecurityContext.RunAsUser = &resolverRunAsUser
 	container.SecurityContext.Capabilities = &coreV1.Capabilities{
 		Drop: resolverCapabilitiesToDrop,
-		Add:  resolverCapabilitiesToAdd,
 	}
 }
 

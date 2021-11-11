@@ -82,6 +82,10 @@ func (r *CBContainersAgentController) setEnforcerDefaults(enforcer *cbcontainers
 		enforcer.WebhookTimeoutSeconds = 5
 	}
 
+	if enforcer.FailurePolicy == "" {
+		enforcer.FailurePolicy = "Ignore"
+	}
+
 	return nil
 }
 

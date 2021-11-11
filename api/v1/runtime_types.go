@@ -54,6 +54,6 @@ type CBContainersRuntimeProtectionSpec struct {
 	Resolver CBContainersRuntimeResolverSpec `json:"resolver,omitempty"`
 	// +kubebuilder:default:=<>
 	Sensor CBContainersRuntimeSensorSpec `json:"sensor,omitempty"`
-	// +kubebuilder:default:=443
+	// +kubebuilder:default:=8080
 	InternalGrpcPort int32 `json:"internalGrpcPort,omitempty"`
 }

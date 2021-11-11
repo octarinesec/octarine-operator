@@ -57,11 +57,19 @@ spec:
                               type: string
                             default: {}
                             type: object
+                          enableEnforcementFeature:
+                            type: boolean
                           env:
                             additionalProperties:
                               type: string
                             default: {}
                             type: object
+                          failurePolicy:
+                            default: Ignore
+                            enum:
+                            - Ignore
+                            - Fail
+                            type: string
                           image:
                             default:
                               repository: cbartifactory/guardrails-enforcer
@@ -661,7 +669,7 @@ spec:
                         default: true
                         type: boolean
                       internalGrpcPort:
-                        default: 443
+                        default: 8080
                         format: int32
                         type: integer
                       resolver:
