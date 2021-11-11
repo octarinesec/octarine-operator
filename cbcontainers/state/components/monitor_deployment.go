@@ -23,6 +23,7 @@ var (
 	MonitorAllowPrivilegeEscalation       = false
 	MonitorReadOnlyRootFilesystem         = true
 	MonitorRunAsUser                int64 = 1500
+	MonitorRunAsNonRoot                   = true
 	MonitorCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
 )
 
@@ -121,6 +122,7 @@ func (obj *MonitorDeploymentK8sObject) mutateSecurityContext(container *coreV1.C
 
 	container.SecurityContext.AllowPrivilegeEscalation = &MonitorAllowPrivilegeEscalation
 	container.SecurityContext.ReadOnlyRootFilesystem = &MonitorReadOnlyRootFilesystem
+	container.SecurityContext.RunAsNonRoot = &MonitorRunAsNonRoot
 	container.SecurityContext.RunAsUser = &MonitorRunAsUser
 	container.SecurityContext.Capabilities = &coreV1.Capabilities{
 		Drop: MonitorCapabilitiesToDrop,

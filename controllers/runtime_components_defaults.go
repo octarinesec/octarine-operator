@@ -20,7 +20,7 @@ func (r *CBContainersAgentController) setRuntimeProtectionComponentsDefaults(run
 	}
 
 	if runtime.InternalGrpcPort == 0 {
-		runtime.InternalGrpcPort = 443
+		runtime.InternalGrpcPort = 8080
 	}
 
 	return nil

@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	MutatingWebhookPath          = "/mutate"
+	MutatingWebhookPath = "/mutate"
 	// This value's default changes across versions so we want to ensure consistency by setting it explicitly
 	MutatingWebhookMatchPolicy = adapters.MatchPolicyEquivalent
 

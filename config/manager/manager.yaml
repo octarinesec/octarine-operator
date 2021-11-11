@@ -23,8 +23,6 @@ spec:
       labels:
         control-plane: operator
     spec:
-      securityContext:
-        runAsUser: 65532
       containers:
       - command:
         - /manager
@@ -33,6 +31,12 @@ spec:
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
+          # See below for source of this UID
+          # https://github.com/kubernetes-sigs/kubebuilder/issues/1637
+          # https://github.com/kubernetes-sigs/kubebuilder/pull/1635
+          runAsUser: 65532
+          runAsNonRoot: true
+          readOnlyRootFilesystem: true
         livenessProbe:
           httpGet:
             path: /healthz

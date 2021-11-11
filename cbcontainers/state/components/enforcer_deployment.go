@@ -17,7 +17,7 @@ const (
 	EnforcerName = "cbcontainers-hardening-enforcer"
 
 	DesiredContainerPortName  = "https"
-	DesiredContainerPortValue = 443
+	DesiredContainerPortValue = 8080
 
 	DesiredTlsSecretVolumeName          = "cert"
 	DesiredTlsSecretVolumeMountPath     = "/etc/octarine-certificates"
@@ -32,8 +32,8 @@ var (
 
 	EnforcerAllowPrivilegeEscalation       = false
 	EnforcerReadOnlyRootFilesystem         = true
-	EnforcerRunAsUser                int64 = 0
-	EnforcerCapabilitiesToAdd              = []coreV1.Capability{"NET_BIND_SERVICE"}
+	EnforcerRunAsUser                int64 = 1500
+	EnforcerRunAsNonRoot                   = true
 	EnforcerCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
 )
 
@@ -142,6 +142,7 @@ func (obj *EnforcerDeploymentK8sObject) mutateEnforcerEnvVars(container *coreV1.
 		{Name: "GUARDRAILS_ENFORCER_KEY_FILE_PATH", Value: fmt.Sprintf("%s/key", DesiredTlsSecretVolumeMountPath)},
 		{Name: "GUARDRAILS_ENFORCER_CERT_FILE_PATH", Value: fmt.Sprintf("%s/signed_cert", DesiredTlsSecretVolumeMountPath)},
 		{Name: "GUARDRAILS_ENFORCER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", enforcerSpec.Prometheus.Port)},
+		{Name: "GUARDRAILS_ENFORCER_PORT", Value: fmt.Sprintf("%d", DesiredContainerPortValue)},
 		{Name: "GIN_MODE", Value: "release"},
 	}
 
@@ -160,9 +161,9 @@ func (obj *EnforcerDeploymentK8sObject) mutateSecurityContext(container *coreV1.
 
 	container.SecurityContext.AllowPrivilegeEscalation = &EnforcerAllowPrivilegeEscalation
 	container.SecurityContext.ReadOnlyRootFilesystem = &EnforcerReadOnlyRootFilesystem
+	container.SecurityContext.RunAsNonRoot = &EnforcerRunAsNonRoot
 	container.SecurityContext.RunAsUser = &EnforcerRunAsUser
 	container.SecurityContext.Capabilities = &coreV1.Capabilities{
-		Add:  EnforcerCapabilitiesToAdd,
 		Drop: EnforcerCapabilitiesToDrop,
 	}
 }
