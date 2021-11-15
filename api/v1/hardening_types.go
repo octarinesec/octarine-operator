@@ -32,7 +32,7 @@ type CBContainersEnforcerSpec struct {
 	Env map[string]string `json:"env,omitempty"`
 	// +kubebuilder:default:=1
 	ReplicasCount *int32 `json:"replicasCount,omitempty"`
-	// +kubebuilder:default:=<>
+	// +kubebuilder:default:={port: 7071}
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/guardrails-enforcer"}
 	Image CBContainersImageSpec `json:"image,omitempty"`

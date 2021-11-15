@@ -21,7 +21,7 @@ type CBContainersRuntimeResolverSpec struct {
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
-	// +kubebuilder:default:=<>
+	// +kubebuilder:default:={port: 7071}
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 }
 
@@ -40,7 +40,7 @@ type CBContainersRuntimeSensorSpec struct {
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes CBContainersFileProbesSpec `json:"probes,omitempty"`
-	// +kubebuilder:default:={enabled:false, port: 7071}
+	// +kubebuilder:default:={port: 7071}
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 	// +kubebuilder:default:=2
 	VerbosityLevel *int `json:"verbosity_level,omitempty"`

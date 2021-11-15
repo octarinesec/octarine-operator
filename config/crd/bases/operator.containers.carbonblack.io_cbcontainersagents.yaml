@@ -133,13 +133,13 @@ spec:
                                 type: integer
                             type: object
                           prometheus:
-                            default: {}
+                            default:
+                              port: 7071
                             properties:
                               enabled:
                                 default: false
                                 type: boolean
                               port:
-                                default: 7071
                                 type: integer
                             type: object
                           replicasCount:
@@ -483,14 +483,12 @@ spec:
                             type: object
                           prometheus:
                             default:
-                              enabled: false
                               port: 7072
                             properties:
                               enabled:
                                 default: false
                                 type: boolean
                               port:
-                                default: 7071
                                 type: integer
                             type: object
                           resources:
@@ -608,13 +606,13 @@ spec:
                                 type: integer
                             type: object
                           prometheus:
-                            default: {}
+                            default:
+                              port: 7071
                             properties:
                               enabled:
                                 default: false
                                 type: boolean
                               port:
-                                default: 7071
                                 type: integer
                             type: object
                           replicasCount:
@@ -746,13 +744,13 @@ spec:
                                 type: integer
                             type: object
                           prometheus:
-                            default: {}
+                            default:
+                              port: 7071
                             properties:
                               enabled:
                                 default: false
                                 type: boolean
                               port:
-                                default: 7071
                                 type: integer
                             type: object
                           replicasCount:
@@ -864,14 +862,12 @@ spec:
                             type: object
                           prometheus:
                             default:
-                              enabled: false
                               port: 7071
                             properties:
                               enabled:
                                 default: false
                                 type: boolean
                               port:
-                                default: 7071
                                 type: integer
                             type: object
                           resources:

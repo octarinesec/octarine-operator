@@ -19,7 +19,7 @@ type CBContainersImageScanningReporterSpec struct {
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
-	// +kubebuilder:default:=<>
+	// +kubebuilder:default:={port: 7071}
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 }
 
@@ -38,7 +38,7 @@ type CBContainersClusterScannerAgentSpec struct {
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes CBContainersFileProbesSpec `json:"probes,omitempty"`
-	// +kubebuilder:default:={enabled: false, port:7072}
+	// +kubebuilder:default:={port: 7072}
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 }
 
