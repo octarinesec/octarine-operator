@@ -44,7 +44,7 @@ func (r *CBContainersAgentController) setImageScanningReporterDefaults(imageScan
 		imageScanningReporter.ReplicasCount = &defaultReplicaCount
 	}
 
-	setDefaultPrometheus(&imageScanningReporter.Prometheus)
+	setDefaultPrometheusWithPort(&imageScanningReporter.Prometheus, 7072)
 
 	setDefaultImage(&imageScanningReporter.Image, "cbartifactory/image-scanning-reporter")
 

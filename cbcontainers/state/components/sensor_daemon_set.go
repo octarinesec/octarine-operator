@@ -130,31 +130,31 @@ func (obj *SensorDaemonSetK8sObject) mutateLabels(daemonSet *appsV1.DaemonSet, a
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {
-	var prometheusEnabled bool
-	var prometheusPort int
+	prometheusEnabled := false
 
 	if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
 		runtimeSensor := agentSpec.Components.RuntimeProtection.Sensor
 		applyment.EnforceMapContains(daemonSet.ObjectMeta.Annotations, runtimeSensor.DaemonSetAnnotations)
 		applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, runtimeSensor.PodTemplateAnnotations)
-		prometheusEnabled = *runtimeSensor.Prometheus.Enabled
-		prometheusPort = runtimeSensor.Prometheus.Port
+		if *runtimeSensor.Prometheus.Enabled {
+			prometheusEnabled = true
+		}
+
 	}
 
 	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
 		clusterScanner := agentSpec.Components.ClusterScanning.ClusterScannerAgent
 		applyment.EnforceMapContains(daemonSet.ObjectMeta.Annotations, clusterScanner.DaemonSetAnnotations)
 		applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, clusterScanner.PodTemplateAnnotations)
-		if commonState.IsDisabled(agentSpec.Components.RuntimeProtection.Enabled) {
-			prometheusEnabled = *clusterScanner.Prometheus.Enabled
-			prometheusPort = clusterScanner.Prometheus.Port
+		if *clusterScanner.Prometheus.Enabled {
+			prometheusEnabled = true
 		}
 	}
-
-	applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, map[string]string{
-		"prometheus.io/scrape": fmt.Sprint(prometheusEnabled),
-		"prometheus.io/port":   fmt.Sprint(prometheusPort),
-	})
+	if prometheusEnabled {
+		applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, map[string]string{
+			"prometheus.io/scrape": fmt.Sprint(true),
+		})
+	}
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateVolumes(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {
@@ -240,6 +240,9 @@ func (obj *SensorDaemonSetK8sObject) mutateRuntimeContainer(
 	container.Command = []string{runtimeSensorRunCommand}
 	commonState.MutateImage(container, sensorSpec.Image, version)
 	commonState.MutateContainerFileProbes(container, sensorSpec.Probes)
+	if commonState.IsEnabled(sensorSpec.Prometheus.Enabled) {
+		container.Ports = []coreV1.ContainerPort{{Name: "metrics",ContainerPort: int32(sensorSpec.Prometheus.Port)}}
+	}
 	obj.mutateRuntimeEnvVars(container, sensorSpec, desiredGRPCPortValue)
 	obj.mutateSecurityContext(container)
 }
@@ -281,6 +284,9 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(
 	container.Resources = clusterScannerSpec.Resources
 	commonState.MutateImage(container, clusterScannerSpec.Image, version)
 	commonState.MutateContainerFileProbes(container, clusterScannerSpec.Probes)
+	if commonState.IsEnabled(clusterScannerSpec.Prometheus.Enabled) {
+		container.Ports = []coreV1.ContainerPort{{Name: "metrics",ContainerPort: int32(clusterScannerSpec.Prometheus.Port)}}
+	}
 	obj.mutateClusterScannerEnvVars(container, clusterScannerSpec, accessTokenSecretName, eventsGatewaySpec)
 	obj.mutateClusterScannerVolumesMounts(container)
 	obj.mutateSecurityContext(container)

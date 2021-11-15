@@ -30,7 +30,7 @@ type CBContainersRuntimeSensorSpec struct {
 	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
 	DaemonSetAnnotations map[string]string `json:"daemonSetAnnotations,omitempty"`
-	// +kubebuilder:default:={prometheus.io/scrape: "false", prometheus.io/port: "7071"}
+	// +kubebuilder:default:={prometheus.io/scrape: "false"}
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`

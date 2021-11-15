@@ -77,6 +77,16 @@ func setDefaultPrometheus(prometheusSpec *v1.CBContainersPrometheusSpec) {
 	}
 }
 
+func setDefaultPrometheusWithPort(prometheusSpec *v1.CBContainersPrometheusSpec, port int) {
+	if prometheusSpec.Enabled == nil {
+		prometheusSpec.Enabled = &falseRef
+	}
+
+	if prometheusSpec.Port == 0 {
+		prometheusSpec.Port = port
+	}
+}
+
 func setDefaultImage(imageSpec *v1.CBContainersImageSpec, imageName string) {
 	if imageSpec.Repository == "" {
 		imageSpec.Repository = imageName

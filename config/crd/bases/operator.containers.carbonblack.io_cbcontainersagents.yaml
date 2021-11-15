@@ -450,7 +450,6 @@ spec:
                             additionalProperties:
                               type: string
                             default:
-                              prometheus.io/port: "7071"
                               prometheus.io/scrape: "false"
                             type: object
                           probes:
@@ -835,7 +834,6 @@ spec:
                             additionalProperties:
                               type: string
                             default:
-                              prometheus.io/port: "7071"
                               prometheus.io/scrape: "false"
                             type: object
                           probes:
