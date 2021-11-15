@@ -68,13 +68,7 @@ func setDefaultFileProbes(probesSpec *v1.CBContainersFileProbesSpec) {
 }
 
 func setDefaultPrometheus(prometheusSpec *v1.CBContainersPrometheusSpec) {
-	if prometheusSpec.Enabled == nil {
-		prometheusSpec.Enabled = &falseRef
-	}
-
-	if prometheusSpec.Port == 0 {
-		prometheusSpec.Port = 7071
-	}
+	setDefaultPrometheusWithPort(prometheusSpec, 7071)
 }
 
 func setDefaultPrometheusWithPort(prometheusSpec *v1.CBContainersPrometheusSpec, port int) {

@@ -44,7 +44,7 @@ func (r *CBContainersAgentController) setImageScanningReporterDefaults(imageScan
 		imageScanningReporter.ReplicasCount = &defaultReplicaCount
 	}
 
-	setDefaultPrometheusWithPort(&imageScanningReporter.Prometheus, 7072)
+	setDefaultPrometheus(&imageScanningReporter.Prometheus)
 
 	setDefaultImage(&imageScanningReporter.Image, "cbartifactory/image-scanning-reporter")
 
@@ -74,7 +74,7 @@ func (r *CBContainersAgentController) setClusterScannerAgentDefaults(clusterScan
 		clusterScannerAgent.Env = make(map[string]string)
 	}
 
-	setDefaultPrometheus(&clusterScannerAgent.Prometheus)
+	setDefaultPrometheusWithPort(&clusterScannerAgent.Prometheus, 7072)
 
 	setDefaultImage(&clusterScannerAgent.Image, "cbartifactory/cluster-scanner")
 

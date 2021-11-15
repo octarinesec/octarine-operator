@@ -9,7 +9,7 @@ type CBContainersRuntimeResolverSpec struct {
 	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
 	DeploymentAnnotations map[string]string `json:"deploymentAnnotations,omitempty"`
-	// +kubebuilder:default:={prometheus.io/scrape: "false", prometheus.io/port: "7071"}
+	// +kubebuilder:default:=<>
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
 	// +kubebuilder:default:=1
 	ReplicasCount *int32 `json:"replicasCount,omitempty"`
@@ -30,7 +30,7 @@ type CBContainersRuntimeSensorSpec struct {
 	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
 	DaemonSetAnnotations map[string]string `json:"daemonSetAnnotations,omitempty"`
-	// +kubebuilder:default:={prometheus.io/scrape: "false"}
+	// +kubebuilder:default:=<>
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
@@ -40,7 +40,7 @@ type CBContainersRuntimeSensorSpec struct {
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes CBContainersFileProbesSpec `json:"probes,omitempty"`
-	// +kubebuilder:default:=<>
+	// +kubebuilder:default:={enabled:false, port: 7071}
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 	// +kubebuilder:default:=2
 	VerbosityLevel *int `json:"verbosity_level,omitempty"`

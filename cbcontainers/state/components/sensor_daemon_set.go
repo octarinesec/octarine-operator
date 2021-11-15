@@ -150,6 +150,7 @@ func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonS
 			prometheusEnabled = true
 		}
 	}
+
 	if prometheusEnabled {
 		applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, map[string]string{
 			"prometheus.io/scrape": fmt.Sprint(true),

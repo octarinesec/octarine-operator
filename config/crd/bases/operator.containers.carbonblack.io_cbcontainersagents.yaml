@@ -449,8 +449,7 @@ spec:
                           podTemplateAnnotations:
                             additionalProperties:
                               type: string
-                            default:
-                              prometheus.io/scrape: "false"
+                            default: {}
                             type: object
                           probes:
                             default: {}
@@ -483,7 +482,9 @@ spec:
                                 type: integer
                             type: object
                           prometheus:
-                            default: {}
+                            default:
+                              enabled: false
+                              port: 7072
                             properties:
                               enabled:
                                 default: false
@@ -566,9 +567,7 @@ spec:
                           podTemplateAnnotations:
                             additionalProperties:
                               type: string
-                            default:
-                              prometheus.io/port: "7071"
-                              prometheus.io/scrape: "false"
+                            default: {}
                             type: object
                           probes:
                             default: {}
@@ -706,9 +705,7 @@ spec:
                           podTemplateAnnotations:
                             additionalProperties:
                               type: string
-                            default:
-                              prometheus.io/port: "7071"
-                              prometheus.io/scrape: "false"
+                            default: {}
                             type: object
                           probes:
                             default: {}
@@ -833,8 +830,7 @@ spec:
                           podTemplateAnnotations:
                             additionalProperties:
                               type: string
-                            default:
-                              prometheus.io/scrape: "false"
+                            default: {}
                             type: object
                           probes:
                             default: {}
@@ -867,7 +863,9 @@ spec:
                                 type: integer
                             type: object
                           prometheus:
-                            default: {}
+                            default:
+                              enabled: false
+                              port: 7071
                             properties:
                               enabled:
                                 default: false
