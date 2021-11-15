@@ -173,18 +173,42 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(
 	version,
 	accessTokenSecretName string,
 	desiredGRPCPortValue int32) {
-	containers := make([]coreV1.Container, 0, 2)
+
+	var runtimeContainer coreV1.Container
+	var clusterScannerContainer coreV1.Container
+
+	desiredContainers := make([]coreV1.Container, 0, 2)
+	runtimeEnabled := false
+	clusterScannerEnabled := false
+	runtimeMissing := false
+	clusterScannerMissing := false
 
 	if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
-		containers = append(containers, coreV1.Container{Name: RuntimeContainerName})
+		runtimeEnabled = true
+		if runtimeContainerLocation := obj.findContainerLocationByName(templatePodSpec.Containers, RuntimeContainerName); runtimeContainerLocation == -1 {
+			runtimeMissing = true
+			runtimeContainer = coreV1.Container{Name: RuntimeContainerName}
+		} else {
+			runtimeContainer = templatePodSpec.Containers[runtimeContainerLocation]
+		}
+
+		desiredContainers = append(desiredContainers, runtimeContainer)
 	}
 
 	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
-		containers = append(containers, coreV1.Container{Name: ClusterScanningContainerName})
+		clusterScannerEnabled = true
+		if clusterScannerContainerLocation := obj.findContainerLocationByName(templatePodSpec.Containers, ClusterScanningContainerName); clusterScannerContainerLocation == -1 {
+			clusterScannerMissing = true
+			clusterScannerContainer = coreV1.Container{Name: ClusterScanningContainerName}
+		} else {
+			clusterScannerContainer = templatePodSpec.Containers[clusterScannerContainerLocation]
+		}
+
+		desiredContainers = append(desiredContainers, clusterScannerContainer)
 	}
 
-	if len(templatePodSpec.Containers) != len(containers) || obj.componentsWereSwitched(agentSpec, templatePodSpec) {
-		templatePodSpec.Containers = containers
+	if obj.isStateChanged(len(templatePodSpec.Containers), len(desiredContainers), runtimeEnabled, clusterScannerEnabled, runtimeMissing, clusterScannerMissing) {
+		templatePodSpec.Containers = desiredContainers
 	}
 
 	if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
@@ -201,19 +225,24 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(
 	}
 }
 
-// In case one enabled feature was off, and the other was on, and they were switched (first is now on, and second off),
-// the containers count is the same (1), but the container name is wrong for the mutate containers methods, which will lead to
-// index out of range error in finding the container by name.
-// componentsWereSwitched checks if this scenario happened, and return boolean answer.
-func (obj *SensorDaemonSetK8sObject) componentsWereSwitched(agentSpec *cbContainersV1.CBContainersAgentSpec, templatePodSpec *coreV1.PodSpec) bool {
-	if len(templatePodSpec.Containers) == 1 {
-		if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
-			return templatePodSpec.Containers[0].Name != RuntimeContainerName
-		}
+func (obj *SensorDaemonSetK8sObject) isStateChanged(actualContainersLength, desiredContainersLength int, runtimeEnabled, clusterScannerEnabled, runtimeMissing, clusterScannerMissing bool) bool {
+	// the actual containers length is different then the desired containers length.
+	// test cases
+	// there are more containers then the 2 allowed
+	// there 0 containers when at least one component should be enabled
+	// the are different components amount then the desired count.
+	if actualContainersLength != desiredContainersLength {
+		return true
+	}
 
-		if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
-			return templatePodSpec.Containers[0].Name != ClusterScanningContainerName
-		}
+	// runtime enabled and container missing is actual state
+	if runtimeEnabled && runtimeMissing {
+		return true
+	}
+
+	// cluster scanner enabled and container is missing in actual state
+	if clusterScannerEnabled && clusterScannerMissing {
+		return true
 	}
 
 	return false
@@ -242,7 +271,7 @@ func (obj *SensorDaemonSetK8sObject) mutateRuntimeContainer(
 	commonState.MutateImage(container, sensorSpec.Image, version)
 	commonState.MutateContainerFileProbes(container, sensorSpec.Probes)
 	if commonState.IsEnabled(sensorSpec.Prometheus.Enabled) {
-		container.Ports = []coreV1.ContainerPort{{Name: "metrics",ContainerPort: int32(sensorSpec.Prometheus.Port)}}
+		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(sensorSpec.Prometheus.Port)}}
 	}
 	obj.mutateRuntimeEnvVars(container, sensorSpec, desiredGRPCPortValue)
 	obj.mutateSecurityContext(container)
@@ -286,7 +315,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(
 	commonState.MutateImage(container, clusterScannerSpec.Image, version)
 	commonState.MutateContainerFileProbes(container, clusterScannerSpec.Probes)
 	if commonState.IsEnabled(clusterScannerSpec.Prometheus.Enabled) {
-		container.Ports = []coreV1.ContainerPort{{Name: "metrics",ContainerPort: int32(clusterScannerSpec.Prometheus.Port)}}
+		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(clusterScannerSpec.Prometheus.Port)}}
 	}
 	obj.mutateClusterScannerEnvVars(container, clusterScannerSpec, accessTokenSecretName, eventsGatewaySpec)
 	obj.mutateClusterScannerVolumesMounts(container)
