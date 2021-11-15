@@ -496,11 +496,11 @@ spec:
                           resources:
                             default:
                               limits:
-                                cpu: 500m
+                                cpu: 2000m
                                 memory: 4Gi
                               requests:
                                 cpu: 30m
-                                memory: 256Mi
+                                memory: 64Mi
                             description: ResourceRequirements describes the compute
                               resource requirements.
                             properties:
@@ -530,7 +530,7 @@ spec:
                             type: object
                         type: object
                       enabled:
-                        default: false
+                        default: true
                         type: boolean
                       imageScanningReporter:
                         default: {}
