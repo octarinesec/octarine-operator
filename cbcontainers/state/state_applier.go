@@ -21,44 +21,44 @@ type AgentComponentApplier interface {
 }
 
 type StateApplier struct {
-	desiredConfigMap          *components.ConfigurationK8sObject
-	desiredRegistrySecret     *components.RegistrySecretK8sObject
-	desiredPriorityClass      *components.PriorityClassK8sObject
-	desiredMonitorDeployment  *components.MonitorDeploymentK8sObject
-	enforcerTlsSecret         *components.EnforcerTlsK8sObject
-	enforcerDeployment        *components.EnforcerDeploymentK8sObject
-	enforcerService           *components.EnforcerServiceK8sObject
-	enforcerValidatingWebhook *components.EnforcerValidatingWebhookK8sObject
-	enforcerMutatingWebhook   *components.EnforcerMutatingWebhookK8sObject
-	stateReporterDeployment   *components.StateReporterDeploymentK8sObject
-	resolverDeployment        *components.ResolverDeploymentK8sObject
-	resolverService           *components.ResolverServiceK8sObject
-	sensorDaemonSet           *components.SensorDaemonSetK8sObject
+	desiredConfigMap                *components.ConfigurationK8sObject
+	desiredRegistrySecret           *components.RegistrySecretK8sObject
+	desiredPriorityClass            *components.PriorityClassK8sObject
+	desiredMonitorDeployment        *components.MonitorDeploymentK8sObject
+	enforcerTlsSecret               *components.EnforcerTlsK8sObject
+	enforcerDeployment              *components.EnforcerDeploymentK8sObject
+	enforcerService                 *components.EnforcerServiceK8sObject
+	enforcerValidatingWebhook       *components.EnforcerValidatingWebhookK8sObject
+	enforcerMutatingWebhook         *components.EnforcerMutatingWebhookK8sObject
+	stateReporterDeployment         *components.StateReporterDeploymentK8sObject
+	resolverDeployment              *components.ResolverDeploymentK8sObject
+	resolverService                 *components.ResolverServiceK8sObject
+	sensorDaemonSet                 *components.SensorDaemonSetK8sObject
 	imageScanningReporterDeployment *components.ImageScanningReporterDeploymentK8sObject
 	imageScanningReporterService    *components.ImageScanningReporterServiceK8sObject
-	applier                   AgentComponentApplier
-	log                       logr.Logger
+	applier                         AgentComponentApplier
+	log                             logr.Logger
 }
 
 func NewStateApplier(agentComponentApplier AgentComponentApplier, k8sVersion string, tlsSecretsValuesCreator components.TlsSecretsValuesCreator, log logr.Logger) *StateApplier {
 	return &StateApplier{
-		desiredConfigMap:          components.NewConfigurationK8sObject(),
-		desiredRegistrySecret:     components.NewRegistrySecretK8sObject(),
-		desiredPriorityClass:      components.NewPriorityClassK8sObject(k8sVersion),
-		desiredMonitorDeployment:  components.NewMonitorDeploymentK8sObject(),
-		enforcerTlsSecret:         components.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
-		enforcerDeployment:        components.NewEnforcerDeploymentK8sObject(),
-		enforcerService:           components.NewEnforcerServiceK8sObject(),
-		enforcerValidatingWebhook: components.NewEnforcerValidatingWebhookK8sObject(k8sVersion),
-		enforcerMutatingWebhook:   components.NewEnforcerMutatingWebhookK8sObject(k8sVersion),
-		stateReporterDeployment:   components.NewStateReporterDeploymentK8sObject(),
-		resolverDeployment:        components.NewResolverDeploymentK8sObject(),
-		resolverService:           components.NewResolverServiceK8sObject(),
-		sensorDaemonSet:           components.NewSensorDaemonSetK8sObject(),
+		desiredConfigMap:                components.NewConfigurationK8sObject(),
+		desiredRegistrySecret:           components.NewRegistrySecretK8sObject(),
+		desiredPriorityClass:            components.NewPriorityClassK8sObject(k8sVersion),
+		desiredMonitorDeployment:        components.NewMonitorDeploymentK8sObject(),
+		enforcerTlsSecret:               components.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
+		enforcerDeployment:              components.NewEnforcerDeploymentK8sObject(),
+		enforcerService:                 components.NewEnforcerServiceK8sObject(),
+		enforcerValidatingWebhook:       components.NewEnforcerValidatingWebhookK8sObject(k8sVersion),
+		enforcerMutatingWebhook:         components.NewEnforcerMutatingWebhookK8sObject(k8sVersion),
+		stateReporterDeployment:         components.NewStateReporterDeploymentK8sObject(),
+		resolverDeployment:              components.NewResolverDeploymentK8sObject(),
+		resolverService:                 components.NewResolverServiceK8sObject(),
+		sensorDaemonSet:                 components.NewSensorDaemonSetK8sObject(),
 		imageScanningReporterDeployment: components.NewImageScanningReporterDeploymentK8sObject(),
 		imageScanningReporterService:    components.NewImageScanningReporterServiceK8sObject(),
-		applier:                   agentComponentApplier,
-		log:                       log,
+		applier:                         agentComponentApplier,
+		log:                             log,
 	}
 }
 
@@ -86,14 +86,16 @@ func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbconta
 	}
 	c.log.Info("Applied state reporter objects", "Mutated", mutatedStateReporter)
 
-	mutatedResolver, mutatedComponentsDaemonSet, runtimeResolverDeleted, componentsDamonSetDeleted := false, false, false, false
+	mutatedRuntimeResolver, runtimeResolverDeleted := false, false
+	mutatedComponentsDaemonSet, componentsDamonSetDeleted := false, false
 	var deleteErr error = nil
+
 	if common.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
-		mutatedResolver, err = c.applyResolver(ctx, agentSpec, applyOptions)
+		mutatedRuntimeResolver, err = c.applyResolver(ctx, agentSpec, applyOptions)
 		if err != nil {
 			return false, err
 		}
-		c.log.Info("Applied runtime kubernetes resolver objects", "Mutated", mutatedResolver)
+		c.log.Info("Applied runtime kubernetes resolver objects", "Mutated", mutatedRuntimeResolver)
 
 	} else {
 		runtimeResolverDeleted, deleteErr = c.deleteResolver(ctx, agentSpec)
@@ -130,7 +132,7 @@ func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbconta
 		}
 	}
 
-	return coreMutated || mutatedEnforcer || mutatedStateReporter || mutatedResolver || mutatedComponentsDaemonSet || runtimeResolverDeleted || mutatedImageScanningReporter || imageScanningReporterDeleted || componentsDamonSetDeleted, nil
+	return coreMutated || mutatedEnforcer || mutatedStateReporter || mutatedRuntimeResolver || mutatedComponentsDaemonSet || runtimeResolverDeleted || mutatedImageScanningReporter || imageScanningReporterDeleted || componentsDamonSetDeleted, nil
 }
 
 func (c *StateApplier) applyCoreComponents(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, registrySecret *models.RegistrySecretValues, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
