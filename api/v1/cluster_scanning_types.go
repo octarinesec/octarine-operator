@@ -1,10 +1,8 @@
 package v1
 
-import (
-	coreV1 "k8s.io/api/core/v1"
-)
+import coreV1 "k8s.io/api/core/v1"
 
-type CBContainersRuntimeResolverSpec struct {
+type CBContainersImageScanningReporterSpec struct {
 	// +kubebuilder:default:=<>
 	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
@@ -15,7 +13,7 @@ type CBContainersRuntimeResolverSpec struct {
 	ReplicasCount *int32 `json:"replicasCount,omitempty"`
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
-	// +kubebuilder:default:={repository:"cbartifactory/runtime-kubernetes-resolver"}
+	// +kubebuilder:default:={repository:"cbartifactory/image-scanning-reporter"}
 	Image CBContainersImageSpec `json:"image,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "1024Mi", cpu: "900m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
@@ -25,7 +23,7 @@ type CBContainersRuntimeResolverSpec struct {
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 }
 
-type CBContainersRuntimeSensorSpec struct {
+type CBContainersClusterScannerAgentSpec struct {
 	// +kubebuilder:default:=<>
 	Labels map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:default:=<>
@@ -34,26 +32,22 @@ type CBContainersRuntimeSensorSpec struct {
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
-	// +kubebuilder:default:={repository:"cbartifactory/runtime-kubernetes-sensor"}
+	// +kubebuilder:default:={repository:"cbartifactory/cluster-scanner"}
 	Image CBContainersImageSpec `json:"image,omitempty"`
-	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "1024Mi", cpu: "500m"}}
+	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "4Gi", cpu: "2000m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes CBContainersFileProbesSpec `json:"probes,omitempty"`
-	// +kubebuilder:default:={port: 7071}
+	// +kubebuilder:default:={port: 7072}
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
-	// +kubebuilder:default:=2
-	VerbosityLevel *int `json:"verbosity_level,omitempty"`
 }
 
-// CBContainersRuntimeProtectionSpec defines the desired state of CBContainersRuntime
-type CBContainersRuntimeProtectionSpec struct {
+// CBContainersClusterScanningSpec defines the desired state of CBContainersClusterScanning
+type CBContainersClusterScanningSpec struct {
 	// +kubebuilder:default:=true
 	Enabled *bool `json:"enabled,omitempty"`
 	// +kubebuilder:default:=<>
-	Resolver CBContainersRuntimeResolverSpec `json:"resolver,omitempty"`
+	ImageScanningReporter CBContainersImageScanningReporterSpec `json:"imageScanningReporter,omitempty"`
 	// +kubebuilder:default:=<>
-	Sensor CBContainersRuntimeSensorSpec `json:"sensor,omitempty"`
-	// +kubebuilder:default:=8080
-	InternalGrpcPort int32 `json:"internalGrpcPort,omitempty"`
+	ClusterScannerAgent CBContainersClusterScannerAgentSpec `json:"clusterScanner,omitempty"`
 }

@@ -391,7 +391,7 @@ func TestSensorDaemonsetIsApplied(t *testing.T) {
 	appliedObjects, _ := getAndAssertAppliedAndDeletedObjects(t, "", nil)
 	require.Contains(t, appliedObjects, K8sObjectDetails{
 		Namespace:  commonState.DataPlaneNamespaceName,
-		Name:       components.SensorName,
+		Name:       components.DaemonSetName,
 		ObjectType: reflect.TypeOf(&appsV1.DaemonSet{}),
 	})
 }

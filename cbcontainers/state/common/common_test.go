@@ -460,3 +460,30 @@ func TestMutateContainerFileProbes(t *testing.T) {
 	require.True(t, reflect.DeepEqual(expectedLivenessProbe, container.LivenessProbe))
 	require.True(t, reflect.DeepEqual(expectedReadinessProbe, container.ReadinessProbe))
 }
+
+func TestComponentsEnableCheck(t *testing.T) {
+	falseRef := false
+	trueRef := true
+
+	runtimeSpecSetAsNil := cbcontainersv1.CBContainersRuntimeProtectionSpec{Enabled: nil}
+	runtimeSpecDisabled := cbcontainersv1.CBContainersRuntimeProtectionSpec{Enabled: &falseRef}
+	runtimeSpecEnabled := cbcontainersv1.CBContainersRuntimeProtectionSpec{Enabled: &trueRef}
+
+	clusterScanningSpecSetAsNil := cbcontainersv1.CBContainersClusterScanningSpec{Enabled: nil}
+	clusterScanningSpecDisabled := cbcontainersv1.CBContainersClusterScanningSpec{Enabled: &falseRef}
+	clusterScanningSpecEnabled := cbcontainersv1.CBContainersClusterScanningSpec{Enabled: &trueRef}
+
+	require.True(t, reflect.DeepEqual(IsEnabled(runtimeSpecSetAsNil.Enabled), false))
+	require.True(t, reflect.DeepEqual(IsDisabled(runtimeSpecSetAsNil.Enabled), true))
+	require.True(t, reflect.DeepEqual(IsEnabled(runtimeSpecDisabled.Enabled), false))
+	require.True(t, reflect.DeepEqual(IsDisabled(runtimeSpecDisabled.Enabled), true))
+	require.True(t, reflect.DeepEqual(IsEnabled(runtimeSpecEnabled.Enabled), true))
+	require.True(t, reflect.DeepEqual(IsDisabled(runtimeSpecEnabled.Enabled), false))
+
+	require.True(t, reflect.DeepEqual(IsEnabled(clusterScanningSpecSetAsNil.Enabled), false))
+	require.True(t, reflect.DeepEqual(IsDisabled(clusterScanningSpecSetAsNil.Enabled), true))
+	require.True(t, reflect.DeepEqual(IsEnabled(clusterScanningSpecDisabled.Enabled), false))
+	require.True(t, reflect.DeepEqual(IsDisabled(clusterScanningSpecDisabled.Enabled), true))
+	require.True(t, reflect.DeepEqual(IsEnabled(clusterScanningSpecEnabled.Enabled), true))
+	require.True(t, reflect.DeepEqual(IsDisabled(clusterScanningSpecEnabled.Enabled), false))
+}

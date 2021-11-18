@@ -8,6 +8,7 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/components"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
@@ -20,40 +21,44 @@ type AgentComponentApplier interface {
 }
 
 type StateApplier struct {
-	desiredConfigMap          *components.ConfigurationK8sObject
-	desiredRegistrySecret     *components.RegistrySecretK8sObject
-	desiredPriorityClass      *components.PriorityClassK8sObject
-	desiredMonitorDeployment  *components.MonitorDeploymentK8sObject
-	enforcerTlsSecret         *components.EnforcerTlsK8sObject
-	enforcerDeployment        *components.EnforcerDeploymentK8sObject
-	enforcerService           *components.EnforcerServiceK8sObject
-	enforcerValidatingWebhook *components.EnforcerValidatingWebhookK8sObject
-	enforcerMutatingWebhook   *components.EnforcerMutatingWebhookK8sObject
-	stateReporterDeployment   *components.StateReporterDeploymentK8sObject
-	resolverDeployment        *components.ResolverDeploymentK8sObject
-	resolverService           *components.ResolverServiceK8sObject
-	sensorDaemonSet           *components.SensorDaemonSetK8sObject
-	applier                   AgentComponentApplier
-	log                       logr.Logger
+	desiredConfigMap                *components.ConfigurationK8sObject
+	desiredRegistrySecret           *components.RegistrySecretK8sObject
+	desiredPriorityClass            *components.PriorityClassK8sObject
+	desiredMonitorDeployment        *components.MonitorDeploymentK8sObject
+	enforcerTlsSecret               *components.EnforcerTlsK8sObject
+	enforcerDeployment              *components.EnforcerDeploymentK8sObject
+	enforcerService                 *components.EnforcerServiceK8sObject
+	enforcerValidatingWebhook       *components.EnforcerValidatingWebhookK8sObject
+	enforcerMutatingWebhook         *components.EnforcerMutatingWebhookK8sObject
+	stateReporterDeployment         *components.StateReporterDeploymentK8sObject
+	resolverDeployment              *components.ResolverDeploymentK8sObject
+	resolverService                 *components.ResolverServiceK8sObject
+	sensorDaemonSet                 *components.SensorDaemonSetK8sObject
+	imageScanningReporterDeployment *components.ImageScanningReporterDeploymentK8sObject
+	imageScanningReporterService    *components.ImageScanningReporterServiceK8sObject
+	applier                         AgentComponentApplier
+	log                             logr.Logger
 }
 
 func NewStateApplier(agentComponentApplier AgentComponentApplier, k8sVersion string, tlsSecretsValuesCreator components.TlsSecretsValuesCreator, log logr.Logger) *StateApplier {
 	return &StateApplier{
-		desiredConfigMap:          components.NewConfigurationK8sObject(),
-		desiredRegistrySecret:     components.NewRegistrySecretK8sObject(),
-		desiredPriorityClass:      components.NewPriorityClassK8sObject(k8sVersion),
-		desiredMonitorDeployment:  components.NewMonitorDeploymentK8sObject(),
-		enforcerTlsSecret:         components.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
-		enforcerDeployment:        components.NewEnforcerDeploymentK8sObject(),
-		enforcerService:           components.NewEnforcerServiceK8sObject(),
-		enforcerValidatingWebhook: components.NewEnforcerValidatingWebhookK8sObject(k8sVersion),
-		enforcerMutatingWebhook:   components.NewEnforcerMutatingWebhookK8sObject(k8sVersion),
-		stateReporterDeployment:   components.NewStateReporterDeploymentK8sObject(),
-		resolverDeployment:        components.NewResolverDeploymentK8sObject(),
-		resolverService:           components.NewResolverServiceK8sObject(),
-		sensorDaemonSet:           components.NewSensorDaemonSetK8sObject(),
-		applier:                   agentComponentApplier,
-		log:                       log,
+		desiredConfigMap:                components.NewConfigurationK8sObject(),
+		desiredRegistrySecret:           components.NewRegistrySecretK8sObject(),
+		desiredPriorityClass:            components.NewPriorityClassK8sObject(k8sVersion),
+		desiredMonitorDeployment:        components.NewMonitorDeploymentK8sObject(),
+		enforcerTlsSecret:               components.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
+		enforcerDeployment:              components.NewEnforcerDeploymentK8sObject(),
+		enforcerService:                 components.NewEnforcerServiceK8sObject(),
+		enforcerValidatingWebhook:       components.NewEnforcerValidatingWebhookK8sObject(k8sVersion),
+		enforcerMutatingWebhook:         components.NewEnforcerMutatingWebhookK8sObject(k8sVersion),
+		stateReporterDeployment:         components.NewStateReporterDeploymentK8sObject(),
+		resolverDeployment:              components.NewResolverDeploymentK8sObject(),
+		resolverService:                 components.NewResolverServiceK8sObject(),
+		sensorDaemonSet:                 components.NewSensorDaemonSetK8sObject(),
+		imageScanningReporterDeployment: components.NewImageScanningReporterDeploymentK8sObject(),
+		imageScanningReporterService:    components.NewImageScanningReporterServiceK8sObject(),
+		applier:                         agentComponentApplier,
+		log:                             log,
 	}
 }
 
@@ -81,28 +86,53 @@ func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbconta
 	}
 	c.log.Info("Applied state reporter objects", "Mutated", mutatedStateReporter)
 
-	mutatedResolver, mutatedSensor, runtimeDeleted := false, false, false
+	mutatedRuntimeResolver, runtimeResolverDeleted := false, false
+	mutatedComponentsDaemonSet, componentsDamonSetDeleted := false, false
 	var deleteErr error = nil
-	if agentSpec.Components.RuntimeProtection.Enabled != nil && *agentSpec.Components.RuntimeProtection.Enabled {
-		mutatedResolver, err = c.applyResolver(ctx, agentSpec, applyOptions)
-		if err != nil {
-			return false, err
-		}
-		c.log.Info("Applied runtime kubernetes resolver objects", "Mutated", mutatedResolver)
 
-		mutatedSensor, err = c.applySensor(ctx, agentSpec, applyOptions)
+	if common.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
+		mutatedRuntimeResolver, err = c.applyResolver(ctx, agentSpec, applyOptions)
 		if err != nil {
 			return false, err
 		}
-		c.log.Info("Applied runtime kubernetes sensor objects", "Mutated", mutatedSensor)
+		c.log.Info("Applied runtime kubernetes resolver objects", "Mutated", mutatedRuntimeResolver)
+
 	} else {
-		runtimeDeleted, deleteErr = c.deleteRuntime(ctx, agentSpec)
+		runtimeResolverDeleted, deleteErr = c.deleteResolver(ctx, agentSpec)
 		if deleteErr != nil {
 			return false, deleteErr
 		}
 	}
 
-	return coreMutated || mutatedEnforcer || mutatedStateReporter || mutatedResolver || mutatedSensor || runtimeDeleted, nil
+	mutatedImageScanningReporter, imageScanningReporterDeleted := false, false
+	if common.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
+		mutatedImageScanningReporter, err = c.applyImageScanningReporter(ctx, agentSpec, applyOptions)
+		if err != nil {
+			return false, err
+		}
+
+		c.log.Info("Applied image scanning reporter objects", "Mutated", mutatedImageScanningReporter)
+	} else {
+		imageScanningReporterDeleted, err = c.deleteImageScanningReporter(ctx, agentSpec)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	if common.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) || common.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
+		mutatedComponentsDaemonSet, err = c.applyComponentsDamonSet(ctx, agentSpec, applyOptions)
+		if err != nil {
+			return false, err
+		}
+		c.log.Info("Applied featured components daemon set objects", "Mutated", mutatedComponentsDaemonSet)
+	} else {
+		componentsDamonSetDeleted, err = c.deleteComponentsDamonSet(ctx, agentSpec)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	return coreMutated || mutatedEnforcer || mutatedStateReporter || mutatedRuntimeResolver || mutatedComponentsDaemonSet || runtimeResolverDeleted || mutatedImageScanningReporter || imageScanningReporterDeleted || componentsDamonSetDeleted, nil
 }
 
 func (c *StateApplier) applyCoreComponents(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, registrySecret *models.RegistrySecretValues, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
@@ -217,16 +247,18 @@ func (c *StateApplier) applyResolver(ctx context.Context, agentSpec *cbcontainer
 	return mutatedService || mutatedDeployment, nil
 }
 
-func (c *StateApplier) applySensor(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
+// applyComponentsDamonSet applies the daemon set that stores the runtime sensor and/or the cluster-scanning scanner containers.
+// the daemon set is set to be applied if either of the featured components are enabled.
+func (c *StateApplier) applyComponentsDamonSet(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
 	mutatedDaemonSet, _, err := c.applier.Apply(ctx, c.sensorDaemonSet, agentSpec, applyOptions)
 	if err != nil {
 		return false, err
 	}
-	c.log.Info("Applied runtime kubernetes sensor daemon set", "Mutated", mutatedDaemonSet)
+	c.log.Info("Applied daemon set featured components", "Mutated", mutatedDaemonSet)
 	return mutatedDaemonSet, nil
 }
 
-func (c *StateApplier) deleteRuntime(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec) (bool, error) {
+func (c *StateApplier) deleteResolver(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec) (bool, error) {
 	resolverServiceDeleted, deleteErr := c.applier.Delete(ctx, c.resolverService, agentSpec)
 	if deleteErr != nil {
 		return false, deleteErr
@@ -241,14 +273,54 @@ func (c *StateApplier) deleteRuntime(ctx context.Context, agentSpec *cbcontainer
 		c.log.Info("Deleted resolver deployment")
 	}
 
+	return resolverServiceDeleted || resolverDeploymentDeleted, nil
+}
+
+func (c *StateApplier) applyImageScanningReporter(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, applyOptions *applymentOptions.ApplyOptions) (bool, error) {
+	mutatedService, _, err := c.applier.Apply(ctx, c.imageScanningReporterService, agentSpec, applyOptions)
+	if err != nil {
+		return false, err
+	}
+	c.log.Info("Applied image scanning reporter service", "Mutated", mutatedService)
+
+	mutatedDeployment, _, err := c.applier.Apply(ctx, c.imageScanningReporterDeployment, agentSpec, applyOptions)
+	if err != nil {
+		return false, err
+	}
+	c.log.Info("Applied image scanning reporter deployment", "Mutated", mutatedDeployment)
+
+	return mutatedService || mutatedDeployment, nil
+}
+
+func (c *StateApplier) deleteImageScanningReporter(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec) (bool, error) {
+	imageScanningReporterServiceDeleted, deleteErr := c.applier.Delete(ctx, c.imageScanningReporterService, agentSpec)
+	if deleteErr != nil {
+		return false, deleteErr
+	} else if imageScanningReporterServiceDeleted {
+		c.log.Info("Deleted image scanning reporter service")
+	}
+
+	imageScanningReporterDeploymentDeleted, deleteErr := c.applier.Delete(ctx, c.imageScanningReporterDeployment, agentSpec)
+	if deleteErr != nil {
+		return false, deleteErr
+	} else if imageScanningReporterDeploymentDeleted {
+		c.log.Info("Deleted image scanning reporter deployment")
+	}
+
+	return imageScanningReporterServiceDeleted || imageScanningReporterDeploymentDeleted, nil
+}
+
+// deleteComponentsDamonSet deletes the daemonset that runs the runtime sensor and/or the cluster-scanning scanner containers.
+// the daemon set is being deleted only if all the feature components are disabled (runtime & cluster-scanner)
+func (c *StateApplier) deleteComponentsDamonSet(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec) (bool, error) {
 	sensorDaemonSetDeleted, deleteErr := c.applier.Delete(ctx, c.sensorDaemonSet, agentSpec)
 	if deleteErr != nil {
 		return false, deleteErr
 	} else if sensorDaemonSetDeleted {
-		c.log.Info("Deleted sensor daemonset")
+		c.log.Info("Deleted featured components daemonset")
 	}
 
-	return resolverServiceDeleted || resolverDeploymentDeleted || sensorDaemonSetDeleted, nil
+	return sensorDaemonSetDeleted, nil
 }
 
 func (c *StateApplier) applyEnforcerWebhooks(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, tlsSecret *coreV1.Secret, applyOptions *applymentOptions.ApplyOptions) (bool, error) {

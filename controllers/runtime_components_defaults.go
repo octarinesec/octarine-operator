@@ -78,7 +78,7 @@ func (r *CBContainersAgentController) setRuntimeSensorDefaults(runtimeSensor *cb
 		runtimeSensor.Env = make(map[string]string)
 	}
 
-	setDefaultPrometheus(&runtimeSensor.Prometheus)
+	setDefaultPrometheusWithPort(&runtimeSensor.Prometheus, 7071)
 
 	setDefaultImage(&runtimeSensor.Image, "cbartifactory/runtime-kubernetes-sensor")
 

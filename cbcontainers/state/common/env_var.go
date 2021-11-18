@@ -1,6 +1,7 @@
 package common
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
 	"strconv"
 
@@ -59,6 +60,37 @@ func (b *EnvVarBuilder) WithCustom(customEnvsToAdd ...coreV1.EnvVar) *EnvVarBuil
 	return b
 }
 
+func (b *EnvVarBuilder) WithEnvVarFromResource(envName, containerName, resourcePath string) *EnvVarBuilder {
+	envVar := coreV1.EnvVar{
+		Name: envName,
+		ValueFrom: &coreV1.EnvVarSource{
+			ResourceFieldRef: &coreV1.ResourceFieldSelector{
+				ContainerName: containerName,
+				Resource:      resourcePath,
+				Divisor:       resource.Quantity{Format: resource.DecimalSI},
+			},
+		},
+	}
+	b.envVars[envName] = envVar
+
+	return b
+}
+
+func (b *EnvVarBuilder) WithEnvVarFromField(envName, fieldPath, apiVersion string) *EnvVarBuilder {
+	envVar := coreV1.EnvVar{
+		Name: envName,
+		ValueFrom: &coreV1.EnvVarSource{
+			FieldRef: &coreV1.ObjectFieldSelector{
+				FieldPath:  fieldPath,
+				APIVersion: apiVersion,
+			},
+		},
+	}
+	b.envVars[envName] = envVar
+
+	return b
+}
+
 func (b *EnvVarBuilder) WithEnvVarFromSecret(envName, accessKeySecretName string) *EnvVarBuilder {
 	envVar := coreV1.EnvVar{
 		Name: envName,
@@ -107,9 +139,28 @@ func (b *EnvVarBuilder) IsEqual(actualEnv []coreV1.EnvVar) bool {
 
 	for _, actualEnvVar := range actualEnv {
 		desiredEnvVar, ok := b.envVars[actualEnvVar.Name]
-		if !ok || !reflect.DeepEqual(actualEnvVar, desiredEnvVar) {
+		if !ok {
 			return false
 		}
+
+		if desiredEnvVar.ValueFrom != nil && desiredEnvVar.ValueFrom.ResourceFieldRef != nil {
+			if !b.isResourceFieldRefEquals(desiredEnvVar.ValueFrom.ResourceFieldRef, actualEnvVar.ValueFrom.ResourceFieldRef) {
+				return false
+			}
+		} else if !reflect.DeepEqual(actualEnvVar, desiredEnvVar) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (b *EnvVarBuilder) isResourceFieldRefEquals(desiredResourceFieldRef, actualResourceFieldRef *coreV1.ResourceFieldSelector) bool {
+	if desiredResourceFieldRef.ContainerName != actualResourceFieldRef.ContainerName {
+		return false
+	}
+	if desiredResourceFieldRef.Resource != actualResourceFieldRef.Resource {
+		return false
 	}
 
 	return true

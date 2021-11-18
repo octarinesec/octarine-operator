@@ -27,5 +27,9 @@ func (r *CBContainersAgentController) setComponentsDefaults(components *cbcontai
 		return err
 	}
 
+	if err := r.setClusterScanningComponentsDefaults(&components.ClusterScanning); err != nil {
+		return err
+	}
+
 	return nil
 }
