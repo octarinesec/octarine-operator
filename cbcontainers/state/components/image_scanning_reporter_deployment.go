@@ -56,6 +56,7 @@ func (obj *ImageScanningReporterDeploymentK8sObject) MutateK8sObject(k8sObject c
 	obj.mutateLabels(deployment, imageScanningReporter)
 	obj.mutateAnnotations(deployment, imageScanningReporter)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
+	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, imageScanningReporter)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec, imageScanningReporter, &agentSpec.Gateways.HardeningEventsGateway, agentSpec.Version, agentSpec.AccessTokenSecretName)
 
 	return nil
@@ -110,6 +111,11 @@ func (obj *ImageScanningReporterDeploymentK8sObject) mutateVolumes(templatePodSp
 
 	// mutate root-cas volume, for https server certificates
 	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
+}
+
+func (obj *ImageScanningReporterDeploymentK8sObject) mutateAffinityAndNodeSelector(templatePodSpec *coreV1.PodSpec, imageScanningReporterSpec *cbcontainersv1.CBContainersImageScanningReporterSpec) {
+	templatePodSpec.Affinity = imageScanningReporterSpec.Affinity
+	templatePodSpec.NodeSelector = imageScanningReporterSpec.NodeSelector
 }
 
 func (obj *ImageScanningReporterDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, imageScanningReporterSpec *cbcontainersv1.CBContainersImageScanningReporterSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {

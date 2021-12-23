@@ -78,6 +78,7 @@ func (obj *EnforcerDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	obj.mutateAnnotations(deployment, enforcer)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
+	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, enforcer)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec, enforcer, &agentSpec.Gateways.HardeningEventsGateway, agentSpec.Version, agentSpec.AccessTokenSecretName)
 
 	return nil
@@ -115,6 +116,11 @@ func (obj *EnforcerDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.Po
 	templatePodSpec.Volumes[tlsSecretVolumeIndex].Secret.Optional = &DesiredTlsSecretVolumeOptionalValue
 
 	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
+}
+
+func (obj *EnforcerDeploymentK8sObject) mutateAffinityAndNodeSelector(templatePodSpec *coreV1.PodSpec, enforcerSpec *cbcontainersv1.CBContainersEnforcerSpec) {
+	templatePodSpec.Affinity = enforcerSpec.Affinity
+	templatePodSpec.NodeSelector = enforcerSpec.NodeSelector
 }
 
 func (obj *EnforcerDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, enforcerSpec *cbcontainersv1.CBContainersEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {

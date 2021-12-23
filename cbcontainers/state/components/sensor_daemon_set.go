@@ -85,6 +85,7 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	obj.mutateLabels(daemonSet, agentSpec)
 	obj.mutateAnnotations(daemonSet, agentSpec)
 	obj.mutateVolumes(daemonSet, agentSpec)
+	obj.mutateTolerations(daemonSet, agentSpec)
 	obj.mutateContainersList(&daemonSet.Spec.Template.Spec,
 		agentSpec,
 		agentSpec.Version,
@@ -165,6 +166,10 @@ func (obj *SensorDaemonSetK8sObject) mutateVolumes(daemonSet *appsV1.DaemonSet, 
 		// clean cluster-scanner volumes
 		daemonSet.Spec.Template.Spec.Volumes = nil
 	}
+}
+
+func (obj *SensorDaemonSetK8sObject) mutateTolerations(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+	daemonSet.Spec.Template.Spec.Tolerations = agentSpec.Components.Settings.DaemonSetsTolerations
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateContainersList(

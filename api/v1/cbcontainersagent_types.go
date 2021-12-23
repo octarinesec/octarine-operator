@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -42,6 +43,12 @@ type CBContainersComponentsSpec struct {
 	RuntimeProtection CBContainersRuntimeProtectionSpec `json:"runtimeProtection,omitempty"`
 	// +kubebuilder:default:=<>
 	ClusterScanning CBContainersClusterScanningSpec `json:"clusterScanning,omitempty"`
+	// +kubebuilder:default:=<>
+	Settings CBContainersComponentsSettings `json:"settings,omitempty"`
+}
+
+type CBContainersComponentsSettings struct {
+	DaemonSetsTolerations []coreV1.Toleration `json:"daemonSetsTolerations,omitempty"`
 }
 
 // CBContainersAgentStatus defines the observed state of CBContainersAgent

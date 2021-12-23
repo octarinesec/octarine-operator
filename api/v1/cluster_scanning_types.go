@@ -21,6 +21,10 @@ type CBContainersImageScanningReporterSpec struct {
 	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
 	// +kubebuilder:default:={port: 7071}
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
+	// +kubebuilder:default:=<>
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	// +kubebuilder:default:=<>
+	Affinity *coreV1.Affinity `json:"affinity,omitempty"`
 }
 
 type CBContainersClusterScannerAgentSpec struct {
