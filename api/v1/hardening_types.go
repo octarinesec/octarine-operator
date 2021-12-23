@@ -19,6 +19,10 @@ type CBContainersStateReporterSpec struct {
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
+	// +kubebuilder:default:=<>
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	// +kubebuilder:default:=<>
+	Affinity *coreV1.Affinity `json:"affinity,omitempty"`
 }
 
 type CBContainersEnforcerSpec struct {
@@ -40,6 +44,10 @@ type CBContainersEnforcerSpec struct {
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
+	// +kubebuilder:default:=<>
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	// +kubebuilder:default:=<>
+	Affinity *coreV1.Affinity `json:"affinity,omitempty"`
 	// +kubebuilder:default:=5
 	WebhookTimeoutSeconds    int32 `json:"webhookTimeoutSeconds,omitempty"`
 	EnableEnforcementFeature bool  `json:"enableEnforcementFeature,omitempty"`

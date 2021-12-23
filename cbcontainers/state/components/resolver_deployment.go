@@ -79,6 +79,7 @@ func (obj *ResolverDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	obj.mutateAnnotations(deployment, resolver)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
+	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, resolver)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec,
 		resolver,
 		&agentSpec.Gateways.RuntimeEventsGateway,
@@ -96,6 +97,11 @@ func (obj *ResolverDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.Po
 	}
 
 	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
+}
+
+func (obj *ResolverDeploymentK8sObject) mutateAffinityAndNodeSelector(templatePodSpec *coreV1.PodSpec, resolverSpec *cbContainersV1.CBContainersRuntimeResolverSpec) {
+	templatePodSpec.Affinity = resolverSpec.Affinity
+	templatePodSpec.NodeSelector = resolverSpec.NodeSelector
 }
 
 func (obj *ResolverDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Deployment, resolverSpec *cbContainersV1.CBContainersRuntimeResolverSpec) {

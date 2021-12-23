@@ -68,3 +68,10 @@ This is the CR you'll need to deploy in order to trigger the operator to deploy 
 | `probes.failureThreshold`                    | Carbon Black Container Component probes failure threshold      | 3                                                             |
 | `prometheus.enabled`                         | Carbon Black Container Component enable Prometheus scraping    | false                                                         |
 | `prometheus.port`                            | Carbon Black Container Component Prometheus server port        | 7071                                                          |
+| `nodeSelector`                               | Carbon Black Container Component node selector                 | `{}`                                                          |
+| `affinity`                                   | Carbon Black Container Component affinity                      | `{}`                                                          |
+
+### Other Components Optional parameters
+| Parameter                                        | Description                                                                            | Default                                                       |                                                               
+| -------------------------------------------------| ---------------------------------------------------------------------------------------| ------------------------------------------------------------- |                                                               
+| `spec.components.settings.daemonSetsTolerations` | Carbon Black DaemonSet Component Tolerations                                           | Empty array                                                   |

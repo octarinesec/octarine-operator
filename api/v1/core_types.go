@@ -26,4 +26,8 @@ type CBContainersMonitorSpec struct {
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
+	// +kubebuilder:default:=<>
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	// +kubebuilder:default:=<>
+	Affinity *coreV1.Affinity `json:"affinity,omitempty"`
 }
