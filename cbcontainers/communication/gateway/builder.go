@@ -62,6 +62,11 @@ func (builder *Builder) WithClusterScanning() *Builder {
 	return builder
 }
 
+func (builder *Builder) WithGuardrailsEnforce() *Builder {
+	builder.agentComponents = append(builder.agentComponents, models.AgentComponentGuardrailsEnforce)
+	return builder
+}
+
 func (builder *Builder) Build() (*ApiGateway, error) {
 	return NewApiGateway(
 		builder.account,
