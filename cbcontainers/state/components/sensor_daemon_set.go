@@ -37,7 +37,7 @@ var (
 	sensorIsPrivileged       = true
 	sensorRunAsUser    int64 = 0
 
-	resolverAddress            = fmt.Sprintf("%s.%s.svc.cluster.local", ResolverName, commonState.DataPlaneNamespaceName)
+	resolverAddress            = fmt.Sprintf("%s.%s.svc", ResolverName, commonState.DataPlaneNamespaceName)
 	supportedContainerRuntimes = map[string]string{
 		"containerd": containerdRuntimeEndpoint,
 		"docker":     dockerRuntimeEndpoint,
