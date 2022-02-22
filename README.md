@@ -159,7 +159,7 @@ kubectl set env -n cbcontainers-dataplane deployment cbcontainers-operator HTTP_
 ```
 
 In order to configure those environment variables for the Hardening Enforcer and the Hardening State Reporter components,
-update the Hardening CR using the proxy environment variables:
+update the `CBContainersAgent` CR using the proxy environment variables (`kubectl edit cbcontainersagents.operator.containers.carbonblack.io cbcontainers-agent`):
 
 ```yaml
 spec:
