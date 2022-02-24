@@ -139,20 +139,24 @@ spec:
             memory: 64Mi
       enforcer:
         resources:
-          limits:
-            cpu: 200m
-            memory: 256Mi
-          requests:
-            cpu: 30m
-            memory: 64Mi
+          #### DESIRED RESOURCES SPEC
       stateReporter:
         resources:
-          limits:
-            cpu: 200m
-            memory: 256Mi
-          requests:
-            cpu: 30m
-            memory: 64Mi
+          #### DESIRED RESOURCES SPEC
+    runtimeProtection:
+      resolver:
+        resources:
+          #### DESIRED RESOURCES SPEC
+      sensor:
+        resources:
+          #### DESIRED RESOURCES SPEC
+    clusterScanning:
+      imageScanningReporter:
+        resources:
+          #### DESIRED RESOURCES SPEC
+      clusterScanner:
+        resources:
+          #### DESIRED RESOURCES SPEC
 ```
 
 ### When using Prometheus Operator
