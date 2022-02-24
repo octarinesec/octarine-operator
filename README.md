@@ -124,6 +124,37 @@ Cluster Role binding creation:
 kubectl create clusterrolebinding metrics --clusterrole=cbcontainers-metrics-reader --serviceaccount=<prometheus-namespace>:<prometheus-service-account-name>
 ```
 
+## Changing components resources:
+```yaml
+spec:
+  components:
+    basic:
+      monitor:
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 30m
+            memory: 64Mi
+      enforcer:
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 30m
+            memory: 64Mi
+      stateReporter:
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 30m
+            memory: 64Mi
+```
+
 ### When using Prometheus Operator
 
 Use the following ServiceMonitor to start scraping metrics from the CBContainers operator:
