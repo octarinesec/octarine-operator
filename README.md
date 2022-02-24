@@ -139,24 +139,24 @@ spec:
             memory: 64Mi
       enforcer:
         resources:
-          #### DESIRED RESOURCES SPEC
+          #### DESIRED RESOURCES SPEC - for hardening enforcer container
       stateReporter:
         resources:
-          #### DESIRED RESOURCES SPEC
+          #### DESIRED RESOURCES SPEC - for hardening state reporter container
     runtimeProtection:
       resolver:
         resources:
-          #### DESIRED RESOURCES SPEC
+          #### DESIRED RESOURCES SPEC - for runtime resolver container
       sensor:
         resources:
-          #### DESIRED RESOURCES SPEC
+          #### DESIRED RESOURCES SPEC - for node-agent runtime container
     clusterScanning:
       imageScanningReporter:
         resources:
-          #### DESIRED RESOURCES SPEC
+          #### DESIRED RESOURCES SPEC - for image scanning reporter pod
       clusterScanner:
         resources:
-          #### DESIRED RESOURCES SPEC
+          #### DESIRED RESOURCES SPEC - for node-agent cluster-scanner container
 ```
 
 ### When using Prometheus Operator
