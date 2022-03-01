@@ -226,7 +226,7 @@ spec:
     gatewayTLS:
       rootCAsBundle: <Base64 encoded proxy CA>
 ```
-Another option will be to allow the agent communicate without verifing the certificate. this option is not recomanded and exposes the agent to MITM attack.
+Another option will be to allow the agent communicate without verifying the certificate. this option is not recommended and exposes the agent to MITM attack.
 ```yaml
 spec:
   gateways:
