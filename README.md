@@ -219,6 +219,21 @@ Finding the API-server IP:
 kubectl -n default get service kubernetes -o=jsonpath='{..clusterIP}'
 ```
 
+When using non transparent HTTPS proxy you will need to configure the agent to use the proxy certificate authority:
+```yaml
+spec:
+  gateways:
+    gatewayTLS:
+      rootCAsBundle: <Base64 encoded proxy CA>
+```
+Another option will be to allow the agent communicate without verifing the certificate. this option is not recomanded and exposes the agent to MITM attack.
+```yaml
+spec:
+  gateways:
+    gatewayTLS:
+      insecureSkipVerify: true
+```
+
 ## Utilizing v1beta1 CustomResourceDefinition versions
 The operator supports Kubernetes clusters from v1.13+. 
 The CustomResourceDefinition APIs were in beta stage in those cluster and were later promoted to GA in v1.16. They are no longer served as of v1.22 of Kubernetes.
