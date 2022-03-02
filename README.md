@@ -193,7 +193,7 @@ In order to configure those environment variables in the Operator, use the follo
 kubectl set env -n cbcontainers-dataplane deployment cbcontainers-operator HTTP_PROXY="<proxy-url>" HTTPS_PROXY="<proxy-url>" NO_PROXY="<kubernetes-api-server-ip>/<range>"
 ```
 
-In order to configure those environment variables for the Hardening Enforcer and the Hardening State Reporter components,
+In order to configure those environment variables for the basic, Runtime and Image Scanning  components,
 update the `CBContainersAgent` CR using the proxy environment variables (`kubectl edit cbcontainersagents.operator.containers.carbonblack.io cbcontainers-agent`):
 
 ```yaml
@@ -206,6 +206,28 @@ spec:
           HTTPS_PROXY: "<proxy-url>"
           NO_PROXY: "<kubernetes-api-server-ip>/<range>"
       stateReporter:
+        env:
+          HTTP_PROXY: "<proxy-url>"
+          HTTPS_PROXY: "<proxy-url>"
+          NO_PROXY: "<kubernetes-api-server-ip>/<range>"
+    runtimeProtection:
+      resolver:
+        env:
+          HTTP_PROXY: "<proxy-url>"
+          HTTPS_PROXY: "<proxy-url>"
+          NO_PROXY: "<kubernetes-api-server-ip>/<range>"
+      sensor:
+        env:
+          HTTP_PROXY: "<proxy-url>"
+          HTTPS_PROXY: "<proxy-url>"
+          NO_PROXY: "<kubernetes-api-server-ip>/<range>"
+    clusterScanning:
+      clusterScanner:
+        env:
+          HTTP_PROXY: "<proxy-url>"
+          HTTPS_PROXY: "<proxy-url>"
+          NO_PROXY: "<kubernetes-api-server-ip>/<range>"
+      imageScanningReporter:
         env:
           HTTP_PROXY: "<proxy-url>"
           HTTPS_PROXY: "<proxy-url>"
