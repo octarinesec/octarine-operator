@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: operator
+  name: cbcontainers-operator
+  namespace: cbcontainers-dataplane
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: operator
+  template:
+    metadata:
+      labels:
+        control-plane: operator
+    spec:
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=10
+        image: "{{ .Values.rbacProxy.image.repository | default "gcr.io/kubebuilder/kube-rbac-proxy" }}:{{ .Values.rbacProxy.image.version | default "v0.8.0" }}"
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+        {{ if .Values.rbacProxy.resources }}
+          {{- with .Values.rbacProxy.resources -}}
+        resources:
+            {{- toYaml . | trim | nindent 10 -}}
+          {{- end -}}
+        {{- end }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65532
+      - args:
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=127.0.0.1:8080
+        command:
+        - /manager
+        image: "{{ .Values.operator.image.repository | default "cbartifactory/octarine-operator" }}:{{ .Values.operator.image.version | default "5.1.0" }}"
+        env:
+        {{/* If you want to enable HTTP Proxy you need to set all 3 of the values - operator.proxy.http, operator.proxy.https and operator.proxy.noProxy */}}
+        {{- if .Values.operator.proxy -}}
+        - name: HTTP_PROXY
+          value: {{ required "all values under spec.operator.proxy are required if even one is set" .Values.operator.proxy.http }}
+        - name: HTTPS_PROXY
+          value: {{ required "all values under spec.operator.proxy are required if even one is set" .Values.operator.proxy.https }}
+        - name: NO_PROXY
+          value: {{ required "all values under spec.operator.proxy are required if even one is set" .Values.operator.proxy.noProxy }}
+        {{- end -}}
+        {{- if .Values.operator.environment -}}
+          {{- with .Values.operator.environment -}}
+            {{- toYaml . | trim | nindent 8 -}}
+          {{- end -}}
+        {{ end }}
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        {{ if .Values.operator.resources }}
+          {{- with .Values.operator.resources -}}
+        resources:
+            {{- toYaml . | trim | nindent 10 -}}
+          {{- end -}}
+        {{- end }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65532
+      serviceAccountName: cbcontainers-operator
+      terminationGracePeriodSeconds: 10

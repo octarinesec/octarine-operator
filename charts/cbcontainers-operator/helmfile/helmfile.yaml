@@ -1,0 +1,17 @@
+helmDefaults:
+  kubeContext: {{ requiredEnv "CONTEXT" }}
+
+releases:
+  - name: cbcontainers-operator
+    namespace: cbcontainers-dataplane
+    chart: ../cbcontainers-operator-chart
+    version: {{ requiredEnv "CHART_VERSION" }}
+    values:
+      - values.yaml
+    wait: true
+    timeout: 600
+    recreatePods: false
+    force: false
+    installed: true
+    atomic: true
+    createNamespace: false

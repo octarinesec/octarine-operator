@@ -1,0 +1,44 @@
+# accessToken is the API token used by the agent to communicate with the backend
+accessToken: ""
+# accountId is the ID of the organization account
+accountId: ""
+# version is the version of the agent that will be installed
+version: "main"
+# clusterGroup is the group that the cluster will belong to.
+clusterGroup: "default"
+# clusterName is the name that will be used for the cluster that the agent is installed on
+clusterName: ""
+# environment is the environment to which the cluster will be connected to
+environment: 'prod01'
+# accessTokenSecretName is the name of the Kubernetes object of type Secret that holds the values of the Access Token
+accessTokenSecretName: ""
+# components is the set of components that will be installed
+components:
+  # basic is the configuration of the basic features
+ basic:
+  # enforcer is the configuration of the enforcer service
+  enforcer:
+    resources: {}
+    replicasCount: 1
+    image:
+      repository: ""
+  # monitor is the configuration of the monitor service
+  monitor:
+    resources: ""
+    image:
+      repository:
+  # stateReporter is the configuration of the state reporter service
+  stateReporter:
+    resources: {}
+    image:
+      repository: ""
+  # runtimeProtection is the configuration of the runtime features
+  # if omitted, the runtime components won't be installed
+  runtimeProtection:
+    resolver:
+      replicasCount: 1
+  # clusterScanning is the configuration of the cluster scanning features
+  # if omitted, the cluster scanning components won't be installed
+  clusterScanning:
+    # enabled controls whether the cluster scanning features will be enabled
+    enabled: false

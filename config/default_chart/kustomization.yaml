@@ -1,0 +1,22 @@
+# This file is only used to support apiextensions/v1 and apiextensions/v1beta1 CRD versions
+# For any functional modifications, use ../operator/kustomization.yaml instead
+
+bases:
+  - ../default
+
+patchesStrategicMerge:
+  - patch.yaml
+
+patchesJson6902:
+# replace the hardcoded API version of the CustomResourceDefinition resource
+# with a dynamic one that will be filled by Helm.
+# this is to support older Kubernetes versions (<1.16) where CRD is in the apiextensions.k8s.io/v1beta APi group
+- target:
+    group: apiextensions.k8s.io
+    version: v1
+    kind: CustomResourceDefinition
+    name: cbcontainersagents.operator.containers.carbonblack.io
+  patch: |-
+    - op: replace
+      path: /apiVersion
+      value: "apiextensions.k8s.io/{{ include \"cbcontainers-agent.api-version\" }}"
