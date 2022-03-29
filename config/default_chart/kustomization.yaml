@@ -4,6 +4,8 @@
 bases:
   - ../default
 
+# delete the Deployment resource because that is heavily templated in order to be configured via Helm
+# this required the Deployment being in a separate file which we maintain manually
 patchesStrategicMerge:
   - patch.yaml
 

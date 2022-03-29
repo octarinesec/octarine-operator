@@ -2,6 +2,8 @@
 
 This is the official Helm chart for installation of the CBContainers agent.
 
+Helm 3 is supported.
+
 ## Installation
 
 In order for the chart to be installed it needs minimal configuration.

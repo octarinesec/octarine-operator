@@ -3,7 +3,7 @@ accessToken: ""
 # accountId is the ID of the organization account
 accountId: ""
 # version is the version of the agent that will be installed
-version: ""
+version: "2.3.1"
 # clusterGroup is the group that the cluster will belong to.
 clusterGroup: ""
 # clusterName is the name that will be used for the cluster that the agent is installed on

@@ -2,6 +2,8 @@
 
 This is the official Helm chart for installation of the CBContainers Operator.
 
+Helm 3 is supported.
+
 ## Installation
 
 The chart can be installed as is, without any customization or modifications.
@@ -24,9 +26,7 @@ helm install cbcontainers-operator ./cbcontainers-operator-chart
 | Parameter                                              | Description                                                      | Default                                                                            |
 | ------------------------------------------------------ | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | `spec.operator.image.repository`                       | The repository of the operator image                             | `cbartifactory/octarine-operator`                                                  |
-| `spec.operator.image.version`                          | The version of the operator image                                | `5.1.0`                                                                            |
-| `spec.rbacProxy.image.repository`                      | The repository of the Kube RBAC proxy image                      | `gcr.io/kubebuilder/kube-rbac-proxy`                                               |
-| `spec.rbacProxy.image.version`                         | The version of the Kube RBAC proxy image                         | `v0.8.0`                                                                           |
+| `spec.operator.image.version`                          | The version of the operator image                                | The latest version of the operator image                                                                            |
 | `spec.operator.resources`                              | Carbon Black Container Operator resources                        | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}` |
 | `spec.rbacProxy.resources`                             | Kube RBAC Proxy resources                                        | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}` |
 | `spec.operator.environment`                            | Environment variables to be set to the operator pod              | []                                                                                 |

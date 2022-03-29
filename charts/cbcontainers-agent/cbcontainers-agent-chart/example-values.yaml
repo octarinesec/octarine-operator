@@ -3,42 +3,186 @@ accessToken: ""
 # accountId is the ID of the organization account
 accountId: ""
 # version is the version of the agent that will be installed
-version: "main"
+version: "2.3.1"
 # clusterGroup is the group that the cluster will belong to.
 clusterGroup: "default"
 # clusterName is the name that will be used for the cluster that the agent is installed on
-clusterName: ""
-# environment is the environment to which the cluster will be connected to
-environment: 'prod01'
+clusterName: "test-cluster"
 # accessTokenSecretName is the name of the Kubernetes object of type Secret that holds the values of the Access Token
-accessTokenSecretName: ""
+accessTokenSecretName: "my-access-token-secret-name"
+gateways:
+  gatewayTLS:
+  apiGateway:
+  coreEventsGateway:
+  hardeningEventsGateway:
+  runtimeEventsGateway:
 # components is the set of components that will be installed
 components:
   # basic is the configuration of the basic features
- basic:
-  # enforcer is the configuration of the enforcer service
-  enforcer:
-    resources: {}
-    replicasCount: 1
-    image:
-      repository: ""
-  # monitor is the configuration of the monitor service
-  monitor:
-    resources: ""
-    image:
-      repository:
-  # stateReporter is the configuration of the state reporter service
-  stateReporter:
-    resources: {}
-    image:
-      repository: ""
+  basic:
+    # enforcer is the configuration of the enforcer service
+    enforcer:
+      labels: {}
+      deploymentAnnotations: {}
+      podTemplateAnnotations: {}
+      env: {}
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "30m"
+        limits:
+          memory: "256Mi"
+          cpu: "200m"
+      replicasCount: 1
+      prometheus:
+        port: 7071
+        enabled: false
+      image:
+        repository: "cbartifactory/guardrails-enforcer"
+        tag: "2.3.1"
+        pullPolicy: "Always"
+      probes: {}
+      nodeSelector: {}
+      affinity: {}
+      webhookTimeoutSeconds: 5
+      enableEnforcementFeature: true
+      failurePolicy: "Ignore"
+    # monitor is the configuration of the monitor service
+    monitor:
+      labels: {}
+      deploymentAnnotations: {}
+      podTemplateAnnotations: {}
+      env: {}
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "30m"
+        limits:
+          memory: "256Mi"
+          cpu: "200m"
+      image:
+        repository: "cbartifactory/monitor"
+        tag: "2.3.1"
+        pullPolicy: "Always"
+      probes: {}
+      nodeSelector: {}
+      affinity: {}
+    # stateReporter is the configuration of the state reporter service
+    stateReporter:
+      labels: {}
+      deploymentAnnotations: {}
+      podTemplateAnnotations: {}
+      env: {}
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "30m"
+        limits:
+          memory: "256Mi"
+          cpu: "200m"
+      image:
+        repository: "cbartifactory/guardrails-state-reporter"
+        tag: "2.3.1"
+        pullPolicy: "Always"
+      probes: {}
+      nodeSelector: {}
+      affinity: {}
   # runtimeProtection is the configuration of the runtime features
   # if omitted, the runtime components won't be installed
   runtimeProtection:
+    enabled: true
+    internalGrpcPort: 8080
     resolver:
+      labels: {}
+      deploymentAnnotations: {}
+      podTemplateAnnotations: {}
       replicasCount: 1
+      env: {}
+      image:
+        repository: "cbartifactory/runtime-kubernetes-resolver"
+        tag: "2.3.1"
+        pullPolicy: "Always"
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "30m"
+        limits:
+          memory: "256Mi"
+          cpu: "200m"
+      probes: {}
+      prometheus:
+        port: 7071
+        enabled: false
+      nodeSelector: {}
+      affinity: {}
+    sensor:
+      labels: {}
+      deploymentAnnotations: {}
+      podTemplateAnnotations: {}
+      env: {}
+      image:
+        repository: "cbartifactory/runtime-kubernetes-sensor"
+        tag: "2.3.1"
+        pullPolicy: "Always"
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "30m"
+        limits:
+          memory: "256Mi"
+          cpu: "200m"
+      probes: {}
+      prometheus:
+        port: 7071
+        enabled: false
+      verbosity: 2
   # clusterScanning is the configuration of the cluster scanning features
   # if omitted, the cluster scanning components won't be installed
   clusterScanning:
     # enabled controls whether the cluster scanning features will be enabled
     enabled: false
+    imageScanningReporter:
+      labels: {}
+      deploymentAnnotations: {}
+      podTemplateAnnotations: {}
+      replicasCount: 1
+      env: {}
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "30m"
+        limits:
+          memory: "256Mi"
+          cpu: "200m"
+      image:
+        repository: "cbartifactory/image-scanning-reporter"
+        tag: "2.3.1"
+        pullPolicy: "Always"
+      probes: {}
+      prometheus:
+        port: 7071
+        enabled: false
+      nodeSelector: {}
+      affinity: {}
+    clusterScanner:
+      labels: {}
+      deploymentAnnotations: {}
+      podTemplateAnnotations: {}
+      env: {}
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "30m"
+        limits:
+          memory: "256Mi"
+          cpu: "200m"
+      image:
+        repository: "cbartifactory/cluster-scanner"
+        tag: "2.3.1"
+        pullPolicy: "Always"
+      probes: {}
+      prometheus:
+        port: 7071
+        enabled: false
+  settings:
+    daemonSetsTolerations:
