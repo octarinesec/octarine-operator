@@ -43,3 +43,18 @@ The way that the CBC Containers components are installed is highly customizable.
 You can set different properties for the components or enable/disable components via the `spec.components` section of your `values.yaml` file.
 
 For all the possible values see <https://github.com/octarinesec/octarine-operator/blob/master/docs%2Fcrds.md#basic-components-optional-parameters>.
+
+### Secret creation
+
+In order for the agent components to function correctly and be able to communicate with the CBC backend an access token is required.
+
+This token is located in a secret.
+By default the secret is named `"cbcontainers-access-token"`, but that is configurable via the `accessTokenSecretName` property.
+
+If that secret does not exist, the operator will not start any of the agent components.
+
+If you want to create the secret as part of the chart installation provide the `accessToken` value to the chart.
+
+This means storing the secret as plain text in your `values.yaml` file.
+
+If you prefer to create the `Secret` yourself in an alternative and more secure way, don't set the `accessToken` value and the chart will not create the `Secret` objects.

@@ -6,7 +6,7 @@ spec:
   account: {{ required "accountId is required" .Values.accountId }}
   clusterName: "{{ required "clusterGroup is required" .Values.clusterGroup }}:{{ required "clusterName is required" .Values.clusterName }}"
   version: {{ required "version is required" .Values.version | quote }}
-  accessTokenSecretName: {{ include "cbcontainers-agent.access-token-name" .Values.accessTokenSecretName -}}
+  accessTokenSecretName: {{ include "cbcontainers-agent.access-token-name" .Values.accessTokenSecretName }}
   apiGateway:
     host: {{ required "gateways.apiGatewayHost is required" .Values.gateways.apiGatewayHost }}
   coreEventsGateway:

@@ -1,7 +1,7 @@
 # accessToken is the API token used by the agent to communicate with the backend
 accessToken: ""
 # accountId is the ID of the organization account
-accountId: ""
+accountId: "ABC123"
 # version is the version of the agent that will be installed
 version: "2.3.1"
 # clusterGroup is the group that the cluster will belong to.
@@ -10,12 +10,13 @@ clusterGroup: "default"
 clusterName: "test-cluster"
 # accessTokenSecretName is the name of the Kubernetes object of type Secret that holds the values of the Access Token
 accessTokenSecretName: "my-access-token-secret-name"
+# gateways is the collection of gateways that will be used to communicate with the CBC backend
 gateways:
   gatewayTLS:
-  apiGateway:
-  coreEventsGateway:
-  hardeningEventsGateway:
-  runtimeEventsGateway:
+  apiGatewayHost: https://api.gateway.com
+  coreEventsGatewayHost: https://events.gateway.com
+  hardeningEventsGatewayHost: https://hardening.events.gateway.com
+  runtimeEventsGatewayHost: https://runtime.events.gateway.com
 # components is the set of components that will be installed
 components:
   # basic is the configuration of the basic features
