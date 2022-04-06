@@ -12,7 +12,7 @@ There are 8 required fields that need to be provided by the user:
 
 | Parameter                                              | Description                                                      |
 | ------------------------------------------------------ | ---------------------------------------------------------------- |
-| `spec.accountId`                                       | The account ID of the organization using CBC                     |
+| `spec.orgKey`                                       | The org key of the organization using CBC                     |
 | `spec.clusterName`                                     | The name of the cluster that will be added to CBC                |
 | `spec.clusterGroup`                                    | The group that the cluster belongs to in CBC                     |
 | `spec.version`                                         | The version of the agent images                                  |
