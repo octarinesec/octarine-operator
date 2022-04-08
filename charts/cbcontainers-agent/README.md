@@ -42,7 +42,7 @@ The way that the CBC Containers components are installed is highly customizable.
 
 You can set different properties for the components or enable/disable components via the `spec.components` section of your `values.yaml` file.
 
-For all the possible values see <https://github.com/octarinesec/octarine-operator/blob/master/docs%2Fcrds.md#basic-components-optional-parameters>.
+For all the possible values see <https://github.com/octarinesec/octarine-operator/blob/master/docs%2Fcrds.md#basic-components-optional-parameters> and [`example-value.yaml`](cbcontainers-agent-chart/example-values.yaml).
 
 ### Secret creation
 
