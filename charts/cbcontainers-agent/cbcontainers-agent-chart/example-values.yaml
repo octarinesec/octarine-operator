@@ -1,9 +1,12 @@
+# this is an example file with all possible values
+# that can be used for the customization of the cbcontainers-agent chart
+
 # accessToken is the API token used by the agent to communicate with the backend
 accessToken: ""
 # orgKey is the ID of the organization account
 orgKey: "ABC123"
 # version is the version of the agent that will be installed
-version: "2.3.1"
+version: "2.4.0"
 # clusterGroup is the group that the cluster will belong to.
 clusterGroup: "default"
 # clusterName is the name that will be used for the cluster that the agent is installed on
