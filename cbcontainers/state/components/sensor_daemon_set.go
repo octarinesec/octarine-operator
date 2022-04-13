@@ -31,6 +31,8 @@ const (
 	dockerRuntimeEndpoint           = "/var/run/dockershim.sock"
 	dockerSock                      = "/var/run/docker.sock"
 	crioRuntimeEndpoint             = "/var/run/crio/crio.sock"
+
+	configuredContainerRuntimeVolumeName = "configured-container-runtime-endpoint"
 )
 
 var (
@@ -161,7 +163,7 @@ func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonS
 
 func (obj *SensorDaemonSetK8sObject) mutateVolumes(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {
 	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
-		obj.mutateClusterScannerVolumes(&daemonSet.Spec.Template.Spec)
+		obj.mutateClusterScannerVolumes(&daemonSet.Spec.Template.Spec, &agentSpec.Components.ClusterScanning.ClusterScannerAgent)
 	} else {
 		// clean cluster-scanner volumes
 		daemonSet.Spec.Template.Spec.Volumes = nil
@@ -323,7 +325,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(
 		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(clusterScannerSpec.Prometheus.Port)}}
 	}
 	obj.mutateClusterScannerEnvVars(container, clusterScannerSpec, accessTokenSecretName, eventsGatewaySpec)
-	obj.mutateClusterScannerVolumesMounts(container)
+	obj.mutateClusterScannerVolumesMounts(container, clusterScannerSpec)
 	obj.mutateSecurityContext(container)
 }
 
@@ -339,6 +341,11 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 		{Name: "CLUSTER_SCANNER_READINESS_PATH", Value: clusterScannerSpec.Probes.ReadinessPath},
 	}
 
+	if clusterScannerSpec.ContainerRuntime.Endpoint != "" && clusterScannerSpec.ContainerRuntime.ContainerRuntimeType != "" {
+		customEnvs = append(customEnvs, coreV1.EnvVar{Name:"CLUSTER_SCANNER_ENDPOINT", Value: clusterScannerSpec.ContainerRuntime.Endpoint})
+		customEnvs = append(customEnvs, coreV1.EnvVar{Name:"CLUSTER_SCANNER_CONTAINER_RUNTIME", Value: clusterScannerSpec.ContainerRuntime.ContainerRuntimeType.String()})
+	}
+
 	envVarBuilder := commonState.NewEnvVarBuilder().
 		WithCommonDataPlane(accessTokenSecretName).
 		WithEventsGateway(eventsGatewaySpec).
@@ -352,8 +359,10 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 	commonState.MutateEnvVars(container, envVarBuilder)
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec *coreV1.PodSpec) {
-	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != len(supportedContainerRuntimes)+1 {
+func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec *coreV1.PodSpec, clusterScannerSpec *cbContainersV1.CBContainersClusterScannerAgentSpec) {
+	containerRuntimes := getContainerRuntimes(clusterScannerSpec)
+
+	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != len(containerRuntimes)+1 {
 		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
 	}
 
@@ -361,7 +370,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec
 	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 
 	// mutate container-runtimes unix sockets files for the cluster-scanner CRI
-	for name, path := range supportedContainerRuntimes {
+	for name, path := range containerRuntimes {
 		routeIndex := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, name)
 		if templatePodSpec.Volumes[routeIndex].HostPath == nil {
 			templatePodSpec.Volumes[routeIndex].HostPath = &coreV1.HostPathVolumeSource{Path: path}
@@ -369,8 +378,10 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec
 	}
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container *coreV1.Container) {
-	if container.VolumeMounts == nil || len(container.VolumeMounts) != len(supportedContainerRuntimes)+1 {
+func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container *coreV1.Container, clusterScannerSpec *cbContainersV1.CBContainersClusterScannerAgentSpec) {
+	containerRuntimes := getContainerRuntimes(clusterScannerSpec)
+
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != len(containerRuntimes)+1 {
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
 
@@ -378,8 +389,24 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container
 	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
 
 	// mutate mount for container-runtimes unix sockets files for the cluster-scanner CRI
-	for name, mountPath := range supportedContainerRuntimes {
+	for name, mountPath := range containerRuntimes {
 		index := commonState.EnsureAndGetVolumeMountIndexForName(container, name)
 		commonState.MutateVolumeMount(container, index, mountPath, true)
 	}
+}
+
+// The cluster scanner uses the container runtime unix socket to fetch the running containers to scan.
+// getContainerRuntimes returns the unix paths to mount to the daemon set, so the cluster scanner container could access them.
+// Returns supported container runtimes paths, and customer custom endpoint path if provided.
+func getContainerRuntimes(clusterScannerSpec *cbContainersV1.CBContainersClusterScannerAgentSpec) map[string]string {
+	containerRuntimes := make(map[string]string, 0)
+	for name, endpoint := range supportedContainerRuntimes {
+		containerRuntimes[name] = endpoint
+	}
+
+	if clusterScannerSpec.ContainerRuntime.Endpoint != "" {
+		containerRuntimes[configuredContainerRuntimeVolumeName] = clusterScannerSpec.ContainerRuntime.Endpoint
+	}
+
+	return containerRuntimes
 }
