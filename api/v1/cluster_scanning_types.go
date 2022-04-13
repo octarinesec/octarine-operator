@@ -44,6 +44,8 @@ type CBContainersClusterScannerAgentSpec struct {
 	Probes CBContainersFileProbesSpec `json:"probes,omitempty"`
 	// +kubebuilder:default:={port: 7072}
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
+	// +kubebuilder:default:=<>
+	ContainerRuntime CBContainersContainerRuntimeSpec `json:"containerRuntime,omitempty"`
 }
 
 // CBContainersClusterScanningSpec defines the desired state of CBContainersClusterScanning
