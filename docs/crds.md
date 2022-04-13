@@ -54,6 +54,16 @@ This is the CR you'll need to deploy in order to trigger the operator to deploy 
 | `spec.components.runtimeProtection.resolver.resources`      | Carbon Black Container Runtime Resolver resources      | `{requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "1024Mi", cpu: "900m"}}`                                        |
 | `spec.components.runtimeProtection.sensor.resources`      | Carbon Black Container Runtime Sensor resources      | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "1024Mi", cpu: "500m"}}`                                        |
 
+### Cluster Scanning Components Optional parameters
+
+| Parameter                                              | Description                                                                | Default                                    |
+| -------------------------------------------------------| -------------------------------------------------------------------------- | ------------------------------------------ |                             
+| `spec.components.clusterScanning.enabled`                      | Carbon Black Container flag to control Cluster Scanning components deployment       | true                                       |
+| `spec.components.clusterScanning.imageScanningReporter.image.repository`    | Carbon Black Container Image Scanning Reporter image repository                   | `cbartifactory/image-scanning-reporter`|
+| `spec.components.clusterScanning.clusterScanner.image.repository`    | Carbon Black Container Cluster Scanner Agent image repository                       | `cbartifactory/cluster-scanner`  |
+| `spec.components.clusterScanning.imageScanningReporter.resources`      | Carbon Black Container Image Scanning Reporter resources      | `{requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "1024Mi", cpu: "900m"}}`                                        |
+| `spec.components.clusterScanning.clusterScanner.resources`      | Carbon Black Container Cluster Scanner resources      | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "1024Mi", cpu: "500m"}}`                                        |
+
 ### Components Common Optional parameters
 
 | Parameter                                    | Description                                                                            | Default                                                       |                                                               
