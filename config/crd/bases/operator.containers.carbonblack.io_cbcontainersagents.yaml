@@ -2481,6 +2481,14 @@ spec:
                       clusterScanner:
                         default: {}
                         properties:
+                          containerRuntime:
+                            default: {}
+                            properties:
+                              containerRuntimeType:
+                                type: string
+                              endpoint:
+                                type: string
+                            type: object
                           daemonSetAnnotations:
                             additionalProperties:
                               type: string

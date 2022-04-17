@@ -2317,6 +2317,13 @@ spec:
                   properties:
                     clusterScanner:
                       properties:
+                        containerRuntime:
+                          properties:
+                            containerRuntimeType:
+                              type: string
+                            endpoint:
+                              type: string
+                          type: object
                         daemonSetAnnotations:
                           additionalProperties:
                             type: string
