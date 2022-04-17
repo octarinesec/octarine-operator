@@ -63,6 +63,8 @@ This is the CR you'll need to deploy in order to trigger the operator to deploy 
 | `spec.components.clusterScanning.clusterScanner.image.repository`    | Carbon Black Container Cluster Scanner Agent image repository                       | `cbartifactory/cluster-scanner`  |
 | `spec.components.clusterScanning.imageScanningReporter.resources`      | Carbon Black Container Image Scanning Reporter resources      | `{requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "1024Mi", cpu: "900m"}}`                                        |
 | `spec.components.clusterScanning.clusterScanner.resources`      | Carbon Black Container Cluster Scanner resources      | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "1024Mi", cpu: "500m"}}`                                        |
+| `spec.components.clusterScanning.clusterScanner.containerRuntime.containerRuntimeType`      | Carbon Black Container Cluster Scanner Container-Runtime Type. One of the options: containerd/docker-daemon       | |
+| `spec.components.clusterScanning.clusterScanner.containerRuntime.endpoint`      | Carbon Black Container Cluster Scanner Container-Runtime Endpoint Path       | |
 
 ### Components Common Optional parameters
 
