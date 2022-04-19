@@ -2317,13 +2317,6 @@ spec:
                   properties:
                     clusterScanner:
                       properties:
-                        containerRuntime:
-                          properties:
-                            containerRuntimeType:
-                              type: string
-                            endpoint:
-                              type: string
-                          type: object
                         daemonSetAnnotations:
                           additionalProperties:
                             type: string
@@ -2341,6 +2334,16 @@ spec:
                             repository:
                               type: string
                             tag:
+                              type: string
+                          type: object
+                        k8sContainerEngine:
+                          properties:
+                            endpoint:
+                              type: string
+                            engineType:
+                              enum:
+                              - containerd
+                              - docker-daemon
                               type: string
                           type: object
                         labels:

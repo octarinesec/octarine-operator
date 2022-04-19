@@ -2481,14 +2481,6 @@ spec:
                       clusterScanner:
                         default: {}
                         properties:
-                          containerRuntime:
-                            default: {}
-                            properties:
-                              containerRuntimeType:
-                                type: string
-                              endpoint:
-                                type: string
-                            type: object
                           daemonSetAnnotations:
                             additionalProperties:
                               type: string
@@ -2511,6 +2503,17 @@ spec:
                               repository:
                                 type: string
                               tag:
+                                type: string
+                            type: object
+                          k8sContainerEngine:
+                            default: {}
+                            properties:
+                              endpoint:
+                                type: string
+                              engineType:
+                                enum:
+                                - containerd
+                                - docker-daemon
                                 type: string
                             type: object
                           labels:
