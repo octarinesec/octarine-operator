@@ -12,7 +12,10 @@ const (
 	CRIOContainerRuntime       ContainerEngineType = "cri-o"
 )
 
+var SupportedK8sEngineTypes = []ContainerEngineType{ContainerdContainerRuntime, DockerContainerRuntime}
+
 type K8sContainerEngineSpec struct {
-	Endpoint   string              `json:"endpoint,omitempty"`
+	Endpoint string `json:"endpoint,omitempty"`
+	// +kubebuilder:validation:Enum:=containerd;docker-daemon
 	EngineType ContainerEngineType `json:"engineType,omitempty"`
 }

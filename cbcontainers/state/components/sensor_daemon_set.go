@@ -342,8 +342,8 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 	}
 
 	if clusterScannerSpec.K8sContainerEngine.Endpoint != "" && clusterScannerSpec.K8sContainerEngine.EngineType != "" {
-		customEnvs = append(customEnvs, coreV1.EnvVar{Name:"CLUSTER_SCANNER_ENDPOINT", Value: clusterScannerSpec.K8sContainerEngine.Endpoint})
-		customEnvs = append(customEnvs, coreV1.EnvVar{Name:"CLUSTER_SCANNER_CONTAINER_RUNTIME", Value: clusterScannerSpec.K8sContainerEngine.EngineType.String()})
+		customEnvs = append(customEnvs, coreV1.EnvVar{Name: "CLUSTER_SCANNER_ENDPOINT", Value: clusterScannerSpec.K8sContainerEngine.Endpoint})
+		customEnvs = append(customEnvs, coreV1.EnvVar{Name: "CLUSTER_SCANNER_CONTAINER_RUNTIME", Value: clusterScannerSpec.K8sContainerEngine.EngineType.String()})
 	}
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
