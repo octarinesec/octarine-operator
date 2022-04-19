@@ -1,18 +1,18 @@
 package v1
 
-type ContainerRuntimeType string
+type ContainerEngineType string
 
-func (containerRuntimeType ContainerRuntimeType) String() string {
-	return string(containerRuntimeType)
+func (engineType ContainerEngineType) String() string {
+	return string(engineType)
 }
 
 const (
-	ContainerdContainerRuntime ContainerRuntimeType = "containerd"
-	DockerContainerRuntime     ContainerRuntimeType = "docker-daemon"
-	CRIOContainerRuntime       ContainerRuntimeType = "cri-o"
+	ContainerdContainerRuntime ContainerEngineType = "containerd"
+	DockerContainerRuntime     ContainerEngineType = "docker-daemon"
+	CRIOContainerRuntime       ContainerEngineType = "cri-o"
 )
 
-type CBContainersContainerRuntimeSpec struct {
-	Endpoint             string               `json:"endpoint,omitempty"`
-	ContainerRuntimeType ContainerRuntimeType `json:"containerRuntimeType,omitempty"`
+type K8sContainerEngineSpec struct {
+	Endpoint   string              `json:"endpoint,omitempty"`
+	EngineType ContainerEngineType `json:"engineType,omitempty"`
 }

@@ -45,7 +45,7 @@ type CBContainersClusterScannerAgentSpec struct {
 	// +kubebuilder:default:={port: 7072}
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 	// +kubebuilder:default:=<>
-	ContainerRuntime CBContainersContainerRuntimeSpec `json:"containerRuntime,omitempty"`
+	K8sContainerEngine K8sContainerEngineSpec `json:"k8sContainerEngine,omitempty"`
 }
 
 // CBContainersClusterScanningSpec defines the desired state of CBContainersClusterScanning

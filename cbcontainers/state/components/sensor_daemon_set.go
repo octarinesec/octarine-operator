@@ -341,9 +341,9 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 		{Name: "CLUSTER_SCANNER_READINESS_PATH", Value: clusterScannerSpec.Probes.ReadinessPath},
 	}
 
-	if clusterScannerSpec.ContainerRuntime.Endpoint != "" && clusterScannerSpec.ContainerRuntime.ContainerRuntimeType != "" {
-		customEnvs = append(customEnvs, coreV1.EnvVar{Name:"CLUSTER_SCANNER_ENDPOINT", Value: clusterScannerSpec.ContainerRuntime.Endpoint})
-		customEnvs = append(customEnvs, coreV1.EnvVar{Name:"CLUSTER_SCANNER_CONTAINER_RUNTIME", Value: clusterScannerSpec.ContainerRuntime.ContainerRuntimeType.String()})
+	if clusterScannerSpec.K8sContainerEngine.Endpoint != "" && clusterScannerSpec.K8sContainerEngine.EngineType != "" {
+		customEnvs = append(customEnvs, coreV1.EnvVar{Name:"CLUSTER_SCANNER_ENDPOINT", Value: clusterScannerSpec.K8sContainerEngine.Endpoint})
+		customEnvs = append(customEnvs, coreV1.EnvVar{Name:"CLUSTER_SCANNER_CONTAINER_RUNTIME", Value: clusterScannerSpec.K8sContainerEngine.EngineType.String()})
 	}
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
@@ -399,13 +399,13 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container
 // getContainerRuntimes returns the unix paths to mount to the daemon set, so the cluster scanner container could access them.
 // Returns supported container runtimes paths, and customer custom endpoint path if provided.
 func getContainerRuntimes(clusterScannerSpec *cbContainersV1.CBContainersClusterScannerAgentSpec) map[string]string {
-	containerRuntimes := make(map[string]string, 0)
+	containerRuntimes := make(map[string]string)
 	for name, endpoint := range supportedContainerRuntimes {
 		containerRuntimes[name] = endpoint
 	}
 
-	if clusterScannerSpec.ContainerRuntime.Endpoint != "" {
-		containerRuntimes[configuredContainerRuntimeVolumeName] = clusterScannerSpec.ContainerRuntime.Endpoint
+	if clusterScannerSpec.K8sContainerEngine.Endpoint != "" {
+		containerRuntimes[configuredContainerRuntimeVolumeName] = clusterScannerSpec.K8sContainerEngine.Endpoint
 	}
 
 	return containerRuntimes
