@@ -19,6 +19,7 @@ const (
 	apiHostVarName          = "OCTARINE_API_HOST"
 	apiPortVarName          = "OCTARINE_API_PORT"
 	apiAdapterVarName       = "OCTARINE_API_ADAPTER_NAME"
+	agentVersionVarName     = "OCTARINE_AGENT_VERSION"
 	tlsSkipVerifyVarName    = "TLS_INSECURE_SKIP_VERIFY"
 	tlsRootCAsPathVarName   = "TLS_ROOT_CAS_PATH"
 )
@@ -129,6 +130,7 @@ func (b *EnvVarBuilder) WithCommonDataPlane(accessKeySecretName string) *EnvVarB
 		WithEnvVarFromConfigmap(apiHostVarName, DataPlaneConfigmapApiHostKey).
 		WithEnvVarFromConfigmap(apiPortVarName, DataPlaneConfigmapApiPortKey).
 		WithEnvVarFromConfigmap(apiAdapterVarName, DataPlaneConfigmapApiAdapterKey).
+		WithEnvVarFromConfigmap(agentVersionVarName, DataPlaneConfigmapAgentVersionKey).
 		WithGatewayTLS()
 }
 
