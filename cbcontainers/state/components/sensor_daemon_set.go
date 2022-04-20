@@ -31,6 +31,7 @@ const (
 	// k8s container runtime/contaienr engine endpoints
 	containerdRuntimeEndpoint         = "/var/run/containerd/containerd.sock"
 	microk8sContainerdRuntimeEndpoint = "/var/snap/microk8s/common/run/containerd.sock"
+	k3sContainerdRuntimeEndpoint      = "/run/k3s/containerd/containerd.sock"
 	dockerRuntimeEndpoint             = "/var/run/dockershim.sock"
 	dockerSock                        = "/var/run/docker.sock"
 	crioRuntimeEndpoint               = "/var/run/crio/crio.sock"
@@ -46,6 +47,7 @@ var (
 	supportedContainerRuntimes = map[string]string{
 		"containerd":          containerdRuntimeEndpoint,
 		"microk8s-containerd": microk8sContainerdRuntimeEndpoint,
+		"k3s-containerd":      k3sContainerdRuntimeEndpoint,
 		"docker":              dockerRuntimeEndpoint,
 		"crio":                crioRuntimeEndpoint,
 		"dockersock":          dockerSock,
