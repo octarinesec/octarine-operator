@@ -2,10 +2,10 @@ package components
 
 import (
 	"fmt"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/utils"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -39,11 +39,7 @@ func (obj *ResolverServiceK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	service.Labels = resolver.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
 
-	setAsHeadlessService, err := utils.IsVersionGreaterThan(agentSpec.Version, "2.4.0")
-	if err != nil {
-		return err
-	}
-	if setAsHeadlessService {
+	if models.AgentVersion(agentSpec.Version).IsResolverHeadlessServiceCompatible() {
 		service.Spec.ClusterIP = coreV1.ClusterIPNone
 	}
 
