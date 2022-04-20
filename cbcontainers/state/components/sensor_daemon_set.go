@@ -27,10 +27,13 @@ const (
 	runtimeSensorHostPID       = true
 
 	desiredConnectionTimeoutSeconds = 60
-	containerdRuntimeEndpoint       = "/var/run/containerd/containerd.sock"
-	dockerRuntimeEndpoint           = "/var/run/dockershim.sock"
-	dockerSock                      = "/var/run/docker.sock"
-	crioRuntimeEndpoint             = "/var/run/crio/crio.sock"
+
+	// k8s container runtime/contaienr engine endpoints
+	containerdRuntimeEndpoint         = "/var/run/containerd/containerd.sock"
+	microk8sContainerdRuntimeEndpoint = "/var/snap/microk8s/common/run/containerd.sock"
+	dockerRuntimeEndpoint             = "/var/run/dockershim.sock"
+	dockerSock                        = "/var/run/docker.sock"
+	crioRuntimeEndpoint               = "/var/run/crio/crio.sock"
 
 	configuredContainerRuntimeVolumeName = "configured-container-runtime-endpoint"
 )
@@ -41,10 +44,11 @@ var (
 
 	resolverAddress            = fmt.Sprintf("%s.%s.svc.cluster.local", ResolverName, commonState.DataPlaneNamespaceName)
 	supportedContainerRuntimes = map[string]string{
-		"containerd": containerdRuntimeEndpoint,
-		"docker":     dockerRuntimeEndpoint,
-		"crio":       crioRuntimeEndpoint,
-		"dockersock": dockerSock,
+		"containerd":          containerdRuntimeEndpoint,
+		"microk8s-containerd": microk8sContainerdRuntimeEndpoint,
+		"docker":              dockerRuntimeEndpoint,
+		"crio":                crioRuntimeEndpoint,
+		"dockersock":          dockerSock,
 	}
 )
 
