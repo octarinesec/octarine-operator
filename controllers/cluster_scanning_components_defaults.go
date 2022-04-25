@@ -1,6 +1,9 @@
 package controllers
 
-import cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+import (
+	"fmt"
+	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+)
 
 func (r *CBContainersAgentController) setClusterScanningComponentsDefaults(clusterScanning *cbcontainersv1.CBContainersClusterScanningSpec) error {
 	if clusterScanning.Enabled == nil {
@@ -84,5 +87,30 @@ func (r *CBContainersAgentController) setClusterScannerAgentDefaults(clusterScan
 
 	setDefaultFileProbes(&clusterScannerAgent.Probes)
 
+	emptyK8sContainerEngineSpec := cbcontainersv1.K8sContainerEngineSpec{}
+	if clusterScannerAgent.K8sContainerEngine != emptyK8sContainerEngineSpec {
+		if err := validateClusterScannerK8sContainerEngineSpec(clusterScannerAgent.K8sContainerEngine); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+func validateClusterScannerK8sContainerEngineSpec(spec cbcontainersv1.K8sContainerEngineSpec) error {
+	if spec.Endpoint == "" {
+		return fmt.Errorf("k8s container engine endpoint must be provided if configuring k8s container engine option")
+	}
+
+	if spec.EngineType == "" {
+		return fmt.Errorf("k8s container engine type must be provided if configuring k8s container engine option")
+	}
+
+	for _, engineType := range cbcontainersv1.SupportedK8sEngineTypes {
+		if engineType == spec.EngineType {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("invalid engine type %v provided", spec.EngineType)
 }
