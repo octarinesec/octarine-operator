@@ -14,7 +14,7 @@ func NewDefaultGatewayCreator() *DefaultGatewayCreator {
 
 func (creator *DefaultGatewayCreator) CreateGateway(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) (APIGateway, error) {
 	spec := cbContainersAgent.Spec
-	builder := gateway.NewBuilder(spec.Account, spec.ClusterName, accessToken, spec.Gateways.ApiGateway.Host).
+	builder := gateway.NewBuilder(spec.Account, spec.ClusterName, accessToken, spec.Gateways.ApiGateway.Host, cbContainersAgent.ObjectMeta.Annotations).
 		SetURLComponents(spec.Gateways.ApiGateway.Scheme, spec.Gateways.ApiGateway.Port, spec.Gateways.ApiGateway.Adapter).
 		SetTLSInsecureSkipVerify(spec.Gateways.GatewayTLS.InsecureSkipVerify).
 		SetTLSRootCAsBundle(spec.Gateways.GatewayTLS.RootCAsBundle)
