@@ -6,7 +6,7 @@ const (
 	DataPlaneConfigmapName            = "cbcontainers-dataplane-config"
 	RegistrySecretName                = "cbcontainers-registry-secret"
 	DataPlaneServiceAccountName       = "cbcontainers-operator"
-	AgentServiceAccountName           = "cbcontainers-agent"
+	AgentNodeServiceAccountName       = "cbcontainers-agent-node"
 	StateReporterServiceAccountName   = "cbcontainers-state-reporter"
 	EnforcerServiceAccountName        = "cbcontainers-enforcer"
 	MonitorServiceAccountName         = "cbcontainers-monitor"
