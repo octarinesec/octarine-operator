@@ -87,7 +87,7 @@ func setDefaultImage(imageSpec *v1.CBContainersImageSpec, imageName string) {
 	}
 
 	if imageSpec.PullPolicy == "" {
-		imageSpec.PullPolicy = "Always"
+		imageSpec.PullPolicy = "IfNotPresent"
 	}
 }
 

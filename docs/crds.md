@@ -75,7 +75,7 @@ This is the CR you'll need to deploy in order to trigger the operator to deploy 
 | `podTemplateAnnotations`                     | Carbon Black Container Component Pod annotations               | `{}` |
 | `env`                                        | Carbon Black Container Component Pod environment vars          | Empty map                                                     |
 | `image.tag`                                  | Carbon Black Container Component image tag                     | The agent version                                             |
-| `image.pullPolicy`                           | Carbon Black Container Component pull policy                   | `Always`                                                      | | |
+| `image.pullPolicy`                           | Carbon Black Container Component pull policy                   | `IfNotPresent`                                                      | | |
 | `probes.port`                                | Carbon Black Container Component probes port                   | 8181                                                          |
 | `probes.scheme`                              | Carbon Black Container Component probes scheme                 | `HTTP`                                                        |
 | `probes.initialDelaySeconds`                 | Carbon Black Container Component probes initial delay seconds  | 3                                                             |

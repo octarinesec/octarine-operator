@@ -764,7 +764,7 @@ spec:
                               repository: cbartifactory/guardrails-enforcer
                             properties:
                               pullPolicy:
-                                default: Always
+                                default: IfNotPresent
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
@@ -1581,7 +1581,7 @@ spec:
                               repository: cbartifactory/monitor
                             properties:
                               pullPolicy:
-                                default: Always
+                                default: IfNotPresent
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
@@ -2380,7 +2380,7 @@ spec:
                               repository: cbartifactory/guardrails-state-reporter
                             properties:
                               pullPolicy:
-                                default: Always
+                                default: IfNotPresent
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
@@ -2502,7 +2502,7 @@ spec:
                               repository: cbartifactory/cluster-scanner
                             properties:
                               pullPolicy:
-                                default: Always
+                                default: IfNotPresent
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
@@ -3301,7 +3301,7 @@ spec:
                               repository: cbartifactory/image-scanning-reporter
                             properties:
                               pullPolicy:
-                                default: Always
+                                default: IfNotPresent
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
@@ -4127,7 +4127,7 @@ spec:
                               repository: cbartifactory/runtime-kubernetes-resolver
                             properties:
                               pullPolicy:
-                                default: Always
+                                default: IfNotPresent
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
@@ -4257,7 +4257,7 @@ spec:
                               repository: cbartifactory/runtime-kubernetes-sensor
                             properties:
                               pullPolicy:
-                                default: Always
+                                default: IfNotPresent
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
