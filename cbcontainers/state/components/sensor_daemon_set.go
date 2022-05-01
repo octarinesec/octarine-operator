@@ -37,8 +37,9 @@ var (
 	sensorIsPrivileged       = true
 	sensorRunAsUser    int64 = 0
 
-	resolverAddress            = fmt.Sprintf("%s.%s.svc.cluster.local", ResolverName, commonState.DataPlaneNamespaceName)
-	supportedContainerRuntimes = map[string]string{
+	resolverAddress              = fmt.Sprintf("%s.%s.svc.cluster.local", ResolverName, commonState.DataPlaneNamespaceName)
+	imageScanningReporterAddress = fmt.Sprintf("%s.%s.svc.cluster.local", ImageScanningReporterName, commonState.DataPlaneNamespaceName)
+	supportedContainerRuntimes   = map[string]string{
 		"containerd": containerdRuntimeEndpoint,
 		"docker":     dockerRuntimeEndpoint,
 		"crio":       crioRuntimeEndpoint,
@@ -332,7 +333,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 	accessTokenSecretName string, eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec) {
 	customEnvs := []coreV1.EnvVar{
 		{Name: "CLUSTER_SCANNER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", clusterScannerSpec.Prometheus.Port)},
-		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_HOST", Value: ImageScanningReporterName},
+		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_HOST", Value: imageScanningReporterAddress},
 		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_PORT", Value: fmt.Sprintf("%d", ImageScanningReporterDesiredContainerPortValue)},
 		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_SCHEME", Value: ImageScanningReporterDesiredContainerPortName},
 		{Name: "CLUSTER_SCANNER_LIVENESS_PATH", Value: clusterScannerSpec.Probes.LivenessPath},
