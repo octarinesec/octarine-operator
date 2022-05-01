@@ -13,7 +13,7 @@ type Builder struct {
 	cluster               string
 	accessToken           string
 	agentComponents       []string
-	clusterAnnotations    map[string]string
+	clusterLabels         map[string]string
 	scheme                string
 	host                  string
 	port                  int
@@ -22,7 +22,7 @@ type Builder struct {
 	tlsRootCAsBundle      []byte
 }
 
-func NewBuilder(account, cluster, accessToken, host string, clusterAnnotations map[string]string) *Builder {
+func NewBuilder(account, cluster, accessToken, host string, clusterLabels map[string]string) *Builder {
 	return &Builder{
 		account:               account,
 		cluster:               cluster,
@@ -33,7 +33,7 @@ func NewBuilder(account, cluster, accessToken, host string, clusterAnnotations m
 		adapter:               DefaultAdapter,
 		tlsInsecureSkipVerify: false,
 		tlsRootCAsBundle:      nil,
-		clusterAnnotations:    clusterAnnotations,
+		clusterLabels:         clusterLabels,
 	}
 }
 
@@ -75,7 +75,7 @@ func (builder *Builder) Build() (*ApiGateway, error) {
 		builder.cluster,
 		builder.accessToken,
 		builder.agentComponents,
-		builder.clusterAnnotations,
+		builder.clusterLabels,
 		builder.scheme,
 		builder.host,
 		builder.port,
