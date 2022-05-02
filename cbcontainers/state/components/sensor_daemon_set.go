@@ -118,7 +118,7 @@ func (obj *SensorDaemonSetK8sObject) initiateDamonSet(daemonSet *appsV1.DaemonSe
 		daemonSet.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
 
-	daemonSet.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
+	daemonSet.Spec.Template.Spec.ServiceAccountName = commonState.AgentNodeServiceAccountName
 	daemonSet.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	daemonSet.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 }

@@ -70,7 +70,7 @@ func (obj *MonitorDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, 
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels
 	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels
-	deployment.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
+	deployment.Spec.Template.Spec.ServiceAccountName = commonState.MonitorServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, monitor.DeploymentAnnotations)
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, monitor.PodTemplateAnnotations)

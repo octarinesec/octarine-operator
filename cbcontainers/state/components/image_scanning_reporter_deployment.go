@@ -77,7 +77,7 @@ func (obj *ImageScanningReporterDeploymentK8sObject) initiateDeployment(deployme
 	}
 
 	deployment.Spec.Replicas = imageScanningReporter.ReplicasCount
-	deployment.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
+	deployment.Spec.Template.Spec.ServiceAccountName = commonState.ImageScanningServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 }
