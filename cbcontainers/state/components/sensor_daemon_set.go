@@ -43,8 +43,9 @@ var (
 	sensorIsPrivileged       = true
 	sensorRunAsUser    int64 = 0
 
-	resolverAddress            = fmt.Sprintf("%s.%s.svc.cluster.local", ResolverName, commonState.DataPlaneNamespaceName)
-	supportedContainerRuntimes = map[string]string{
+	resolverAddress              = fmt.Sprintf("%s.%s.svc.cluster.local", ResolverName, commonState.DataPlaneNamespaceName)
+	imageScanningReporterAddress = fmt.Sprintf("%s.%s.svc.cluster.local", ImageScanningReporterName, commonState.DataPlaneNamespaceName)
+	supportedContainerRuntimes   = map[string]string{
 		"containerd":          containerdRuntimeEndpoint,
 		"microk8s-containerd": microk8sContainerdRuntimeEndpoint,
 		"k3s-containerd":      k3sContainerdRuntimeEndpoint,
@@ -117,7 +118,7 @@ func (obj *SensorDaemonSetK8sObject) initiateDamonSet(daemonSet *appsV1.DaemonSe
 		daemonSet.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
 
-	daemonSet.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
+	daemonSet.Spec.Template.Spec.ServiceAccountName = commonState.AgentNodeServiceAccountName
 	daemonSet.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	daemonSet.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 }
@@ -340,7 +341,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 	accessTokenSecretName string, eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec) {
 	customEnvs := []coreV1.EnvVar{
 		{Name: "CLUSTER_SCANNER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", clusterScannerSpec.Prometheus.Port)},
-		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_HOST", Value: ImageScanningReporterName},
+		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_HOST", Value: imageScanningReporterAddress},
 		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_PORT", Value: fmt.Sprintf("%d", ImageScanningReporterDesiredContainerPortValue)},
 		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_SCHEME", Value: ImageScanningReporterDesiredContainerPortName},
 		{Name: "CLUSTER_SCANNER_LIVENESS_PATH", Value: clusterScannerSpec.Probes.LivenessPath},

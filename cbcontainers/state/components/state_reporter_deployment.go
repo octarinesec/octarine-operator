@@ -71,7 +71,7 @@ func (obj *StateReporterDeploymentK8sObject) MutateK8sObject(k8sObject client.Ob
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels
 	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels
-	deployment.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
+	deployment.Spec.Template.Spec.ServiceAccountName = commonState.StateReporterServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, stateReporter.DeploymentAnnotations)
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, stateReporter.PodTemplateAnnotations)
