@@ -220,13 +220,13 @@ spec:
         env:
           HTTP_PROXY: "<proxy-url>"
           HTTPS_PROXY: "<proxy-url>"
-          NO_PROXY: "<kubernetes-api-server-ip>/<range>"
+          NO_PROXY: "<kubernetes-api-server-ip>/<range>,cbcontainers-runtime-resolver.cbcontainers-dataplane.svc.cluster.local"
     clusterScanning:
       clusterScanner:
         env:
           HTTP_PROXY: "<proxy-url>"
           HTTPS_PROXY: "<proxy-url>"
-          NO_PROXY: "<kubernetes-api-server-ip>/<range>"
+          NO_PROXY: "<kubernetes-api-server-ip>/<range>,cbcontainers-image-scanning-reporter.cbcontainers-dataplane.svc.cluster.local"
       imageScanningReporter:
         env:
           HTTP_PROXY: "<proxy-url>"
