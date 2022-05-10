@@ -6,7 +6,7 @@ const (
 	AgentMinVersionNone                 AgentVersion = "none"
 	AgentMaxVersionLatest               AgentVersion = "latest"
 	AgentVersionUnknown                 AgentVersion = ""
-	AgentVersionResolverHeadlessService AgentVersion = "2.4.0"
+	AgentVersionResolverHeadlessService AgentVersion = "2.4.2"
 )
 
 func (v AgentVersion) IsLargerThan(version string) bool {
