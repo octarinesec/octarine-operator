@@ -36,7 +36,6 @@ func (obj *ResolverServiceK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	resolver := &runtimeProtection.Resolver
 	service.Labels = resolver.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
-	service.Spec.ClusterIP = coreV1.ClusterIPNone
 
 	service.Spec.Selector = map[string]string{
 		resolverLabelKey: ResolverName,
