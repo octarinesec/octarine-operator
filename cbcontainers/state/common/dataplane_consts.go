@@ -28,4 +28,6 @@ const (
 	DataPlaneConfigmapTlsRootCAsFilePath = "root.pem"
 
 	AccessTokenSecretKeyName = "accessToken"
+
+	RootCAVolumeDefaultMode int32 = 420 // 644 in octal
 )
