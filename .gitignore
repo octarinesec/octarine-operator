@@ -82,5 +82,5 @@ tags
 bin
 testbin
 
-operator.yaml
+/operator.yaml
 /cbcontainers-operator

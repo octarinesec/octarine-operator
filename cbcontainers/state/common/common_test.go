@@ -116,6 +116,15 @@ func TestWithDataPlaneCommonConfig(t *testing.T) {
 				},
 			},
 		},
+		agentVersionVarName: {
+			Name: agentVersionVarName,
+			ValueFrom: &coreV1.EnvVarSource{
+				ConfigMapKeyRef: &coreV1.ConfigMapKeySelector{
+					LocalObjectReference: coreV1.LocalObjectReference{Name: DataPlaneConfigmapName},
+					Key:                  DataPlaneConfigmapAgentVersionKey,
+				},
+			},
+		},
 	}
 	actual := NewEnvVarBuilder().
 		WithCommonDataPlane(accessTokenSecretName).

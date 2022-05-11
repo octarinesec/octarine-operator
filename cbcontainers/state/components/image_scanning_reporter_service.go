@@ -18,7 +18,9 @@ const (
 
 type ImageScanningReporterServiceK8sObject struct{}
 
-func NewImageScanningReporterServiceK8sObject() *ImageScanningReporterServiceK8sObject { return &ImageScanningReporterServiceK8sObject{} }
+func NewImageScanningReporterServiceK8sObject() *ImageScanningReporterServiceK8sObject {
+	return &ImageScanningReporterServiceK8sObject{}
+}
 
 func (obj *ImageScanningReporterServiceK8sObject) EmptyK8sObject() client.Object {
 	return &coreV1.Service{}

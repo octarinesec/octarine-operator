@@ -2336,6 +2336,16 @@ spec:
                             tag:
                               type: string
                           type: object
+                        k8sContainerEngine:
+                          properties:
+                            endpoint:
+                              type: string
+                            engineType:
+                              enum:
+                              - containerd
+                              - docker-daemon
+                              type: string
+                          type: object
                         labels:
                           additionalProperties:
                             type: string

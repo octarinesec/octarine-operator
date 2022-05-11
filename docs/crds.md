@@ -39,15 +39,32 @@ This is the CR you'll need to deploy in order to trigger the operator to deploy 
 | `spec.components.basic.monitor.image.repository`       | Carbon Black Container Monitor image repository                            | `cbartifactory/monitor`                    |
 | `spec.components.basic.enforcer.image.repository`      | Carbon Black Container Hardening Enforcer image repository                 | `cbartifactory/guardrails-enforcer`        |
 | `spec.components.basic.stateReporter.image.repository` | Carbon Black Container Hardening State Reporter image repository           | `cbartifactory/guardrails-state-reporter`  |
+| `spec.components.basic.monitor.resources` | Carbon Black Container Monitor resources           | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}`  |
+| `spec.components.basic.enforcer.resources` | Carbon Black Container Hardening Enforcer resources           | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}`  |
+| `spec.components.basic.stateReporter.resources` | Carbon Black Container Hardening State Reporter resources           | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}`  |
 
 ### Runtime Components Optional parameters
 
 | Parameter                                              | Description                                                                | Default                                    |
 | -------------------------------------------------------| -------------------------------------------------------------------------- | ------------------------------------------ |                             
-| `spec.components.runtime.enabled`                      | Carbon Black Container flag to control Runtime components deployment       | true                                       |
-| `spec.components.runtime.resolver.image.repository`    | Carbon Black Container Runtime Resolver image repository                   | `cbartifactory/runtime-kubernetes-resolver`|
-| `spec.components.runtime.sensor.image.repository`    | Carbon Black Container Runtime Sensor image repository                       | `cbartifactory/runtime-kubernetes-sensor`  |
-| `spec.components.runtime.internalGrpcPort`      | Carbon Black Container Runtime gRPC port the resolver exposes for the sensor      | 443                                        |
+| `spec.components.runtimeProtection.enabled`                      | Carbon Black Container flag to control Runtime components deployment       | true                                       |
+| `spec.components.runtimeProtection.resolver.image.repository`    | Carbon Black Container Runtime Resolver image repository                   | `cbartifactory/runtime-kubernetes-resolver`|
+| `spec.components.runtimeProtection.sensor.image.repository`    | Carbon Black Container Runtime Sensor image repository                       | `cbartifactory/runtime-kubernetes-sensor`  |
+| `spec.components.runtimeProtection.internalGrpcPort`      | Carbon Black Container Runtime gRPC port the resolver exposes for the sensor      | 443                                        |
+| `spec.components.runtimeProtection.resolver.resources`      | Carbon Black Container Runtime Resolver resources      | `{requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "1024Mi", cpu: "900m"}}`                                        |
+| `spec.components.runtimeProtection.sensor.resources`      | Carbon Black Container Runtime Sensor resources      | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "1024Mi", cpu: "500m"}}`                                        |
+
+### Cluster Scanning Components Optional parameters
+
+| Parameter                                              | Description                                                                | Default                                    |
+| -------------------------------------------------------| -------------------------------------------------------------------------- | ------------------------------------------ |                             
+| `spec.components.clusterScanning.enabled`                      | Carbon Black Container flag to control Cluster Scanning components deployment       | true                                       |
+| `spec.components.clusterScanning.imageScanningReporter.image.repository`    | Carbon Black Container Image Scanning Reporter image repository                   | `cbartifactory/image-scanning-reporter`|
+| `spec.components.clusterScanning.clusterScanner.image.repository`    | Carbon Black Container Cluster Scanner Agent image repository                       | `cbartifactory/cluster-scanner`  |
+| `spec.components.clusterScanning.imageScanningReporter.resources`      | Carbon Black Container Image Scanning Reporter resources      | `{requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "1024Mi", cpu: "900m"}}`                                        |
+| `spec.components.clusterScanning.clusterScanner.resources`      | Carbon Black Container Cluster Scanner resources      | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "1024Mi", cpu: "500m"}}`                                        |
+| `spec.components.clusterScanning.clusterScanner.k8sContainerEngine.engineType`      | Carbon Black Container Cluster Scanner k8s container engine type. One of the options: `containerd`/`docker-daemon`       | |
+| `spec.components.clusterScanning.clusterScanner.k8sContainerEngine.endpoint`      | Carbon Black Container Cluster Scanner  k8s container engine endpoint path       | |
 
 ### Components Common Optional parameters
 

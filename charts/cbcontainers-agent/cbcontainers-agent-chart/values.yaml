@@ -1,0 +1,10 @@
+# accessToken is the API token used by the agent to communicate with the backend
+accessToken: ""
+# orgKey is the ID of the organization account
+orgKey: ""
+# version is the version of the agent that will be installed
+version: "2.4.0"
+# clusterGroup is the group that the cluster will belong to.
+clusterGroup: ""
+# clusterName is the name that will be used for the cluster that the agent is installed on
+clusterName: ""

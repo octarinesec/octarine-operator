@@ -124,6 +124,41 @@ Cluster Role binding creation:
 kubectl create clusterrolebinding metrics --clusterrole=cbcontainers-metrics-reader --serviceaccount=<prometheus-namespace>:<prometheus-service-account-name>
 ```
 
+## Changing components resources:
+```yaml
+spec:
+  components:
+    basic:
+      monitor:
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 30m
+            memory: 64Mi
+      enforcer:
+        resources:
+          #### DESIRED RESOURCES SPEC - for hardening enforcer container
+      stateReporter:
+        resources:
+          #### DESIRED RESOURCES SPEC - for hardening state reporter container
+    runtimeProtection:
+      resolver:
+        resources:
+          #### DESIRED RESOURCES SPEC - for runtime resolver container
+      sensor:
+        resources:
+          #### DESIRED RESOURCES SPEC - for node-agent runtime container
+    clusterScanning:
+      imageScanningReporter:
+        resources:
+          #### DESIRED RESOURCES SPEC - for image scanning reporter pod
+      clusterScanner:
+        resources:
+          #### DESIRED RESOURCES SPEC - for node-agent cluster-scanner container
+```
+
 ### When using Prometheus Operator
 
 Use the following ServiceMonitor to start scraping metrics from the CBContainers operator:
@@ -158,8 +193,8 @@ In order to configure those environment variables in the Operator, use the follo
 kubectl set env -n cbcontainers-dataplane deployment cbcontainers-operator HTTP_PROXY="<proxy-url>" HTTPS_PROXY="<proxy-url>" NO_PROXY="<kubernetes-api-server-ip>/<range>"
 ```
 
-In order to configure those environment variables for the Hardening Enforcer and the Hardening State Reporter components,
-update the Hardening CR using the proxy environment variables:
+In order to configure those environment variables for the basic, Runtime and Image Scanning  components,
+update the `CBContainersAgent` CR using the proxy environment variables (`kubectl edit cbcontainersagents.operator.containers.carbonblack.io cbcontainers-agent`):
 
 ```yaml
 spec:
@@ -175,6 +210,28 @@ spec:
           HTTP_PROXY: "<proxy-url>"
           HTTPS_PROXY: "<proxy-url>"
           NO_PROXY: "<kubernetes-api-server-ip>/<range>"
+    runtimeProtection:
+      resolver:
+        env:
+          HTTP_PROXY: "<proxy-url>"
+          HTTPS_PROXY: "<proxy-url>"
+          NO_PROXY: "<kubernetes-api-server-ip>/<range>"
+      sensor:
+        env:
+          HTTP_PROXY: "<proxy-url>"
+          HTTPS_PROXY: "<proxy-url>"
+          NO_PROXY: "<kubernetes-api-server-ip>/<range>,cbcontainers-runtime-resolver.cbcontainers-dataplane.svc.cluster.local"
+    clusterScanning:
+      clusterScanner:
+        env:
+          HTTP_PROXY: "<proxy-url>"
+          HTTPS_PROXY: "<proxy-url>"
+          NO_PROXY: "<kubernetes-api-server-ip>/<range>,cbcontainers-image-scanning-reporter.cbcontainers-dataplane.svc.cluster.local"
+      imageScanningReporter:
+        env:
+          HTTP_PROXY: "<proxy-url>"
+          HTTPS_PROXY: "<proxy-url>"
+          NO_PROXY: "<kubernetes-api-server-ip>/<range>"
 ```
 
 It is very important to configure the NO_PROXY environment variable with the value of the Kubernetes API server IP.
@@ -184,11 +241,26 @@ Finding the API-server IP:
 kubectl -n default get service kubernetes -o=jsonpath='{..clusterIP}'
 ```
 
+When using non transparent HTTPS proxy you will need to configure the agent to use the proxy certificate authority:
+```yaml
+spec:
+  gateways:
+    gatewayTLS:
+      rootCAsBundle: <Base64 encoded proxy CA>
+```
+Another option will be to allow the agent communicate without verifying the certificate. this option is not recommended and exposes the agent to MITM attack.
+```yaml
+spec:
+  gateways:
+    gatewayTLS:
+      insecureSkipVerify: true
+```
+
 ## Utilizing v1beta1 CustomResourceDefinition versions
 The operator supports Kubernetes clusters from v1.13+. 
 The CustomResourceDefinition APIs were in beta stage in those cluster and were later promoted to GA in v1.16. They are no longer served as of v1.22 of Kubernetes.
 
-To maintain compatibility, this operator offers 2 sets of CustomResoruceDefinitions - one under the `apiextensions/v1beta1` API and one under `apiextensons/v1`.
+To maintain compatibility, this operator offers 2 sets of CustomResourceDefinitions - one under the `apiextensions/v1beta1` API and one under `apiextensons/v1`.
 
 By default, all operations in the repository like `deploy` or `install` work with the v1 version of the `apiextensions` API. Utilizing `v1beta1` is supported by passing the `CRD_VERSION=v1beta1` option when running make.
 Note that both `apiextensions/v1` and `apiextensions/v1beta1` versions of the CRDs are generated and maintained by `make` - only commands that use the final output work with 1 version at a time.

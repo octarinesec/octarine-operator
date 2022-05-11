@@ -1,6 +1,12 @@
-
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    control-plane: operator
+    octarine: ignore
+  name: cbcontainers-dataplane
 ---
-apiVersion: apiextensions.k8s.io/v1
+apiVersion: apiextensions.k8s.io/{{ include "cbcontainers-agent.api-version" . }}
 kind: CustomResourceDefinition
 metadata:
   annotations:
@@ -2505,17 +2511,6 @@ spec:
                               tag:
                                 type: string
                             type: object
-                          k8sContainerEngine:
-                            default: {}
-                            properties:
-                              endpoint:
-                                type: string
-                              engineType:
-                                enum:
-                                - containerd
-                                - docker-daemon
-                                type: string
-                            type: object
                           labels:
                             additionalProperties:
                               type: string
@@ -4493,3 +4488,296 @@ status:
     plural: ""
   conditions: []
   storedVersions: []
+---
+apiVersion: v1
+imagePullSecrets:
+- name: cbcontainers-operator-public-registry-secret
+kind: ServiceAccount
+metadata:
+  name: cbcontainers-operator
+  namespace: cbcontainers-dataplane
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: cbcontainers-manager-psp
+spec:
+  allowedCapabilities:
+  - NET_BIND_SERVICE
+  - SYS_ADMIN
+  fsGroup:
+    rule: RunAsAny
+  hostIPC: true
+  hostNetwork: true
+  hostPID: true
+  privileged: true
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cbcontainers-leader-election-role
+  namespace: cbcontainers-dataplane
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: cbcontainers-manager-role
+rules:
+- apiGroups:
+  - ""
+  - discovery.k8s.io
+  resources:
+  - endpoints
+  - endpointslices
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  verbs:
+  - '*'
+- apiGroups:
+  - apiextensions.k8s.io
+  - apps
+  - batch
+  - ""
+  - extensions
+  - networking.k8s.io
+  - rbac
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterrolebindings
+  - cronjobs
+  - customresourcedefinitions
+  - daemonsets
+  - deployments
+  - ingresses
+  - jobs
+  - namespaces
+  - networkpolicies
+  - nodes
+  - pods
+  - replicasets
+  - replicationcontrollers
+  - rolebindings
+  - services
+  - statefulsets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  - ""
+  resources:
+  - daemonsets
+  - deployments
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - operator.containers.carbonblack.io
+  resources:
+  - cbcontainersagents
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - operator.containers.carbonblack.io
+  resources:
+  - cbcontainersagents/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - operator.containers.carbonblack.io
+  resources:
+  - cbcontainersagents/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - policy
+  resourceNames:
+  - cbcontainers-manager-psp
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+- apiGroups:
+  - scheduling.k8s.io
+  resources:
+  - priorityclasses
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cbcontainers-proxy-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cbcontainers-leader-election-rolebinding
+  namespace: cbcontainers-dataplane
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cbcontainers-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: cbcontainers-operator
+  namespace: cbcontainers-dataplane
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cbcontainers-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cbcontainers-manager-role
+subjects:
+- kind: ServiceAccount
+  name: cbcontainers-operator
+  namespace: cbcontainers-dataplane
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cbcontainers-proxy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cbcontainers-proxy-role
+subjects:
+- kind: ServiceAccount
+  name: cbcontainers-operator
+  namespace: cbcontainers-dataplane
+---
+apiVersion: v1
+data:
+  controller_manager_config.yaml: |
+    apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
+    kind: ControllerManagerConfig
+    health:
+      healthProbeBindAddress: :8081
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    webhook:
+      port: 9443
+    leaderElection:
+      leaderElect: true
+      resourceName: d27fd235.operator.containers.carbonblack.io
+kind: ConfigMap
+metadata:
+  name: cbcontainers-manager-config
+  namespace: cbcontainers-dataplane
+---
+apiVersion: v1
+data:
+  .dockerconfigjson: eyJhdXRocyI6IHsiaHR0cHM6Ly9pbmRleC5kb2NrZXIuaW8vdjEvIjogeyJhdXRoIjogImIyTjBZWEpwYm1WdmNHVnlZWFJ2Y2pvMk5HSTFOMkkzTXkweU1qZzNMVFEwT1RJdFlqQm1aaTB4WkRnM05tTXdaalJqWXpBPSJ9fX0=
+kind: Secret
+metadata:
+  name: cbcontainers-operator-public-registry-secret
+  namespace: cbcontainers-dataplane
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    control-plane: operator
+  name: cbcontainers-operator-metrics-service
+  namespace: cbcontainers-dataplane
+spec:
+  ports:
+  - name: https
+    port: 8443
+    targetPort: https
+  selector:
+    control-plane: operator
