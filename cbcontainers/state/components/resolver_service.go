@@ -2,8 +2,6 @@ package components
 
 import (
 	"fmt"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
-
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	coreV1 "k8s.io/api/core/v1"
@@ -38,10 +36,7 @@ func (obj *ResolverServiceK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	resolver := &runtimeProtection.Resolver
 	service.Labels = resolver.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
-
-	if models.AgentVersion(agentSpec.Version).IsResolverHeadlessServiceCompatible() {
-		service.Spec.ClusterIP = coreV1.ClusterIPNone
-	}
+	service.Spec.ClusterIP = coreV1.ClusterIPNone
 
 	service.Spec.Selector = map[string]string{
 		resolverLabelKey: ResolverName,
