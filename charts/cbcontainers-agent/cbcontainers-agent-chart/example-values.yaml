@@ -44,7 +44,7 @@ components:
       image:
         repository: "cbartifactory/guardrails-enforcer"
         tag: "2.3.1"
-        pullPolicy: "Always"
+        pullPolicy: "IfNotPresent"
       probes: {}
       nodeSelector: {}
       affinity: {}
@@ -67,7 +67,7 @@ components:
       image:
         repository: "cbartifactory/monitor"
         tag: "2.3.1"
-        pullPolicy: "Always"
+        pullPolicy: "IfNotPresent"
       probes: {}
       nodeSelector: {}
       affinity: {}
@@ -87,7 +87,7 @@ components:
       image:
         repository: "cbartifactory/guardrails-state-reporter"
         tag: "2.3.1"
-        pullPolicy: "Always"
+        pullPolicy: "IfNotPresent"
       probes: {}
       nodeSelector: {}
       affinity: {}
@@ -105,7 +105,7 @@ components:
       image:
         repository: "cbartifactory/runtime-kubernetes-resolver"
         tag: "2.3.1"
-        pullPolicy: "Always"
+        pullPolicy: "IfNotPresent"
       resources:
         requests:
           memory: "64Mi"
@@ -127,7 +127,7 @@ components:
       image:
         repository: "cbartifactory/runtime-kubernetes-sensor"
         tag: "2.3.1"
-        pullPolicy: "Always"
+        pullPolicy: "IfNotPresent"
       resources:
         requests:
           memory: "64Mi"
@@ -161,7 +161,7 @@ components:
       image:
         repository: "cbartifactory/image-scanning-reporter"
         tag: "2.3.1"
-        pullPolicy: "Always"
+        pullPolicy: "IfNotPresent"
       probes: {}
       prometheus:
         port: 7071
@@ -183,7 +183,7 @@ components:
       image:
         repository: "cbartifactory/cluster-scanner"
         tag: "2.3.1"
-        pullPolicy: "Always"
+        pullPolicy: "IfNotPresent"
       probes: {}
       prometheus:
         port: 7071
