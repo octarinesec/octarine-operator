@@ -31,10 +31,8 @@ func mutateContainerCommonProbes(container *coreV1.Container) {
 }
 
 func mutateHTTPProbe(probe *coreV1.Probe, desiredPath string, desiredProbes cbcontainersv1.CBContainersHTTPProbesSpec) {
-	if probe.Handler.HTTPGet == nil {
-		probe.Handler = coreV1.Handler{
-			HTTPGet: &coreV1.HTTPGetAction{},
-		}
+	if probe.HTTPGet == nil {
+		probe.HTTPGet = &coreV1.HTTPGetAction{}
 	}
 
 	probe.HTTPGet.Path = desiredPath
@@ -44,13 +42,11 @@ func mutateHTTPProbe(probe *coreV1.Probe, desiredPath string, desiredProbes cbco
 }
 
 func mutateFileProbe(probe *coreV1.Probe, desiredPath string, desiredProbes cbcontainersv1.CBContainersFileProbesSpec) {
-	if probe.Handler.Exec == nil {
-		probe.Handler = coreV1.Handler{
-			Exec: &coreV1.ExecAction{},
-		}
+	if probe.Exec == nil {
+		probe.Exec = &coreV1.ExecAction{}
 	}
 
-	probe.Handler.Exec.Command = []string{"cat", desiredPath}
+	probe.Exec.Command = []string{"cat", desiredPath}
 	mutateCommonProbe(probe, desiredProbes.CBContainersCommonProbesSpec)
 }
 
