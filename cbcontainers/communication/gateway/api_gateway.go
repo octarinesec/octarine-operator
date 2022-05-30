@@ -20,6 +20,7 @@ type ApiGateway struct {
 	cluster         string
 	accessToken     string
 	agentComponents []string
+	clusterLabels   map[string]string
 	scheme          string
 	host            string
 	port            int
@@ -47,7 +48,7 @@ func createClient(tlsInsecureSkipVerify bool, rootCAsBundle []byte) (*resty.Clie
 	return client, nil
 }
 
-func NewApiGateway(account, cluster string, accessToken string, agentComponents []string, scheme, host string, port int, adapter string,
+func NewApiGateway(account, cluster string, accessToken string, agentComponents []string, clusterLabels map[string]string, scheme, host string, port int, adapter string,
 	tlsInsecureSkipVerify bool, rootCAsBundle []byte) (*ApiGateway, error) {
 
 	client, err := createClient(tlsInsecureSkipVerify, rootCAsBundle)
@@ -60,6 +61,7 @@ func NewApiGateway(account, cluster string, accessToken string, agentComponents 
 		cluster:         cluster,
 		accessToken:     accessToken,
 		agentComponents: agentComponents,
+		clusterLabels:   clusterLabels,
 		scheme:          scheme,
 		host:            host,
 		port:            port,
@@ -97,7 +99,7 @@ func (gateway *ApiGateway) RegisterCluster() error {
 		SetBody(map[string]interface{}{
 			"name":           gateway.cluster,
 			"components":     gateway.agentComponents,
-			"labels":         map[string]string{},
+			"labels":         gateway.clusterLabels,
 			"inbounddefault": "allow",
 		}).
 		Post(url)
