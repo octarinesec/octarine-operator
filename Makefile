@@ -99,7 +99,7 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: manifests
-manifests: controller-gen  ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: controller-gen controller-gen-old  ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 # This is needed since controller-gen does not support empty object/maps like {} but they are helpful to propagate default values up from nested objects
 	for filename in $$(ls config/crd/bases) ; do \
@@ -109,7 +109,7 @@ manifests: controller-gen  ## Generate WebhookConfiguration, ClusterRole and Cus
 		mv $$XT.temp $$XT ; \
 	done
 # The above modification is not needed for v1beta1 as defaults are not supported there at all
-	$(CONTROLLER_GEN) $(CRD_OPTIONS_V1BETA1) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd_v1beta1/bases
+	$(CONTROLLER_GEN_OLD) $(CRD_OPTIONS_V1BETA1) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd_v1beta1/bases
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -194,14 +194,21 @@ LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
+## Location to install dependencies to
+LOCALBINOLD ?= $(shell pwd)/bin_old
+$(LOCALBINOLD):
+	mkdir -p $(LOCALBINOLD)
+
 ## Tool Binaries
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
+CONTROLLER_GEN_OLD ?= $(LOCALBINOLD)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v3.8.7
 CONTROLLER_TOOLS_VERSION ?= v0.8.0
+CONTROLLER_TOOLS_OLD_VERSION ?= v0.6.2
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
@@ -213,6 +220,11 @@ $(KUSTOMIZE): $(LOCALBIN)
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
 $(CONTROLLER_GEN): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+
+.PHONY: controller-gen-old
+controller-gen-old: $(CONTROLLER_GEN_OLD) ## Download controller-gen-old locally if necessary.
+$(CONTROLLER_GEN_OLD): $(LOCALBINOLD)
+	GOBIN=$(LOCALBINOLD) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_OLD_VERSION)
 
 .PHONY: envtest
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
