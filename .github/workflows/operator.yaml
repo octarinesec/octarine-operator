@@ -19,7 +19,7 @@ jobs:
           go-version: 1.17
       - name: Setup Operator SDK
         run: |
-          git clone -b v1.5.0 https://github.com/operator-framework/operator-sdk
+          git clone -b v1.21.0 https://github.com/operator-framework/operator-sdk
           cd operator-sdk
           make install
       - name: Set up Docker Buildx
