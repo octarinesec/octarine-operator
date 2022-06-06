@@ -392,7 +392,7 @@ func TestMutateContainerHTTPProbes(t *testing.T) {
 	}
 
 	expectedReadinessProbe := &coreV1.Probe{
-		Handler: coreV1.Handler{
+		ProbeHandler: coreV1.ProbeHandler{
 			HTTPGet: &coreV1.HTTPGetAction{
 				Path:   expectedReadinessPath,
 				Port:   intstr.FromInt(expectedPort),
@@ -406,7 +406,7 @@ func TestMutateContainerHTTPProbes(t *testing.T) {
 		FailureThreshold:    expectedFailureThreshold,
 	}
 	expectedLivenessProbe := &coreV1.Probe{
-		Handler: coreV1.Handler{
+		ProbeHandler: coreV1.ProbeHandler{
 			HTTPGet: &coreV1.HTTPGetAction{
 				Path:   expectedLivenessPath,
 				Port:   intstr.FromInt(expectedPort),
@@ -440,7 +440,7 @@ func TestMutateContainerFileProbes(t *testing.T) {
 	}
 
 	expectedReadinessProbe := &coreV1.Probe{
-		Handler: coreV1.Handler{
+		ProbeHandler: coreV1.ProbeHandler{
 			Exec: &coreV1.ExecAction{
 				Command: []string{"cat", expectedReadinessPath},
 			},
@@ -452,7 +452,7 @@ func TestMutateContainerFileProbes(t *testing.T) {
 		FailureThreshold:    expectedFailureThreshold,
 	}
 	expectedLivenessProbe := &coreV1.Probe{
-		Handler: coreV1.Handler{
+		ProbeHandler: coreV1.ProbeHandler{
 			Exec: &coreV1.ExecAction{
 				Command: []string{"cat", expectedLivenessPath},
 			},

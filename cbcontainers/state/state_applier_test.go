@@ -165,7 +165,7 @@ func testStateApplier(t *testing.T, setup StateApplierTestSetup, k8sVersion stri
 
 	setup(mockObjects)
 
-	stateApplier := state.NewStateApplier(mockObjects.componentApplier, k8sVersion, mockObjects.secretValuesCreator, &logrTesting.TestLogger{T: t})
+	stateApplier := state.NewStateApplier(mockObjects.componentApplier, k8sVersion, mockObjects.secretValuesCreator, logrTesting.NewTestLogger(t))
 	return stateApplier.ApplyDesiredState(context.Background(), agentSpec, nil, nil)
 }
 

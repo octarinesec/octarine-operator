@@ -64,7 +64,7 @@ func testCBContainersClusterController(t *testing.T, setups ...SetupClusterContr
 
 	controller := &controllers.CBContainersAgentController{
 		Client: mocksObjects.client,
-		Log:    &logrTesting.TestLogger{T: t},
+		Log:    logrTesting.NewTestLogger(t),
 		Scheme: &runtime.Scheme{},
 
 		ClusterProcessor: mocksObjects.ClusterProcessor,

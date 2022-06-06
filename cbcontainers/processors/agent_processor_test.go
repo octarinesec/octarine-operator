@@ -37,7 +37,7 @@ func testClusterProcessor(t *testing.T, setupAndAssert SetupAndAssertClusterProc
 		operatorVersionProviderMock: mocks.NewMockOperatorVersionProvider(ctrl),
 	}
 
-	processor := processors.NewAgentProcessor(&logrTesting.TestLogger{T: t}, mocksObjects.gatewayCreatorMock, mocksObjects.operatorVersionProviderMock)
+	processor := processors.NewAgentProcessor(logrTesting.NewTestLogger(t), mocksObjects.gatewayCreatorMock, mocksObjects.operatorVersionProviderMock)
 	setupAndAssert(mocksObjects, processor)
 }
 
