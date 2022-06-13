@@ -42,7 +42,7 @@ spec:
         - --metrics-bind-address=127.0.0.1:8080
         command:
         - /manager
-        image: "{{ .Values.operator.image.repository | default "cbartifactory/octarine-operator" }}:{{ .Values.operator.image.version | default "5.1.0" }}"
+        image: "{{ .Values.operator.image.repository | default "cbartifactory/octarine-operator" }}:{{ .Values.operator.image.version | default (trimPrefix "v" .Chart.AppVersion) }}"
         env:
         {{/* If you want to enable HTTP Proxy you need to set all 3 of the values - operator.proxy.http, operator.proxy.https and operator.proxy.noProxy */}}
         {{- if .Values.operator.proxy -}}
