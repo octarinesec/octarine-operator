@@ -156,5 +156,6 @@ func (r *CBContainersAgentController) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Service{}).
 		Owns(&appsV1.DaemonSet{}).
 		Owns(adapters.EmptyValidatingWebhookConfigForVersion(r.K8sVersion)).
+		Owns(adapters.EmptyMutatingWebhookConfigForVersion(r.K8sVersion)).
 		Complete(r)
 }
