@@ -68,7 +68,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) mutateWebhooks(webhookConfiguration
 
 	initializeWebhooks := false
 	webhooks := webhookConfiguration.GetWebhooks()
-	if webhooks == nil || len(webhooks) != 2 {
+	if webhooks == nil || len(webhooks) != 1 {
 		initializeWebhooks = true
 	} else {
 		resourcesWebhook, resourcesWebhookFound := obj.findWebhookByName(webhooks, MutatingWebhookName)
