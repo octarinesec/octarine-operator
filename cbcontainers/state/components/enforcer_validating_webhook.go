@@ -136,7 +136,10 @@ func (obj *EnforcerValidatingWebhookK8sObject) getResourcesNamespaceSelector(sel
 	}
 
 	cbContainersNamespace := metav1.LabelSelectorRequirement{
-		Key:      "name",
+		// See https://kubernetes.io/docs/reference/labels-annotations-taints/#kubernetes-io-metadata-name
+		// This is the label that always matches the namespace name
+		// We can't filter directly by namespace otherwise
+		Key:      "kubernetes.io/metadata.name",
 		Operator: metav1.LabelSelectorOpNotIn,
 		Values:   []string{commonState.DataPlaneNamespaceName},
 	}
