@@ -130,7 +130,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) getResourcesNamespaceSelector(selec
 	cbContainersNamespace := metav1.LabelSelectorRequirement{
 		Key:      "name",
 		Operator: metav1.LabelSelectorOpNotIn,
-		Values:   []string{commonState.DataPlaneNamespaceName},
+		Values:   []string{commonState.DataPlaneNamespaceName, commonState.KubeSystemNamespaceName},
 	}
 
 	initializeLabelSelector := false

@@ -1,7 +1,8 @@
 package common
 
 const (
-	DataPlaneNamespaceName = "cbcontainers-dataplane"
+	DataPlaneNamespaceName  = "cbcontainers-dataplane"
+	KubeSystemNamespaceName = "kube-system"
 
 	DataPlaneConfigmapName            = "cbcontainers-dataplane-config"
 	RegistrySecretName                = "cbcontainers-registry-secret"
