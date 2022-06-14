@@ -136,7 +136,10 @@ func (obj *EnforcerValidatingWebhookK8sObject) getResourcesNamespaceSelector(sel
 	}
 
 	cbContainersNamespace := metav1.LabelSelectorRequirement{
-		Key:      "name",
+		// See https://kubernetes.io/docs/reference/labels-annotations-taints/#kubernetes-io-metadata-name
+		// This is the label that always matches the namespace name
+		// We can't filter directly by namespace otherwise
+		Key:      "kubernetes.io/metadata.name",
 		Operator: metav1.LabelSelectorOpNotIn,
 		Values:   []string{commonState.DataPlaneNamespaceName},
 	}
@@ -229,6 +232,9 @@ func (obj *EnforcerValidatingWebhookK8sObject) mutateNamespacesWebhook(namespace
 }
 
 func (obj *EnforcerValidatingWebhookK8sObject) mutateNamespacesWebhooksRules(webhook adapters.WebhookAdapter) {
+	// This webhook exists to prevent someone from adding the "octarine:ignore" label on a namespace (except ours)
+	// Which would essentially disable our product there
+	// So we have a separate webhook call for all namespaces and the agent will forbid the request if the label is added
 	rules := webhook.GetAdmissionRules()
 	if rules == nil || len(rules) != 1 {
 		rules = make([]adapters.AdmissionRuleAdapter, 1)

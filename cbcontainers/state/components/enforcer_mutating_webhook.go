@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	MutatingWebhookName = "resources.validating-webhook.cbcontainers"
+	MutatingWebhookName = "resources.mutating-webhook.cbcontainers"
 )
 
 var (
@@ -68,7 +68,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) mutateWebhooks(webhookConfiguration
 
 	initializeWebhooks := false
 	webhooks := webhookConfiguration.GetWebhooks()
-	if webhooks == nil || len(webhooks) != 2 {
+	if webhooks == nil || len(webhooks) != 1 {
 		initializeWebhooks = true
 	} else {
 		resourcesWebhook, resourcesWebhookFound := obj.findWebhookByName(webhooks, MutatingWebhookName)
@@ -127,10 +127,13 @@ func (obj *EnforcerMutatingWebhookK8sObject) getResourcesNamespaceSelector(selec
 		Values:   []string{"ignore"},
 	}
 
-	cbContainersNamespace := metav1.LabelSelectorRequirement{
-		Key:      "name",
+	ignoredNamespaces := metav1.LabelSelectorRequirement{
+		// See https://kubernetes.io/docs/reference/labels-annotations-taints/#kubernetes-io-metadata-name
+		// This is the label that always matches the namespace name
+		// We can't filter directly by namespace otherwise
+		Key:      "kubernetes.io/metadata.name",
 		Operator: metav1.LabelSelectorOpNotIn,
-		Values:   []string{commonState.DataPlaneNamespaceName},
+		Values:   []string{commonState.DataPlaneNamespaceName, commonState.KubeSystemNamespaceName},
 	}
 
 	initializeLabelSelector := false
@@ -143,7 +146,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) getResourcesNamespaceSelector(selec
 			if reflect.DeepEqual(requirement, octarineIgnore) {
 				octarineIgnoreFound = true
 			}
-			if reflect.DeepEqual(requirement, cbContainersNamespace) {
+			if reflect.DeepEqual(requirement, ignoredNamespaces) {
 				cbContainersNamespaceFound = true
 			}
 		}
@@ -152,7 +155,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) getResourcesNamespaceSelector(selec
 
 	if initializeLabelSelector {
 		return &metav1.LabelSelector{
-			MatchExpressions: []metav1.LabelSelectorRequirement{octarineIgnore, cbContainersNamespace},
+			MatchExpressions: []metav1.LabelSelectorRequirement{octarineIgnore, ignoredNamespaces},
 		}
 	}
 
