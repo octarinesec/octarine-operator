@@ -1,6 +1,6 @@
 module github.com/vmware/cbcontainers-operator
 
-go 1.17
+go 1.18
 
 require (
 	github.com/cloudflare/cfssl v1.4.1
