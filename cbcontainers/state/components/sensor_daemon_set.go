@@ -373,8 +373,8 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec
 	}
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container *coreV1.Container, clusterScannerSpec *cbContainersV1.CBContainersClusterScannerAgentSpec) {
-	containerRuntimes := getContainerRuntimes(clusterScannerSpec)
+func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+	containerRuntimes := getContainerRuntimes(&agentSpec.Components.ClusterScanning.ClusterScannerAgent)
 
 	if container.VolumeMounts == nil || len(container.VolumeMounts) != len(containerRuntimes)+1 {
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
