@@ -1,0 +1,22 @@
+apiVersion: operator.containers.carbonblack.io/v1
+kind: CBContainersAgent
+metadata:
+  name: cbcontainers-agent
+spec:
+  account: {{ required "orgKey is required" .Values.orgKey }}
+  clusterName: "{{ required "clusterGroup is required" .Values.clusterGroup }}:{{ required "clusterName is required" .Values.clusterName }}"
+  version: {{ required "version is required" .Values.version | quote }}
+  accessTokenSecretName: {{ include "cbcontainers-agent.access-token-name" .Values.accessTokenSecretName }}
+  gateways:
+    apiGateway:
+      host: {{ required "gateways.apiGatewayHost is required" .Values.gateways.apiGatewayHost }}
+    coreEventsGateway:
+      host: {{ required "gateways.coreEventsGatewayHost is required" .Values.gateways.coreEventsGatewayHost }}
+    hardeningEventsGateway:
+      host: {{ required "gateways.hardeningEventsGatewayHost is required" .Values.gateways.hardeningEventsGatewayHost }}
+    runtimeEventsGateway:
+      host: {{ required "gateways.runtimeEventsGatewayHost is required" .Values.gateways.runtimeEventsGatewayHost }}
+  {{- with .Values.components }}
+  components:
+    {{- toYaml . | trim | nindent 4 -}}
+  {{ end }}

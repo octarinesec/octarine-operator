@@ -32,10 +32,12 @@ func MutateVolumeConfigMapItem(configMapSource *coreV1.ConfigMapVolumeSource, ke
 }
 
 func MutateVolumesToIncludeRootCAsVolume(templatePodSpec *coreV1.PodSpec) {
+	rootCADefaultMode := RootCAVolumeDefaultMode
 	rootCAsVolumeIndex := EnsureAndGetVolumeIndexForName(templatePodSpec, DesiredTlsRootCAsVolumeName)
 	if templatePodSpec.Volumes[rootCAsVolumeIndex].ConfigMap == nil {
 		templatePodSpec.Volumes[rootCAsVolumeIndex].ConfigMap = &coreV1.ConfigMapVolumeSource{
 			LocalObjectReference: coreV1.LocalObjectReference{Name: DataPlaneConfigmapName},
+			DefaultMode:          &rootCADefaultMode,
 		}
 	}
 	if templatePodSpec.Volumes[rootCAsVolumeIndex].ConfigMap.Items == nil || len(templatePodSpec.Volumes[rootCAsVolumeIndex].ConfigMap.Items) != 1 {

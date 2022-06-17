@@ -1,0 +1,21 @@
+operator:
+  image:
+    repository: ""
+    version: ""
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 64Mi
+rbacProxy:
+  image:
+    version: ""
+  resources:
+    limits:
+      cpu: 100m
+      memory: 64Mi
+    requests:
+      cpu: 20m
+      memory: 16Mi

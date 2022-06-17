@@ -49,8 +49,9 @@ type CBContainersEnforcerSpec struct {
 	// +kubebuilder:default:=<>
 	Affinity *coreV1.Affinity `json:"affinity,omitempty"`
 	// +kubebuilder:default:=5
-	WebhookTimeoutSeconds    int32 `json:"webhookTimeoutSeconds,omitempty"`
-	EnableEnforcementFeature bool  `json:"enableEnforcementFeature,omitempty"`
+	WebhookTimeoutSeconds int32 `json:"webhookTimeoutSeconds,omitempty"`
+	// +kubebuilder:default:=true
+	EnableEnforcementFeature bool `json:"enableEnforcementFeature,omitempty"`
 	// +kubebuilder:validation:Enum=Ignore;Fail
 	// +kubebuilder:default:=Ignore
 	FailurePolicy string `json:"failurePolicy,omitempty"`

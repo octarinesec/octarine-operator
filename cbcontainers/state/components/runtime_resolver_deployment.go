@@ -74,7 +74,7 @@ func (obj *ResolverDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels
 	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels
-	deployment.Spec.Template.Spec.ServiceAccountName = commonState.DataPlaneServiceAccountName
+	deployment.Spec.Template.Spec.ServiceAccountName = commonState.RuntimeResolverServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 

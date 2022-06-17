@@ -80,7 +80,8 @@ tags
 .DS_Store
 
 bin
+bin_old
 testbin
 
-operator.yaml
+/operator.yaml
 /cbcontainers-operator
