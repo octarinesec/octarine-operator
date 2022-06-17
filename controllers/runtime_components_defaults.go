@@ -23,6 +23,10 @@ func (r *CBContainersAgentController) setRuntimeProtectionComponentsDefaults(run
 		runtime.InternalGrpcPort = 8080
 	}
 
+	if runtime.LogVerbosity == "" {
+		runtime.LogVerbosity = "info"
+	}
+
 	return nil
 }
 
@@ -87,11 +91,6 @@ func (r *CBContainersAgentController) setRuntimeSensorDefaults(runtimeSensor *cb
 	}
 
 	setDefaultFileProbes(&runtimeSensor.Probes)
-
-	if runtimeSensor.VerbosityLevel == nil {
-		defaultVerbosity := 2
-		runtimeSensor.VerbosityLevel = &defaultVerbosity
-	}
 
 	return nil
 }

@@ -46,8 +46,6 @@ type CBContainersRuntimeSensorSpec struct {
 	Probes CBContainersFileProbesSpec `json:"probes,omitempty"`
 	// +kubebuilder:default:={port: 7071}
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
-	// +kubebuilder:default:=2
-	VerbosityLevel *int `json:"verbosity_level,omitempty"`
 }
 
 // CBContainersRuntimeProtectionSpec defines the desired state of CBContainersRuntime
@@ -60,4 +58,6 @@ type CBContainersRuntimeProtectionSpec struct {
 	Sensor CBContainersRuntimeSensorSpec `json:"sensor,omitempty"`
 	// +kubebuilder:default:=8080
 	InternalGrpcPort int32 `json:"internalGrpcPort,omitempty"`
+	// +kubebuilder:default:="info"
+	LogVerbosity string `json:"logVerbosity,omitempty"`
 }

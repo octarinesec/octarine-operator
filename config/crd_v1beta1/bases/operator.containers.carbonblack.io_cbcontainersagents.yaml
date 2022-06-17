@@ -3172,6 +3172,9 @@ spec:
                     internalGrpcPort:
                       format: int32
                       type: integer
+                    logVerbosity:
+                      format: byte
+                      type: string
                     resolver:
                       properties:
                         affinity:
@@ -4016,8 +4019,6 @@ spec:
                                 value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                               type: object
                           type: object
-                        verbosity_level:
-                          type: integer
                       type: object
                   type: object
                 settings:

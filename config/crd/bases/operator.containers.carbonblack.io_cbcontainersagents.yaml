@@ -3420,6 +3420,10 @@ spec:
                         default: 8080
                         format: int32
                         type: integer
+                      logVerbosity:
+                        default: "info"
+                        format: byte
+                        type: string
                       resolver:
                         default: {}
                         properties:
@@ -4345,9 +4349,6 @@ spec:
                                   value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                                 type: object
                             type: object
-                          verbosity_level:
-                            default: 2
-                            type: integer
                         type: object
                     type: object
                   settings:

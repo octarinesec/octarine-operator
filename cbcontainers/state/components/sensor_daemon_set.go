@@ -19,12 +19,11 @@ const (
 	ClusterScanningContainerName = "cbcontainers-cluster-scanner"
 	daemonSetLabelKey            = "app.kubernetes.io/name"
 
-	runtimeSensorVerbosityFlag = "-v"
-	runtimeSensorRunCommand    = "/run_sensor.sh"
-	defaultDnsPolicy           = coreV1.DNSClusterFirst
-	runtimeSensorDNSPolicy     = coreV1.DNSClusterFirstWithHostNet
-	runtimeSensorHostNetwork   = true
-	runtimeSensorHostPID       = true
+	runtimeSensorRunCommand  = "/run_sensor.sh"
+	defaultDnsPolicy         = coreV1.DNSClusterFirst
+	runtimeSensorDNSPolicy   = coreV1.DNSClusterFirstWithHostNet
+	runtimeSensorHostNetwork = true
+	runtimeSensorHostPID     = true
 
 	desiredConnectionTimeoutSeconds = 60
 	containerdRuntimeEndpoint       = "/var/run/containerd/containerd.sock"
@@ -86,12 +85,7 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	obj.mutateAnnotations(daemonSet, agentSpec)
 	obj.mutateVolumes(daemonSet, agentSpec)
 	obj.mutateTolerations(daemonSet, agentSpec)
-	obj.mutateContainersList(&daemonSet.Spec.Template.Spec,
-		agentSpec,
-		agentSpec.Version,
-		agentSpec.AccessTokenSecretName,
-		runtimeProtection.InternalGrpcPort,
-	)
+	obj.mutateContainersList(daemonSet, agentSpec)
 
 	return nil
 }
@@ -172,15 +166,12 @@ func (obj *SensorDaemonSetK8sObject) mutateTolerations(daemonSet *appsV1.DaemonS
 	daemonSet.Spec.Template.Spec.Tolerations = agentSpec.Components.Settings.DaemonSetsTolerations
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateContainersList(
-	templatePodSpec *coreV1.PodSpec,
-	agentSpec *cbContainersV1.CBContainersAgentSpec,
-	version,
-	accessTokenSecretName string,
-	desiredGRPCPortValue int32) {
+func (obj *SensorDaemonSetK8sObject) mutateContainersList(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {
 
 	var runtimeContainer coreV1.Container
 	var clusterScannerContainer coreV1.Container
+
+	templatePodSpec := daemonSet.Spec.Template.Spec
 
 	desiredContainers := make([]coreV1.Container, 0, 2)
 	runtimeEnabled := false
@@ -219,23 +210,22 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(
 	if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
 		obj.mutateRuntimeContainer(
 			&templatePodSpec.Containers[obj.findContainerLocationByName(templatePodSpec.Containers, RuntimeContainerName)],
-			&agentSpec.Components.RuntimeProtection.Sensor, version, desiredGRPCPortValue)
+			agentSpec)
 	}
 
 	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
 		obj.mutateClusterScannerContainer(
 			&templatePodSpec.Containers[obj.findContainerLocationByName(templatePodSpec.Containers, ClusterScanningContainerName)],
-			&agentSpec.Components.ClusterScanning.ClusterScannerAgent, version, accessTokenSecretName,
-			&agentSpec.Gateways.HardeningEventsGateway)
+			agentSpec)
 	}
 }
 
 func (obj *SensorDaemonSetK8sObject) isStateChanged(actualContainersLength, desiredContainersLength int, runtimeEnabled, clusterScannerEnabled, runtimeMissing, clusterScannerMissing bool) bool {
-	// the actual containers length is different then the desired containers length.
+	// actual containers' length is different from desired containers' length.
 	// test cases
-	// there are more containers then the 2 allowed
+	// there are more containers than the 2 allowed
 	// there 0 containers when at least one component should be enabled
-	// the are different components amount then the desired count.
+	// there are different components amount then the desired count.
 	if actualContainersLength != desiredContainersLength {
 		return true
 	}
@@ -263,35 +253,34 @@ func (obj *SensorDaemonSetK8sObject) findContainerLocationByName(containers []co
 	return -1
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateRuntimeContainer(
-	container *coreV1.Container,
-	sensorSpec *cbContainersV1.CBContainersRuntimeSensorSpec,
-	version string,
-	desiredGRPCPortValue int32) {
+func (obj *SensorDaemonSetK8sObject) mutateRuntimeContainer(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+	sensorSpec := &agentSpec.Components.RuntimeProtection.Sensor
 
 	container.Name = RuntimeContainerName
 	container.Resources = sensorSpec.Resources
-	container.Args = []string{runtimeSensorVerbosityFlag, fmt.Sprintf("%d", *sensorSpec.VerbosityLevel)}
 	container.Command = []string{runtimeSensorRunCommand}
-	commonState.MutateImage(container, sensorSpec.Image, version)
+	commonState.MutateImage(container, sensorSpec.Image, agentSpec.Version)
 	commonState.MutateContainerFileProbes(container, sensorSpec.Probes)
 	if commonState.IsEnabled(sensorSpec.Prometheus.Enabled) {
 		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(sensorSpec.Prometheus.Port)}}
 	}
-	obj.mutateRuntimeEnvVars(container, sensorSpec, desiredGRPCPortValue)
-	obj.mutateSecurityContext(container)
+	obj.mutateRuntimeEnvVars(container, agentSpec)
+	obj.mutateSecurityContext(container, agentSpec)
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateRuntimeEnvVars(
-	container *coreV1.Container,
-	sensorSpec *cbContainersV1.CBContainersRuntimeSensorSpec,
-	desiredGRPCPortValue int32) {
+func (obj *SensorDaemonSetK8sObject) mutateRuntimeEnvVars(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+
+	sensorSpec := &agentSpec.Components.RuntimeProtection.Sensor
+	runtimeProtection := &agentSpec.Components.RuntimeProtection
+	desiredGRPCPortValue := runtimeProtection.InternalGrpcPort
+
 	customEnvs := []coreV1.EnvVar{
 		{Name: "RUNTIME_KUBERNETES_SENSOR_GRPC_PORT", Value: fmt.Sprintf("%d", desiredGRPCPortValue)},
 		{Name: "RUNTIME_KUBERNETES_SENSOR_RESOLVER_ADDRESS", Value: resolverAddress},
 		{Name: "RUNTIME_KUBERNETES_SENSOR_RESOLVER_CONNECTION_TIMEOUT_SECONDS", Value: fmt.Sprintf("%d", desiredConnectionTimeoutSeconds)},
 		{Name: "RUNTIME_KUBERNETES_SENSOR_LIVENESS_PATH", Value: sensorSpec.Probes.LivenessPath},
 		{Name: "RUNTIME_KUBERNETES_SENSOR_READINESS_PATH", Value: sensorSpec.Probes.ReadinessPath},
+		{Name: "RUNTIME_KUBERNETES_SENSOR_LOG_LEVEL", Value: runtimeProtection.LogVerbosity},
 	}
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
@@ -300,7 +289,7 @@ func (obj *SensorDaemonSetK8sObject) mutateRuntimeEnvVars(
 	commonState.MutateEnvVars(container, envVarBuilder)
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateSecurityContext(container *coreV1.Container) {
+func (obj *SensorDaemonSetK8sObject) mutateSecurityContext(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
 	if container.SecurityContext == nil {
 		container.SecurityContext = &coreV1.SecurityContext{}
 	}
@@ -309,27 +298,26 @@ func (obj *SensorDaemonSetK8sObject) mutateSecurityContext(container *coreV1.Con
 	container.SecurityContext.RunAsUser = &sensorRunAsUser
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(
-	container *coreV1.Container,
-	clusterScannerSpec *cbContainersV1.CBContainersClusterScannerAgentSpec,
-	version string,
-	accessTokenSecretName string,
-	eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec) {
+func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+
+	clusterScannerSpec := &agentSpec.Components.ClusterScanning.ClusterScannerAgent
+
 	container.Name = ClusterScanningContainerName
 	container.Resources = clusterScannerSpec.Resources
-	commonState.MutateImage(container, clusterScannerSpec.Image, version)
+	commonState.MutateImage(container, clusterScannerSpec.Image, agentSpec.Version)
 	commonState.MutateContainerFileProbes(container, clusterScannerSpec.Probes)
 	if commonState.IsEnabled(clusterScannerSpec.Prometheus.Enabled) {
 		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(clusterScannerSpec.Prometheus.Port)}}
 	}
-	obj.mutateClusterScannerEnvVars(container, clusterScannerSpec, accessTokenSecretName, eventsGatewaySpec)
-	obj.mutateClusterScannerVolumesMounts(container)
-	obj.mutateSecurityContext(container)
+	obj.mutateClusterScannerEnvVars(container, agentSpec)
+	obj.mutateClusterScannerVolumesMounts(container, agentSpec)
+	obj.mutateSecurityContext(container, agentSpec)
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *coreV1.Container,
-	clusterScannerSpec *cbContainersV1.CBContainersClusterScannerAgentSpec,
-	accessTokenSecretName string, eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec) {
+func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+
+	clusterScannerSpec := &agentSpec.Components.ClusterScanning.ClusterScannerAgent
+
 	customEnvs := []coreV1.EnvVar{
 		{Name: "CLUSTER_SCANNER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", clusterScannerSpec.Prometheus.Port)},
 		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_HOST", Value: ImageScanningReporterName},
@@ -340,8 +328,8 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 	}
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
-		WithCommonDataPlane(accessTokenSecretName).
-		WithEventsGateway(eventsGatewaySpec).
+		WithCommonDataPlane(agentSpec.AccessTokenSecretName).
+		WithEventsGateway(&agentSpec.Gateways.HardeningEventsGateway).
 		WithCustom(customEnvs...).
 		WithEnvVarFromResource("CLUSTER_SCANNER_LIMITS_MEMORY", ClusterScanningContainerName, "limits.memory").
 		WithEnvVarFromResource("CLUSTER_SCANNER_REQUESTS_MEMORY", ClusterScanningContainerName, "requests.memory").
@@ -369,7 +357,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec
 	}
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container *coreV1.Container) {
+func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
 	if container.VolumeMounts == nil || len(container.VolumeMounts) != len(supportedContainerRuntimes)+1 {
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
