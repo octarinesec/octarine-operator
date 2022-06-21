@@ -4511,7 +4511,7 @@ spec:
                         default: 8080
                         format: int32
                         type: integer
-                      logVerbosity:
+                      logLevel:
                         default: "info"
                         format: byte
                         type: string

@@ -4214,7 +4214,7 @@ spec:
                     internalGrpcPort:
                       format: int32
                       type: integer
-                    logVerbosity:
+                    logLevel:
                       format: byte
                       type: string
                     resolver:

@@ -23,8 +23,8 @@ func (r *CBContainersAgentController) setRuntimeProtectionComponentsDefaults(run
 		runtime.InternalGrpcPort = 8080
 	}
 
-	if runtime.LogVerbosity == "" {
-		runtime.LogVerbosity = "info"
+	if runtime.LogLevel == "" {
+		runtime.LogLevel = "info"
 	}
 
 	return nil
