@@ -333,7 +333,7 @@ func (c *StateApplier) applyEnforcerWebhooks(ctx context.Context, agentSpec *cbc
 	}
 
 	mutatedMutatingWebhook := false
-	if agentSpec.Components.Basic.Enforcer.EnableEnforcementFeature {
+	if agentSpec.Components.Basic.Enforcer.EnableEnforcementFeature != nil && *agentSpec.Components.Basic.Enforcer.EnableEnforcementFeature {
 		c.enforcerMutatingWebhook.UpdateTlsSecretValues(tlsSecretValues)
 		mutatedMutatingWebhook, _, err = c.applier.Apply(ctx, c.enforcerMutatingWebhook, agentSpec, applyOptions)
 		if err != nil {
