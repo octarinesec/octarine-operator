@@ -104,15 +104,15 @@ func (obj *EnforcerMutatingWebhookK8sObject) findWebhookByName(webhooks []adapte
 
 func (obj *EnforcerMutatingWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook adapters.WebhookAdapter, timeoutSeconds int32, failurePolicy string) {
 	resourcesWebhook.SetName(MutatingWebhookName)
-	resourcesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
 	resourcesWebhook.SetFailurePolicy(failurePolicy)
 	resourcesWebhook.SetSideEffects(MutatingWebhookSideEffect)
-	resourcesWebhook.SetMatchPolicy(MutatingWebhookMatchPolicy)
 	namespaceSelector := obj.getResourcesNamespaceSelector(resourcesWebhook.GetNamespaceSelector())
 	resourcesWebhook.SetNamespaceSelector(namespaceSelector)
 	obj.mutateMutatingWebhooksRules(resourcesWebhook)
 	if obj.kubeletVersion == "" || obj.kubeletVersion >= "v1.14" {
 		resourcesWebhook.SetTimeoutSeconds(timeoutSeconds)
+		resourcesWebhook.SetMatchPolicy(MutatingWebhookMatchPolicy)
+		resourcesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
 	}
 	resourcesWebhook.SetCABundle(obj.tlsSecretValues.CaCert)
 	resourcesWebhook.SetServiceName(EnforcerName)

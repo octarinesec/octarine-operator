@@ -112,15 +112,15 @@ func (obj *EnforcerValidatingWebhookK8sObject) findWebhookByName(webhooks []adap
 
 func (obj *EnforcerValidatingWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook adapters.WebhookAdapter, timeoutSeconds int32, failurePolicy string) {
 	resourcesWebhook.SetName(ValidatingResourcesWebhookName)
-	resourcesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
 	resourcesWebhook.SetFailurePolicy(failurePolicy)
 	resourcesWebhook.SetSideEffects(ResourcesWebhookSideEffect)
-	resourcesWebhook.SetMatchPolicy(WebhookMatchPolicy)
 	namespaceSelector := obj.getResourcesNamespaceSelector(resourcesWebhook.GetNamespaceSelector())
 	resourcesWebhook.SetNamespaceSelector(namespaceSelector)
 	obj.mutateResourcesWebhooksRules(resourcesWebhook)
 	if obj.kubeletVersion == "" || obj.kubeletVersion >= "v1.14" {
 		resourcesWebhook.SetTimeoutSeconds(timeoutSeconds)
+		resourcesWebhook.SetMatchPolicy(WebhookMatchPolicy)
+		resourcesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
 	}
 	resourcesWebhook.SetCABundle(obj.tlsSecretValues.CaCert)
 	resourcesWebhook.SetServiceName(EnforcerName)
@@ -213,13 +213,14 @@ func (obj *EnforcerValidatingWebhookK8sObject) getResourcesList() []string {
 
 func (obj *EnforcerValidatingWebhookK8sObject) mutateNamespacesWebhook(namespacesWebhook adapters.WebhookAdapter, timeoutSeconds int32, failurePolicy string) {
 	namespacesWebhook.SetName(ValidatingNamespacesWebhookName)
-	namespacesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
 	namespacesWebhook.SetFailurePolicy(failurePolicy)
-	namespacesWebhook.SetMatchPolicy(WebhookMatchPolicy)
 	namespacesWebhook.SetSideEffects(NamespacesWebhookSideEffect)
 	namespacesWebhook.SetNamespaceSelector(&metav1.LabelSelector{})
 	if obj.kubeletVersion == "" || obj.kubeletVersion >= "v1.14" {
+		// Fields introduced to v1beta1 in 1.14
 		namespacesWebhook.SetTimeoutSeconds(timeoutSeconds)
+		namespacesWebhook.SetMatchPolicy(WebhookMatchPolicy)
+		namespacesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
 	}
 
 	namespacesWebhook.SetCABundle(obj.tlsSecretValues.CaCert)

@@ -348,6 +348,7 @@ func (c *StateApplier) applyEnforcerWebhooks(ctx context.Context, agentSpec *cbc
 		mutatedMutatingWebhook = deletedWebhookDueToDisabledFlag
 	}
 
+	c.log.Info("Applied enforcer webhooks", "Mutated validated webhook", mutatedValidatingWebhook, "Mutated mutating webhook", mutatedMutatingWebhook)
 	return mutatedValidatingWebhook || mutatedMutatingWebhook, nil
 }
 
