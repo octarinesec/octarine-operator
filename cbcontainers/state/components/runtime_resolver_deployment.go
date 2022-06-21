@@ -172,7 +172,7 @@ func (obj *ResolverDeploymentK8sObject) mutateEnvVars(
 
 	customEnvs := []coreV1.EnvVar{
 		{Name: "RUNTIME_KUBERNETES_RESOLVER_GRPC_PORT", Value: fmt.Sprintf("%d", desiredGRPCPortValue)},
-		{Name: "RUNTIME_KUBERNETES_RESOLVER_LOG_LEVEL", Value: runtimeProtection.LogLevel},
+		{Name: "RUNTIME_KUBERNETES_RESOLVER_LOG_LEVEL", Value: runtimeProtection.Resolver.LogLevel},
 		{Name: "RUNTIME_KUBERNETES_RESOLVER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", resolverSpec.Prometheus.Port)},
 		{Name: "RUNTIME_KUBERNETES_RESOLVER_PROBES_PORT", Value: fmt.Sprintf("%d", resolverSpec.Probes.Port)},
 		{Name: "RUNTIME_KUBERNETES_RESOLVER_INITIALIZATION_TIMEOUT_MINUTES", Value: fmt.Sprintf("%d", desiredInitializationTimeoutMinutes)},

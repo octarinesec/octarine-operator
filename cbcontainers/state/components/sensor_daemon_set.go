@@ -289,7 +289,7 @@ func (obj *SensorDaemonSetK8sObject) mutateRuntimeEnvVars(container *coreV1.Cont
 		{Name: "RUNTIME_KUBERNETES_SENSOR_RESOLVER_CONNECTION_TIMEOUT_SECONDS", Value: fmt.Sprintf("%d", desiredConnectionTimeoutSeconds)},
 		{Name: "RUNTIME_KUBERNETES_SENSOR_LIVENESS_PATH", Value: sensorSpec.Probes.LivenessPath},
 		{Name: "RUNTIME_KUBERNETES_SENSOR_READINESS_PATH", Value: sensorSpec.Probes.ReadinessPath},
-		{Name: "RUNTIME_KUBERNETES_SENSOR_LOG_LEVEL", Value: runtimeProtection.LogLevel},
+		{Name: "RUNTIME_KUBERNETES_SENSOR_LOG_LEVEL", Value: runtimeProtection.Sensor.LogLevel},
 	}
 
 	envVarBuilder := commonState.NewEnvVarBuilder().

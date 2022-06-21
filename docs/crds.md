@@ -51,8 +51,9 @@ This is the CR you'll need to deploy in order to trigger the operator to deploy 
 | `spec.components.runtimeProtection.resolver.image.repository` | Carbon Black Container Runtime Resolver image repository                     | `cbartifactory/runtime-kubernetes-resolver`                                          |
 | `spec.components.runtimeProtection.sensor.image.repository`   | Carbon Black Container Runtime Sensor image repository                       | `cbartifactory/runtime-kubernetes-sensor`                                            |
 | `spec.components.runtimeProtection.internalGrpcPort`          | Carbon Black Container Runtime gRPC port the resolver exposes for the sensor | 443                                                                                  |
-| `spec.components.runtime.logLevel`                        | Carbon Black Container Runtime log level                                     | "panic", "fatal", "error", "warn", "info", "debug", "trace"  (default info)          |
+| `spec.components.runtimeProtection.resolver.logLevel`         | Carbon Black Container Runtime Resolver log level                            | "panic", "fatal", "error", "warn", "info", "debug", "trace"  (default info)          |
 | `spec.components.runtimeProtection.resolver.resources`        | Carbon Black Container Runtime Resolver resources                            | `{requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "1024Mi", cpu: "900m"}}` |
+| `spec.components.runtimeProtection.sensor.logLevel`           | Carbon Black Container Runtime Sensor log level                              | "panic", "fatal", "error", "warn", "info", "debug", "trace"  (default info)          |
 | `spec.components.runtimeProtection.sensor.resources`          | Carbon Black Container Runtime Sensor resources                              | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "1024Mi", cpu: "500m"}}`  |
 
 ### Cluster Scanning Components Optional parameters

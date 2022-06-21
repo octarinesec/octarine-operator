@@ -27,6 +27,8 @@ type CBContainersRuntimeResolverSpec struct {
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 	// +kubebuilder:default:=<>
 	Affinity *coreV1.Affinity `json:"affinity,omitempty"`
+	// +kubebuilder:default:="info"
+	LogLevel string `json:"logLevel,omitempty"`
 }
 
 type CBContainersRuntimeSensorSpec struct {
@@ -48,6 +50,8 @@ type CBContainersRuntimeSensorSpec struct {
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 	// +kubebuilder:default:=2
 	VerbosityLevel *int `json:"verbosity_level,omitempty"`
+	// +kubebuilder:default:="info"
+	LogLevel string `json:"logLevel,omitempty"`
 }
 
 // CBContainersRuntimeProtectionSpec defines the desired state of CBContainersRuntime
@@ -60,6 +64,4 @@ type CBContainersRuntimeProtectionSpec struct {
 	Sensor CBContainersRuntimeSensorSpec `json:"sensor,omitempty"`
 	// +kubebuilder:default:=8080
 	InternalGrpcPort int32 `json:"internalGrpcPort,omitempty"`
-	// +kubebuilder:default:="info"
-	LogLevel string `json:"logLevel,omitempty"`
 }

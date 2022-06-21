@@ -4511,13 +4511,13 @@ spec:
                         default: 8080
                         format: int32
                         type: integer
-                      logLevel:
-                        default: "info"
-                        format: byte
-                        type: string
                       resolver:
                         default: {}
                         properties:
+                          logLevel:
+                            default: "info"
+                            format: byte
+                            type: string
                           affinity:
                             default: {}
                             description: Affinity is a group of affinity scheduling
@@ -5601,6 +5601,10 @@ spec:
                       sensor:
                         default: {}
                         properties:
+                          logLevel:
+                            default: "info"
+                            format: byte
+                            type: string
                           daemonSetAnnotations:
                             additionalProperties:
                               type: string
