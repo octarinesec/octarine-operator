@@ -86,6 +86,10 @@ func (r *CBContainersAgentController) setEnforcerDefaults(enforcer *cbcontainers
 		enforcer.FailurePolicy = "Ignore"
 	}
 
+	if enforcer.EnableEnforcementFeature == nil {
+		enforcer.EnableEnforcementFeature = &trueRef
+	}
+
 	return nil
 }
 

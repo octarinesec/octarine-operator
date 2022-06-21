@@ -51,7 +51,7 @@ type CBContainersEnforcerSpec struct {
 	// +kubebuilder:default:=5
 	WebhookTimeoutSeconds int32 `json:"webhookTimeoutSeconds,omitempty"`
 	// +kubebuilder:default:=true
-	EnableEnforcementFeature bool `json:"enableEnforcementFeature,omitempty"`
+	EnableEnforcementFeature *bool `json:"enableEnforcementFeature,omitempty"`
 	// +kubebuilder:validation:Enum=Ignore;Fail
 	// +kubebuilder:default:=Ignore
 	FailurePolicy string `json:"failurePolicy,omitempty"`
