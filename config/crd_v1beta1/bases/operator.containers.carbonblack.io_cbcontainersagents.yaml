@@ -5319,6 +5319,8 @@ spec:
                                 value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                               type: object
                           type: object
+                        verbosity_level:
+                          type: integer
                       type: object
                   type: object
                 settings:
