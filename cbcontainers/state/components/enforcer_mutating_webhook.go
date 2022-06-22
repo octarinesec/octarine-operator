@@ -111,8 +111,10 @@ func (obj *EnforcerMutatingWebhookK8sObject) mutateResourcesWebhook(resourcesWeb
 	obj.mutateMutatingWebhooksRules(resourcesWebhook)
 	if obj.kubeletVersion == "" || obj.kubeletVersion >= "v1.14" {
 		resourcesWebhook.SetTimeoutSeconds(timeoutSeconds)
-		resourcesWebhook.SetMatchPolicy(MutatingWebhookMatchPolicy)
 		resourcesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
+	}
+	if obj.kubeletVersion == "" || obj.kubeletVersion >= "v1.15" {
+		resourcesWebhook.SetMatchPolicy(WebhookMatchPolicy)
 	}
 	resourcesWebhook.SetCABundle(obj.tlsSecretValues.CaCert)
 	resourcesWebhook.SetServiceName(EnforcerName)
