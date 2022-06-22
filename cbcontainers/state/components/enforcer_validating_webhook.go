@@ -119,8 +119,10 @@ func (obj *EnforcerValidatingWebhookK8sObject) mutateResourcesWebhook(resourcesW
 	obj.mutateResourcesWebhooksRules(resourcesWebhook)
 	if obj.kubeletVersion == "" || obj.kubeletVersion >= "v1.14" {
 		resourcesWebhook.SetTimeoutSeconds(timeoutSeconds)
-		resourcesWebhook.SetMatchPolicy(WebhookMatchPolicy)
 		resourcesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
+	}
+	if obj.kubeletVersion == "" || obj.kubeletVersion >= "v1.15" {
+		resourcesWebhook.SetMatchPolicy(WebhookMatchPolicy)
 	}
 	resourcesWebhook.SetCABundle(obj.tlsSecretValues.CaCert)
 	resourcesWebhook.SetServiceName(EnforcerName)
@@ -219,10 +221,12 @@ func (obj *EnforcerValidatingWebhookK8sObject) mutateNamespacesWebhook(namespace
 	if obj.kubeletVersion == "" || obj.kubeletVersion >= "v1.14" {
 		// Fields introduced to v1beta1 in 1.14
 		namespacesWebhook.SetTimeoutSeconds(timeoutSeconds)
-		namespacesWebhook.SetMatchPolicy(WebhookMatchPolicy)
 		namespacesWebhook.SetAdmissionReviewVersions([]string{"v1beta1"})
 	}
-
+	if obj.kubeletVersion == "" || obj.kubeletVersion >= "v1.15" {
+		// Fields introduced to v1beta1 in 1.15
+		namespacesWebhook.SetMatchPolicy(WebhookMatchPolicy)
+	}
 	namespacesWebhook.SetCABundle(obj.tlsSecretValues.CaCert)
 	namespacesWebhook.SetServiceNamespace(commonState.DataPlaneNamespaceName)
 	namespacesWebhook.SetServiceName(EnforcerName)
