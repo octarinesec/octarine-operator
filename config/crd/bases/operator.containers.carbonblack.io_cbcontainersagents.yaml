@@ -4514,6 +4514,10 @@ spec:
                       resolver:
                         default: {}
                         properties:
+                          logLevel:
+                            default: "info"
+                            format: byte
+                            type: string
                           affinity:
                             default: {}
                             description: Affinity is a group of affinity scheduling
@@ -5597,6 +5601,10 @@ spec:
                       sensor:
                         default: {}
                         properties:
+                          logLevel:
+                            default: "info"
+                            format: byte
+                            type: string
                           daemonSetAnnotations:
                             additionalProperties:
                               type: string

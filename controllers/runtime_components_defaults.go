@@ -58,6 +58,10 @@ func (r *CBContainersAgentController) setRuntimeResolverDefaults(runtimeResolver
 
 	setDefaultHTTPProbes(&runtimeResolver.Probes)
 
+	if runtimeResolver.LogLevel == "" {
+		runtimeResolver.LogLevel = "info"
+	}
+
 	return nil
 }
 
@@ -88,9 +92,8 @@ func (r *CBContainersAgentController) setRuntimeSensorDefaults(runtimeSensor *cb
 
 	setDefaultFileProbes(&runtimeSensor.Probes)
 
-	if runtimeSensor.VerbosityLevel == nil {
-		defaultVerbosity := 2
-		runtimeSensor.VerbosityLevel = &defaultVerbosity
+	if runtimeSensor.LogLevel == "" {
+		runtimeSensor.LogLevel = "info"
 	}
 
 	return nil

@@ -4216,6 +4216,9 @@ spec:
                       type: integer
                     resolver:
                       properties:
+                        logLevel:
+                          format: byte
+                          type: string
                         affinity:
                           description: Affinity is a group of affinity scheduling
                             rules.
@@ -5232,6 +5235,9 @@ spec:
                       type: object
                     sensor:
                       properties:
+                        logLevel:
+                          format: byte
+                          type: string
                         daemonSetAnnotations:
                           additionalProperties:
                             type: string

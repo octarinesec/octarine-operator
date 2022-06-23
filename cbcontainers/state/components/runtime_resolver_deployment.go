@@ -77,21 +77,17 @@ func (obj *ResolverDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	deployment.Spec.Template.Spec.ServiceAccountName = commonState.RuntimeResolverServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
-	obj.mutateAnnotations(deployment, resolver)
-	obj.mutateVolumes(&deployment.Spec.Template.Spec)
-	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, resolver)
-	obj.mutateContainersList(&deployment.Spec.Template.Spec,
-		resolver,
-		&agentSpec.Gateways.RuntimeEventsGateway,
-		agentSpec.Version,
-		agentSpec.AccessTokenSecretName,
-		runtimeProtection.InternalGrpcPort,
-	)
+
+	obj.mutateAnnotations(deployment, agentSpec)
+	obj.mutateVolumes(deployment, agentSpec)
+	obj.mutateAffinityAndNodeSelector(deployment, agentSpec)
+	obj.mutateContainersList(deployment, agentSpec)
 
 	return nil
 }
 
-func (obj *ResolverDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.PodSpec) {
+func (obj *ResolverDeploymentK8sObject) mutateVolumes(deployment *appsV1.Deployment, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+	templatePodSpec := &deployment.Spec.Template.Spec
 	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != 1 {
 		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
 	}
@@ -99,12 +95,17 @@ func (obj *ResolverDeploymentK8sObject) mutateVolumes(templatePodSpec *coreV1.Po
 	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
-func (obj *ResolverDeploymentK8sObject) mutateAffinityAndNodeSelector(templatePodSpec *coreV1.PodSpec, resolverSpec *cbContainersV1.CBContainersRuntimeResolverSpec) {
+func (obj *ResolverDeploymentK8sObject) mutateAffinityAndNodeSelector(deployment *appsV1.Deployment, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+	resolverSpec := &agentSpec.Components.RuntimeProtection.Resolver
+
+	templatePodSpec := &deployment.Spec.Template.Spec
 	templatePodSpec.Affinity = resolverSpec.Affinity
 	templatePodSpec.NodeSelector = resolverSpec.NodeSelector
 }
 
-func (obj *ResolverDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Deployment, resolverSpec *cbContainersV1.CBContainersRuntimeResolverSpec) {
+func (obj *ResolverDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Deployment, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+	resolverSpec := &agentSpec.Components.RuntimeProtection.Resolver
+
 	if deployment.ObjectMeta.Annotations == nil {
 		deployment.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -123,58 +124,55 @@ func (obj *ResolverDeploymentK8sObject) mutateAnnotations(deployment *appsV1.Dep
 }
 
 func (obj *ResolverDeploymentK8sObject) mutateContainersList(
-	templatePodSpec *coreV1.PodSpec,
-	resolverSpec *cbContainersV1.CBContainersRuntimeResolverSpec,
-	eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec,
-	version,
-	accessTokenSecretName string,
-	desiredGRPCPortValue int32) {
+	deployment *appsV1.Deployment,
+	agentSpec *cbContainersV1.CBContainersAgentSpec) {
 
+	templatePodSpec := &deployment.Spec.Template.Spec
 	if len(templatePodSpec.Containers) != 1 {
 		container := coreV1.Container{}
 		templatePodSpec.Containers = []coreV1.Container{container}
 	}
 
-	obj.mutateContainer(&templatePodSpec.Containers[0], resolverSpec, eventsGatewaySpec,
-		version, accessTokenSecretName, desiredGRPCPortValue)
+	obj.mutateContainer(&templatePodSpec.Containers[0], agentSpec)
 }
 
 func (obj *ResolverDeploymentK8sObject) mutateContainer(
 	container *coreV1.Container,
-	resolverSpec *cbContainersV1.CBContainersRuntimeResolverSpec,
-	eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec,
-	version,
-	accessTokenSecretName string,
-	desiredGRPCPortValue int32) {
+	agentSpec *cbContainersV1.CBContainersAgentSpec) {
+
+	resolverSpec := &agentSpec.Components.RuntimeProtection.Resolver
 
 	container.Name = ResolverName
 	container.Resources = resolverSpec.Resources
-	commonState.MutateImage(container, resolverSpec.Image, version)
+	commonState.MutateImage(container, resolverSpec.Image, agentSpec.Version)
 	commonState.MutateContainerHTTPProbes(container, resolverSpec.Probes)
-	obj.mutateEnvVars(container, resolverSpec, eventsGatewaySpec, accessTokenSecretName, desiredGRPCPortValue)
-	obj.mutateContainerPorts(container, desiredGRPCPortValue)
+	obj.mutateEnvVars(container, agentSpec)
+	obj.mutateContainerPorts(container, agentSpec)
 	obj.mutateSecurityContext(container)
 	obj.mutateVolumesMounts(container)
 }
 
-func (obj *ResolverDeploymentK8sObject) mutateContainerPorts(container *coreV1.Container, desiredGRPCPortValue int32) {
+func (obj *ResolverDeploymentK8sObject) mutateContainerPorts(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
 	if container.Ports == nil || len(container.Ports) != 1 {
 		container.Ports = []coreV1.ContainerPort{{}}
 	}
 
 	container.Ports[0].Name = desiredDeploymentGRPCPortName
-	container.Ports[0].ContainerPort = desiredGRPCPortValue
+	container.Ports[0].ContainerPort = agentSpec.Components.RuntimeProtection.InternalGrpcPort
 }
 
 func (obj *ResolverDeploymentK8sObject) mutateEnvVars(
-	container *coreV1.Container,
-	resolverSpec *cbContainersV1.CBContainersRuntimeResolverSpec,
-	eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec,
-	accessTokenSecretName string,
-	desiredGRPCPortValue int32) {
+	container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+
+	runtimeProtection := &agentSpec.Components.RuntimeProtection
+	resolverSpec := &runtimeProtection.Resolver
+	desiredGRPCPortValue := runtimeProtection.InternalGrpcPort
+	eventsGatewaySpec := &agentSpec.Gateways.RuntimeEventsGateway
+	accessTokenSecretName := agentSpec.AccessTokenSecretName
 
 	customEnvs := []coreV1.EnvVar{
 		{Name: "RUNTIME_KUBERNETES_RESOLVER_GRPC_PORT", Value: fmt.Sprintf("%d", desiredGRPCPortValue)},
+		{Name: "RUNTIME_KUBERNETES_RESOLVER_LOG_LEVEL", Value: runtimeProtection.Resolver.LogLevel},
 		{Name: "RUNTIME_KUBERNETES_RESOLVER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", resolverSpec.Prometheus.Port)},
 		{Name: "RUNTIME_KUBERNETES_RESOLVER_PROBES_PORT", Value: fmt.Sprintf("%d", resolverSpec.Probes.Port)},
 		{Name: "RUNTIME_KUBERNETES_RESOLVER_INITIALIZATION_TIMEOUT_MINUTES", Value: fmt.Sprintf("%d", desiredInitializationTimeoutMinutes)},
