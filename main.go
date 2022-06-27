@@ -39,6 +39,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -91,6 +92,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	setupLog.Info("Getting Cluster Identifyer: kube-system uid")
+	mgrClient := mgr.GetClient()
+	namespace := &coreV1.Namespace{}
+	err = mgrClient.Get(context.Background(),
+		client.ObjectKey{Namespace: "kube-system"}, namespace)
+	if err != nil {
+		setupLog.Error(err, "unable to get the kube-system namespace")
+		os.Exit(1)
+	}
+	clusterIdentifier := string(namespace.UID)
+
 	setupLog.Info("Getting Nodes list")
 	nodesList := &coreV1.NodeList{}
 	if err := mgr.GetAPIReader().List(context.Background(), nodesList); err != nil || nodesList.Items == nil || len(nodesList.Items) < 1 {
@@ -106,7 +118,7 @@ func main() {
 		Log:              cbContainersAgentLogger,
 		Scheme:           mgr.GetScheme(),
 		K8sVersion:       k8sVersion,
-		ClusterProcessor: processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator(), operator.NewEnvVersionProvider()),
+		ClusterProcessor: processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator(), operator.NewEnvVersionProvider(), clusterIdentifier),
 		StateApplier:     state.NewStateApplier(agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")

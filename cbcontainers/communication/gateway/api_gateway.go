@@ -93,7 +93,7 @@ func (gateway *ApiGateway) getResourcePathWithAccountPath(resourceName string) s
 	return gateway.baseUrl(fmt.Sprintf("account/%s/%s", gateway.account, resourceName))
 }
 
-func (gateway *ApiGateway) RegisterCluster() error {
+func (gateway *ApiGateway) RegisterCluster(clusterIdentifier string) error {
 	url := gateway.getResourcePathWithAccountPath("clusters")
 	resp, err := gateway.baseRequest().
 		SetBody(map[string]interface{}{
@@ -101,6 +101,7 @@ func (gateway *ApiGateway) RegisterCluster() error {
 			"components":     gateway.agentComponents,
 			"labels":         gateway.clusterLabels,
 			"inbounddefault": "allow",
+			"identifier":     clusterIdentifier,
 		}).
 		Post(url)
 

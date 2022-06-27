@@ -47,9 +47,8 @@ type AgentProcessor interface {
 
 type CBContainersAgentController struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
-
+	Log              logr.Logger
+	Scheme           *runtime.Scheme
 	ClusterProcessor AgentProcessor
 	StateApplier     StateApplier
 	K8sVersion       string
