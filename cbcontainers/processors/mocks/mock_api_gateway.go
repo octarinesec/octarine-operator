@@ -65,15 +65,15 @@ func (mr *MockAPIGatewayMockRecorder) GetRegistrySecret() *gomock.Call {
 }
 
 // RegisterCluster mocks base method.
-func (m *MockAPIGateway) RegisterCluster() error {
+func (m *MockAPIGateway) RegisterCluster(arg0 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegisterCluster")
+	ret := m.ctrl.Call(m, "RegisterCluster", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RegisterCluster indicates an expected call of RegisterCluster.
-func (mr *MockAPIGatewayMockRecorder) RegisterCluster() *gomock.Call {
+func (mr *MockAPIGatewayMockRecorder) RegisterCluster(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterCluster", reflect.TypeOf((*MockAPIGateway)(nil).RegisterCluster))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterCluster", reflect.TypeOf((*MockAPIGateway)(nil).RegisterCluster), arg0)
 }

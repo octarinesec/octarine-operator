@@ -27,6 +27,8 @@ var (
 	AccessToken = test_utils.RandomString()
 )
 
+const mockIdentifier string = "00000000-0000-0000-0000-000000000000"
+
 func testClusterProcessor(t *testing.T, setupAndAssert SetupAndAssertClusterProcessorTest) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -37,7 +39,7 @@ func testClusterProcessor(t *testing.T, setupAndAssert SetupAndAssertClusterProc
 		operatorVersionProviderMock: mocks.NewMockOperatorVersionProvider(ctrl),
 	}
 
-	processor := processors.NewAgentProcessor(logrTesting.NewTestLogger(t), mocksObjects.gatewayCreatorMock, mocksObjects.operatorVersionProviderMock, "mockIdentifier")
+	processor := processors.NewAgentProcessor(logrTesting.NewTestLogger(t), mocksObjects.gatewayCreatorMock, mocksObjects.operatorVersionProviderMock, mockIdentifier)
 	setupAndAssert(mocksObjects, processor)
 }
 
@@ -46,7 +48,7 @@ func setupValidMocksCalls(testMocks *ClusterProcessorTestMocks, times int) {
 	testMocks.gatewayMock.EXPECT().GetRegistrySecret().DoAndReturn(func() (*models.RegistrySecretValues, error) {
 		return &models.RegistrySecretValues{Data: map[string][]byte{test_utils.RandomString(): {}}}, nil
 	}).Times(times)
-	testMocks.gatewayMock.EXPECT().RegisterCluster().Return(nil).Times(times)
+	testMocks.gatewayMock.EXPECT().RegisterCluster(mockIdentifier).Return(nil).Times(times)
 	// this will skip the compatibility check
 	// for all tests that do not explicitly test that
 	testMocks.operatorVersionProviderMock.EXPECT().GetOperatorVersion().Return("", operator.ErrNotSemVer).AnyTimes()
@@ -99,7 +101,7 @@ func TestProcessorReturnsErrorWhenCanNotRegisterCluster(t *testing.T) {
 		clusterCR := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Account: test_utils.RandomString(), ClusterName: test_utils.RandomString()}}
 		testMocks.gatewayCreatorMock.EXPECT().CreateGateway(gomock.Any(), gomock.Any()).Return(testMocks.gatewayMock, nil)
 		testMocks.gatewayMock.EXPECT().GetRegistrySecret().Return(&models.RegistrySecretValues{}, nil)
-		testMocks.gatewayMock.EXPECT().RegisterCluster().Return(fmt.Errorf(""))
+		testMocks.gatewayMock.EXPECT().RegisterCluster(mockIdentifier).Return(fmt.Errorf(""))
 		_, err := processor.Process(clusterCR, AccessToken)
 		require.Error(t, err)
 	})
@@ -110,7 +112,7 @@ func TestProcessorReturnsErrorWhenOperatorVersionProviderReturnsUnknownError(t *
 		clusterCR := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Account: test_utils.RandomString(), ClusterName: test_utils.RandomString()}}
 		testMocks.gatewayCreatorMock.EXPECT().CreateGateway(gomock.Any(), gomock.Any()).Return(testMocks.gatewayMock, nil)
 		testMocks.gatewayMock.EXPECT().GetRegistrySecret().Return(&models.RegistrySecretValues{}, nil)
-		testMocks.gatewayMock.EXPECT().RegisterCluster().Return(nil)
+		testMocks.gatewayMock.EXPECT().RegisterCluster(mockIdentifier).Return(nil)
 		testMocks.operatorVersionProviderMock.EXPECT().GetOperatorVersion().Return("", fmt.Errorf("intentional unknown error"))
 		_, err := processor.Process(clusterCR, AccessToken)
 		require.Error(t, err)
@@ -171,7 +173,7 @@ func TestCheckCompatibilityCompatibleVersions(t *testing.T) {
 				clusterCR := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: "1.0.0", Account: test_utils.RandomString(), ClusterName: test_utils.RandomString()}}
 				testMocks.gatewayCreatorMock.EXPECT().CreateGateway(gomock.Any(), gomock.Any()).Return(testMocks.gatewayMock, nil)
 				testMocks.gatewayMock.EXPECT().GetRegistrySecret().Return(&models.RegistrySecretValues{}, nil)
-				testMocks.gatewayMock.EXPECT().RegisterCluster().Return(nil)
+				testMocks.gatewayMock.EXPECT().RegisterCluster(mockIdentifier).Return(nil)
 				testCase.setup(testMocks)
 
 				values, err := processor.Process(clusterCR, AccessToken)
