@@ -20,12 +20,14 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"os"
-
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/operator"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"os"
 
 	coreV1 "k8s.io/api/core/v1"
 
@@ -39,20 +41,21 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
 	certificatesUtils "github.com/vmware/cbcontainers-operator/cbcontainers/utils/certificates"
 	"github.com/vmware/cbcontainers-operator/controllers"
-	// +kubebuilder:scaffold:imports
 )
 
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
+
+const NamespaceIdentifier = "kube-system"
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -92,16 +95,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("Getting Cluster Identifyer: kube-system uid")
-	mgrClient := mgr.GetClient()
-	namespace := &coreV1.Namespace{}
-	err = mgrClient.Get(context.Background(),
-		client.ObjectKey{Namespace: "kube-system"}, namespace)
+	setupLog.Info(fmt.Sprintf("Getting Cluster Identifier: %v uid", NamespaceIdentifier))
+	config, err := rest.InClusterConfig()
 	if err != nil {
-		setupLog.Error(err, "unable to get the kube-system namespace")
+		setupLog.Error(err, "unable to get the in cluster rest config")
 		os.Exit(1)
 	}
-	clusterIdentifier := string(namespace.UID)
+	// creates the clientset
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		setupLog.Error(err, "unable to create the client")
+		os.Exit(1)
+	}
+
+	kubeSystem, err := client.CoreV1().Namespaces().Get(context.TODO(), NamespaceIdentifier, metav1.GetOptions{})
+	if err != nil {
+		setupLog.Error(err, fmt.Sprintf("unable to get the %v namespace", NamespaceIdentifier))
+		os.Exit(1)
+	}
+	clusterIdentifier := string(kubeSystem.UID)
+
+	setupLog.Info(fmt.Sprintf("Cluster Identifier: %v", clusterIdentifier))
 
 	setupLog.Info("Getting Nodes list")
 	nodesList := &coreV1.NodeList{}
