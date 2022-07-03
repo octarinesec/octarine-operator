@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
@@ -90,14 +91,29 @@ func (gateway *ApiGateway) baseRequestWithRetries() *resty.Request {
 }
 
 func (gateway *ApiGateway) getResourcePathWithAccountPath(resourceName string) string {
-	return gateway.baseUrl(fmt.Sprintf("account/%s/%s", gateway.account, resourceName))
+	return gateway.baseUrl(fmt.Sprintf("management/%v", resourceName))
 }
 
+func (gateway *ApiGateway) SplitToGroupAndMember() (string, string, error) {
+	parts := strings.Split(gateway.cluster, ":")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("cluster name '%v' is not in group:member format with two parts", gateway.cluster)
+	}
+
+	return parts[0], parts[1], nil
+}
 func (gateway *ApiGateway) RegisterCluster(clusterIdentifier string) error {
 	url := gateway.getResourcePathWithAccountPath("clusters")
+
+	group, member, err := gateway.SplitToGroupAndMember()
+	if err != nil {
+		return err
+	}
+
 	resp, err := gateway.baseRequest().
 		SetBody(map[string]interface{}{
-			"name":           gateway.cluster,
+			"group":          group,
+			"member":         member,
 			"components":     gateway.agentComponents,
 			"labels":         gateway.clusterLabels,
 			"inbounddefault": "allow",
@@ -115,7 +131,7 @@ func (gateway *ApiGateway) RegisterCluster(clusterIdentifier string) error {
 }
 
 func (gateway *ApiGateway) GetRegistrySecret() (*models.RegistrySecretValues, error) {
-	url := gateway.getResourcePathWithAccountPath("registrySecret")
+	url := gateway.getResourcePathWithAccountPath("registry_secret")
 
 	resp, err := gateway.baseRequest().
 		SetResult(&models.RegistrySecretValues{}).
