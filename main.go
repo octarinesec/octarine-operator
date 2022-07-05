@@ -48,6 +48,7 @@ import (
 	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
 	certificatesUtils "github.com/vmware/cbcontainers-operator/cbcontainers/utils/certificates"
 	"github.com/vmware/cbcontainers-operator/controllers"
+	// +kubebuilder:scaffold:imports
 )
 
 var (
@@ -95,7 +96,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info(fmt.Sprintf("Getting Cluster Identifier: %v uid", NamespaceIdentifier))
+	setupLog.Info(fmt.Sprintf("Getting Cluster Identifier: %v uid", x))
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		setupLog.Error(err, "unable to get the in cluster rest config")
