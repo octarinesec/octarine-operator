@@ -24,10 +24,8 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/operator"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	coreV1 "k8s.io/api/core/v1"
@@ -38,14 +36,13 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
+	certificatesUtils "github.com/vmware/cbcontainers-operator/cbcontainers/utils/certificates"
+	"github.com/vmware/cbcontainers-operator/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
-
-	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
-	certificatesUtils "github.com/vmware/cbcontainers-operator/cbcontainers/utils/certificates"
-	"github.com/vmware/cbcontainers-operator/controllers"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	// +kubebuilder:scaffold:imports
 )
@@ -55,7 +52,7 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
-const NamespaceIdentifier = "kube-system"
+const NamespaceIdentifier = "default"
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -96,30 +93,19 @@ func main() {
 	}
 
 	setupLog.Info(fmt.Sprintf("Getting Cluster Identifier: %v uid", NamespaceIdentifier))
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		setupLog.Error(err, "unable to get the in cluster rest config")
-		os.Exit(1)
-	}
-	// creates the clientset
-	client, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		setupLog.Error(err, "unable to create the client")
-		os.Exit(1)
-	}
-
-	kubeSystem, err := client.CoreV1().Namespaces().Get(context.TODO(), NamespaceIdentifier, metav1.GetOptions{})
-	if err != nil {
+	namespace := &coreV1.Namespace{}
+	apiReader := mgr.GetAPIReader()
+	if err = apiReader.Get(context.Background(), client.ObjectKey{Namespace: NamespaceIdentifier, Name: NamespaceIdentifier}, namespace); err != nil {
 		setupLog.Error(err, fmt.Sprintf("unable to get the %v namespace", NamespaceIdentifier))
 		os.Exit(1)
 	}
-	clusterIdentifier := string(kubeSystem.UID)
+	clusterIdentifier := string(namespace.UID)
 
 	setupLog.Info(fmt.Sprintf("Cluster Identifier: %v", clusterIdentifier))
 
 	setupLog.Info("Getting Nodes list")
 	nodesList := &coreV1.NodeList{}
-	if err := mgr.GetAPIReader().List(context.Background(), nodesList); err != nil || nodesList.Items == nil || len(nodesList.Items) < 1 {
+	if err := apiReader.List(context.Background(), nodesList); err != nil || nodesList.Items == nil || len(nodesList.Items) < 1 {
 		setupLog.Error(err, "couldn't get nodes list")
 		os.Exit(1)
 	}
