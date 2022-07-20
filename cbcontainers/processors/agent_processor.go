@@ -11,7 +11,7 @@ import (
 )
 
 type APIGateway interface {
-	RegisterCluster() error
+	RegisterCluster(clusterIdentifier string) error
 	GetRegistrySecret() (*models.RegistrySecretValues, error)
 	GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.OperatorCompatibility, error)
 }
@@ -34,14 +34,17 @@ type AgentProcessor struct {
 	lastProcessedObject *cbcontainersv1.CBContainersAgent
 
 	log logr.Logger
+
+	clusterIdentifier string
 }
 
-func NewAgentProcessor(log logr.Logger, clusterRegistrarCreator APIGatewayCreator, operatorVersionProvider OperatorVersionProvider) *AgentProcessor {
+func NewAgentProcessor(log logr.Logger, clusterRegistrarCreator APIGatewayCreator, operatorVersionProvider OperatorVersionProvider, clusterIdentifier string) *AgentProcessor {
 	return &AgentProcessor{
 		gatewayCreator:          clusterRegistrarCreator,
 		lastProcessedObject:     nil,
 		operatorVersionProvider: operatorVersionProvider,
 		log:                     log,
+		clusterIdentifier:       clusterIdentifier,
 	}
 }
 
@@ -88,7 +91,7 @@ func (processor *AgentProcessor) initializeIfNeeded(cbContainersCluster *cbconta
 	}
 
 	processor.log.Info("Calling register cluster")
-	if err := gateway.RegisterCluster(); err != nil {
+	if err := gateway.RegisterCluster(processor.clusterIdentifier); err != nil {
 		return err
 	}
 

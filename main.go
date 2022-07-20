@@ -20,12 +20,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"os"
-
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/operator"
+	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	coreV1 "k8s.io/api/core/v1"
 
@@ -35,16 +36,14 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
+	certificatesUtils "github.com/vmware/cbcontainers-operator/cbcontainers/utils/certificates"
+	"github.com/vmware/cbcontainers-operator/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	operatorcontainerscarbonblackiov1 "github.com/vmware/cbcontainers-operator/api/v1"
-	certificatesUtils "github.com/vmware/cbcontainers-operator/cbcontainers/utils/certificates"
-	"github.com/vmware/cbcontainers-operator/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -52,6 +51,8 @@ var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
+
+const NamespaceIdentifier = "default"
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -91,9 +92,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	setupLog.Info(fmt.Sprintf("Getting Cluster Identifier: %v uid", NamespaceIdentifier))
+	namespace := &coreV1.Namespace{}
+	apiReader := mgr.GetAPIReader()
+	if err = apiReader.Get(context.Background(), client.ObjectKey{Namespace: NamespaceIdentifier, Name: NamespaceIdentifier}, namespace); err != nil {
+		setupLog.Error(err, fmt.Sprintf("unable to get the %v namespace", NamespaceIdentifier))
+		os.Exit(1)
+	}
+	clusterIdentifier := string(namespace.UID)
+
+	setupLog.Info(fmt.Sprintf("Cluster Identifier: %v", clusterIdentifier))
+
 	setupLog.Info("Getting Nodes list")
 	nodesList := &coreV1.NodeList{}
-	if err := mgr.GetAPIReader().List(context.Background(), nodesList); err != nil || nodesList.Items == nil || len(nodesList.Items) < 1 {
+	if err := apiReader.List(context.Background(), nodesList); err != nil || nodesList.Items == nil || len(nodesList.Items) < 1 {
 		setupLog.Error(err, "couldn't get nodes list")
 		os.Exit(1)
 	}
@@ -106,7 +118,7 @@ func main() {
 		Log:              cbContainersAgentLogger,
 		Scheme:           mgr.GetScheme(),
 		K8sVersion:       k8sVersion,
-		ClusterProcessor: processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator(), operator.NewEnvVersionProvider()),
+		ClusterProcessor: processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator(), operator.NewEnvVersionProvider(), clusterIdentifier),
 		StateApplier:     state.NewStateApplier(agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")

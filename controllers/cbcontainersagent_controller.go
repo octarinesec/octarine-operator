@@ -47,9 +47,8 @@ type AgentProcessor interface {
 
 type CBContainersAgentController struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
-
+	Log              logr.Logger
+	Scheme           *runtime.Scheme
 	ClusterProcessor AgentProcessor
 	StateApplier     StateApplier
 	K8sVersion       string
@@ -80,6 +79,7 @@ func (r *CBContainersAgentController) getContainersAgentObject(ctx context.Conte
 // +kubebuilder:rbac:groups={apps,core},resources={deployments,services,daemonsets},verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources={validatingwebhookconfigurations,mutatingwebhookconfigurations},verbs=*
 // +kubebuilder:rbac:groups={core},resources={nodes},verbs=list
+// +kubebuilder:rbac:groups={core},resources={namespaces},verbs=get
 // +kubebuilder:rbac:groups={policy},resources={podsecuritypolicies},verbs=use,resourceNames={cbcontainers-manager-psp}
 
 func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
