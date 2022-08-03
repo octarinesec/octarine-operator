@@ -180,7 +180,7 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(daemonSet *appsV1.Daem
 	var runtimeContainer coreV1.Container
 	var clusterScannerContainer coreV1.Container
 
-	templatePodSpec := daemonSet.Spec.Template.Spec
+	templatePodSpec := &daemonSet.Spec.Template.Spec
 
 	desiredContainers := make([]coreV1.Container, 0, 2)
 	runtimeEnabled := false
