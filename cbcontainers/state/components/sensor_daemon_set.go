@@ -180,7 +180,7 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(daemonSet *appsV1.Daem
 	var runtimeContainer coreV1.Container
 	var clusterScannerContainer coreV1.Container
 
-	templatePodSpec := daemonSet.Spec.Template.Spec
+	templatePodSpec := &daemonSet.Spec.Template.Spec
 
 	desiredContainers := make([]coreV1.Container, 0, 2)
 	runtimeEnabled := false
@@ -274,7 +274,7 @@ func (obj *SensorDaemonSetK8sObject) mutateRuntimeContainer(container *coreV1.Co
 		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(sensorSpec.Prometheus.Port)}}
 	}
 	obj.mutateRuntimeEnvVars(container, agentSpec)
-	obj.mutateSecurityContext(container, agentSpec)
+	obj.mutateSecurityContext(container)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateRuntimeEnvVars(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
@@ -298,7 +298,7 @@ func (obj *SensorDaemonSetK8sObject) mutateRuntimeEnvVars(container *coreV1.Cont
 	commonState.MutateEnvVars(container, envVarBuilder)
 }
 
-func (obj *SensorDaemonSetK8sObject) mutateSecurityContext(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+func (obj *SensorDaemonSetK8sObject) mutateSecurityContext(container *coreV1.Container) {
 	if container.SecurityContext == nil {
 		container.SecurityContext = &coreV1.SecurityContext{}
 	}
@@ -320,7 +320,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(container *co
 	}
 	obj.mutateClusterScannerEnvVars(container, agentSpec)
 	obj.mutateClusterScannerVolumesMounts(container, agentSpec)
-	obj.mutateSecurityContext(container, agentSpec)
+	obj.mutateSecurityContext(container)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
