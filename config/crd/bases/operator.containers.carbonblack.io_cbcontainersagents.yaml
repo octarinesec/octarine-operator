@@ -4499,6 +4499,107 @@ spec:
                             type: object
                         type: object
                     type: object
+                  cndr:
+                    default: {}
+                    description: CBContainersCndrSpec defines the desired state of
+                      CBContainersCndr
+                    properties:
+                      companyCodeSecretName:
+                        default: cbcontainers-company-code
+                        type: string
+                      enabled:
+                        default: true
+                        type: boolean
+                      sensor:
+                        default: {}
+                        properties:
+                          daemonSetAnnotations:
+                            additionalProperties:
+                              type: string
+                            default: {}
+                            type: object
+                          env:
+                            additionalProperties:
+                              type: string
+                            default: {}
+                            type: object
+                          image:
+                            default:
+                              repository: octarinesec/cndr
+                            properties:
+                              pullPolicy:
+                                default: IfNotPresent
+                                description: PullPolicy describes a policy for if/when
+                                  to pull a container image
+                                type: string
+                              repository:
+                                type: string
+                              tag:
+                                type: string
+                            type: object
+                          labels:
+                            additionalProperties:
+                              type: string
+                            default: {}
+                            type: object
+                          logLevel:
+                            default: info
+                            type: string
+                          podTemplateAnnotations:
+                            additionalProperties:
+                              type: string
+                            default: {}
+                            type: object
+                          prometheus:
+                            default:
+                              port: 7071
+                            properties:
+                              enabled:
+                                default: false
+                                type: boolean
+                              port:
+                                type: integer
+                            type: object
+                          resources:
+                            default:
+                              limits:
+                                cpu: 500m
+                                memory: 1024Mi
+                              requests:
+                                cpu: 30m
+                                memory: 64Mi
+                            description: ResourceRequirements describes the compute
+                              resource requirements.
+                            properties:
+                              limits:
+                                additionalProperties:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                description: 'Limits describes the maximum amount
+                                  of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                                type: object
+                              requests:
+                                additionalProperties:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                description: 'Requests describes the minimum amount
+                                  of compute resources required. If Requests is omitted
+                                  for a container, it defaults to Limits if that is
+                                  explicitly specified, otherwise to an implementation-defined
+                                  value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                                type: object
+                            type: object
+                          verbosity_level:
+                            default: 2
+                            type: integer
+                        type: object
+                    type: object
                   runtimeProtection:
                     default: {}
                     description: CBContainersRuntimeProtectionSpec defines the desired

@@ -4205,6 +4205,83 @@ spec:
                           type: object
                       type: object
                   type: object
+                cndr:
+                  description: CBContainersCndrSpec defines the desired state of CBContainersCndr
+                  properties:
+                    companyCodeSecretName:
+                      type: string
+                    enabled:
+                      type: boolean
+                    sensor:
+                      properties:
+                        daemonSetAnnotations:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        env:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        image:
+                          properties:
+                            pullPolicy:
+                              description: PullPolicy describes a policy for if/when
+                                to pull a container image
+                              type: string
+                            repository:
+                              type: string
+                            tag:
+                              type: string
+                          type: object
+                        labels:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        logLevel:
+                          type: string
+                        podTemplateAnnotations:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        prometheus:
+                          properties:
+                            enabled:
+                              type: boolean
+                            port:
+                              type: integer
+                          type: object
+                        resources:
+                          description: ResourceRequirements describes the compute
+                            resource requirements.
+                          properties:
+                            limits:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: 'Limits describes the maximum amount of
+                                compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                              type: object
+                            requests:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: 'Requests describes the minimum amount
+                                of compute resources required. If Requests is omitted
+                                for a container, it defaults to Limits if that is
+                                explicitly specified, otherwise to an implementation-defined
+                                value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                              type: object
+                          type: object
+                        verbosity_level:
+                          type: integer
+                      type: object
+                  type: object
                 runtimeProtection:
                   description: CBContainersRuntimeProtectionSpec defines the desired
                     state of CBContainersRuntime
