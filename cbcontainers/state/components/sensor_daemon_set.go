@@ -56,7 +56,7 @@ var (
 		"dockersock":          dockerSock,
 	}
 
-	cndrHostPaths = []string{"var", "boot", "usr", "etc"}
+	cndrHostPaths = []string{"boot"}
 )
 
 type SensorDaemonSetK8sObject struct{}
