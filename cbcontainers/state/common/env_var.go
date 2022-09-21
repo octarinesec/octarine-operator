@@ -92,13 +92,13 @@ func (b *EnvVarBuilder) WithEnvVarFromField(envName, fieldPath, apiVersion strin
 	return b
 }
 
-func (b *EnvVarBuilder) WithEnvVarFromSecret(envName, accessKeySecretName string) *EnvVarBuilder {
+func (b *EnvVarBuilder) WithEnvVarFromSecret(envName, accessKeySecretName, key string) *EnvVarBuilder {
 	envVar := coreV1.EnvVar{
 		Name: envName,
 		ValueFrom: &coreV1.EnvVarSource{
 			SecretKeyRef: &coreV1.SecretKeySelector{
 				LocalObjectReference: coreV1.LocalObjectReference{Name: accessKeySecretName},
-				Key:                  AccessTokenSecretKeyName,
+				Key:                  key,
 			},
 		},
 	}
@@ -123,7 +123,7 @@ func (b *EnvVarBuilder) WithEnvVarFromConfigmap(envName, configKeyName string) *
 }
 
 func (b *EnvVarBuilder) WithCommonDataPlane(accessKeySecretName string) *EnvVarBuilder {
-	return b.WithEnvVarFromSecret(accessTokenVarName, accessKeySecretName).
+	return b.WithEnvVarFromSecret(accessTokenVarName, accessKeySecretName, AccessTokenSecretKeyName).
 		WithEnvVarFromConfigmap(accountVarName, DataPlaneConfigmapAccountKey).
 		WithEnvVarFromConfigmap(clusterVarName, DataPlaneConfigmapClusterKey).
 		WithEnvVarFromConfigmap(apiSchemeVarName, DataPlaneConfigmapApiSchemeKey).

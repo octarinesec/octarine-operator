@@ -8,6 +8,7 @@ import (
 
 const (
 	defaultAccessToken = "cbcontainers-access-token"
+	defaultCompanyCode = "cbcontainers-company-code"
 )
 
 var trueRef = true
