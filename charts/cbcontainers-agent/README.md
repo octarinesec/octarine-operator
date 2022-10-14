@@ -10,30 +10,30 @@ In order for the chart to be installed it needs minimal configuration.
 
 There are 8 required fields that need to be provided by the user:
 
-| Parameter                                              | Description                                                      |
-| ------------------------------------------------------ | ---------------------------------------------------------------- |
-| `spec.orgKey`                                       | The org key of the organization using CBC                     |
-| `spec.clusterName`                                     | The name of the cluster that will be added to CBC                |
-| `spec.clusterGroup`                                    | The group that the cluster belongs to in CBC                     |
-| `spec.version`                                         | The version of the agent images                                  |
-| `spec.gateways.apiGatewayHost`                         | The URL of the CBC API Gateway                                   |
-| `spec.gateways.coreEventsGatewayHost`                  | The URL of the CBC Core events Gateway                           |
-| `spec.gateways.hardeningEventsGatewayHost`             | The URL of the CBC Hardening events Gateway                      |
-| `spec.gateways.runtimeEventsGatewayHost`               | The URL of the CBC Runtime events Gateway                        |
+| Parameter                                  | Description                                       |
+|--------------------------------------------|---------------------------------------------------|
+| `spec.orgKey`                              | The org key of the organization using CBC         |
+| `spec.clusterName`                         | The name of the cluster that will be added to CBC |
+| `spec.clusterGroup`                        | The group that the cluster belongs to in CBC      |
+| `spec.version`                             | The version of the agent images                   |
+| `spec.gateways.apiGatewayHost`             | The URL of the CBC API Gateway                    |
+| `spec.gateways.coreEventsGatewayHost`      | The URL of the CBC Core events Gateway            |
+| `spec.gateways.hardeningEventsGatewayHost` | The URL of the CBC Hardening events Gateway       |
+| `spec.gateways.runtimeEventsGatewayHost`   | The URL of the CBC Runtime events Gateway         |
 
 After setting these required fields in a `values.yaml` file you can install the chart from our repo:
 
 ```sh
 helm repo add vmware TODO-chart-repo/TODO-chart-name -f values.yaml
 helm repo update
-helm install cbcontainers-agent TODO-chart-repo/TODO-chart-name -f values.yaml
+helm install cbcontainers-agent TODO-chart-repo/TODO-chart-name -f values.yaml --namespace cbcontainers-dataplane
 ```
 
 or from source
 
 ```sh
 cd charts/cbcontainers-agent
-helm install cbcontainers-agent ./cbcontainers-agent-chart -f values.yaml
+helm install cbcontainers-agent ./cbcontainers-agent-chart -f values.yaml --namespace cbcontainers-dataplane
 ```
 
 ## Customization
