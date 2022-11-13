@@ -194,6 +194,7 @@ func (obj *EnforcerValidatingWebhookK8sObject) getResourcesList() []string {
 	return []string{
 		"pods/portforward",
 		"pods/exec",
+		"pods/ephemeralcontainers",
 		"pods",
 		"replicasets",
 		"services",
