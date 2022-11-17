@@ -63,6 +63,7 @@ The operator implements controllers for the Carbon Black Container custom resour
 [Full Custom Resources Definitions Documentation](docs/crds.md)
 
 #### 2.1 Apply the Carbon Black Container Agent CR
+
 <u>cbcontainersagents.operator.containers.carbonblack.io</u>
 
 This is the CR you'll need to deploy in order to trigger the operator to deploy the data plane components.
@@ -91,9 +92,11 @@ spec:
 `couldn't find access token secret k8s object`
 
 ### Uninstalling the Carbon Black Cloud Container Operator
+
 ```sh
 make undeploy
 ```
+
 * Notice that the above command will delete the Carbon Black Container custom resources definitions and instances.
 
 ## Reading Metrics With Prometheus

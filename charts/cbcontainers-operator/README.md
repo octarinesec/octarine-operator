@@ -8,13 +8,15 @@ Helm 3 is supported.
 
 The chart can be installed as is, without any customization or modifications.
 
-### Choosing a namespace for the helm release
-Currently, the charts do not support running outside the `cbcontainers-dataplane` namespace, and they create and label that namespace as needed. 
+### Choosing a namespace for the Helm release
+
+Currently, the charts does not support running outside the `cbcontainers-dataplane` namespace, and they create and label that namespace as needed.
 Therefore, there are two options for choosing the namespace for the actual helm release - creating the `cbcontainers-dataplane` namespace and "adopting" it via Helm _or_ installing the release in another namespace.
 
 **Option 1**: Using `cbcontainers-dataplane` to manage the release (recommended)
 
-Run the following commands to prepare the release namespace
+Run the following commands to prepare the release namespace:
+
 ```sh
 kubectl create namespace cbcontainers-dataplane
 kubectl annotate namespace cbcontainers-dataplane meta.helm.sh/release-name=cbcontainers-operator meta.helm.sh/release-namespace=cbcontainers-dataplane
@@ -22,15 +24,16 @@ kubectl label namespace cbcontainers-dataplane app.kubernetes.io/managed-by=Helm
 ```
 
 And use `cbcontainers-dataplane` in all commands below that require a namespace (`--namespace X`).
-With this option, future commands like `helm install`, `helm list` should be run in the context of the `cbcontainers-dataplane` namespace. 
+With this option, future commands like `helm install`, `helm list` should be run in the context of the `cbcontainers-dataplane` namespace.
 
 **Option 2**: Using a different namespace to manage the release
 
 Choose a namespace that exists in the cluster - `my-namespace` and use that for all commands that require a namespace below (`--namespace X`).
-Note that in this case the resources are still installed in `cbcontainers-dataplane` namespace but the actual helm release does not live there.
-With this option, future commands like `helm install`, `helm list`, etc. must be run in the context of the chosen namespace `my-namespace`. 
+Note that in this case the resources are still installed in `cbcontainers-dataplane` namespace, but the actual Helm release does not live there.
+With this option, future commands like `helm install`, `helm list`, etc. must be run in the context of the chosen namespace `my-namespace`.
 
 ### Installing the operator chart
+
 Now, install the actual helm chart in the namespace based on the chosen option 1 or 2 above.
 
 ```sh
@@ -39,7 +42,7 @@ helm repo update
 helm install cbcontainers-operator TODO-chart-repo/TODO-chart-name --namespace X
 ```
 
-or from source
+or from source:
 
 ```sh
 cd charts/cbcontainers-operator
@@ -72,8 +75,8 @@ For more info see <https://github.com/octarinesec/octarine-operator/tree/master#
 
 This chart consists of two [templates](cbcontainers-operator-chart/templates).
 
-The [operator.yaml](cbcontainers-operator-chart/templates/operator.yaml) file contains all resource, apart from the operator deployment.
-It is generated with via `kustomize`.
+The [operator.yaml](cbcontainers-operator-chart/templates/operator.yaml) file contains all resources, apart from the operator deployment.
+It is generated via `kustomize`.
 For more info see [config/default_chart](../../config/default_chart).
 
 The [deployment.yaml](cbcontainers-operator-chart/templates/deployment.yaml) file contains the operator Deployment resource.
