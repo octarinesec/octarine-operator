@@ -5882,6 +5882,9 @@ spec:
                 - hardeningEventsGateway
                 - runtimeEventsGateway
                 type: object
+              namespace:
+                default: cbcontainers-dataplane
+                type: string
               version:
                 type: string
             required:

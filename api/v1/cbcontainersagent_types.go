@@ -30,6 +30,8 @@ type CBContainersAgentSpec struct {
 	ClusterName string                   `json:"clusterName,required"`
 	Version     string                   `json:"version,required"`
 	Gateways    CBContainersGatewaysSpec `json:"gateways,required"`
+	// +kubebuilder:default:="cbcontainers-dataplane"
+	Namespace string `json:"namespace,omitempty"`
 	// +kubebuilder:default:="cbcontainers-access-token"
 	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
 	// +kubebuilder:default:=<>
@@ -62,7 +64,7 @@ type CBContainersAgentStatus struct {
 // +kubebuilder:resource:path=cbcontainersagents,scope=Cluster
 
 // CBContainersAgent is the Schema for the cbcontainersagents API
-//+kubebuilder:subresource:status
+// +kubebuilder:subresource:status
 type CBContainersAgent struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
