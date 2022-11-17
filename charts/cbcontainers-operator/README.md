@@ -10,27 +10,10 @@ The chart can be installed as is, without any customization or modifications.
 
 ### Choosing a namespace for the Helm release
 
-Currently, the charts does not support running outside the `cbcontainers-dataplane` namespace, and they create and label that namespace as needed.
-Therefore, there are two options for choosing the namespace for the actual helm release - creating the `cbcontainers-dataplane` namespace and "adopting" it via Helm _or_ installing the release in another namespace.
+You can create the Helm release in any namespace that you want.
 
-**Option 1**: Using `cbcontainers-dataplane` to manage the release (recommended)
-
-Run the following commands to prepare the release namespace:
-
-```sh
-kubectl create namespace cbcontainers-dataplane
-kubectl annotate namespace cbcontainers-dataplane meta.helm.sh/release-name=cbcontainers-operator meta.helm.sh/release-namespace=cbcontainers-dataplane
-kubectl label namespace cbcontainers-dataplane app.kubernetes.io/managed-by=Helm
-```
-
-And use `cbcontainers-dataplane` in all commands below that require a namespace (`--namespace X`).
-With this option, future commands like `helm install`, `helm list` should be run in the context of the `cbcontainers-dataplane` namespace.
-
-**Option 2**: Using a different namespace to manage the release
-
-Choose a namespace that exists in the cluster - `my-namespace` and use that for all commands that require a namespace below (`--namespace X`).
-Note that in this case the resources are still installed in `cbcontainers-dataplane` namespace, but the actual Helm release does not live there.
-With this option, future commands like `helm install`, `helm list`, etc. must be run in the context of the chosen namespace `my-namespace`.
+You can also customize the namespace in which the operator is installed.
+See [Customization](#namespace).
 
 ### Installing the operator chart
 
@@ -52,12 +35,18 @@ helm install cbcontainers-operator ./cbcontainers-operator-chart --namespace X
 ## Customization
 
 | Parameter                        | Description                                         | Default                                                                            |
-|----------------------------------|-----------------------------------------------------|------------------------------------------------------------------------------------|
+| -------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | `spec.operator.image.repository` | The repository of the operator image                | `cbartifactory/octarine-operator`                                                  |
 | `spec.operator.image.version`    | The version of the operator image                   | The latest version of the operator image                                           |
 | `spec.operator.resources`        | Carbon Black Container Operator resources           | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}` |
 | `spec.rbacProxy.resources`       | Kube RBAC Proxy resources                           | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}` |
 | `spec.operator.environment`      | Environment variables to be set to the operator pod | []                                                                                 |
+
+### Namespace
+
+By default, the CBContainers Operator is installed in the `cbcontainers-dataplane` namespace.
+
+If you want to change that, set the `namespace` field in your `values.yaml` file.
 
 ### HTTP Proxy
 
