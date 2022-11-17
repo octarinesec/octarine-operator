@@ -1,6 +1,9 @@
 package common
 
 const (
+	// DataPlaneNamespaceName is the name of the default namespace, where CBContainers Dataplane is installed.
+	//
+	// This is configurable by the user, so it should not be assumed that this will always be the name where the dataplane is deployed.
 	DataPlaneNamespaceName  = "cbcontainers-dataplane"
 	KubeSystemNamespaceName = "kube-system"
 
@@ -24,6 +27,8 @@ const (
 	DataPlaneConfigmapApiAdapterKey     = "ApiAdapter"
 	DataPlaneConfigmapTlsSkipVerifyKey  = "TLS.SkipVerify"
 	DataPlaneConfigmapTlsRootCAsPathKey = "TLS.RootCAsPath"
+	// DataPlaneConfigmapDataplaneNamespaceKey is the config map key that points to the value of the dataplane namespace
+	DataPlaneConfigmapDataplaneNamespaceKey = "DataplaneNamespace"
 
 	DataPlaneConfigmapTlsRootCAsDirPath  = "/etc/gateway-certs"
 	DataPlaneConfigmapTlsRootCAsFilePath = "root.pem"

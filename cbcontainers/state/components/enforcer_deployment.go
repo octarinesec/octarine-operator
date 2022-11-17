@@ -37,10 +37,15 @@ var (
 	EnforcerCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
 )
 
-type EnforcerDeploymentK8sObject struct{}
+type EnforcerDeploymentK8sObject struct {
+	// Namespace is the Namespace in which the Deployment will be created.
+	Namespace string
+}
 
 func NewEnforcerDeploymentK8sObject() *EnforcerDeploymentK8sObject {
-	return &EnforcerDeploymentK8sObject{}
+	return &EnforcerDeploymentK8sObject{
+		Namespace: commonState.DataPlaneNamespaceName,
+	}
 }
 
 func (obj *EnforcerDeploymentK8sObject) EmptyK8sObject() client.Object {
@@ -48,7 +53,7 @@ func (obj *EnforcerDeploymentK8sObject) EmptyK8sObject() client.Object {
 }
 
 func (obj *EnforcerDeploymentK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: EnforcerName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: EnforcerName, Namespace: obj.Namespace}
 }
 
 func (obj *EnforcerDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbcontainersv1.CBContainersAgentSpec) error {
@@ -76,7 +81,8 @@ func (obj *EnforcerDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	deployment.Spec.Template.Spec.ServiceAccountName = commonState.EnforcerServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
-
+	obj.Namespace = agentSpec.Namespace
+	deployment.Namespace = agentSpec.Namespace
 	obj.mutateAnnotations(deployment, enforcer)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, enforcer)

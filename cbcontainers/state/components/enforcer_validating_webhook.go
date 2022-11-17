@@ -2,6 +2,8 @@ package components
 
 import (
 	"fmt"
+	"reflect"
+
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/adapters"
@@ -9,7 +11,6 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -30,11 +31,15 @@ var (
 type EnforcerValidatingWebhookK8sObject struct {
 	tlsSecretValues *models.TlsSecretValues
 	kubeletVersion  string
+
+	// ServiceNamespace is the namespace of the Service that serves the validating webhook.
+	ServiceNamespace string
 }
 
 func NewEnforcerValidatingWebhookK8sObject(kubeletVersion string) *EnforcerValidatingWebhookK8sObject {
 	return &EnforcerValidatingWebhookK8sObject{
-		kubeletVersion: kubeletVersion,
+		kubeletVersion:   kubeletVersion,
+		ServiceNamespace: commonState.DataPlaneNamespaceName,
 	}
 }
 
@@ -126,7 +131,7 @@ func (obj *EnforcerValidatingWebhookK8sObject) mutateResourcesWebhook(resourcesW
 	}
 	resourcesWebhook.SetCABundle(obj.tlsSecretValues.CaCert)
 	resourcesWebhook.SetServiceName(EnforcerName)
-	resourcesWebhook.SetServiceNamespace(commonState.DataPlaneNamespaceName)
+	resourcesWebhook.SetServiceNamespace(obj.ServiceNamespace)
 	resourcesWebhook.SetServicePath(&WebhookPath)
 }
 
@@ -137,13 +142,13 @@ func (obj *EnforcerValidatingWebhookK8sObject) getResourcesNamespaceSelector(sel
 		Values:   []string{"ignore"},
 	}
 
-	cbContainersNamespace := metav1.LabelSelectorRequirement{
+	agentNamespace := metav1.LabelSelectorRequirement{
 		// See https://kubernetes.io/docs/reference/labels-annotations-taints/#kubernetes-io-metadata-name
 		// This is the label that always matches the namespace name
 		// We can't filter directly by namespace otherwise
 		Key:      "kubernetes.io/metadata.name",
 		Operator: metav1.LabelSelectorOpNotIn,
-		Values:   []string{commonState.DataPlaneNamespaceName},
+		Values:   []string{obj.ServiceNamespace},
 	}
 
 	initializeLabelSelector := false
@@ -156,7 +161,7 @@ func (obj *EnforcerValidatingWebhookK8sObject) getResourcesNamespaceSelector(sel
 			if reflect.DeepEqual(requirement, octarineIgnore) {
 				octarineIgnoreFound = true
 			}
-			if reflect.DeepEqual(requirement, cbContainersNamespace) {
+			if reflect.DeepEqual(requirement, agentNamespace) {
 				cbContainersNamespaceFound = true
 			}
 		}
@@ -165,7 +170,7 @@ func (obj *EnforcerValidatingWebhookK8sObject) getResourcesNamespaceSelector(sel
 
 	if initializeLabelSelector {
 		return &metav1.LabelSelector{
-			MatchExpressions: []metav1.LabelSelectorRequirement{octarineIgnore, cbContainersNamespace},
+			MatchExpressions: []metav1.LabelSelectorRequirement{octarineIgnore, agentNamespace},
 		}
 	}
 
@@ -229,7 +234,7 @@ func (obj *EnforcerValidatingWebhookK8sObject) mutateNamespacesWebhook(namespace
 		namespacesWebhook.SetMatchPolicy(WebhookMatchPolicy)
 	}
 	namespacesWebhook.SetCABundle(obj.tlsSecretValues.CaCert)
-	namespacesWebhook.SetServiceNamespace(commonState.DataPlaneNamespaceName)
+	namespacesWebhook.SetServiceNamespace(obj.ServiceNamespace)
 	namespacesWebhook.SetServiceName(EnforcerName)
 	namespacesWebhook.SetServicePath(&WebhookPath)
 

@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
@@ -69,6 +70,13 @@ func (c *StateApplier) GetPriorityClassEmptyK8sObject() client.Object {
 func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, registrySecret *models.RegistrySecretValues, setOwner applymentOptions.OwnerSetter) (bool, error) {
 	applyOptions := applymentOptions.NewApplyOptions().SetOwnerSetter(setOwner)
 
+	// The namespace field of the agent spec should always be populated, because it has a default value
+	// but just in case include this check here in case it turns out to be empty in the future.
+	// By default all objects have the "cbcontainers-dataplane" as namespace.
+	if agentSpec.Namespace != "" {
+		c.setNamespace(agentSpec.Namespace)
+	}
+
 	coreMutated, err := c.applyCoreComponents(ctx, agentSpec, registrySecret, applyOptions)
 	if err != nil {
 		return false, err
@@ -88,7 +96,7 @@ func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbconta
 
 	mutatedRuntimeResolver, runtimeResolverDeleted := false, false
 	mutatedComponentsDaemonSet, componentsDamonSetDeleted := false, false
-	var deleteErr error = nil
+	var deleteErr error
 
 	if common.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
 		mutatedRuntimeResolver, err = c.applyResolver(ctx, agentSpec, applyOptions)
@@ -133,6 +141,24 @@ func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbconta
 	}
 
 	return coreMutated || mutatedEnforcer || mutatedStateReporter || mutatedRuntimeResolver || mutatedComponentsDaemonSet || runtimeResolverDeleted || mutatedImageScanningReporter || imageScanningReporterDeleted || componentsDamonSetDeleted, nil
+}
+
+// setNamespace sets the namespace to all the desired K8s objects which are namespaced.
+func (c *StateApplier) setNamespace(namespace string) {
+	c.desiredConfigMap.Namespace = namespace
+	c.desiredRegistrySecret.Namespace = namespace
+	c.desiredMonitorDeployment.Namespace = namespace
+	c.enforcerTlsSecret.Namespace = namespace
+	c.enforcerDeployment.Namespace = namespace
+	c.enforcerService.Namespace = namespace
+	c.enforcerValidatingWebhook.ServiceNamespace = namespace
+	c.enforcerMutatingWebhook.ServiceNamespace = namespace
+	c.stateReporterDeployment.Namespace = namespace
+	c.resolverDeployment.Namespace = namespace
+	c.resolverService.Namespace = namespace
+	c.sensorDaemonSet.Namespace = namespace
+	c.imageScanningReporterDeployment.Namespace = namespace
+	c.imageScanningReporterService.Namespace = namespace
 }
 
 func (c *StateApplier) applyCoreComponents(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, registrySecret *models.RegistrySecretValues, applyOptions *applymentOptions.ApplyOptions) (bool, error) {

@@ -29,10 +29,15 @@ var (
 	ImageScanningReporterCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
 )
 
-type ImageScanningReporterDeploymentK8sObject struct{}
+type ImageScanningReporterDeploymentK8sObject struct {
+	// Namespace is the Namespace in which the Deployment will be created.
+	Namespace string
+}
 
 func NewImageScanningReporterDeploymentK8sObject() *ImageScanningReporterDeploymentK8sObject {
-	return &ImageScanningReporterDeploymentK8sObject{}
+	return &ImageScanningReporterDeploymentK8sObject{
+		Namespace: commonState.DataPlaneNamespaceName,
+	}
 }
 
 func (obj *ImageScanningReporterDeploymentK8sObject) EmptyK8sObject() client.Object {
@@ -40,7 +45,7 @@ func (obj *ImageScanningReporterDeploymentK8sObject) EmptyK8sObject() client.Obj
 }
 
 func (obj *ImageScanningReporterDeploymentK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: ImageScanningReporterName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: ImageScanningReporterName, Namespace: obj.Namespace}
 }
 
 func (obj *ImageScanningReporterDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbcontainersv1.CBContainersAgentSpec) error {
@@ -50,6 +55,7 @@ func (obj *ImageScanningReporterDeploymentK8sObject) MutateK8sObject(k8sObject c
 	}
 
 	clusterScanning := &agentSpec.Components.ClusterScanning
+	deployment.Namespace = agentSpec.Namespace
 	imageScanningReporter := &clusterScanning.ImageScanningReporter
 	obj.initiateDeployment(deployment, imageScanningReporter)
 	obj.mutateLabels(deployment, imageScanningReporter)

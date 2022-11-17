@@ -16,6 +16,11 @@ import (
 const (
 	MonitorName     = "cbcontainers-monitor"
 	MonitorLabelKey = "app.kubernetes.io/name"
+
+	// MonitorAgentVersionEnvVarKey is the name of the monitor environment variable that holds the value of the agent version.
+	MonitorAgentVersionEnvVarKey = "MONITOR_AGENT_VERSION"
+	// MonitorDataplaneNamespaceEnvVarKey is the name of the monitor environment variable that holds the value of the dataplane namespace.
+	MonitorDataplaneNamespaceEnvVarKey = "MONITOR_DATAPLANE_NAMESPACE"
 )
 
 var (
@@ -27,10 +32,15 @@ var (
 	MonitorCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
 )
 
-type MonitorDeploymentK8sObject struct{}
+type MonitorDeploymentK8sObject struct {
+	// Namespace is the Namespace in which the Deployment will be created.
+	Namespace string
+}
 
 func NewMonitorDeploymentK8sObject() *MonitorDeploymentK8sObject {
-	return &MonitorDeploymentK8sObject{}
+	return &MonitorDeploymentK8sObject{
+		Namespace: commonState.DataPlaneNamespaceName,
+	}
 }
 
 func (obj *MonitorDeploymentK8sObject) EmptyK8sObject() client.Object {
@@ -38,7 +48,7 @@ func (obj *MonitorDeploymentK8sObject) EmptyK8sObject() client.Object {
 }
 
 func (obj *MonitorDeploymentK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: MonitorName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: MonitorName, Namespace: obj.Namespace}
 }
 
 func (obj *MonitorDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbcontainersv1.CBContainersAgentSpec) error {
@@ -66,6 +76,7 @@ func (obj *MonitorDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, 
 		deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
 
+	deployment.Namespace = agentSpec.Namespace
 	deployment.Spec.Replicas = &MonitorReplicas
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels
@@ -112,7 +123,8 @@ func (obj *MonitorDeploymentK8sObject) mutateContainer(container *coreV1.Contain
 	envVarBuilder := commonState.NewEnvVarBuilder().
 		WithCommonDataPlane(accessTokenSecretName).
 		WithEventsGateway(eventsGatewaySpec).
-		WithEnvVarFromConfigmap("MONITOR_AGENT_VERSION", commonState.DataPlaneConfigmapAgentVersionKey).
+		WithEnvVarFromConfigmap(MonitorAgentVersionEnvVarKey, commonState.DataPlaneConfigmapAgentVersionKey).
+		WithEnvVarFromConfigmap(MonitorDataplaneNamespaceEnvVarKey, commonState.DataPlaneConfigmapDataplaneNamespaceKey).
 		WithSpec(monitorSpec.Env)
 	commonState.MutateEnvVars(container, envVarBuilder)
 
