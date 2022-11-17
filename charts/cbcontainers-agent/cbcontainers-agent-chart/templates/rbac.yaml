@@ -110,7 +110,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: cbcontainers-agent-node
-    namespace: {{ .Values.namespace }}
+    namespace: { { default "cbcontainers-dataplane" .Values.namespace } }
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -123,7 +123,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: cbcontainers-enforcer
-    namespace: {{ .Values.namespace }}
+    namespace: { { default "cbcontainers-dataplane" .Values.namespace } }
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -136,7 +136,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: cbcontainers-image-scanning
-    namespace: {{ .Values.namespace }}
+    namespace: { { default "cbcontainers-dataplane" .Values.namespace } }
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -149,7 +149,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: cbcontainers-monitor
-    namespace: {{ .Values.namespace }}
+    namespace: { { default "cbcontainers-dataplane" .Values.namespace } }
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -162,7 +162,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: cbcontainers-runtime-resolver
-    namespace: {{ .Values.namespace }}
+    namespace: { { default "cbcontainers-dataplane" .Values.namespace } }
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -175,4 +175,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: cbcontainers-state-reporter
-    namespace: {{ .Values.namespace }}
+    namespace: { { default "cbcontainers-dataplane" .Values.namespace } }
