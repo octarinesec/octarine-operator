@@ -2,6 +2,7 @@ package components
 
 import (
 	"fmt"
+
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	coreV1 "k8s.io/api/core/v1"
@@ -14,16 +15,23 @@ const (
 	DesiredServiceGRPCPortName = "https"
 )
 
-type ResolverServiceK8sObject struct{}
+type ResolverServiceK8sObject struct {
+	// Namespace is the Namespace in which the Service will be created.
+	Namespace string
+}
 
-func NewResolverServiceK8sObject() *ResolverServiceK8sObject { return &ResolverServiceK8sObject{} }
+func NewResolverServiceK8sObject() *ResolverServiceK8sObject {
+	return &ResolverServiceK8sObject{
+		Namespace: commonState.DataPlaneNamespaceName,
+	}
+}
 
 func (obj *ResolverServiceK8sObject) EmptyK8sObject() client.Object {
 	return &coreV1.Service{}
 }
 
 func (obj *ResolverServiceK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: ResolverName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: ResolverName, Namespace: obj.Namespace}
 }
 
 func (obj *ResolverServiceK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbcontainersv1.CBContainersAgentSpec) error {
@@ -38,6 +46,7 @@ func (obj *ResolverServiceK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
 	service.Spec.ClusterIP = coreV1.ClusterIPNone
 
+	service.Namespace = agentSpec.Namespace
 	service.Spec.Selector = map[string]string{
 		resolverLabelKey: ResolverName,
 	}

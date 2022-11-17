@@ -132,7 +132,7 @@ func (r *CBContainersAgentController) getRegistrySecretValues(ctx context.Contex
 }
 
 func (r *CBContainersAgentController) getAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (string, error) {
-	accessTokenSecretNamespacedName := types.NamespacedName{Name: cbContainersCluster.Spec.AccessTokenSecretName, Namespace: commonState.DataPlaneNamespaceName}
+	accessTokenSecretNamespacedName := types.NamespacedName{Name: cbContainersCluster.Spec.AccessTokenSecretName, Namespace: cbContainersCluster.Spec.Namespace}
 	accessTokenSecret := &corev1.Secret{}
 	if err := r.Get(ctx, accessTokenSecretNamespacedName, accessTokenSecret); err != nil {
 		return "", fmt.Errorf("couldn't find access token secret k8s object: %v", err)

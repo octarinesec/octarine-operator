@@ -16,16 +16,23 @@ const (
 	DesiredServicePortValue = 443
 )
 
-type EnforcerServiceK8sObject struct{}
+type EnforcerServiceK8sObject struct {
+	// Namespace is the Namespace in which the Service will be created.
+	Namespace string
+}
 
-func NewEnforcerServiceK8sObject() *EnforcerServiceK8sObject { return &EnforcerServiceK8sObject{} }
+func NewEnforcerServiceK8sObject() *EnforcerServiceK8sObject {
+	return &EnforcerServiceK8sObject{
+		Namespace: commonState.DataPlaneNamespaceName,
+	}
+}
 
 func (obj *EnforcerServiceK8sObject) EmptyK8sObject() client.Object {
 	return &coreV1.Service{}
 }
 
 func (obj *EnforcerServiceK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: EnforcerName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: EnforcerName, Namespace: obj.Namespace}
 }
 
 func (obj *EnforcerServiceK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbcontainersv1.CBContainersAgentSpec) error {
@@ -38,6 +45,7 @@ func (obj *EnforcerServiceK8sObject) MutateK8sObject(k8sObject client.Object, ag
 
 	service.Labels = enforcer.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
+	service.Namespace = agentSpec.Namespace
 	service.Spec.Selector = map[string]string{
 		EnforcerLabelKey: EnforcerName,
 	}

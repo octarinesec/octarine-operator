@@ -21,11 +21,15 @@ type TlsSecretsValuesCreator interface {
 
 type EnforcerTlsK8sObject struct {
 	tlsSecretsValuesCreator TlsSecretsValuesCreator
+
+	// Namespace is the Namespace in which the Enforcer TLS secret will be created.
+	Namespace string
 }
 
 func NewEnforcerTlsK8sObject(tlsSecretsValuesCreator TlsSecretsValuesCreator) *EnforcerTlsK8sObject {
 	return &EnforcerTlsK8sObject{
 		tlsSecretsValuesCreator: tlsSecretsValuesCreator,
+		Namespace:               commonState.DataPlaneNamespaceName,
 	}
 }
 
@@ -34,16 +38,17 @@ func (obj *EnforcerTlsK8sObject) EmptyK8sObject() client.Object {
 }
 
 func (obj *EnforcerTlsK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: EnforcerTlsName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: EnforcerTlsName, Namespace: obj.Namespace}
 }
 
-func (obj *EnforcerTlsK8sObject) MutateK8sObject(k8sObject client.Object, _ *cbcontainersv1.CBContainersAgentSpec) error {
+func (obj *EnforcerTlsK8sObject) MutateK8sObject(k8sObject client.Object, spec *cbcontainersv1.CBContainersAgentSpec) error {
 	secret, ok := k8sObject.(*coreV1.Secret)
 	if !ok {
 		return fmt.Errorf("expected Secret K8s object")
 	}
 
-	tlsSecretValues, err := obj.tlsSecretsValuesCreator.CreateTlsSecretsValues(types.NamespacedName{Name: EnforcerName, Namespace: commonState.DataPlaneNamespaceName})
+	secret.Namespace = spec.Namespace
+	tlsSecretValues, err := obj.tlsSecretsValuesCreator.CreateTlsSecretsValues(types.NamespacedName{Name: EnforcerName, Namespace: obj.Namespace})
 	if err != nil {
 		return err
 	}

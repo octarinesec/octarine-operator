@@ -16,10 +16,15 @@ const (
 	DesiredImageScanningReporterServicePortValue = 443
 )
 
-type ImageScanningReporterServiceK8sObject struct{}
+type ImageScanningReporterServiceK8sObject struct {
+	// Namespace is the Namespace in which the Service will be created.
+	Namespace string
+}
 
 func NewImageScanningReporterServiceK8sObject() *ImageScanningReporterServiceK8sObject {
-	return &ImageScanningReporterServiceK8sObject{}
+	return &ImageScanningReporterServiceK8sObject{
+		Namespace: commonState.DataPlaneNamespaceName,
+	}
 }
 
 func (obj *ImageScanningReporterServiceK8sObject) EmptyK8sObject() client.Object {
@@ -27,7 +32,7 @@ func (obj *ImageScanningReporterServiceK8sObject) EmptyK8sObject() client.Object
 }
 
 func (obj *ImageScanningReporterServiceK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: ImageScanningReporterName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: ImageScanningReporterName, Namespace: obj.Namespace}
 }
 
 func (obj *ImageScanningReporterServiceK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbcontainersv1.CBContainersAgentSpec) error {
@@ -38,6 +43,7 @@ func (obj *ImageScanningReporterServiceK8sObject) MutateK8sObject(k8sObject clie
 
 	imageScanningReporter := &agentSpec.Components.ClusterScanning.ImageScanningReporter
 
+	service.Namespace = agentSpec.Namespace
 	service.Labels = imageScanningReporter.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
 	service.Spec.Selector = map[string]string{
