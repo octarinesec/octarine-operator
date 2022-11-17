@@ -4,7 +4,7 @@ metadata:
   labels:
     control-plane: operator
   name: cbcontainers-operator
-  namespace: cbcontainers-dataplane
+  namespace: {{ .Values.namespace }}
 spec:
   replicas: 1
   selector:
@@ -58,7 +58,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: "{{ .Values.operator.image.repository | default "cbartifactory/octarine-operator" }}:{{ .Values.operator.image.version | default (trimPrefix "v" .Chart.AppVersion) }}"
+        image: "{{ .Values.operator.image.repository | default "cbartifactory/octarine-operator" }}:{{ .Values.operator.image.version | default .Chart.AppVersion }}"
         env:
         {{/* If you want to enable HTTP Proxy you need to set all 3 of the values - operator.proxy.http, operator.proxy.https and operator.proxy.noProxy */}}
         {{- if .Values.operator.proxy -}}
