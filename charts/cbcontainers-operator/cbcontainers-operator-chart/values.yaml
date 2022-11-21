@@ -21,3 +21,4 @@ rbacProxy:
       memory: 16Mi
 operatorNamespace: "cbcontainers-dataplane"
 createOperatorNamespace: true
+installCRD: true

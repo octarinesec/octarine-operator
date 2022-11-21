@@ -8,6 +8,7 @@ metadata:
   name: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
 {{ end }}
 ---
+{{ if .Values.installCRD }}
 apiVersion: apiextensions.k8s.io/{{ include "cbcontainers-agent.api-version" . }}
 kind: CustomResourceDefinition
 metadata:
@@ -3322,6 +3323,7 @@ spec:
     subresources:
       status: {}
 
+{{ end }}
 ---
 apiVersion: v1
 imagePullSecrets:
