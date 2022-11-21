@@ -11,7 +11,8 @@ operator:
       memory: 64Mi
 rbacProxy:
   image:
-    version: ""
+    repository: "cbartifactory/kube-rbac-proxy"
+    version: "v0.13.0"
   resources:
     limits:
       cpu: 100m
