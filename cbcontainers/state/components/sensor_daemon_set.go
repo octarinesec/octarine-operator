@@ -91,7 +91,7 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 
 	runtimeProtection := &agentSpec.Components.RuntimeProtection
 
-	obj.initiateDamonSet(daemonSet)
+	obj.initiateDaemonSet(daemonSet, agentSpec)
 
 	if commonState.IsEnabled(runtimeProtection.Enabled) || isCndrEnbaled(agentSpec.Components.Cndr) {
 		daemonSet.Spec.Template.Spec.DNSPolicy = runtimeSensorDNSPolicy
@@ -116,7 +116,7 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	return nil
 }
 
-func (obj *SensorDaemonSetK8sObject) initiateDamonSet(daemonSet *appsV1.DaemonSet) {
+func (obj *SensorDaemonSetK8sObject) initiateDaemonSet(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {
 	if daemonSet.Spec.Selector == nil {
 		daemonSet.Spec.Selector = &metav1.LabelSelector{}
 	}
@@ -131,7 +131,9 @@ func (obj *SensorDaemonSetK8sObject) initiateDamonSet(daemonSet *appsV1.DaemonSe
 
 	daemonSet.Spec.Template.Spec.ServiceAccountName = commonState.AgentNodeServiceAccountName
 	daemonSet.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
-	daemonSet.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
+	if agentSpec.Components.Basic.CreateDefaultImagePullSecrets {
+		daemonSet.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
+	}
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateLabels(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {

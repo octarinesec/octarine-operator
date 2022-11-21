@@ -57,7 +57,7 @@ func (obj *ImageScanningReporterDeploymentK8sObject) MutateK8sObject(k8sObject c
 	clusterScanning := &agentSpec.Components.ClusterScanning
 	deployment.Namespace = agentSpec.Namespace
 	imageScanningReporter := &clusterScanning.ImageScanningReporter
-	obj.initiateDeployment(deployment, imageScanningReporter)
+	obj.initiateDeployment(deployment, agentSpec)
 	obj.mutateLabels(deployment, imageScanningReporter)
 	obj.mutateAnnotations(deployment, imageScanningReporter)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
@@ -69,7 +69,7 @@ func (obj *ImageScanningReporterDeploymentK8sObject) MutateK8sObject(k8sObject c
 }
 
 // initiateDeployment initiate the deployment attributes with empty or default values.
-func (obj *ImageScanningReporterDeploymentK8sObject) initiateDeployment(deployment *appsV1.Deployment, imageScanningReporter *cbcontainersv1.CBContainersImageScanningReporterSpec) {
+func (obj *ImageScanningReporterDeploymentK8sObject) initiateDeployment(deployment *appsV1.Deployment, agentSpec *cbcontainersv1.CBContainersAgentSpec) {
 	if deployment.Spec.Selector == nil {
 		deployment.Spec.Selector = &metav1.LabelSelector{}
 	}
@@ -82,10 +82,13 @@ func (obj *ImageScanningReporterDeploymentK8sObject) initiateDeployment(deployme
 		deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
 
+	imageScanningReporter := &agentSpec.Components.ClusterScanning.ImageScanningReporter
 	deployment.Spec.Replicas = imageScanningReporter.ReplicasCount
 	deployment.Spec.Template.Spec.ServiceAccountName = commonState.ImageScanningServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
-	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
+	if agentSpec.Components.Basic.CreateDefaultImagePullSecrets {
+		deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
+	}
 }
 
 func (obj *ImageScanningReporterDeploymentK8sObject) mutateLabels(deployment *appsV1.Deployment, imageScanningReporterSpec *cbcontainersv1.CBContainersImageScanningReporterSpec) {

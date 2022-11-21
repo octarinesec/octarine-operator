@@ -110,10 +110,15 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	r.Log.Info("Getting registry secret values")
-	registrySecret, err := r.getRegistrySecretValues(ctx, cbContainersAgent, accessToken)
-	if err != nil {
-		return ctrl.Result{}, err
+	var registrySecret *models.RegistrySecretValues
+	if cbContainersAgent.Spec.Components.Basic.CreateDefaultImagePullSecrets {
+		r.Log.Info("Getting registry secret values")
+		registrySecret, err = r.getRegistrySecretValues(ctx, cbContainersAgent, accessToken)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	} else {
+		r.Log.Info(`Skipping default image pull secrets creation, because "spec.components.basic.createImagePullSecrets" is set to "false"`)
 	}
 
 	r.Log.Info("Applying desired state")
