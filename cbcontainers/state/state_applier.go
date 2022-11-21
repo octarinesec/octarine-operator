@@ -168,12 +168,15 @@ func (c *StateApplier) applyCoreComponents(ctx context.Context, agentSpec *cbcon
 	}
 	c.log.Info("Applied config map", "Mutated", mutatedConfigmap)
 
-	c.desiredRegistrySecret.UpdateRegistrySecretValues(registrySecret)
-	mutatedRegistrySecret, _, err := c.applier.Apply(ctx, c.desiredRegistrySecret, agentSpec, applyOptions)
-	if err != nil {
-		return false, err
+	mutatedRegistrySecret := false
+	if registrySecret != nil {
+		c.desiredRegistrySecret.UpdateRegistrySecretValues(registrySecret)
+		mutatedRegistrySecret, _, err = c.applier.Apply(ctx, c.desiredRegistrySecret, agentSpec, applyOptions)
+		if err != nil {
+			return false, err
+		}
+		c.log.Info("Applied registry secret", "Mutated", mutatedRegistrySecret)
 	}
-	c.log.Info("Applied registry secret", "Mutated", mutatedRegistrySecret)
 
 	mutatedPriorityClass, _, err := c.applier.Apply(ctx, c.desiredPriorityClass, agentSpec, applyOptions)
 	if err != nil {

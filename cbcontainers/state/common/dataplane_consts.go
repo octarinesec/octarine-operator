@@ -7,7 +7,10 @@ const (
 	DataPlaneNamespaceName  = "cbcontainers-dataplane"
 	KubeSystemNamespaceName = "kube-system"
 
-	DataPlaneConfigmapName            = "cbcontainers-dataplane-config"
+	DataPlaneConfigmapName = "cbcontainers-dataplane-config"
+	// RegistrySecretName is the name of the secret that contains the image pull secret for the default registry of the agent images.
+	//
+	// The creation of this secret is optional, as the users may override the agent images and not use the registry we provide.
 	RegistrySecretName                = "cbcontainers-registry-secret"
 	DataPlaneServiceAccountName       = "cbcontainers-operator"
 	AgentNodeServiceAccountName       = "cbcontainers-agent-node"

@@ -9,6 +9,13 @@ type CBContainersBasicSpec struct {
 	Enforcer CBContainersEnforcerSpec `json:"enforcer,omitempty"`
 	// +kubebuilder:default:=<>
 	StateReporter CBContainersStateReporterSpec `json:"stateReporter,omitempty"`
+	// CreateDefaultImagePullSecrets controls whether or not to create the secrets
+	// needed to pull the containers images from the default repository.
+	//
+	// This should be set to true if the user does not override the default images for the services.
+	//
+	// +kubebuilder:default:=true
+	CreateDefaultImagePullSecrets bool `json:"createDefaultImagePullSecrets,omitempty"`
 }
 
 type CBContainersMonitorSpec struct {

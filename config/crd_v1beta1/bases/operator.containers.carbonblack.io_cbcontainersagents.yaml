@@ -46,6 +46,13 @@ spec:
               properties:
                 basic:
                   properties:
+                    createDefaultImagePullSecrets:
+                      description: "CreateDefaultImagePullSecrets controls whether
+                        or not to create the secrets needed to pull the containers
+                        images from the default repository. \n This should be set
+                        to true if the user does not override the default images for
+                        the services."
+                      type: boolean
                     enforcer:
                       properties:
                         affinity:

@@ -85,7 +85,9 @@ func (obj *MonitorDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, 
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, monitor.DeploymentAnnotations)
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, monitor.PodTemplateAnnotations)
-	deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
+	if agentSpec.Components.Basic.CreateDefaultImagePullSecrets {
+		deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
+	}
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, monitor)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec, monitor, &agentSpec.Gateways.CoreEventsGateway, agentSpec.Version, agentSpec.AccessTokenSecretName)
