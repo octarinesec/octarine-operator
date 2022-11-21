@@ -51,6 +51,12 @@ If you want to change that, set the `operatorNamespace` field in your `values.ya
 The chart will automatically create the namespace that you have chosen to install the operator into.
 If you don't want to do that (because you have already created the namespace), set the `createOperatorNamespace` field in your `values.yaml` file to `false`.
 
+### CRD Installation
+
+By default, installing the chart will also create the `CBContainersAgent` CRD.
+
+If you want to manage the CRD in a different way and don't want to install it along with the chart, set the `installCRD` field in your `values.yaml` file to `false`.
+
 ### HTTP Proxy
 
 If you want to use an HTTP proxy for the communication with the CBC backend you need to set 3 environment variables.
