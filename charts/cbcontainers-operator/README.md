@@ -48,6 +48,9 @@ By default, the CBContainers Operator is installed in the `cbcontainers-dataplan
 
 If you want to change that, set the `namespace` field in your `values.yaml` file.
 
+The chart will automaticaclly create the namespace that ou have chosen to install the operator into.
+If you don't want to do that (because you have already created the namespace), set the `installNamespace` field in your `values.yaml` file to `false`.
+
 ### HTTP Proxy
 
 If you want to use an HTTP proxy for the communication with the CBC backend you need to set 3 environment variables.

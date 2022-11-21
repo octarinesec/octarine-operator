@@ -1,3 +1,4 @@
+{{ if .Values.createNamespace }}
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -5,6 +6,7 @@ metadata:
     control-plane: operator
     octarine: ignore
   name: {{ default "cbcontainers-dataplane" .Values.namespace }}
+{{ end }}
 ---
 apiVersion: apiextensions.k8s.io/{{ include "cbcontainers-agent.api-version" . }}
 kind: CustomResourceDefinition
