@@ -65,6 +65,11 @@ func (builder *NodeTermsBuilder) validateRequirements(selector *v1.NodeSelector)
 	}
 
 	terms := &selector.NodeSelectorTerms[0]
+
+	if len(builder.requirements) != len(terms.MatchExpressions) {
+		return false
+	}
+
 	for _, desiredRequirement := range builder.requirements {
 		foundKey := false
 		for _, actualRequirement := range terms.MatchExpressions {
