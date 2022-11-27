@@ -95,12 +95,7 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	obj.mutateVolumes(daemonSet, agentSpec)
 	obj.mutateTolerations(daemonSet, agentSpec)
 	obj.mutateContainersList(daemonSet, agentSpec)
-
-	builder := commonState.NewNodeTermsBuilder(&daemonSet.Spec.Template.Spec)
-	if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
-		builder.WithArchRequirement()
-	}
-	builder.Build()
+	commonState.NewNodeTermsBuilder(&daemonSet.Spec.Template.Spec).Build()
 
 	return nil
 }

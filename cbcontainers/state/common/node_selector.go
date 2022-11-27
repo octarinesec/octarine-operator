@@ -5,7 +5,6 @@ import (
 	"k8s.io/utils/strings/slices"
 )
 
-//map[string]string
 type NodeTermsBuilder struct {
 	podSpec      *v1.PodSpec
 	requirements []v1.NodeSelectorRequirement
@@ -17,7 +16,7 @@ func NewNodeTermsBuilder(podSpec *v1.PodSpec) *NodeTermsBuilder {
 		requirements: make([]v1.NodeSelectorRequirement, 0),
 	}
 
-	return builder.withOSRequirement()
+	return builder.withOSRequirement().withArchRequirement()
 }
 
 func (builder *NodeTermsBuilder) withOSRequirement() *NodeTermsBuilder {
@@ -28,7 +27,7 @@ func (builder *NodeTermsBuilder) withOSRequirement() *NodeTermsBuilder {
 	})
 }
 
-func (builder *NodeTermsBuilder) WithArchRequirement() *NodeTermsBuilder {
+func (builder *NodeTermsBuilder) withArchRequirement() *NodeTermsBuilder {
 	return builder.WithRequirement(v1.NodeSelectorRequirement{
 		Key:      v1.LabelArchStable,
 		Operator: v1.NodeSelectorOpIn,
@@ -108,15 +107,3 @@ func (builder *NodeTermsBuilder) Build() {
 		}
 	}
 }
-
-//
-//func NewCBContainersNodeSelector() CBContainersNodeSelector {
-//	return CBContainersNodeSelector{
-//		v1.LabelOSStable: string(v1.Linux),
-//	}
-//}
-//
-//func (selector CBContainersNodeSelector) WithArch() CBContainersNodeSelector {
-//	selector[v1.LabelArchStable] = ""
-//	return selector
-//}
