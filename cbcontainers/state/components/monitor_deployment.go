@@ -78,6 +78,7 @@ func (obj *MonitorDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, 
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, monitor)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec, monitor, &agentSpec.Gateways.CoreEventsGateway, agentSpec.Version, agentSpec.AccessTokenSecretName)
+	commonState.NewNodeTermsBuilder(&deployment.Spec.Template.Spec).Build()
 
 	return nil
 }
