@@ -15,11 +15,11 @@ The Carbon Black Cloud Container Operator utilizes the operator-framework to cre
 ## Operator Deployment
 
 ### Prerequisites
-Kubernetes 1.13+ is supported.
+Kubernetes 1.16+ is supported.
 
 ### From script:
 ```
-export OPERATOR_VERSION=v4.0.0
+export OPERATOR_VERSION=v5.4.0
 export OPERATOR_SCRIPT_URL=https://setup.containers.carbonblack.io/operator-$OPERATOR_VERSION-apply.sh
 curl -s $OPERATOR_SCRIPT_URL | bash
 ```

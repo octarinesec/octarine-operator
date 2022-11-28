@@ -51,13 +51,13 @@ func (obj *ImageScanningReporterDeploymentK8sObject) MutateK8sObject(k8sObject c
 
 	clusterScanning := &agentSpec.Components.ClusterScanning
 	imageScanningReporter := &clusterScanning.ImageScanningReporter
-
 	obj.initiateDeployment(deployment, imageScanningReporter)
 	obj.mutateLabels(deployment, imageScanningReporter)
 	obj.mutateAnnotations(deployment, imageScanningReporter)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, imageScanningReporter)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec, imageScanningReporter, &agentSpec.Gateways.HardeningEventsGateway, agentSpec.Version, agentSpec.AccessTokenSecretName)
+	commonState.NewNodeTermsBuilder(&deployment.Spec.Template.Spec).Build()
 
 	return nil
 }

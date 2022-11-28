@@ -4496,6 +4496,7 @@ kind: ServiceAccount
 metadata:
   name: cbcontainers-operator
   namespace: cbcontainers-dataplane
+{{- if and (eq (int .Capabilities.KubeVersion.Major) 1) (lt (int .Capabilities.KubeVersion.Minor) 25) }}
 ---
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
@@ -4519,6 +4520,7 @@ spec:
     rule: RunAsAny
   volumes:
   - '*'
+{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role

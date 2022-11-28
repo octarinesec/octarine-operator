@@ -82,6 +82,7 @@ func (obj *ResolverDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	obj.mutateVolumes(deployment, agentSpec)
 	obj.mutateAffinityAndNodeSelector(deployment, agentSpec)
 	obj.mutateContainersList(deployment, agentSpec)
+	commonState.NewNodeTermsBuilder(&deployment.Spec.Template.Spec).Build()
 
 	return nil
 }

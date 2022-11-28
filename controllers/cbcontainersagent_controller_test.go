@@ -85,7 +85,7 @@ func setupClusterCustomResource(testMocks *ClusterControllerTestMocks) {
 func setUpTokenSecretValues(testMocks *ClusterControllerTestMocks) {
 	accessTokenSecretNamespacedName := types.NamespacedName{Name: ClusterAccessTokenSecretName, Namespace: commonState.DataPlaneNamespaceName}
 	testMocks.client.EXPECT().Get(testMocks.ctx, accessTokenSecretNamespacedName, &corev1.Secret{}).
-		Do(func(ctx context.Context, namespacedName types.NamespacedName, secret *corev1.Secret) {
+		Do(func(ctx context.Context, namespacedName types.NamespacedName, secret *corev1.Secret, _ ...interface{}) {
 			secret.Data = map[string][]byte{
 				commonState.AccessTokenSecretKeyName: []byte(MyClusterTokenValue),
 			}

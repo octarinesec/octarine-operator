@@ -2,6 +2,8 @@
 
 ## Developer Guide
 
+SKD version = 1.25.2
+
 ### Deploying the operator without using an image
 
 #### Installing dependencies (verify the kube config context)

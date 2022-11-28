@@ -20,7 +20,7 @@ jobs:
       - name: Setup Operator SDK
         run: |
           mkdir /tmp/operator-sdk
-          git clone -b v1.22.0 https://github.com/operator-framework/operator-sdk /tmp/operator-sdk
+          git clone -b v1.25.2 https://github.com/operator-framework/operator-sdk /tmp/operator-sdk
           cd /tmp/operator-sdk
           make install
           cd -

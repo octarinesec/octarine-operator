@@ -25,9 +25,26 @@ spec:
       labels:
         control-plane: operator
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - "linux"
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - "386"
+                - "amd64"
+                - "amd64p32"
       containers:
       - command:
         - /manager
+        args:
+        - --leader-elect
         image: controller:latest
         imagePullPolicy: IfNotPresent
         name: manager

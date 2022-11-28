@@ -3,4 +3,4 @@ name: cbcontainers-agent
 description: A Helm chart for installing the CBContainers Agent
 type: application
 version: 1.0.0
-appVersion: "2.4.0"
+appVersion: "2.9.0"
