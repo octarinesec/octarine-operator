@@ -1,11 +1,11 @@
-{{ if .Values.createNamespace }}
+{{ if .Values.createOperatorNamespace }}
 apiVersion: v1
 kind: Namespace
 metadata:
   labels:
     control-plane: operator
     octarine: ignore
-  name: {{ default "cbcontainers-dataplane" .Values.namespace }}
+  name: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
 {{ end }}
 ---
 apiVersion: apiextensions.k8s.io/{{ include "cbcontainers-agent.api-version" . }}
@@ -3329,7 +3329,7 @@ imagePullSecrets:
 kind: ServiceAccount
 metadata:
   name: cbcontainers-operator
-  namespace: {{ default "cbcontainers-dataplane" .Values.namespace }}
+  namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
 {{- if and (eq (int .Capabilities.KubeVersion.Major) 1) (lt (int .Capabilities.KubeVersion.Minor) 25) }}
 ---
 apiVersion: policy/v1beta1
@@ -3360,7 +3360,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: cbcontainers-leader-election-role
-  namespace: {{ default "cbcontainers-dataplane" .Values.namespace }}
+  namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
 rules:
 - apiGroups:
   - ""
@@ -3539,7 +3539,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: cbcontainers-leader-election-rolebinding
-  namespace: {{ default "cbcontainers-dataplane" .Values.namespace }}
+  namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -3547,7 +3547,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: cbcontainers-operator
-  namespace: {{ default "cbcontainers-dataplane" .Values.namespace }}
+  namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -3560,7 +3560,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: cbcontainers-operator
-  namespace: {{ default "cbcontainers-dataplane" .Values.namespace }}
+  namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -3573,7 +3573,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: cbcontainers-operator
-  namespace: {{ default "cbcontainers-dataplane" .Values.namespace }}
+  namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
 ---
 apiVersion: v1
 data:
@@ -3592,7 +3592,7 @@ data:
 kind: ConfigMap
 metadata:
   name: cbcontainers-manager-config
-  namespace: {{ default "cbcontainers-dataplane" .Values.namespace }}
+  namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
 ---
 apiVersion: v1
 data:
@@ -3600,7 +3600,7 @@ data:
 kind: Secret
 metadata:
   name: cbcontainers-operator-public-registry-secret
-  namespace: {{ default "cbcontainers-dataplane" .Values.namespace }}
+  namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
 type: kubernetes.io/dockerconfigjson
 ---
 apiVersion: v1
@@ -3609,7 +3609,7 @@ metadata:
   labels:
     control-plane: operator
   name: cbcontainers-operator-metrics-service
-  namespace: {{ default "cbcontainers-dataplane" .Values.namespace }}
+  namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
 spec:
   ports:
   - name: https

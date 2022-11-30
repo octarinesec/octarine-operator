@@ -13,6 +13,9 @@ clusterGroup: "default"
 clusterName: "test-cluster"
 # accessTokenSecretName is the name of the Kubernetes object of type Secret that holds the values of the Access Token
 accessTokenSecretName: "my-access-token-secret-name"
+# agentNamespace is the name of the namespace in which the agent will be installed
+# that namespace should exist before the chart is installed
+agentNamespace: "cbcontainers-dataplane"
 # gateways is the collection of gateways that will be used to communicate with the CBC backend
 gateways:
   gatewayTLS:
