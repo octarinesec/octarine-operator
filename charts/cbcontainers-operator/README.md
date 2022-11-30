@@ -46,10 +46,10 @@ helm install cbcontainers-operator ./cbcontainers-operator-chart --namespace X
 
 By default, the CBContainers Operator is installed in the `cbcontainers-dataplane` namespace.
 
-If you want to change that, set the `namespace` field in your `values.yaml` file.
+If you want to change that, set the `operatorNamespace` field in your `values.yaml` file.
 
-The chart will automaticaclly create the namespace that ou have chosen to install the operator into.
-If you don't want to do that (because you have already created the namespace), set the `installNamespace` field in your `values.yaml` file to `false`.
+The chart will automatically create the namespace that you have chosen to install the operator into.
+If you don't want to do that (because you have already created the namespace), set the `createOperatorNamespace` field in your `values.yaml` file to `false`.
 
 ### HTTP Proxy
 

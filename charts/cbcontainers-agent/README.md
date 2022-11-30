@@ -48,7 +48,7 @@ For all the possible values see <https://github.com/octarinesec/octarine-operato
 
 By default the CBContainers agent will be installed in the `cbcontainers-dataplane` namespace.
 
-If you want to change that set the `namespace` value in your `values.yaml` file.
+If you want to change that set the `agentNamespce` value in your `values.yaml` file.
 
 ### Secret creation
 

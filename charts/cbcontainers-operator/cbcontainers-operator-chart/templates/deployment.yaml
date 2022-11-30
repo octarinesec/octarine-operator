@@ -4,7 +4,7 @@ metadata:
   labels:
     control-plane: operator
   name: cbcontainers-operator
-  namespace: {{ default "cbcontainers-dataplane" .Values.namespace }}
+  namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
 spec:
   replicas: 1
   selector:
