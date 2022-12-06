@@ -4,7 +4,7 @@ import cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 
 func (r *CBContainersAgentController) setCndrComponentsDefaults(cndr *cbcontainersv1.CBContainersCndrSpec) error {
 	if cndr.Enabled == nil {
-		cndr.Enabled = &trueRef
+		cndr.Enabled = &falseRef
 	}
 
 	if cndr.CompanyCodeSecretName == "" {

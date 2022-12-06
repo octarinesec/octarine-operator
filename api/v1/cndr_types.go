@@ -27,7 +27,7 @@ type CBContainersCndrSensorSpec struct {
 
 // CBContainersCndrSpec defines the desired state of CBContainersCndr
 type CBContainersCndrSpec struct {
-	// +kubebuilder:default:=true
+	// +kubebuilder:default:=false
 	Enabled *bool `json:"enabled,omitempty"`
 	// +kubebuilder:default:=<>
 	Sensor CBContainersCndrSensorSpec `json:"sensor,omitempty"`
