@@ -2,6 +2,8 @@ package components
 
 import (
 	"fmt"
+	"reflect"
+
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/adapters"
@@ -9,7 +11,6 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -28,11 +29,15 @@ var (
 type EnforcerMutatingWebhookK8sObject struct {
 	tlsSecretValues *models.TlsSecretValues
 	kubeletVersion  string
+
+	// ServiceNamespace is the namespace of the Service that serves the validating webhook.
+	ServiceNamespace string
 }
 
 func NewEnforcerMutatingWebhookK8sObject(kubeletVersion string) *EnforcerMutatingWebhookK8sObject {
 	return &EnforcerMutatingWebhookK8sObject{
-		kubeletVersion: kubeletVersion,
+		kubeletVersion:   kubeletVersion,
+		ServiceNamespace: commonState.DataPlaneNamespaceName,
 	}
 }
 
@@ -60,10 +65,10 @@ func (obj *EnforcerMutatingWebhookK8sObject) MutateK8sObject(k8sObject client.Ob
 
 	enforcer := &agentSpec.Components.Basic.Enforcer
 	obj.mutateWebhookConfigurationLabels(webhookConfiguration, enforcer)
-	return obj.mutateWebhooks(webhookConfiguration, enforcer)
+	return obj.mutateWebhooks(webhookConfiguration, enforcer, agentSpec.Namespace)
 }
 
-func (obj *EnforcerMutatingWebhookK8sObject) mutateWebhooks(webhookConfiguration adapters.WebhookConfigurationAdapter, enforcer *cbcontainersv1.CBContainersEnforcerSpec) error {
+func (obj *EnforcerMutatingWebhookK8sObject) mutateWebhooks(webhookConfiguration adapters.WebhookConfigurationAdapter, enforcer *cbcontainersv1.CBContainersEnforcerSpec, serviceNamespace string) error {
 	var resourcesWebhookObj adapters.WebhookAdapter
 
 	initializeWebhooks := false
@@ -88,7 +93,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) mutateWebhooks(webhookConfiguration
 		resourcesWebhookObj = updatedWebhooks[0]
 	}
 
-	obj.mutateResourcesWebhook(resourcesWebhookObj, enforcer.WebhookTimeoutSeconds, enforcer.FailurePolicy)
+	obj.mutateResourcesWebhook(resourcesWebhookObj, enforcer.WebhookTimeoutSeconds, enforcer.FailurePolicy, serviceNamespace)
 	return nil
 }
 
@@ -102,7 +107,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) findWebhookByName(webhooks []adapte
 	return nil, false
 }
 
-func (obj *EnforcerMutatingWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook adapters.WebhookAdapter, timeoutSeconds int32, failurePolicy string) {
+func (obj *EnforcerMutatingWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook adapters.WebhookAdapter, timeoutSeconds int32, failurePolicy, serviceNamespace string) {
 	resourcesWebhook.SetName(MutatingWebhookName)
 	resourcesWebhook.SetFailurePolicy(failurePolicy)
 	resourcesWebhook.SetSideEffects(MutatingWebhookSideEffect)
@@ -118,7 +123,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) mutateResourcesWebhook(resourcesWeb
 	}
 	resourcesWebhook.SetCABundle(obj.tlsSecretValues.CaCert)
 	resourcesWebhook.SetServiceName(EnforcerName)
-	resourcesWebhook.SetServiceNamespace(commonState.DataPlaneNamespaceName)
+	resourcesWebhook.SetServiceNamespace(serviceNamespace)
 	resourcesWebhook.SetServicePath(&MutatingWebhookPath)
 }
 
@@ -135,7 +140,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) getResourcesNamespaceSelector(selec
 		// We can't filter directly by namespace otherwise
 		Key:      "kubernetes.io/metadata.name",
 		Operator: metav1.LabelSelectorOpNotIn,
-		Values:   []string{commonState.DataPlaneNamespaceName, commonState.KubeSystemNamespaceName},
+		Values:   []string{obj.ServiceNamespace, commonState.KubeSystemNamespaceName},
 	}
 
 	initializeLabelSelector := false

@@ -45,9 +45,7 @@ var (
 	sensorIsPrivileged       = true
 	sensorRunAsUser    int64 = 0
 
-	resolverAddress              = fmt.Sprintf("%s.%s.svc.cluster.local", ResolverName, commonState.DataPlaneNamespaceName)
-	imageScanningReporterAddress = fmt.Sprintf("%s.%s.svc.cluster.local", ImageScanningReporterName, commonState.DataPlaneNamespaceName)
-	supportedContainerRuntimes   = map[string]string{
+	supportedContainerRuntimes = map[string]string{
 		"containerd":          containerdRuntimeEndpoint,
 		"microk8s-containerd": microk8sContainerdRuntimeEndpoint,
 		"k3s-containerd":      k3sContainerdRuntimeEndpoint,
@@ -59,10 +57,15 @@ var (
 	cndrHostPaths = []string{"boot"}
 )
 
-type SensorDaemonSetK8sObject struct{}
+type SensorDaemonSetK8sObject struct {
+	// Namespace is the Namespace in which the DaemonSet will be created.
+	Namespace string
+}
 
 func NewSensorDaemonSetK8sObject() *SensorDaemonSetK8sObject {
-	return &SensorDaemonSetK8sObject{}
+	return &SensorDaemonSetK8sObject{
+		Namespace: commonState.DataPlaneNamespaceName,
+	}
 }
 
 func (obj *SensorDaemonSetK8sObject) EmptyK8sObject() client.Object {
@@ -70,7 +73,7 @@ func (obj *SensorDaemonSetK8sObject) EmptyK8sObject() client.Object {
 }
 
 func (obj *SensorDaemonSetK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: DaemonSetName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: DaemonSetName, Namespace: obj.Namespace}
 }
 
 func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbContainersV1.CBContainersAgentSpec) error {
@@ -96,6 +99,7 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 		daemonSet.Spec.Template.Spec.HostPID = false
 	}
 
+	daemonSet.Namespace = agentSpec.Namespace
 	obj.mutateLabels(daemonSet, agentSpec)
 	obj.mutateAnnotations(daemonSet, agentSpec)
 	obj.mutateVolumes(daemonSet, agentSpec)
@@ -342,7 +346,7 @@ func (obj *SensorDaemonSetK8sObject) mutateRuntimeEnvVars(container *coreV1.Cont
 
 	customEnvs := []coreV1.EnvVar{
 		{Name: "RUNTIME_KUBERNETES_SENSOR_GRPC_PORT", Value: fmt.Sprintf("%d", desiredGRPCPortValue)},
-		{Name: "RUNTIME_KUBERNETES_SENSOR_RESOLVER_ADDRESS", Value: resolverAddress},
+		{Name: "RUNTIME_KUBERNETES_SENSOR_RESOLVER_ADDRESS", Value: obj.resolverAddress()},
 		{Name: "RUNTIME_KUBERNETES_SENSOR_RESOLVER_CONNECTION_TIMEOUT_SECONDS", Value: fmt.Sprintf("%d", desiredConnectionTimeoutSeconds)},
 		{Name: "RUNTIME_KUBERNETES_SENSOR_LIVENESS_PATH", Value: sensorSpec.Probes.LivenessPath},
 		{Name: "RUNTIME_KUBERNETES_SENSOR_READINESS_PATH", Value: sensorSpec.Probes.ReadinessPath},
@@ -353,6 +357,10 @@ func (obj *SensorDaemonSetK8sObject) mutateRuntimeEnvVars(container *coreV1.Cont
 		WithCustom(customEnvs...).
 		WithSpec(sensorSpec.Env)
 	commonState.MutateEnvVars(container, envVarBuilder)
+}
+
+func (obj *SensorDaemonSetK8sObject) resolverAddress() string {
+	return fmt.Sprintf("%s.%s.svc.cluster.local", ResolverName, obj.Namespace)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateSecurityContext(container *coreV1.Container) {
@@ -433,7 +441,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 
 	customEnvs := []coreV1.EnvVar{
 		{Name: "CLUSTER_SCANNER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", clusterScannerSpec.Prometheus.Port)},
-		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_HOST", Value: imageScanningReporterAddress},
+		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_HOST", Value: obj.imageScanningReporterAddress()},
 		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_PORT", Value: fmt.Sprintf("%d", ImageScanningReporterDesiredContainerPortValue)},
 		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_SCHEME", Value: ImageScanningReporterDesiredContainerPortName},
 		{Name: "CLUSTER_SCANNER_LIVENESS_PATH", Value: clusterScannerSpec.Probes.LivenessPath},
@@ -456,6 +464,10 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 		WithGatewayTLS()
 
 	commonState.MutateEnvVars(container, envVarBuilder)
+}
+
+func (obj *SensorDaemonSetK8sObject) imageScanningReporterAddress() string {
+	return fmt.Sprintf("%s.%s.svc.cluster.local", ImageScanningReporterName, obj.Namespace)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec *coreV1.PodSpec, clusterScannerSpec *cbContainersV1.CBContainersClusterScannerAgentSpec) {

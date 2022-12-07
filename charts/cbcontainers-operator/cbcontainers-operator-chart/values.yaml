@@ -19,3 +19,5 @@ rbacProxy:
     requests:
       cpu: 20m
       memory: 16Mi
+operatorNamespace: "cbcontainers-dataplane"
+createOperatorNamespace: true

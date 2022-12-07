@@ -44,6 +44,12 @@ You can set different properties for the components or enable/disable components
 
 For all the possible values see <https://github.com/octarinesec/octarine-operator/blob/master/docs%2Fcrds.md#basic-components-optional-parameters> and [`example-value.yaml`](cbcontainers-agent-chart/example-values.yaml).
 
+### Namespace
+
+By default the CBContainers agent will be installed in the `cbcontainers-dataplane` namespace.
+
+If you want to change that set the `agentNamespce` value in your `values.yaml` file.
+
 ### Secret creation
 
 In order for the agent components to function correctly and be able to communicate with the CBC backend an access token is required.

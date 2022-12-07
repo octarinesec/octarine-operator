@@ -27,10 +27,15 @@ var (
 	StateReporterCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
 )
 
-type StateReporterDeploymentK8sObject struct{}
+type StateReporterDeploymentK8sObject struct {
+	// Namespace is the Namespace in which the Deployment will be created.
+	Namespace string
+}
 
 func NewStateReporterDeploymentK8sObject() *StateReporterDeploymentK8sObject {
-	return &StateReporterDeploymentK8sObject{}
+	return &StateReporterDeploymentK8sObject{
+		Namespace: commonState.DataPlaneNamespaceName,
+	}
 }
 
 func (obj *StateReporterDeploymentK8sObject) EmptyK8sObject() client.Object {
@@ -38,7 +43,7 @@ func (obj *StateReporterDeploymentK8sObject) EmptyK8sObject() client.Object {
 }
 
 func (obj *StateReporterDeploymentK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: StateReporterName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: StateReporterName, Namespace: obj.Namespace}
 }
 
 func (obj *StateReporterDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbContainersV1.CBContainersAgentSpec) error {
@@ -67,6 +72,7 @@ func (obj *StateReporterDeploymentK8sObject) MutateK8sObject(k8sObject client.Ob
 		deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
 
+	deployment.Namespace = agentSpec.Namespace
 	deployment.Spec.Replicas = &StateReporterReplicas
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels

@@ -5502,6 +5502,8 @@ spec:
               - hardeningEventsGateway
               - runtimeEventsGateway
               type: object
+            namespace:
+              type: string
             version:
               type: string
           required:

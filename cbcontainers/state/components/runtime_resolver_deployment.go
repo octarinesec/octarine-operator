@@ -29,10 +29,15 @@ var (
 	resolverCapabilitiesToDrop             = []coreV1.Capability{"ALL"}
 )
 
-type ResolverDeploymentK8sObject struct{}
+type ResolverDeploymentK8sObject struct {
+	// Namespace is the Namespace in which the Deployment will be created.
+	Namespace string
+}
 
 func NewResolverDeploymentK8sObject() *ResolverDeploymentK8sObject {
-	return &ResolverDeploymentK8sObject{}
+	return &ResolverDeploymentK8sObject{
+		Namespace: commonState.DataPlaneNamespaceName,
+	}
 }
 
 func (obj *ResolverDeploymentK8sObject) EmptyK8sObject() client.Object {
@@ -40,7 +45,7 @@ func (obj *ResolverDeploymentK8sObject) EmptyK8sObject() client.Object {
 }
 
 func (obj *ResolverDeploymentK8sObject) NamespacedName() types.NamespacedName {
-	return types.NamespacedName{Name: ResolverName, Namespace: commonState.DataPlaneNamespaceName}
+	return types.NamespacedName{Name: ResolverName, Namespace: obj.Namespace}
 }
 
 func (obj *ResolverDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, agentSpec *cbContainersV1.CBContainersAgentSpec) error {
@@ -70,6 +75,7 @@ func (obj *ResolverDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 		deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
 
+	deployment.Namespace = agentSpec.Namespace
 	deployment.Spec.Replicas = resolver.ReplicasCount
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels
