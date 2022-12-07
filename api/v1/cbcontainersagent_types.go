@@ -44,7 +44,7 @@ type CBContainersComponentsSpec struct {
 	// +kubebuilder:default:=<>
 	RuntimeProtection CBContainersRuntimeProtectionSpec `json:"runtimeProtection,omitempty"`
 	// +kubebuilder:default:=<>
-	Cndr *CBContainersCndrSpec `json:"cndr,omitempty"`
+	Cndr CBContainersCndrSpec `json:"cndr,omitempty"`
 	// +kubebuilder:default:=<>
 	ClusterScanning CBContainersClusterScanningSpec `json:"clusterScanning,omitempty"`
 	// +kubebuilder:default:=<>
