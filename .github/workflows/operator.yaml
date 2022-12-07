@@ -33,10 +33,11 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      - id: docker-tag
-        uses: yuya-takeyama/docker-tag-from-github-ref-action@v1
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4.1.1
       - run: make generate
       - run: make manifests
       - run: make test
       - name: Build and push
-        run: make docker-build docker-push IMG=cbartifactory/octarine-operator:${{ steps.docker-tag.outputs.tag }} VERSION=${{ steps.docker-tag.outputs.tag }}
+        run: make docker-build docker-push IMG=cbartifactory/octarine-operator:${{ steps.meta.outputs.tags }} VERSION=${{ steps.meta.outputs.tags }}
