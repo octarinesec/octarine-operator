@@ -27,6 +27,8 @@ jobs:
         with:
           images: |
             octarine-operator
+          flavor: |
+            latest=false
       - uses: actions/checkout@v2
       - name: Set up Go
         uses: actions/setup-go@v2
