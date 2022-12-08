@@ -2,7 +2,6 @@ package components
 
 import (
 	"fmt"
-
 	cbContainersV1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
@@ -17,6 +16,7 @@ const (
 	DaemonSetName                = "cbcontainers-node-agent"
 	RuntimeContainerName         = "cbcontainers-runtime"
 	ClusterScanningContainerName = "cbcontainers-cluster-scanner"
+	CndrContainerName            = "cbcontainers-cndr"
 	daemonSetLabelKey            = "app.kubernetes.io/name"
 
 	runtimeSensorRunCommand  = "/run_sensor.sh"
@@ -36,6 +36,9 @@ const (
 	crioRuntimeEndpoint               = "/var/run/crio/crio.sock"
 
 	configuredContainerRuntimeVolumeName = "configured-container-runtime-endpoint"
+
+	cndrCompanyCodeVarName = "OCTARINE_COMPANY_CODES"
+	cndrCompanyCodeKeyName = "companyCode"
 )
 
 var (
@@ -50,6 +53,8 @@ var (
 		"crio":                crioRuntimeEndpoint,
 		"dockersock":          dockerSock,
 	}
+
+	cndrHostPaths = []string{"boot"}
 )
 
 type SensorDaemonSetK8sObject struct {
@@ -81,7 +86,7 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 
 	obj.initiateDamonSet(daemonSet)
 
-	if commonState.IsEnabled(runtimeProtection.Enabled) {
+	if commonState.IsEnabled(runtimeProtection.Enabled) || isCndrEnbaled(agentSpec.Components.Cndr) {
 		daemonSet.Spec.Template.Spec.DNSPolicy = runtimeSensorDNSPolicy
 		daemonSet.Spec.Template.Spec.HostNetwork = runtimeSensorHostNetwork
 		daemonSet.Spec.Template.Spec.HostPID = runtimeSensorHostPID
@@ -167,12 +172,40 @@ func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonS
 	}
 }
 
+func isCndrEnbaled(cndrSpec *cbContainersV1.CBContainersCndrSpec) bool {
+	return cndrSpec != nil && commonState.IsEnabled(cndrSpec.Enabled)
+}
+
+func (obj *SensorDaemonSetK8sObject) getExpectedVolumeCount(agentSpec *cbContainersV1.CBContainersAgentSpec) int {
+	expectedVolumesCount := 0
+
+	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
+		clusterScannerSpec := &agentSpec.Components.ClusterScanning.ClusterScannerAgent
+		containerRuntimes := getContainerRuntimes(clusterScannerSpec)
+		expectedVolumesCount += len(containerRuntimes) + 1
+	}
+
+	if isCndrEnbaled(agentSpec.Components.Cndr) {
+		expectedVolumesCount += len(cndrHostPaths)
+	}
+
+	return expectedVolumesCount
+}
+
 func (obj *SensorDaemonSetK8sObject) mutateVolumes(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+	templatePodSpec := &daemonSet.Spec.Template.Spec
+
+	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != obj.getExpectedVolumeCount(agentSpec) {
+		// clean cluster-scanner & cndr volumes
+		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
+	}
+
 	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
 		obj.mutateClusterScannerVolumes(&daemonSet.Spec.Template.Spec, &agentSpec.Components.ClusterScanning.ClusterScannerAgent)
-	} else {
-		// clean cluster-scanner volumes
-		daemonSet.Spec.Template.Spec.Volumes = nil
+	}
+
+	if isCndrEnbaled(agentSpec.Components.Cndr) {
+		obj.mutateCndrVolumes(&daemonSet.Spec.Template.Spec, &agentSpec.Components.Cndr.Sensor)
 	}
 }
 
@@ -184,14 +217,17 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(daemonSet *appsV1.Daem
 
 	var runtimeContainer coreV1.Container
 	var clusterScannerContainer coreV1.Container
+	var cndrContainer coreV1.Container
 
 	templatePodSpec := &daemonSet.Spec.Template.Spec
 
 	desiredContainers := make([]coreV1.Container, 0, 2)
 	runtimeEnabled := false
 	clusterScannerEnabled := false
+	cndrEnabled := false
 	runtimeMissing := false
 	clusterScannerMissing := false
+	cndrMissing := false
 
 	if commonState.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) {
 		runtimeEnabled = true
@@ -217,7 +253,19 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(daemonSet *appsV1.Daem
 		desiredContainers = append(desiredContainers, clusterScannerContainer)
 	}
 
-	if obj.isStateChanged(len(templatePodSpec.Containers), len(desiredContainers), runtimeEnabled, clusterScannerEnabled, runtimeMissing, clusterScannerMissing) {
+	if isCndrEnbaled(agentSpec.Components.Cndr) {
+		cndrEnabled = true
+		if cndrContainerLocation := obj.findContainerLocationByName(templatePodSpec.Containers, CndrContainerName); cndrContainerLocation == -1 {
+			cndrMissing = true
+			cndrContainer = coreV1.Container{Name: CndrContainerName}
+		} else {
+			cndrContainer = templatePodSpec.Containers[cndrContainerLocation]
+		}
+
+		desiredContainers = append(desiredContainers, cndrContainer)
+	}
+
+	if obj.isStateChanged(len(templatePodSpec.Containers), len(desiredContainers), runtimeEnabled, clusterScannerEnabled, runtimeMissing, clusterScannerMissing, cndrEnabled, cndrMissing) {
 		templatePodSpec.Containers = desiredContainers
 	}
 
@@ -232,9 +280,15 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(daemonSet *appsV1.Daem
 			&templatePodSpec.Containers[obj.findContainerLocationByName(templatePodSpec.Containers, ClusterScanningContainerName)],
 			agentSpec)
 	}
+
+	if isCndrEnbaled(agentSpec.Components.Cndr) {
+		obj.mutateCndrContainer(
+			&templatePodSpec.Containers[obj.findContainerLocationByName(templatePodSpec.Containers, CndrContainerName)],
+			agentSpec)
+	}
 }
 
-func (obj *SensorDaemonSetK8sObject) isStateChanged(actualContainersLength, desiredContainersLength int, runtimeEnabled, clusterScannerEnabled, runtimeMissing, clusterScannerMissing bool) bool {
+func (obj *SensorDaemonSetK8sObject) isStateChanged(actualContainersLength, desiredContainersLength int, runtimeEnabled, clusterScannerEnabled, runtimeMissing, clusterScannerMissing, cndrEnabled, cndrMissing bool) bool {
 	// actual containers' length is different from desired containers' length.
 	// test cases
 	// there are more containers than the 2 allowed
@@ -251,6 +305,11 @@ func (obj *SensorDaemonSetK8sObject) isStateChanged(actualContainersLength, desi
 
 	// cluster scanner enabled and container is missing in actual state
 	if clusterScannerEnabled && clusterScannerMissing {
+		return true
+	}
+
+	// cluster scanner enabled and container is missing in actual state
+	if cndrEnabled && cndrMissing {
 		return true
 	}
 
@@ -332,6 +391,53 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(container *co
 	obj.mutateSecurityContext(container)
 }
 
+func (obj *SensorDaemonSetK8sObject) mutateCndrContainer(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+
+	cndrSpec := &agentSpec.Components.Cndr.Sensor
+
+	container.Name = CndrContainerName
+	container.Resources = cndrSpec.Resources
+	commonState.MutateImage(container, cndrSpec.Image, agentSpec.Version)
+	if commonState.IsEnabled(cndrSpec.Prometheus.Enabled) {
+		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(cndrSpec.Prometheus.Port)}}
+	}
+	obj.mutateCndrEnvVars(container, agentSpec)
+	obj.mutateCndrVolumesMounts(container, agentSpec)
+	obj.mutateSecurityContext(container)
+}
+
+func (obj *SensorDaemonSetK8sObject) mutateCndrEnvVars(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+	cndrSpec := agentSpec.Components.Cndr
+
+	envVarBuilder := commonState.NewEnvVarBuilder().
+		WithEnvVarFromSecret(cndrCompanyCodeVarName, cndrSpec.CompanyCodeSecretName, cndrCompanyCodeKeyName).
+		WithSpec(cndrSpec.Sensor.Env)
+
+	commonState.MutateEnvVars(container, envVarBuilder)
+}
+
+func (obj *SensorDaemonSetK8sObject) mutateCndrVolumes(templatePodSpec *coreV1.PodSpec, cndrSendorSpec *cbContainersV1.CBContainersCndrSensorSpec) {
+	// mutate host dirs required by the linux sensor
+	for _, path := range cndrHostPaths {
+		routeIndex := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, path)
+		if templatePodSpec.Volumes[routeIndex].HostPath == nil {
+			templatePodSpec.Volumes[routeIndex].HostPath = &coreV1.HostPathVolumeSource{Path: fmt.Sprintf("/%v", path)}
+		}
+	}
+}
+
+func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != len(cndrHostPaths) {
+		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
+	}
+
+	// mutate mount for required host dirs by the linux sensor
+	for _, path := range cndrHostPaths {
+		index := commonState.EnsureAndGetVolumeMountIndexForName(container, path)
+		commonState.MutateVolumeMount(container, index, fmt.Sprintf("/%v", path), false)
+	}
+}
+
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
 
 	clusterScannerSpec := &agentSpec.Components.ClusterScanning.ClusterScannerAgent
@@ -369,10 +475,6 @@ func (obj *SensorDaemonSetK8sObject) imageScanningReporterAddress() string {
 
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec *coreV1.PodSpec, clusterScannerSpec *cbContainersV1.CBContainersClusterScannerAgentSpec) {
 	containerRuntimes := getContainerRuntimes(clusterScannerSpec)
-
-	if templatePodSpec.Volumes == nil || len(templatePodSpec.Volumes) != len(containerRuntimes)+1 {
-		templatePodSpec.Volumes = make([]coreV1.Volume, 0)
-	}
 
 	// mutate root-cas volume, for https certificates
 	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
