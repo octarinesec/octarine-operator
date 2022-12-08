@@ -4544,7 +4544,6 @@ spec:
                         type: object
                     type: object
                   cndr:
-                    default: {}
                     description: CBContainersCndrSpec defines the desired state of
                       CBContainersCndr
                     properties:

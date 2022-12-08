@@ -39,5 +39,9 @@ func (r *CBContainersAgentController) setComponentsDefaults(components *cbcontai
 		return err
 	}
 
+	if err := r.setCndrComponentsDefaults(components.Cndr); err != nil {
+		return err
+	}
+
 	return nil
 }
