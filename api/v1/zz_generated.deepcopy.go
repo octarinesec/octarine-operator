@@ -334,7 +334,11 @@ func (in *CBContainersComponentsSpec) DeepCopyInto(out *CBContainersComponentsSp
 	*out = *in
 	in.Basic.DeepCopyInto(&out.Basic)
 	in.RuntimeProtection.DeepCopyInto(&out.RuntimeProtection)
-	in.Cndr.DeepCopyInto(&out.Cndr)
+	if in.Cndr != nil {
+		in, out := &in.Cndr, &out.Cndr
+		*out = new(CBContainersCndrSpec)
+		(*in).DeepCopyInto(*out)
+	}
 	in.ClusterScanning.DeepCopyInto(&out.ClusterScanning)
 	in.Settings.DeepCopyInto(&out.Settings)
 }
