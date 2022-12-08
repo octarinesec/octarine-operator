@@ -43,10 +43,6 @@ jobs:
           cd -
       - run: make generate
       - run: make manifests
-      - name: Check for changes
-        run: |
-          diff=$(git diff)
-          [ "$diff" != "" ] &&  echo "######### files were changed after running make commands, exiting." && exit 1
       - run: make test
       - name: Build and push
         run: make docker-build docker-push IMG=cbartifactory/${{ steps.meta.outputs.tags }} VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
