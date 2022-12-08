@@ -69,6 +69,11 @@ func (builder *Builder) WithGuardrailsEnforce() *Builder {
 	return builder
 }
 
+func (builder *Builder) WithCndr() *Builder {
+	builder.agentComponents = append(builder.agentComponents, models.AgentComponentCndr)
+	return builder
+}
+
 func (builder *Builder) Build() (*ApiGateway, error) {
 	return NewApiGateway(
 		builder.account,

@@ -31,5 +31,9 @@ func (creator *DefaultGatewayCreator) CreateGateway(cbContainersAgent *cbcontain
 		builder.WithGuardrailsEnforce()
 	}
 
+	if spec.Components.Cndr != nil && spec.Components.Cndr.Enabled != nil && *spec.Components.ClusterScanning.Enabled {
+		builder.WithCndr()
+	}
+
 	return builder.Build()
 }
