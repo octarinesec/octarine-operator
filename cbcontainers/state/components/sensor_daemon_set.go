@@ -37,7 +37,7 @@ const (
 
 	configuredContainerRuntimeVolumeName = "configured-container-runtime-endpoint"
 
-	cndrCompanyCodeVarName = "OCTARINE_COMPANY_CODES"
+	cndrCompanyCodeVarName = "CB_COMPANY_CODES"
 	cndrCompanyCodeKeyName = "companyCode"
 )
 
@@ -54,7 +54,12 @@ var (
 		"dockersock":          dockerSock,
 	}
 
-	cndrHostPaths = []string{"boot"}
+	hostPathDirectory         = coreV1.HostPathDirectory
+	hostPathDirectoryOrCreate = coreV1.HostPathDirectoryOrCreate
+	cndrHostPaths             = map[string]*coreV1.HostPathVolumeSource{
+		"boot":        {Path: "/boot", Type: &hostPathDirectory},
+		"cb-data-dir": {Path: "/var/opt/carbonblack", Type: &hostPathDirectoryOrCreate},
+	}
 )
 
 type SensorDaemonSetK8sObject struct {
@@ -418,10 +423,10 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrEnvVars(container *coreV1.Contain
 
 func (obj *SensorDaemonSetK8sObject) mutateCndrVolumes(templatePodSpec *coreV1.PodSpec, cndrSendorSpec *cbContainersV1.CBContainersCndrSensorSpec) {
 	// mutate host dirs required by the linux sensor
-	for _, path := range cndrHostPaths {
-		routeIndex := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, path)
+	for name, hostPath := range cndrHostPaths {
+		routeIndex := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, name)
 		if templatePodSpec.Volumes[routeIndex].HostPath == nil {
-			templatePodSpec.Volumes[routeIndex].HostPath = &coreV1.HostPathVolumeSource{Path: fmt.Sprintf("/%v", path)}
+			templatePodSpec.Volumes[routeIndex].HostPath = hostPath
 		}
 	}
 }
@@ -432,9 +437,9 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.C
 	}
 
 	// mutate mount for required host dirs by the linux sensor
-	for _, path := range cndrHostPaths {
-		index := commonState.EnsureAndGetVolumeMountIndexForName(container, path)
-		commonState.MutateVolumeMount(container, index, fmt.Sprintf("/%v", path), false)
+	for name, hostPath := range cndrHostPaths {
+		index := commonState.EnsureAndGetVolumeMountIndexForName(container, name)
+		commonState.MutateVolumeMount(container, index, fmt.Sprintf("/%v", hostPath.Path), false)
 	}
 }
 
