@@ -56,9 +56,11 @@ var (
 
 	hostPathDirectory         = coreV1.HostPathDirectory
 	hostPathDirectoryOrCreate = coreV1.HostPathDirectoryOrCreate
+	hostPathFile              = coreV1.HostPathFile
 	cndrHostPaths             = map[string]*coreV1.HostPathVolumeSource{
 		"boot":        {Path: "/boot", Type: &hostPathDirectory},
 		"cb-data-dir": {Path: "/var/opt/carbonblack", Type: &hostPathDirectoryOrCreate},
+		"os-release":  {Path: "/etc/os-release", Type: &hostPathFile},
 	}
 )
 
@@ -437,7 +439,7 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.C
 	// mutate mount for required host dirs by the linux sensor
 	for name, hostPath := range cndrHostPaths {
 		index := commonState.EnsureAndGetVolumeMountIndexForName(container, name)
-		commonState.MutateVolumeMount(container, index, fmt.Sprintf("/%v", hostPath.Path), false)
+		commonState.MutateVolumeMount(container, index, fmt.Sprintf("%v", hostPath.Path), false)
 	}
 }
 
