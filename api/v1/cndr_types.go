@@ -13,7 +13,7 @@ type CBContainersCndrSensorSpec struct {
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
-	// +kubebuilder:default:={repository:"octarinesec/cndr"}
+	// +kubebuilder:default:={repository:"cbartifactory/cndr"}
 	Image CBContainersImageSpec `json:"image,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "1024Mi", cpu: "500m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`

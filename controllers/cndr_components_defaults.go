@@ -45,7 +45,7 @@ func (r *CBContainersAgentController) setCndrSensorDefaults(cndrSensor *cbcontai
 
 	setDefaultPrometheusWithPort(&cndrSensor.Prometheus, 7071)
 
-	setDefaultImage(&cndrSensor.Image, "octarinesec/cndr")
+	setDefaultImage(&cndrSensor.Image, "cbartifactory/cndr")
 
 	if err := setDefaultResourceRequirements(&cndrSensor.Resources, "64Mi", "30m", "1024Mi", "500m"); err != nil {
 		return err
