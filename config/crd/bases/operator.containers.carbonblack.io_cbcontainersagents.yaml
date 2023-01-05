@@ -4568,7 +4568,7 @@ spec:
                             type: object
                           image:
                             default:
-                              repository: octarinesec/cndr
+                              repository: cbartifactory/cndr
                             properties:
                               pullPolicy:
                                 default: IfNotPresent
