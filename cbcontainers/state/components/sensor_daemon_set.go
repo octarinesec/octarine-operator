@@ -2,6 +2,7 @@ package components
 
 import (
 	"fmt"
+
 	cbContainersV1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
@@ -61,6 +62,7 @@ var (
 		"boot":        {Path: "/boot", Type: &hostPathDirectory},
 		"cb-data-dir": {Path: "/var/opt/carbonblack", Type: &hostPathDirectoryOrCreate},
 		"os-release":  {Path: "/etc/os-release", Type: &hostPathFile},
+		"debugfs":     {Path: "/sys/kernel/debug", Type: &hostPathDirectory},
 	}
 )
 
