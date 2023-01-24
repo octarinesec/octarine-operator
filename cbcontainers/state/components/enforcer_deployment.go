@@ -83,6 +83,12 @@ func (obj *EnforcerDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	if agentSpec.Components.Basic.CreateDefaultImagePullSecrets {
 		deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	}
+	for _, secretName := range agentSpec.Components.Basic.ImagePullSecrets {
+		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
+	}
+	for _, secretName := range agentSpec.Components.Basic.Enforcer.ImagePullSecrets {
+		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
+	}
 	obj.Namespace = agentSpec.Namespace
 	deployment.Namespace = agentSpec.Namespace
 	obj.mutateAnnotations(deployment, enforcer)

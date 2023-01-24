@@ -29,6 +29,11 @@ type CBContainersRuntimeResolverSpec struct {
 	Affinity *coreV1.Affinity `json:"affinity,omitempty"`
 	// +kubebuilder:default:="info"
 	LogLevel string `json:"logLevel,omitempty"`
+	// ImagePullSecrets is a list of image pull secret names, which will be used to pull the container image(s)
+	// for the Runtime Resolver Deployment.
+	//
+	// The secrets must already exist.
+	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
 }
 
 type CBContainersRuntimeSensorSpec struct {
@@ -52,6 +57,11 @@ type CBContainersRuntimeSensorSpec struct {
 	VerbosityLevel *int `json:"verbosity_level,omitempty"`
 	// +kubebuilder:default:="info"
 	LogLevel string `json:"logLevel,omitempty"`
+	// ImagePullSecrets is a list of image pull secret names, which will be used to pull the container image(s)
+	// for the Runtime Sensor DaemonSet.
+	//
+	// The secrets must already exist.
+	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
 }
 
 // CBContainersRuntimeProtectionSpec defines the desired state of CBContainersRuntime
