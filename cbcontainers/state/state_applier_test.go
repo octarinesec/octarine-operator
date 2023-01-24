@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/components"
@@ -169,6 +170,9 @@ func testStateApplier(t *testing.T, setup StateApplierTestSetup, k8sVersion, nam
 			RuntimeProtection: cbcontainersv1.CBContainersRuntimeProtectionSpec{
 				Enabled: &trueRef,
 			},
+			Basic: cbcontainersv1.CBContainersBasicSpec{
+				CreateDefaultImagePullSecrets: true,
+			},
 		},
 	}
 
@@ -187,7 +191,7 @@ func testStateApplier(t *testing.T, setup StateApplierTestSetup, k8sVersion, nam
 	setup(mockObjects)
 
 	stateApplier := state.NewStateApplier(mockObjects.componentApplier, k8sVersion, mockObjects.secretValuesCreator, logrTesting.NewTestLogger(t))
-	return stateApplier.ApplyDesiredState(context.Background(), agentSpec, nil, nil)
+	return stateApplier.ApplyDesiredState(context.Background(), agentSpec, &models.RegistrySecretValues{}, nil)
 }
 
 func getAppliedAndDeletedObjects(t *testing.T, k8sVersion, namespace string, setup StateApplierTestSetup, appliedK8sObjectsChangers ...AppliedK8sObjectsChanger) ([]K8sObjectDetails, []K8sObjectDetails, error) {

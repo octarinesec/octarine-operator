@@ -42,6 +42,11 @@ var (
 			Spec: cbcontainersv1.CBContainersAgentSpec{
 				Version:               "21.7.0",
 				AccessTokenSecretName: ClusterAccessTokenSecretName,
+				Components: cbcontainersv1.CBContainersComponentsSpec{
+					Basic: cbcontainersv1.CBContainersBasicSpec{
+						CreateDefaultImagePullSecrets: true,
+					},
+				},
 			},
 		},
 	}
