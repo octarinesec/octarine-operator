@@ -2,12 +2,12 @@ apiVersion: operator.containers.carbonblack.io/v1
 kind: CBContainersAgent
 metadata:
   name: cbcontainers-agent
+  namespace: {{ default "cbcontainers-dataplane" .Values.agentNamespace }}
 spec:
   account: {{ required "orgKey is required" .Values.orgKey }}
   clusterName: "{{ required "clusterGroup is required" .Values.clusterGroup }}:{{ required "clusterName is required" .Values.clusterName }}"
   version: {{ required "version is required" .Values.version | quote }}
   accessTokenSecretName: {{ include "cbcontainers-agent.access-token-name" .Values.accessTokenSecretName }}
-  namespace: {{ default "cbcontainers-dataplane" .Values.agentNamespace }}
   gateways:
     apiGateway:
       host: {{ required "gateways.apiGatewayHost is required" .Values.gateways.apiGatewayHost }}
