@@ -997,6 +997,14 @@ spec:
                             tag:
                               type: string
                           type: object
+                        imagePullSecrets:
+                          description: "ImagePullSecrets is a list of image pull secret
+                            names, which will be used to pull the container image(s)
+                            for the Enforcer Deployment. \n The secrets must already
+                            exist."
+                          items:
+                            type: string
+                          type: array
                         labels:
                           additionalProperties:
                             type: string
@@ -1079,6 +1087,14 @@ spec:
                           format: int32
                           type: integer
                       type: object
+                    imagePullSecrets:
+                      description: "ImagePullSecrets is a list of image pull secret
+                        names, which will be used to pull the container image(s) for
+                        the Agent deployment. \n These secrets will be shared for
+                        all containers. \n The secrets must already exist."
+                      items:
+                        type: string
+                      type: array
                     monitor:
                       properties:
                         affinity:
@@ -2016,6 +2032,14 @@ spec:
                             tag:
                               type: string
                           type: object
+                        imagePullSecrets:
+                          description: "ImagePullSecrets is a list of image pull secret
+                            names, which will be used to pull the container image(s)
+                            for the Monitor Deployment. \n The secrets must already
+                            exist."
+                          items:
+                            type: string
+                          type: array
                         labels:
                           additionalProperties:
                             type: string
@@ -3022,6 +3046,14 @@ spec:
                             tag:
                               type: string
                           type: object
+                        imagePullSecrets:
+                          description: "ImagePullSecrets is a list of image pull secret
+                            names, which will be used to pull the container image(s)
+                            for the State Reporter Deployment. \n The secrets must
+                            already exist."
+                          items:
+                            type: string
+                          type: array
                         labels:
                           additionalProperties:
                             type: string
@@ -4132,6 +4164,14 @@ spec:
                             tag:
                               type: string
                           type: object
+                        imagePullSecrets:
+                          description: "ImagePullSecrets is a list of image pull secret
+                            names, which will be used to pull the container image(s)
+                            for the Image Scanning Reporter Deployment. \n The secrets
+                            must already exist."
+                          items:
+                            type: string
+                          type: array
                         labels:
                           additionalProperties:
                             type: string
@@ -5235,6 +5275,14 @@ spec:
                             tag:
                               type: string
                           type: object
+                        imagePullSecrets:
+                          description: "ImagePullSecrets is a list of image pull secret
+                            names, which will be used to pull the container image(s)
+                            for the Runtime Resolver Deployment. \n The secrets must
+                            already exist."
+                          items:
+                            type: string
+                          type: array
                         labels:
                           additionalProperties:
                             type: string
@@ -5337,6 +5385,14 @@ spec:
                             tag:
                               type: string
                           type: object
+                        imagePullSecrets:
+                          description: "ImagePullSecrets is a list of image pull secret
+                            names, which will be used to pull the container image(s)
+                            for the Runtime Sensor DaemonSet. \n The secrets must
+                            already exist."
+                          items:
+                            type: string
+                          type: array
                         labels:
                           additionalProperties:
                             type: string

@@ -89,6 +89,12 @@ func (obj *ImageScanningReporterDeploymentK8sObject) initiateDeployment(deployme
 	if agentSpec.Components.Basic.CreateDefaultImagePullSecrets {
 		deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	}
+	for _, secretName := range agentSpec.Components.Basic.ImagePullSecrets {
+		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
+	}
+	for _, secretName := range agentSpec.Components.ClusterScanning.ImageScanningReporter.ImagePullSecrets {
+		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
+	}
 }
 
 func (obj *ImageScanningReporterDeploymentK8sObject) mutateLabels(deployment *appsV1.Deployment, imageScanningReporterSpec *cbcontainersv1.CBContainersImageScanningReporterSpec) {

@@ -2,6 +2,7 @@ package components
 
 import (
 	"fmt"
+
 	cbContainersV1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
@@ -133,6 +134,12 @@ func (obj *SensorDaemonSetK8sObject) initiateDaemonSet(daemonSet *appsV1.DaemonS
 	daemonSet.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	if agentSpec.Components.Basic.CreateDefaultImagePullSecrets {
 		daemonSet.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
+	}
+	for _, secretName := range agentSpec.Components.Basic.ImagePullSecrets {
+		daemonSet.Spec.Template.Spec.ImagePullSecrets = append(daemonSet.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
+	}
+	for _, secretName := range agentSpec.Components.RuntimeProtection.Sensor.ImagePullSecrets {
+		daemonSet.Spec.Template.Spec.ImagePullSecrets = append(daemonSet.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
 	}
 }
 

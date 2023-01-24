@@ -84,6 +84,12 @@ func (obj *StateReporterDeploymentK8sObject) MutateK8sObject(k8sObject client.Ob
 	if agentSpec.Components.Basic.CreateDefaultImagePullSecrets {
 		deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	}
+	for _, secretName := range agentSpec.Components.Basic.ImagePullSecrets {
+		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
+	}
+	for _, secretName := range agentSpec.Components.Basic.StateReporter.ImagePullSecrets {
+		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
+	}
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, stateReporter)
 	obj.mutateContainersList(&deployment.Spec.Template.Spec, stateReporter, &agentSpec.Gateways.HardeningEventsGateway, agentSpec.Version, agentSpec.AccessTokenSecretName)
