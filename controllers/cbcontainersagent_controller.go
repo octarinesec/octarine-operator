@@ -111,7 +111,7 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	var registrySecret *models.RegistrySecretValues
-	if cbContainersAgent.Spec.Components.Basic.CreateDefaultImagePullSecrets {
+	if cbContainersAgent.Spec.Components.Settings.CreateDefaultImagePullSecrets {
 		r.Log.Info("Getting registry secret values")
 		registrySecret, err = r.getRegistrySecretValues(ctx, cbContainersAgent, accessToken)
 		if err != nil {

@@ -85,10 +85,10 @@ func (obj *MonitorDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, 
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	applyment.EnforceMapContains(deployment.ObjectMeta.Annotations, monitor.DeploymentAnnotations)
 	applyment.EnforceMapContains(deployment.Spec.Template.ObjectMeta.Annotations, monitor.PodTemplateAnnotations)
-	if agentSpec.Components.Basic.CreateDefaultImagePullSecrets {
+	if agentSpec.Components.Settings.CreateDefaultImagePullSecrets {
 		deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	}
-	for _, secretName := range agentSpec.Components.Basic.ImagePullSecrets {
+	for _, secretName := range agentSpec.Components.Settings.ImagePullSecrets {
 		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
 	}
 	for _, secretName := range agentSpec.Components.Basic.Monitor.ImagePullSecrets {

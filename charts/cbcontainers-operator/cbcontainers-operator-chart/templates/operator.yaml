@@ -551,6 +551,11 @@ spec:
                               tag:
                                 type: string
                             type: object
+                          imagePullSecrets:
+                            description: "ImagePullSecrets is a list of image pull secret names, which will be used to pull the container image(s) for the Enforcer Deployment. \n The secrets must already exist."
+                            items:
+                              type: string
+                            type: array
                           labels:
                             additionalProperties:
                               type: string
@@ -1139,6 +1144,11 @@ spec:
                               tag:
                                 type: string
                             type: object
+                          imagePullSecrets:
+                            description: "ImagePullSecrets is a list of image pull secret names, which will be used to pull the container image(s) for the Monitor Deployment. \n The secrets must already exist."
+                            items:
+                              type: string
+                            type: array
                           labels:
                             additionalProperties:
                               type: string
@@ -1709,6 +1719,11 @@ spec:
                               tag:
                                 type: string
                             type: object
+                          imagePullSecrets:
+                            description: "ImagePullSecrets is a list of image pull secret names, which will be used to pull the container image(s) for the State Reporter Deployment. \n The secrets must already exist."
+                            items:
+                              type: string
+                            type: array
                           labels:
                             additionalProperties:
                               type: string
@@ -2404,6 +2419,11 @@ spec:
                               tag:
                                 type: string
                             type: object
+                          imagePullSecrets:
+                            description: "ImagePullSecrets is a list of image pull secret names, which will be used to pull the container image(s) for the Image Scanning Reporter Deployment. \n The secrets must already exist."
+                            items:
+                              type: string
+                            type: array
                           labels:
                             additionalProperties:
                               type: string
@@ -3000,6 +3020,11 @@ spec:
                               tag:
                                 type: string
                             type: object
+                          imagePullSecrets:
+                            description: "ImagePullSecrets is a list of image pull secret names, which will be used to pull the container image(s) for the Runtime Resolver Deployment. \n The secrets must already exist."
+                            items:
+                              type: string
+                            type: array
                           labels:
                             additionalProperties:
                               type: string
@@ -3125,6 +3150,11 @@ spec:
                               tag:
                                 type: string
                             type: object
+                          imagePullSecrets:
+                            description: "ImagePullSecrets is a list of image pull secret names, which will be used to pull the container image(s) for the Runtime Sensor DaemonSet. \n The secrets must already exist."
+                            items:
+                              type: string
+                            type: array
                           labels:
                             additionalProperties:
                               type: string
@@ -3215,6 +3245,10 @@ spec:
                   settings:
                     default: {}
                     properties:
+                      createDefaultImagePullSecrets:
+                        default: true
+                        description: "CreateDefaultImagePullSecrets controls whether or not to create the secrets needed to pull the containers images from the default repository. \n This should be set to true if the user does not override the default images for the services."
+                        type: boolean
                       daemonSetsTolerations:
                         items:
                           description: The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.
@@ -3236,6 +3270,11 @@ spec:
                               description: Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.
                               type: string
                           type: object
+                        type: array
+                      imagePullSecrets:
+                        description: "ImagePullSecrets is a list of image pull secret names, which will be used to pull the container image(s) for the Agent deployment. \n These secrets will be shared for all containers. \n The secrets must already exist."
+                        items:
+                          type: string
                         type: array
                     type: object
                 type: object
@@ -3322,7 +3361,6 @@ spec:
     storage: true
     subresources:
       status: {}
-
 {{ end }}
 ---
 apiVersion: v1
