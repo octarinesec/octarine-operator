@@ -48,14 +48,6 @@ spec:
                   basic:
                     default: {}
                     properties:
-                      createDefaultImagePullSecrets:
-                        default: true
-                        description: "CreateDefaultImagePullSecrets controls whether
-                          or not to create the secrets needed to pull the containers
-                          images from the default repository. \n This should be set
-                          to true if the user does not override the default images
-                          for the services."
-                        type: boolean
                       enforcer:
                         default: {}
                         properties:
@@ -1160,14 +1152,6 @@ spec:
                             format: int32
                             type: integer
                         type: object
-                      imagePullSecrets:
-                        description: "ImagePullSecrets is a list of image pull secret
-                          names, which will be used to pull the container image(s)
-                          for the Agent deployment. \n These secrets will be shared
-                          for all containers. \n The secrets must already exist."
-                        items:
-                          type: string
-                        type: array
                       monitor:
                         default: {}
                         properties:
@@ -5884,6 +5868,14 @@ spec:
                   settings:
                     default: {}
                     properties:
+                      createDefaultImagePullSecrets:
+                        default: true
+                        description: "CreateDefaultImagePullSecrets controls whether
+                          or not to create the secrets needed to pull the containers
+                          images from the default repository. \n This should be set
+                          to true if the user does not override the default images
+                          for the services."
+                        type: boolean
                       daemonSetsTolerations:
                         items:
                           description: The pod this Toleration is attached to tolerates
@@ -5924,6 +5916,14 @@ spec:
                                 be empty, otherwise just a regular string.
                               type: string
                           type: object
+                        type: array
+                      imagePullSecrets:
+                        description: "ImagePullSecrets is a list of image pull secret
+                          names, which will be used to pull the container image(s)
+                          for the Agent deployment. \n These secrets will be shared
+                          for all containers. \n The secrets must already exist."
+                        items:
+                          type: string
                         type: array
                     type: object
                 type: object

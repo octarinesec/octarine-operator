@@ -132,10 +132,10 @@ func (obj *SensorDaemonSetK8sObject) initiateDaemonSet(daemonSet *appsV1.DaemonS
 
 	daemonSet.Spec.Template.Spec.ServiceAccountName = commonState.AgentNodeServiceAccountName
 	daemonSet.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
-	if agentSpec.Components.Basic.CreateDefaultImagePullSecrets {
+	if agentSpec.Components.Settings.CreateDefaultImagePullSecrets {
 		daemonSet.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
 	}
-	for _, secretName := range agentSpec.Components.Basic.ImagePullSecrets {
+	for _, secretName := range agentSpec.Components.Settings.ImagePullSecrets {
 		daemonSet.Spec.Template.Spec.ImagePullSecrets = append(daemonSet.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
 	}
 	for _, secretName := range agentSpec.Components.RuntimeProtection.Sensor.ImagePullSecrets {

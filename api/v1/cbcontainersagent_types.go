@@ -52,6 +52,20 @@ type CBContainersComponentsSpec struct {
 
 type CBContainersComponentsSettings struct {
 	DaemonSetsTolerations []coreV1.Toleration `json:"daemonSetsTolerations,omitempty"`
+	// CreateDefaultImagePullSecrets controls whether or not to create the secrets
+	// needed to pull the containers images from the default repository.
+	//
+	// This should be set to true if the user does not override the default images for the services.
+	//
+	// +kubebuilder:default:=true
+	CreateDefaultImagePullSecrets bool `json:"createDefaultImagePullSecrets,omitempty"`
+	// ImagePullSecrets is a list of image pull secret names, which will be used to pull the container image(s)
+	// for the Agent deployment.
+	//
+	// These secrets will be shared for all containers.
+	//
+	// The secrets must already exist.
+	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
 }
 
 // CBContainersAgentStatus defines the observed state of CBContainersAgent

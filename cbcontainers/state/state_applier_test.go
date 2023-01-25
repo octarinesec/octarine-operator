@@ -170,7 +170,7 @@ func testStateApplier(t *testing.T, setup StateApplierTestSetup, k8sVersion, nam
 			RuntimeProtection: cbcontainersv1.CBContainersRuntimeProtectionSpec{
 				Enabled: &trueRef,
 			},
-			Basic: cbcontainersv1.CBContainersBasicSpec{
+			Settings: cbcontainersv1.CBContainersComponentsSettings{
 				CreateDefaultImagePullSecrets: true,
 			},
 		},

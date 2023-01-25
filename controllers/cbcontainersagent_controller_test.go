@@ -43,7 +43,7 @@ var (
 				Version:               "21.7.0",
 				AccessTokenSecretName: ClusterAccessTokenSecretName,
 				Components: cbcontainersv1.CBContainersComponentsSpec{
-					Basic: cbcontainersv1.CBContainersBasicSpec{
+					Settings: cbcontainersv1.CBContainersComponentsSettings{
 						CreateDefaultImagePullSecrets: true,
 					},
 				},

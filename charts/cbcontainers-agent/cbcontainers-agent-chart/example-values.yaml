@@ -193,3 +193,5 @@ components:
         enabled: false
   settings:
     daemonSetsTolerations:
+    createDefaultImagePullSecrets: true
+    imagePullSecrets: 
