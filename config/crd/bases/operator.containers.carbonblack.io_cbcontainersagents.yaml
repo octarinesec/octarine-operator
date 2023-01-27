@@ -1032,19 +1032,18 @@ spec:
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
+                              pullSecrets:
+                                description: "PullSecrets is a list of secret names,
+                                  which will be used to pull the container image(s).
+                                  \n The secrets must already exist."
+                                items:
+                                  type: string
+                                type: array
                               repository:
                                 type: string
                               tag:
                                 type: string
                             type: object
-                          imagePullSecrets:
-                            description: "ImagePullSecrets is a list of image pull
-                              secret names, which will be used to pull the container
-                              image(s) for the Enforcer Deployment. \n The secrets
-                              must already exist."
-                            items:
-                              type: string
-                            type: array
                           labels:
                             additionalProperties:
                               type: string
@@ -2127,19 +2126,18 @@ spec:
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
+                              pullSecrets:
+                                description: "PullSecrets is a list of secret names,
+                                  which will be used to pull the container image(s).
+                                  \n The secrets must already exist."
+                                items:
+                                  type: string
+                                type: array
                               repository:
                                 type: string
                               tag:
                                 type: string
                             type: object
-                          imagePullSecrets:
-                            description: "ImagePullSecrets is a list of image pull
-                              secret names, which will be used to pull the container
-                              image(s) for the Monitor Deployment. \n The secrets
-                              must already exist."
-                            items:
-                              type: string
-                            type: array
                           labels:
                             additionalProperties:
                               type: string
@@ -3204,19 +3202,18 @@ spec:
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
+                              pullSecrets:
+                                description: "PullSecrets is a list of secret names,
+                                  which will be used to pull the container image(s).
+                                  \n The secrets must already exist."
+                                items:
+                                  type: string
+                                type: array
                               repository:
                                 type: string
                               tag:
                                 type: string
                             type: object
-                          imagePullSecrets:
-                            description: "ImagePullSecrets is a list of image pull
-                              secret names, which will be used to pull the container
-                              image(s) for the State Reporter Deployment. \n The secrets
-                              must already exist."
-                            items:
-                              type: string
-                            type: array
                           labels:
                             additionalProperties:
                               type: string
@@ -3334,6 +3331,13 @@ spec:
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
+                              pullSecrets:
+                                description: "PullSecrets is a list of secret names,
+                                  which will be used to pull the container image(s).
+                                  \n The secrets must already exist."
+                                items:
+                                  type: string
+                                type: array
                               repository:
                                 type: string
                               tag:
@@ -4414,19 +4418,18 @@ spec:
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
+                              pullSecrets:
+                                description: "PullSecrets is a list of secret names,
+                                  which will be used to pull the container image(s).
+                                  \n The secrets must already exist."
+                                items:
+                                  type: string
+                                type: array
                               repository:
                                 type: string
                               tag:
                                 type: string
                             type: object
-                          imagePullSecrets:
-                            description: "ImagePullSecrets is a list of image pull
-                              secret names, which will be used to pull the container
-                              image(s) for the Image Scanning Reporter Deployment.
-                              \n The secrets must already exist."
-                            items:
-                              type: string
-                            type: array
                           labels:
                             additionalProperties:
                               type: string
@@ -4563,6 +4566,13 @@ spec:
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
+                              pullSecrets:
+                                description: "PullSecrets is a list of secret names,
+                                  which will be used to pull the container image(s).
+                                  \n The secrets must already exist."
+                                items:
+                                  type: string
+                                type: array
                               repository:
                                 type: string
                               tag:
@@ -5618,19 +5628,18 @@ spec:
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
+                              pullSecrets:
+                                description: "PullSecrets is a list of secret names,
+                                  which will be used to pull the container image(s).
+                                  \n The secrets must already exist."
+                                items:
+                                  type: string
+                                type: array
                               repository:
                                 type: string
                               tag:
                                 type: string
                             type: object
-                          imagePullSecrets:
-                            description: "ImagePullSecrets is a list of image pull
-                              secret names, which will be used to pull the container
-                              image(s) for the Runtime Resolver Deployment. \n The
-                              secrets must already exist."
-                            items:
-                              type: string
-                            type: array
                           labels:
                             additionalProperties:
                               type: string
@@ -5759,19 +5768,18 @@ spec:
                                 description: PullPolicy describes a policy for if/when
                                   to pull a container image
                                 type: string
+                              pullSecrets:
+                                description: "PullSecrets is a list of secret names,
+                                  which will be used to pull the container image(s).
+                                  \n The secrets must already exist."
+                                items:
+                                  type: string
+                                type: array
                               repository:
                                 type: string
                               tag:
                                 type: string
                             type: object
-                          imagePullSecrets:
-                            description: "ImagePullSecrets is a list of image pull
-                              secret names, which will be used to pull the container
-                              image(s) for the Runtime Sensor DaemonSet. \n The secrets
-                              must already exist."
-                            items:
-                              type: string
-                            type: array
                           labels:
                             additionalProperties:
                               type: string
