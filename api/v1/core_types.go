@@ -30,9 +30,4 @@ type CBContainersMonitorSpec struct {
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 	// +kubebuilder:default:=<>
 	Affinity *coreV1.Affinity `json:"affinity,omitempty"`
-	// ImagePullSecrets is a list of image pull secret names, which will be used to pull the container image(s)
-	// for the Monitor Deployment.
-	//
-	// The secrets must already exist.
-	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
 }
