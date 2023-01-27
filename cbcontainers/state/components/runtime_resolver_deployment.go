@@ -88,7 +88,7 @@ func (obj *ResolverDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	for _, secretName := range agentSpec.Components.Settings.ImagePullSecrets {
 		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
 	}
-	for _, secretName := range agentSpec.Components.RuntimeProtection.Resolver.ImagePullSecrets {
+	for _, secretName := range agentSpec.Components.RuntimeProtection.Resolver.Image.PullSecrets {
 		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
 	}
 	obj.mutateAnnotations(deployment, agentSpec)

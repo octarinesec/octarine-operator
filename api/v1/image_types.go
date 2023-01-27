@@ -9,4 +9,8 @@ type CBContainersImageSpec struct {
 	Tag        string `json:"tag,omitempty"`
 	// +kubebuilder:default:="IfNotPresent"
 	PullPolicy coreV1.PullPolicy `json:"pullPolicy,omitempty"`
+	// PullSecrets is a list of secret names, which will be used to pull the container image(s).
+	//
+	// The secrets must already exist.
+	PullSecrets []string `json:"pullSecrets,omitempty"`
 }

@@ -138,7 +138,7 @@ func (obj *SensorDaemonSetK8sObject) initiateDaemonSet(daemonSet *appsV1.DaemonS
 	for _, secretName := range agentSpec.Components.Settings.ImagePullSecrets {
 		daemonSet.Spec.Template.Spec.ImagePullSecrets = append(daemonSet.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
 	}
-	for _, secretName := range agentSpec.Components.RuntimeProtection.Sensor.ImagePullSecrets {
+	for _, secretName := range agentSpec.Components.RuntimeProtection.Sensor.Image.PullSecrets {
 		daemonSet.Spec.Template.Spec.ImagePullSecrets = append(daemonSet.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
 	}
 }
