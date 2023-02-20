@@ -29,7 +29,7 @@ func objectsDiffer(actual, desired []coreV1.LocalObjectReference) bool {
 		return true
 	}
 
-	actualMap := make(map[string]struct{}, len(actual))
+	actualMap := make(map[string]struct{})
 	for _, a := range actual {
 		actualMap[a.Name] = struct{}{}
 	}
