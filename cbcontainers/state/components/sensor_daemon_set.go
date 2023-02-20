@@ -35,6 +35,7 @@ const (
 	dockerRuntimeEndpoint             = "/var/run/dockershim.sock"
 	dockerSock                        = "/var/run/docker.sock"
 	crioRuntimeEndpoint               = "/var/run/crio/crio.sock"
+	hostRootPath                      = "/var/opt/root"
 
 	// configuredContainerRuntimeVolumeName is used when the customer has specified a non-standard runtime endpoint in the CRD
 	// as this means we need a special volume+mount for this endpoint
@@ -80,7 +81,7 @@ var (
 	}
 	// Optional to have a diffrent mount volume that the host path. If not exits the host path will be used.
 	cndrVolumeMounts = map[string]string{
-		"root": "/var/opt/root",
+		"root": hostRootPath,
 	}
 )
 
@@ -454,9 +455,14 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrContainer(container *coreV1.Conta
 func (obj *SensorDaemonSetK8sObject) mutateCndrEnvVars(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
 	cndrSpec := agentSpec.Components.Cndr
 
+	customEnvs := []coreV1.EnvVar{
+		{Name: "HOST_ROOT_PATH", Value: hostRootPath},
+	}
+
 	envVarBuilder := commonState.NewEnvVarBuilder().
 		WithCommonDataPlane(agentSpec.AccessTokenSecretName).
 		WithEventsGateway(&agentSpec.Gateways.HardeningEventsGateway).
+		WithCustom(customEnvs...).
 		WithEnvVarFromSecret(cndrCompanyCodeVarName, cndrSpec.CompanyCodeSecretName, cndrCompanyCodeKeyName).
 		WithSpec(cndrSpec.Sensor.Env)
 
