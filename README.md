@@ -19,7 +19,7 @@ Kubernetes 1.16+ is supported.
 
 ### From script:
 ```
-export OPERATOR_VERSION=v5.4.0
+export OPERATOR_VERSION=v5.5.0
 export OPERATOR_SCRIPT_URL=https://setup.containers.carbonblack.io/$OPERATOR_VERSION/operator-apply.sh
 curl -s $OPERATOR_SCRIPT_URL | bash
 ```
