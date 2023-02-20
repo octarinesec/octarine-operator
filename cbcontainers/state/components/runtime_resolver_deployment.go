@@ -82,9 +82,9 @@ func (obj *ResolverDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Template.Spec.ServiceAccountName = commonState.RuntimeResolverServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
-	deployment.Spec.Template.Spec.ImagePullSecrets = getSharedImagePullSecrets(agentSpec)
-	for _, secretName := range agentSpec.Components.RuntimeProtection.Resolver.Image.PullSecrets {
-		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
+	desiredImagePullSecrets := getImagePullSecrets(agentSpec, agentSpec.Components.RuntimeProtection.Resolver.Image.PullSecrets...)
+	if objectsDiffer(desiredImagePullSecrets, deployment.Spec.Template.Spec.ImagePullSecrets) {
+		deployment.Spec.Template.Spec.ImagePullSecrets = getImagePullSecrets(agentSpec, agentSpec.Components.RuntimeProtection.Resolver.Image.PullSecrets...)
 	}
 	obj.mutateAnnotations(deployment, agentSpec)
 	obj.mutateVolumes(deployment, agentSpec)

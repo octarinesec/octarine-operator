@@ -86,9 +86,9 @@ func (obj *ImageScanningReporterDeploymentK8sObject) initiateDeployment(deployme
 	deployment.Spec.Replicas = imageScanningReporter.ReplicasCount
 	deployment.Spec.Template.Spec.ServiceAccountName = commonState.ImageScanningServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
-	deployment.Spec.Template.Spec.ImagePullSecrets = getSharedImagePullSecrets(agentSpec)
-	for _, secretName := range agentSpec.Components.ClusterScanning.ImageScanningReporter.Image.PullSecrets {
-		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
+	desiredImagePullSecrets := getImagePullSecrets(agentSpec, agentSpec.Components.ClusterScanning.ImageScanningReporter.Image.PullSecrets...)
+	if objectsDiffer(desiredImagePullSecrets, deployment.Spec.Template.Spec.ImagePullSecrets) {
+		deployment.Spec.Template.Spec.ImagePullSecrets = getImagePullSecrets(agentSpec, agentSpec.Components.ClusterScanning.ImageScanningReporter.Image.PullSecrets...)
 	}
 }
 

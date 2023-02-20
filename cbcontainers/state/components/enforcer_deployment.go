@@ -80,9 +80,9 @@ func (obj *EnforcerDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Template.Spec.ServiceAccountName = commonState.EnforcerServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
-	deployment.Spec.Template.Spec.ImagePullSecrets = getSharedImagePullSecrets(agentSpec)
-	for _, secretName := range agentSpec.Components.Basic.Enforcer.Image.PullSecrets {
-		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
+	desiredImagePullSecrets := getImagePullSecrets(agentSpec, agentSpec.Components.Basic.Enforcer.Image.PullSecrets...)
+	if objectsDiffer(deployment.Spec.Template.Spec.ImagePullSecrets, desiredImagePullSecrets) {
+		deployment.Spec.Template.Spec.ImagePullSecrets = desiredImagePullSecrets
 	}
 	obj.Namespace = agentSpec.Namespace
 	deployment.Namespace = agentSpec.Namespace
