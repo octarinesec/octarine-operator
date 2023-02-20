@@ -76,6 +76,11 @@ var (
 		"boot":        {Path: "/boot", Type: &hostPathDirectory},
 		"cb-data-dir": {Path: "/var/opt/carbonblack", Type: &hostPathDirectoryOrCreate},
 		"os-release":  {Path: "/etc/os-release", Type: &hostPathFile},
+		"root":        {Path: "/", Type: &hostPathDirectory},
+	}
+	// Optional to have a diffrent mount volume that the host path. If not exits the host path will be used.
+	cndrVolumeMounts = map[string]string{
+		"root": "/var/opt/root",
 	}
 )
 
@@ -478,7 +483,12 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.C
 	// mutate mount for required host dirs by the linux sensor
 	for name, hostPath := range cndrHostPaths {
 		index := commonState.EnsureAndGetVolumeMountIndexForName(container, name)
-		commonState.MutateVolumeMount(container, index, fmt.Sprintf("%v", hostPath.Path), false)
+		if mountName, ok := cndrVolumeMounts[name]; ok {
+			commonState.MutateVolumeMount(container, index, mountName, false)
+		} else {
+			// If not exits use the host path
+			commonState.MutateVolumeMount(container, index, hostPath.Path, false)
+		}
 	}
 
 	// mutate mount for container-runtimes unix sockets files for the container tracking processor
