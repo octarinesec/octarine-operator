@@ -80,12 +80,7 @@ func (obj *EnforcerDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Template.Spec.ServiceAccountName = commonState.EnforcerServiceAccountName
 	deployment.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
-	if agentSpec.Components.Settings.CreateDefaultImagePullSecrets {
-		deployment.Spec.Template.Spec.ImagePullSecrets = []coreV1.LocalObjectReference{{Name: commonState.RegistrySecretName}}
-	}
-	for _, secretName := range agentSpec.Components.Settings.ImagePullSecrets {
-		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
-	}
+	deployment.Spec.Template.Spec.ImagePullSecrets = getSharedImagePullSecrets(agentSpec)
 	for _, secretName := range agentSpec.Components.Basic.Enforcer.Image.PullSecrets {
 		deployment.Spec.Template.Spec.ImagePullSecrets = append(deployment.Spec.Template.Spec.ImagePullSecrets, coreV1.LocalObjectReference{Name: secretName})
 	}

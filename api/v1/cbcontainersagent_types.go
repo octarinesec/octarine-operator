@@ -58,7 +58,7 @@ type CBContainersComponentsSettings struct {
 	// This should be set to true if the user does not override the default images for the services.
 	//
 	// +kubebuilder:default:=true
-	CreateDefaultImagePullSecrets bool `json:"createDefaultImagePullSecrets,omitempty"`
+	CreateDefaultImagePullSecrets *bool `json:"createDefaultImagePullSecrets,omitempty"`
 	// ImagePullSecrets is a list of image pull secret names, which will be used to pull the container image(s)
 	// for the Agent deployment.
 	//
@@ -66,6 +66,14 @@ type CBContainersComponentsSettings struct {
 	//
 	// The secrets must already exist.
 	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
+}
+
+func (s CBContainersComponentsSettings) ShouldCreateDefaultImagePullSecrets() bool {
+	// this field is TRUE by default, so if the user did not set it, return true
+	if s.CreateDefaultImagePullSecrets == nil {
+		return true
+	}
+	return *s.CreateDefaultImagePullSecrets
 }
 
 // CBContainersAgentStatus defines the observed state of CBContainersAgent

@@ -171,7 +171,7 @@ func testStateApplier(t *testing.T, setup StateApplierTestSetup, k8sVersion, nam
 				Enabled: &trueRef,
 			},
 			Settings: cbcontainersv1.CBContainersComponentsSettings{
-				CreateDefaultImagePullSecrets: true,
+				CreateDefaultImagePullSecrets: &trueRef,
 			},
 		},
 	}
