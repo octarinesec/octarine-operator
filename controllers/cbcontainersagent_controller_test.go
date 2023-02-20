@@ -37,6 +37,8 @@ const (
 var (
 	ClusterAccessTokenSecretName = test_utils.RandomString()
 
+	true_ = true
+
 	ClusterCustomResourceItems = []cbcontainersv1.CBContainersAgent{
 		{
 			Spec: cbcontainersv1.CBContainersAgentSpec{
@@ -44,7 +46,7 @@ var (
 				AccessTokenSecretName: ClusterAccessTokenSecretName,
 				Components: cbcontainersv1.CBContainersComponentsSpec{
 					Settings: cbcontainersv1.CBContainersComponentsSettings{
-						CreateDefaultImagePullSecrets: true,
+						CreateDefaultImagePullSecrets: &true_,
 					},
 				},
 			},
