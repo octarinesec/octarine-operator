@@ -133,7 +133,7 @@ func (obj *SensorDaemonSetK8sObject) initiateDaemonSet(daemonSet *appsV1.DaemonS
 	daemonSet.Spec.Template.Spec.ServiceAccountName = commonState.AgentNodeServiceAccountName
 	daemonSet.Spec.Template.Spec.PriorityClassName = commonState.DataPlanePriorityClassName
 	desiredImagePullSecrets := getImagePullSecrets(agentSpec, agentSpec.Components.RuntimeProtection.Sensor.Image.PullSecrets...)
-	if objectsDiffer(desiredImagePullSecrets, daemonSet.Spec.Template.Spec.ImagePullSecrets){
+	if objectsDiffer(desiredImagePullSecrets, daemonSet.Spec.Template.Spec.ImagePullSecrets) {
 		daemonSet.Spec.Template.Spec.ImagePullSecrets = getImagePullSecrets(agentSpec, agentSpec.Components.RuntimeProtection.Sensor.Image.PullSecrets...)
 	}
 }
@@ -444,6 +444,12 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.C
 	for name, hostPath := range cndrHostPaths {
 		index := commonState.EnsureAndGetVolumeMountIndexForName(container, name)
 		commonState.MutateVolumeMount(container, index, fmt.Sprintf("%v", hostPath.Path), false)
+	}
+
+	// mutate mount for container-runtimes unix sockets files for the container tracking processor
+	for name, mountPath := range supportedContainerRuntimes {
+		index := commonState.EnsureAndGetVolumeMountIndexForName(container, name)
+		commonState.MutateVolumeMount(container, index, mountPath, true)
 	}
 }
 
