@@ -436,7 +436,7 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumes(templatePodSpec *coreV1.P
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
-	if container.VolumeMounts == nil || len(container.VolumeMounts) != len(cndrHostPaths) {
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != (len(cndrHostPaths)+len(supportedContainerRuntimes)) {
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
 
@@ -497,7 +497,10 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec
 	// mutate container-runtimes unix sockets files for the cluster-scanner CRI
 	for name, path := range containerRuntimes {
 		routeIndex := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, name)
-		templatePodSpec.Volumes[routeIndex].HostPath = &coreV1.HostPathVolumeSource{Path: path}
+		if templatePodSpec.Volumes[routeIndex].HostPath == nil {
+			templatePodSpec.Volumes[routeIndex].HostPath = &coreV1.HostPathVolumeSource{}
+		}
+		templatePodSpec.Volumes[routeIndex].HostPath.Path = path
 	}
 }
 
