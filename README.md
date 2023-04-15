@@ -17,8 +17,8 @@ The Carbon Black Cloud Container Operator utilizes the operator-framework to cre
 | Operator version| Supported Dataplanes |
 |-----------------|----------------------|
 | v5.6.0          | 2.10.0, 2.11.0       |
-| v5.5.0          | TBD       |
-| v5.4.0          | TBD       |
+| v5.5.0          | 2.10.0, 2.11.0       |
+| v5.4.0          | 2.10.0, 2.11.0       |
 
 ## Operator Deployment
 
