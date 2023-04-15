@@ -12,6 +12,14 @@ The Carbon Black Cloud Container Operator runs within a Kubernetes cluster. The 
 
 The Carbon Black Cloud Container Operator utilizes the operator-framework to create a GO operator, which is responsible for managing and monitoring the Cloud Container components deployment. 
 
+## Computability Matrix
+
+| Operator version| Supported Dataplanes |
+|-----------------|----------------------|
+| v5.6.0          | 2.10.0, 2.11.0       |
+| v5.5.0          | 2.10.0, 2.11.0       |
+| v5.4.0          | 2.10.0, 2.11.0       |
+
 ## Operator Deployment
 
 ### Prerequisites
@@ -19,7 +27,7 @@ Kubernetes 1.16+ is supported.
 
 ### From script:
 ```
-export OPERATOR_VERSION=v5.5.0
+export OPERATOR_VERSION=v5.6.0
 export OPERATOR_SCRIPT_URL=https://setup.containers.carbonblack.io/$OPERATOR_VERSION/operator-apply.sh
 curl -s $OPERATOR_SCRIPT_URL | bash
 ```
