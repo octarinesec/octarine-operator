@@ -12,7 +12,7 @@ The Carbon Black Cloud Container Operator runs within a Kubernetes cluster. The 
 
 The Carbon Black Cloud Container Operator utilizes the operator-framework to create a GO operator, which is responsible for managing and monitoring the Cloud Container components deployment. 
 
-## Computability Matrix
+## Compatibility Matrix
 
 | Operator version| Supported Dataplanes |
 |-----------------|----------------------|
