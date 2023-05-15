@@ -1,38 +1,8 @@
 package controllers
 
 import (
-	"context"
-	"fmt"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"math"
 )
-
-func getScaledReplicasCount() (*int32, error) {
-	// Get the in-cluster config
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, fmt.Errorf("error getting in-cluster config: %v", err)
-	}
-
-	// Create a Kubernetes client
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, fmt.Errorf("error creating Kubernetes client: %v", err)
-	}
-
-	// Get the list of nodes in the cluster
-	nodes, err := clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("error getting list of nodes: %v", err)
-	}
-
-	nodesCount := int32(math.Ceil(float64(len(nodes.Items)) / 3))
-
-	return &nodesCount, nil
-}
 
 func (r *CBContainersAgentController) setRuntimeProtectionComponentsDefaults(runtime *cbcontainersv1.CBContainersRuntimeProtectionSpec) error {
 	if runtime.Enabled == nil {
@@ -75,17 +45,10 @@ func (r *CBContainersAgentController) setRuntimeResolverDefaults(runtimeResolver
 		runtimeResolver.Env = make(map[string]string)
 	}
 
-	defaultReplicaCount := int32(1)
-	replicasCount := &defaultReplicaCount
-
-	nodesCount, err := getScaledReplicasCount()
-	if err != nil {
-		r.Log.Error(err, "failed to determine nodes count: %v, using replicas count defaults")
-	} else {
-		replicasCount = nodesCount
+	if runtimeResolver.NodesToReplicasRatio == nil {
+		defaultNodesToReplicasRatio := int32(5)
+		runtimeResolver.NodesToReplicasRatio = &defaultNodesToReplicasRatio
 	}
-
-	runtimeResolver.ReplicasCount = replicasCount
 
 	setDefaultPrometheus(&runtimeResolver.Prometheus)
 
