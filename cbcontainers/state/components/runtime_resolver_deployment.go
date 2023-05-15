@@ -1,7 +1,11 @@
 package components
 
 import (
+	"context"
 	"fmt"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"math"
 
 	cbContainersV1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
@@ -75,8 +79,19 @@ func (obj *ResolverDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 		deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
 
+	defaultReplicasCount := int32(1)
+	replicasCount := &defaultReplicasCount
+
+	if resolver.ReplicasCount != nil {
+		replicasCount = resolver.ReplicasCount
+	} else {
+		if dynamicReplicasCount, err := obj.getDynamicReplicasCount(resolver.NodesToReplicasRatio); err == nil {
+			replicasCount = dynamicReplicasCount
+		}
+	}
+
 	deployment.Namespace = agentSpec.Namespace
-	deployment.Spec.Replicas = resolver.ReplicasCount
+	deployment.Spec.Replicas = replicasCount
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels
 	deployment.Spec.Template.ObjectMeta.Labels = desiredLabels
@@ -216,4 +231,28 @@ func (obj *ResolverDeploymentK8sObject) mutateVolumesMounts(container *coreV1.Co
 	}
 
 	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
+}
+
+func (obj *ResolverDeploymentK8sObject) getDynamicReplicasCount(nodesToReplicasRatio *int32) (*int32, error) {
+	// Get the in-cluster config
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, fmt.Errorf("error getting in-cluster config: %v", err)
+	}
+
+	// Create a Kubernetes client
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("error creating Kubernetes client: %v", err)
+	}
+
+	// Get the list of nodes in the cluster
+	nodes, err := clientSet.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("error getting list of nodes: %v", err)
+	}
+
+	nodesCount := int32(math.Ceil(float64(len(nodes.Items)) / float64(*nodesToReplicasRatio)))
+
+	return &nodesCount, nil
 }

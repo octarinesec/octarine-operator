@@ -5287,6 +5287,9 @@ spec:
                           additionalProperties:
                             type: string
                           type: object
+                        nodesToReplicasRatio:
+                          format: int32
+                          type: integer
                         podTemplateAnnotations:
                           additionalProperties:
                             type: string

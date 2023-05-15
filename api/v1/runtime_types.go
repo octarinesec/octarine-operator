@@ -11,8 +11,7 @@ type CBContainersRuntimeResolverSpec struct {
 	DeploymentAnnotations map[string]string `json:"deploymentAnnotations,omitempty"`
 	// +kubebuilder:default:=<>
 	PodTemplateAnnotations map[string]string `json:"podTemplateAnnotations,omitempty"`
-	// +kubebuilder:default:=1
-	ReplicasCount *int32 `json:"replicasCount,omitempty"`
+	ReplicasCount          *int32            `json:"replicasCount,omitempty"`
 	// +kubebuilder:default:=<>
 	Env map[string]string `json:"env,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/runtime-kubernetes-resolver"}
@@ -29,6 +28,8 @@ type CBContainersRuntimeResolverSpec struct {
 	Affinity *coreV1.Affinity `json:"affinity,omitempty"`
 	// +kubebuilder:default:="info"
 	LogLevel string `json:"logLevel,omitempty"`
+	// +kubebuilder:default:=5
+	NodesToReplicasRatio *int32 `json:"nodesToReplicasRatio,omitempty"`
 }
 
 type CBContainersRuntimeSensorSpec struct {
