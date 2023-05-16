@@ -233,7 +233,7 @@ func (obj *ResolverDeploymentK8sObject) mutateVolumesMounts(container *coreV1.Co
 	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
 }
 
-func (obj *ResolverDeploymentK8sObject) getDynamicReplicasCount(nodesToReplicasRatio *int32) (*int32, error) {
+func (obj *ResolverDeploymentK8sObject) getDynamicReplicasCount(nodesToReplicasRatio int32) (*int32, error) {
 	// Get the in-cluster config
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -252,7 +252,7 @@ func (obj *ResolverDeploymentK8sObject) getDynamicReplicasCount(nodesToReplicasR
 		return nil, fmt.Errorf("error getting list of nodes: %v", err)
 	}
 
-	nodesCount := int32(math.Ceil(float64(len(nodes.Items)) / float64(*nodesToReplicasRatio)))
+	nodesCount := int32(math.Ceil(float64(len(nodes.Items)) / float64(nodesToReplicasRatio)))
 
 	return &nodesCount, nil
 }

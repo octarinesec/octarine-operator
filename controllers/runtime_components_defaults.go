@@ -45,9 +45,8 @@ func (r *CBContainersAgentController) setRuntimeResolverDefaults(runtimeResolver
 		runtimeResolver.Env = make(map[string]string)
 	}
 
-	if runtimeResolver.NodesToReplicasRatio == nil {
-		defaultNodesToReplicasRatio := int32(5)
-		runtimeResolver.NodesToReplicasRatio = &defaultNodesToReplicasRatio
+	if runtimeResolver.NodesToReplicasRatio == 0 {
+		runtimeResolver.NodesToReplicasRatio = 5
 	}
 
 	setDefaultPrometheus(&runtimeResolver.Prometheus)
