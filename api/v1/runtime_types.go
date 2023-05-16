@@ -29,7 +29,7 @@ type CBContainersRuntimeResolverSpec struct {
 	// +kubebuilder:default:="info"
 	LogLevel string `json:"logLevel,omitempty"`
 	// +kubebuilder:default:=5
-	NodesToReplicasRatio *int32 `json:"nodesToReplicasRatio,omitempty"`
+	NodesToReplicasRatio int32 `json:"nodesToReplicasRatio,omitempty"`
 }
 
 type CBContainersRuntimeSensorSpec struct {
