@@ -3,10 +3,6 @@ package components
 import (
 	"context"
 	"fmt"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"math"
-
 	cbContainersV1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
@@ -14,6 +10,7 @@ import (
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"math"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -36,11 +33,13 @@ var (
 type ResolverDeploymentK8sObject struct {
 	// Namespace is the Namespace in which the Deployment will be created.
 	Namespace string
+	APIReader client.Reader
 }
 
-func NewResolverDeploymentK8sObject() *ResolverDeploymentK8sObject {
+func NewResolverDeploymentK8sObject(apiReader client.Reader) *ResolverDeploymentK8sObject {
 	return &ResolverDeploymentK8sObject{
 		Namespace: commonState.DataPlaneNamespaceName,
+		APIReader: apiReader,
 	}
 }
 
@@ -234,25 +233,11 @@ func (obj *ResolverDeploymentK8sObject) mutateVolumesMounts(container *coreV1.Co
 }
 
 func (obj *ResolverDeploymentK8sObject) getDynamicReplicasCount(nodesToReplicasRatio int32) (*int32, error) {
-	// Get the in-cluster config
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, fmt.Errorf("error getting in-cluster config: %v", err)
-	}
-
-	// Create a Kubernetes client
-	clientSet, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, fmt.Errorf("error creating Kubernetes client: %v", err)
-	}
-
-	// Get the list of nodes in the cluster
-	nodes, err := clientSet.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
-	if err != nil {
+	nodesList := &coreV1.NodeList{}
+	if err := obj.APIReader.List(context.Background(), nodesList); err != nil || nodesList.Items == nil || len(nodesList.Items) < 1 {
 		return nil, fmt.Errorf("error getting list of nodes: %v", err)
 	}
-
-	nodesCount := int32(math.Ceil(float64(len(nodes.Items)) / float64(nodesToReplicasRatio)))
+	nodesCount := int32(math.Ceil(float64(len(nodesList.Items)) / float64(nodesToReplicasRatio)))
 
 	return &nodesCount, nil
 }
