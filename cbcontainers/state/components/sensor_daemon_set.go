@@ -432,6 +432,7 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrEnvVars(container *coreV1.Contain
 	cndrSpec := agentSpec.Components.Cndr
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
+		WithCommonDataPlane(agentSpec.AccessTokenSecretName).
 		WithEnvVarFromSecret(cndrCompanyCodeVarName, cndrSpec.CompanyCodeSecretName, cndrCompanyCodeKeyName).
 		WithSpec(cndrSpec.Sensor.Env)
 
