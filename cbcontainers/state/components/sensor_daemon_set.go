@@ -458,6 +458,9 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.C
 		commonState.MutateVolumeMount(container, index, fmt.Sprintf("%v", hostPath.Path), false)
 	}
 
+	// mutate mount for root-cas volume, for https server certificates
+	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
+
 	// mutate mount for container-runtimes unix sockets files for the container tracking processor
 	for name, mountPath := range supportedContainerRuntimes {
 		index := commonState.EnsureAndGetVolumeMountIndexForName(container, name)
