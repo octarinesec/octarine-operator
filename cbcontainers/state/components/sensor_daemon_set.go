@@ -449,7 +449,11 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumes(templatePodSpec *coreV1.P
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
-	if container.VolumeMounts == nil || len(container.VolumeMounts) != (len(cndrHostPaths)+len(supportedContainerRuntimes)) {
+	expectedLength := len(cndrHostPaths) +
+		len(supportedContainerRuntimes) +
+		1 //root-ca
+
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != expectedLength {
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
 
@@ -459,14 +463,14 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.C
 		commonState.MutateVolumeMount(container, index, fmt.Sprintf("%v", hostPath.Path), false)
 	}
 
-	// mutate mount for root-cas volume, for https server certificates
-	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
-
 	// mutate mount for container-runtimes unix sockets files for the container tracking processor
 	for name, mountPath := range supportedContainerRuntimes {
 		index := commonState.EnsureAndGetVolumeMountIndexForName(container, name)
 		commonState.MutateVolumeMount(container, index, mountPath, true)
 	}
+
+	// mutate mount for root-cas volume, for https server certificates
+	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
