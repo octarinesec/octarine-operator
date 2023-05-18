@@ -433,6 +433,7 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrEnvVars(container *coreV1.Contain
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
 		WithCommonDataPlane(agentSpec.AccessTokenSecretName).
+		WithEventsGateway(&agentSpec.Gateways.HardeningEventsGateway).
 		WithEnvVarFromSecret(cndrCompanyCodeVarName, cndrSpec.CompanyCodeSecretName, cndrCompanyCodeKeyName).
 		WithSpec(cndrSpec.Sensor.Env)
 
@@ -448,7 +449,11 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumes(templatePodSpec *coreV1.P
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
-	if container.VolumeMounts == nil || len(container.VolumeMounts) != (len(cndrHostPaths)+len(supportedContainerRuntimes)) {
+	expectedLength := len(cndrHostPaths) +
+		len(supportedContainerRuntimes) +
+		1 //root-ca
+
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != expectedLength {
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
 
@@ -463,6 +468,9 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.C
 		index := commonState.EnsureAndGetVolumeMountIndexForName(container, name)
 		commonState.MutateVolumeMount(container, index, mountPath, true)
 	}
+
+	// mutate mount for root-cas volume, for https server certificates
+	commonState.MutateVolumeMountToIncludeRootCAsVolumeMount(container)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
