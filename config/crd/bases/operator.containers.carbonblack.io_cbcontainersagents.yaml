@@ -5653,6 +5653,10 @@ spec:
                               type: string
                             default: {}
                             type: object
+                          nodesToReplicasRatio:
+                            default: 5
+                            format: int32
+                            type: integer
                           podTemplateAnnotations:
                             additionalProperties:
                               type: string
@@ -5707,7 +5711,6 @@ spec:
                                 type: integer
                             type: object
                           replicasCount:
-                            default: 1
                             format: int32
                             type: integer
                           resources:

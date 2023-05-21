@@ -119,7 +119,7 @@ func main() {
 		Scheme:           mgr.GetScheme(),
 		K8sVersion:       k8sVersion,
 		ClusterProcessor: processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator(), operator.NewEnvVersionProvider(), clusterIdentifier),
-		StateApplier:     state.NewStateApplier(agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
+		StateApplier:     state.NewStateApplier(mgr.GetAPIReader(), agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")
 		os.Exit(1)

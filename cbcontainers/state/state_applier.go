@@ -41,7 +41,7 @@ type StateApplier struct {
 	log                             logr.Logger
 }
 
-func NewStateApplier(agentComponentApplier AgentComponentApplier, k8sVersion string, tlsSecretsValuesCreator components.TlsSecretsValuesCreator, log logr.Logger) *StateApplier {
+func NewStateApplier(apiReader client.Reader, agentComponentApplier AgentComponentApplier, k8sVersion string, tlsSecretsValuesCreator components.TlsSecretsValuesCreator, log logr.Logger) *StateApplier {
 	return &StateApplier{
 		desiredConfigMap:                components.NewConfigurationK8sObject(),
 		desiredRegistrySecret:           components.NewRegistrySecretK8sObject(),
@@ -53,7 +53,7 @@ func NewStateApplier(agentComponentApplier AgentComponentApplier, k8sVersion str
 		enforcerValidatingWebhook:       components.NewEnforcerValidatingWebhookK8sObject(k8sVersion),
 		enforcerMutatingWebhook:         components.NewEnforcerMutatingWebhookK8sObject(k8sVersion),
 		stateReporterDeployment:         components.NewStateReporterDeploymentK8sObject(),
-		resolverDeployment:              components.NewResolverDeploymentK8sObject(),
+		resolverDeployment:              components.NewResolverDeploymentK8sObject(apiReader),
 		resolverService:                 components.NewResolverServiceK8sObject(),
 		sensorDaemonSet:                 components.NewSensorDaemonSetK8sObject(),
 		imageScanningReporterDeployment: components.NewImageScanningReporterDeploymentK8sObject(),

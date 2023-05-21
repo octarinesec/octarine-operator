@@ -1,6 +1,8 @@
 package controllers
 
-import cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+import (
+	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+)
 
 func (r *CBContainersAgentController) setRuntimeProtectionComponentsDefaults(runtime *cbcontainersv1.CBContainersRuntimeProtectionSpec) error {
 	if runtime.Enabled == nil {
@@ -43,9 +45,8 @@ func (r *CBContainersAgentController) setRuntimeResolverDefaults(runtimeResolver
 		runtimeResolver.Env = make(map[string]string)
 	}
 
-	if runtimeResolver.ReplicasCount == nil {
-		defaultReplicaCount := int32(1)
-		runtimeResolver.ReplicasCount = &defaultReplicaCount
+	if runtimeResolver.NodesToReplicasRatio == 0 {
+		runtimeResolver.NodesToReplicasRatio = 5
 	}
 
 	setDefaultPrometheus(&runtimeResolver.Prometheus)
