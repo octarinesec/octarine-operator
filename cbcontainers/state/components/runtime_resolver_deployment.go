@@ -237,7 +237,7 @@ func (obj *ResolverDeploymentK8sObject) getDynamicReplicasCount(nodesToReplicasR
 	if err := obj.APIReader.List(context.Background(), nodesList); err != nil || nodesList.Items == nil || len(nodesList.Items) < 1 {
 		return nil, fmt.Errorf("error getting list of nodes: %v", err)
 	}
-	nodesCount := int32(math.Ceil(float64(len(nodesList.Items)) / float64(nodesToReplicasRatio)))
+	replicasCount := int32(math.Ceil(float64(len(nodesList.Items)) / float64(nodesToReplicasRatio)))
 
-	return &nodesCount, nil
+	return &replicasCount, nil
 }
