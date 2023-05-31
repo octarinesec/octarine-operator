@@ -5,6 +5,13 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 )
 
+const (
+	// Source: https://github.com/containers/storage/blob/main/docs/containers-storage.conf.5.md
+
+	crioDefaultStoragePathCRD = "/var/lib/containers/storage"
+	crioDefaultConfigPathCRD  = "/etc/containers/storage.conf"
+)
+
 func (r *CBContainersAgentController) setClusterScanningComponentsDefaults(clusterScanning *cbcontainersv1.CBContainersClusterScanningSpec) error {
 	if clusterScanning.Enabled == nil {
 		clusterScanning.Enabled = &trueRef
@@ -92,6 +99,13 @@ func (r *CBContainersAgentController) setClusterScannerAgentDefaults(clusterScan
 		if err := validateClusterScannerK8sContainerEngineSpec(clusterScannerAgent.K8sContainerEngine); err != nil {
 			return err
 		}
+	}
+
+	if clusterScannerAgent.K8sContainerEngine.CRIO.ConfigPath == "" {
+		clusterScannerAgent.K8sContainerEngine.CRIO.ConfigPath = crioDefaultConfigPathCRD
+	}
+	if clusterScannerAgent.K8sContainerEngine.CRIO.StoragePath == "" {
+		clusterScannerAgent.K8sContainerEngine.CRIO.StoragePath = crioDefaultStoragePathCRD
 	}
 
 	return nil

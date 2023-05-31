@@ -3140,12 +3140,33 @@ spec:
                           type: object
                         k8sContainerEngine:
                           properties:
+                            CRIO:
+                              description: CRIO holds configuration values specific
+                                to the CRI-O container engine
+                              properties:
+                                configPath:
+                                  description: ConfigPath can be used to set the path
+                                    to CRI-O's configuration file If not specified,
+                                    the default location for CRI-O is used.
+                                  type: string
+                                storagePath:
+                                  description: StoragePath can be used to set the
+                                    path used by CRI-O to store images on each node.
+                                    This path will be mounted on the cluster scanner
+                                    to provide access to the node's images. If the
+                                    path does not match what CRI-O uses on the nodes,
+                                    then images will not be found and scanned as expected.
+                                    If not specified, the default location of CRI-O
+                                    is used.
+                                  type: string
+                              type: object
                             endpoint:
                               type: string
                             engineType:
                               enum:
                               - containerd
                               - docker-daemon
+                              - cri-o
                               type: string
                           type: object
                         labels:
