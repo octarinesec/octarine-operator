@@ -28,7 +28,7 @@ const (
 
 	desiredConnectionTimeoutSeconds = 60
 
-	// k8s container runtime/contaienr engine endpoints
+	// k8s container runtime/container engine endpoints
 	containerdRuntimeEndpoint         = "/var/run/containerd/containerd.sock"
 	microk8sContainerdRuntimeEndpoint = "/var/snap/microk8s/common/run/containerd.sock"
 	k3sContainerdRuntimeEndpoint      = "/run/k3s/containerd/containerd.sock"
@@ -36,7 +36,16 @@ const (
 	dockerSock                        = "/var/run/docker.sock"
 	crioRuntimeEndpoint               = "/var/run/crio/crio.sock"
 
+	// configuredContainerRuntimeVolumeName is used when the customer has specified a non-standard runtime endpoint in the CRD
+	// as this means we need a special volume+mount for this endpoint
 	configuredContainerRuntimeVolumeName = "configured-container-runtime-endpoint"
+
+	// CRI-O specific volumes since the socket is not enough to read image blobs from the host
+
+	crioStorageVolumeName  = "crio-storage"
+	crioConfigVolumeName   = "crio-config"
+	crioStorageMountedPath = "/var/lib/containers/storage"
+	crioConfigMountedPath  = "/etc/containers/storage.conf"
 
 	cndrCompanyCodeVarName = "CB_COMPANY_CODES"
 	cndrCompanyCodeKeyName = "companyCode"
@@ -200,6 +209,10 @@ func (obj *SensorDaemonSetK8sObject) getExpectedVolumeCount(agentSpec *cbContain
 		if clusterScannerSpec.K8sContainerEngine.Endpoint != "" {
 			expectedVolumesCount += 1
 		}
+
+		// cri-o specific mounts to use the containers/storage library with the host's storage area
+		// one mount is for the image store on the host and one is for the storage.config => we expect 2 more
+		expectedVolumesCount += 2
 	}
 
 	if isCndrEnbaled(agentSpec.Components.Cndr) {
@@ -529,6 +542,22 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec
 		templatePodSpec.Volumes[routeIndex].HostPath.Path = clusterScannerSpec.K8sContainerEngine.Endpoint
 	}
 
+	// Ensure we have volumes for CRI-O
+	crioStorageIx := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, crioStorageVolumeName)
+	if clusterScannerSpec.K8sContainerEngine.CRIO.StoragePath != "" {
+		if templatePodSpec.Volumes[crioStorageIx].HostPath == nil {
+			templatePodSpec.Volumes[crioStorageIx].HostPath = &coreV1.HostPathVolumeSource{}
+		}
+		templatePodSpec.Volumes[crioStorageIx].HostPath.Path = clusterScannerSpec.K8sContainerEngine.CRIO.StoragePath
+	}
+	crioConfigIx := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, crioConfigVolumeName)
+	if clusterScannerSpec.K8sContainerEngine.CRIO.ConfigPath != "" {
+		if templatePodSpec.Volumes[crioConfigIx].HostPath == nil {
+			templatePodSpec.Volumes[crioConfigIx].HostPath = &coreV1.HostPathVolumeSource{}
+		}
+		templatePodSpec.Volumes[crioConfigIx].HostPath.Path = clusterScannerSpec.K8sContainerEngine.CRIO.ConfigPath
+	}
+
 	// mutate root-cas volume, for https certificates
 	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
@@ -548,6 +577,13 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container
 		index := commonState.EnsureAndGetVolumeMountIndexForName(container, name)
 		commonState.MutateVolumeMount(container, index, mountPath, true)
 	}
+
+	// mutate mounts for the CRI-O engine storage
+	crioStorageIx := commonState.EnsureAndGetVolumeMountIndexForName(container, crioStorageVolumeName)
+	// The storage MUST be R/W as file-based locks are used to enable concurrent access to the same storage from both CRI-O and our agent
+	commonState.MutateVolumeMount(container, crioStorageIx, crioStorageMountedPath, false)
+	crioConfigIx := commonState.EnsureAndGetVolumeMountIndexForName(container, crioConfigVolumeName)
+	commonState.MutateVolumeMount(container, crioConfigIx, crioConfigMountedPath, true)
 }
 
 // The cluster scanner uses the container runtime unix socket to fetch the running containers to scan.
