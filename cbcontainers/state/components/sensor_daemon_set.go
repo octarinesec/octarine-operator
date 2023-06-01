@@ -572,7 +572,9 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
 	containerRuntimes := getClusterScannerContainerRuntimes(&agentSpec.Components.ClusterScanning.ClusterScannerAgent)
 
-	if container.VolumeMounts == nil || len(container.VolumeMounts) != len(containerRuntimes)+1 {
+	// We expect to see
+	// container runtimes mounts + root CA mount + 2 mounts for CRI-O
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != (len(containerRuntimes)+1+2) {
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
 
