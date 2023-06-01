@@ -3147,7 +3147,7 @@ spec:
                                 configPath:
                                   description: ConfigPath can be used to set the path
                                     to CRI-O's configuration file If not specified,
-                                    the default location for CRI-O is used.
+                                    the default location for CRI-O is used (/etc/containers/storage.conf).
                                   type: string
                                 storagePath:
                                   description: StoragePath can be used to set the
@@ -3157,7 +3157,7 @@ spec:
                                     path does not match what CRI-O uses on the nodes,
                                     then images will not be found and scanned as expected.
                                     If not specified, the default location of CRI-O
-                                    is used.
+                                    is used (/var/lib/containers/storage).
                                   type: string
                               type: object
                             endpoint:
