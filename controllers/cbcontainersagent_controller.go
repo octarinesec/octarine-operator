@@ -98,7 +98,7 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	if err := r.setAgentDefaults(&cbContainersAgent.Spec); err != nil {
-		return ctrl.Result{}, fmt.Errorf("faild to set defaults to cluster CR: %v", err)
+		return ctrl.Result{}, fmt.Errorf("failed to set defaults to cluster CR: %v", err)
 	}
 
 	setOwner := func(controlledResource metav1.Object) error {

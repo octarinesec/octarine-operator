@@ -2,7 +2,7 @@
 
 ## Developer Guide
 
-SKD version = 1.27.0
+SDK version = 1.27.0
 
 ### Deploying the operator without using an image
 
