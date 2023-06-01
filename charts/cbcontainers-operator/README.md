@@ -60,11 +60,11 @@ If you want to manage the CRD in a different way and don't want to install it al
 ### HTTP Proxy
 
 If you want to use an HTTP proxy for the communication with the CBC backend you need to set 3 environment variables.
-These are exposed via the `spec.operator.proxy` parameters in the `values.yaml` file:
+These are exposed via the `Values.operator.proxy` parameters in the `values.yaml` file:
 
-- `spec.operator.proxy.http`
-- `spec.operator.proxy.https`
-- `spec.rbacProxy.proxy.noProxy`
+- `Values.operator.proxy.http`
+- `Values.operator.proxy.https`
+- `Values.operator.proxy.noProxy`
 
 If you want to use HTTP proxy you need to set ALL 3 values.
 For more info see <https://github.com/octarinesec/octarine-operator/tree/master#using-http-proxy>.
