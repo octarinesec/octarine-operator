@@ -73,6 +73,7 @@ rules:
       - nodes
       - pods
       - replicasets
+      - replicationcontrollers
       - services
     verbs:
       - list
