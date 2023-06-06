@@ -42,12 +42,15 @@ const (
 
 	// CRI-O specific volumes since the socket is not enough to read image blobs from the host
 
-	crioStorageVolumeName = "crio-storage"
-	crioConfigVolumeName  = "crio-config"
-	// Source: https://github.com/containers/storage/blob/main/docs/containers-storage.conf.5.md
+	crioStorageVolumeName       = "crio-storage"
+	crioStorageConfigVolumeName = "crio-storage-config"
+	crioConfigVolumeName        = "crio-config"
 
-	crioStorageDefaultPath = "/var/lib/containers/storage"
-	crioConfigDefaultPath  = "/etc/containers/storage.conf"
+	// Source: https://github.com/containers/storage/blob/main/docs/containers-storage.conf.5.md and https://github.com/cri-o/cri-o/blob/main/docs/crio.conf.5.md
+
+	crioStorageDefaultPath       = "/var/lib/containers"
+	crioStorageConfigDefaultPath = "/etc/containers/storage.conf"
+	crioConfigDefaultPath        = "/etc/crio/crio.conf"
 
 	cndrCompanyCodeVarName = "CB_COMPANY_CODES"
 	cndrCompanyCodeKeyName = "companyCode"
@@ -213,8 +216,8 @@ func (obj *SensorDaemonSetK8sObject) getExpectedVolumeCount(agentSpec *cbContain
 		}
 
 		// cri-o specific mounts to use the containers/storage library with the host's storage area
-		// one mount is for the image store on the host and one is for the storage.config => we expect 2 more
-		expectedVolumesCount += 2
+		// one mount is for the image store on the host, one is for the storage.conf and one is for crio.conf => we expect 3 more
+		expectedVolumesCount += 3
 	}
 
 	if isCndrEnbaled(agentSpec.Components.Cndr) {
@@ -489,7 +492,6 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.C
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
-
 	clusterScannerSpec := &agentSpec.Components.ClusterScanning.ClusterScannerAgent
 
 	customEnvs := []coreV1.EnvVar{
@@ -555,6 +557,16 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec
 	}
 	templatePodSpec.Volumes[crioStorageIx].HostPath.Path = storagePath
 
+	crioStorageConfigIx := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, crioStorageConfigVolumeName)
+	storageConfigPath := clusterScannerSpec.K8sContainerEngine.CRIO.StorageConfigPath
+	if storageConfigPath == "" {
+		storageConfigPath = crioStorageConfigDefaultPath
+	}
+	if templatePodSpec.Volumes[crioStorageConfigIx].HostPath == nil {
+		templatePodSpec.Volumes[crioStorageConfigIx].HostPath = &coreV1.HostPathVolumeSource{}
+	}
+	templatePodSpec.Volumes[crioStorageConfigIx].HostPath.Path = storageConfigPath
+
 	crioConfigIx := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, crioConfigVolumeName)
 	configPath := clusterScannerSpec.K8sContainerEngine.CRIO.ConfigPath
 	if configPath == "" {
@@ -564,6 +576,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec
 		templatePodSpec.Volumes[crioConfigIx].HostPath = &coreV1.HostPathVolumeSource{}
 	}
 	templatePodSpec.Volumes[crioConfigIx].HostPath.Path = configPath
+	// End CRI-O config
 
 	// mutate root-cas volume, for https certificates
 	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
@@ -573,8 +586,8 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container
 	containerRuntimes := getClusterScannerContainerRuntimes(&agentSpec.Components.ClusterScanning.ClusterScannerAgent)
 
 	// We expect to see
-	// container runtimes mounts + root CA mount + 2 mounts for CRI-O
-	if container.VolumeMounts == nil || len(container.VolumeMounts) != (len(containerRuntimes)+1+2) {
+	// container runtimes mounts + root CA mount + 3 mounts for CRI-O
+	if container.VolumeMounts == nil || len(container.VolumeMounts) != (len(containerRuntimes)+1+3) {
 		container.VolumeMounts = make([]coreV1.VolumeMount, 0)
 	}
 
@@ -591,6 +604,8 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container
 	crioStorageIx := commonState.EnsureAndGetVolumeMountIndexForName(container, crioStorageVolumeName)
 	// The storage MUST be R/W as file-based locks are used to enable concurrent access to the same storage from both CRI-O and our agent
 	commonState.MutateVolumeMount(container, crioStorageIx, crioStorageDefaultPath, false)
+	crioStorageConfigIx := commonState.EnsureAndGetVolumeMountIndexForName(container, crioStorageConfigVolumeName)
+	commonState.MutateVolumeMount(container, crioStorageConfigIx, crioStorageConfigDefaultPath, true)
 	crioConfigIx := commonState.EnsureAndGetVolumeMountIndexForName(container, crioConfigVolumeName)
 	commonState.MutateVolumeMount(container, crioConfigIx, crioConfigDefaultPath, true)
 }

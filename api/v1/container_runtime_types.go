@@ -32,8 +32,16 @@ type CRIOSpec struct {
 	// +kubebuilder:validation:Optional
 	StoragePath string `json:"storagePath,omitempty"`
 
-	// ConfigPath can be used to set the path to CRI-O's configuration file
-	// If not specified, the default location for CRI-O is used (/etc/containers/storage.conf).
+	// StorageConfigPath can be used to set the path to the storage configuration file used by CRI-O (if any).
+	// If not specified, the default location for storage is used (/etc/containers/storage.conf).
+	// The files does not need to exist.
+	// See https://github.com/containers/storage/blob/main/docs/containers-storage.conf.5.md for more information
+	// +kubebuilder:validation:Optional
+	StorageConfigPath string `json:"storageConfigPath,omitempty"`
+
+	// ConfigPath can be used to set the path to CRI-O's configuration file.
+	// If not specified, the default location is used (/etc/crio/crio.conf).
+	// See https://github.com/cri-o/cri-o/blob/main/docs/crio.conf.5.md for more information.
 	// +kubebuilder:validation:Optional
 	ConfigPath string `json:"configPath,omitempty"`
 }
