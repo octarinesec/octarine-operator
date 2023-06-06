@@ -81,6 +81,7 @@ rules:
       - networking.k8s.io
       - rbac
       - rbac.authorization.k8s.io
+      - apps.openshift.io
     resources:
       - clusterrolebindings
       - cronjobs
@@ -97,6 +98,7 @@ rules:
       - rolebindings
       - services
       - statefulsets
+      - deploymentconfigs
     verbs:
       - watch
 ---
