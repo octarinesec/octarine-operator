@@ -1845,12 +1845,44 @@ spec:
                           k8sContainerEngine:
                             default: {}
                             properties:
+                              CRIO:
+                                default: { }
+                                description: CRIO holds configuration values specific
+                                  to the CRI-O container engine
+                                properties:
+                                  configPath:
+                                    description: ConfigPath can be used to set the
+                                      path to CRI-O's configuration file. If not specified,
+                                      the default location is used (/etc/crio/crio.conf).
+                                      See https://github.com/cri-o/cri-o/blob/main/docs/crio.conf.5.md
+                                      for more information.
+                                    type: string
+                                  storageConfigPath:
+                                    description: StorageConfigPath can be used to
+                                      set the path to the storage configuration file
+                                      used by CRI-O (if any). If not specified, the
+                                      default location for storage is used (/etc/containers/storage.conf).
+                                      The files does not need to exist. See https://github.com/containers/storage/blob/main/docs/containers-storage.conf.5.md
+                                      for more information
+                                    type: string
+                                  storagePath:
+                                    description: StoragePath can be used to set the
+                                      path used by CRI-O to store images on each node.
+                                      This path will be mounted on the cluster scanner
+                                      to provide access to the node's images. If the
+                                      path does not match what CRI-O uses on the nodes,
+                                      then images will not be found and scanned as
+                                      expected. If not specified, the default location
+                                      of CRI-O is used (/var/lib/containers/storage).
+                                    type: string
+                                type: object
                               endpoint:
                                 type: string
                               engineType:
                                 enum:
                                 - containerd
                                 - docker-daemon
+                                - cri-o
                                 type: string
                             type: object
                           labels:

@@ -87,30 +87,34 @@ func (r *CBContainersAgentController) setClusterScannerAgentDefaults(clusterScan
 
 	setDefaultFileProbes(&clusterScannerAgent.Probes)
 
-	emptyK8sContainerEngineSpec := cbcontainersv1.K8sContainerEngineSpec{}
-	if clusterScannerAgent.K8sContainerEngine != emptyK8sContainerEngineSpec {
-		if err := validateClusterScannerK8sContainerEngineSpec(clusterScannerAgent.K8sContainerEngine); err != nil {
-			return err
-		}
+	if err := validateClusterScannerK8sContainerEngineSpec(clusterScannerAgent.K8sContainerEngine); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func validateClusterScannerK8sContainerEngineSpec(spec cbcontainersv1.K8sContainerEngineSpec) error {
-	if spec.Endpoint == "" {
-		return fmt.Errorf("k8s container engine endpoint must be provided if configuring k8s container engine option")
+	if spec.Endpoint == "" && spec.EngineType != "" {
+		return fmt.Errorf("k8s container engine endpoint must be provided if the k8s container engine type has been set")
 	}
 
-	if spec.EngineType == "" {
-		return fmt.Errorf("k8s container engine type must be provided if configuring k8s container engine option")
+	if spec.Endpoint != "" && spec.EngineType == "" {
+		return fmt.Errorf("k8s container engine type must be provided if the container endpoint has been set")
 	}
 
-	for _, engineType := range cbcontainersv1.SupportedK8sEngineTypes {
-		if engineType == spec.EngineType {
-			return nil
+	if spec.EngineType != "" {
+		found := false
+		for _, engineType := range cbcontainersv1.SupportedK8sEngineTypes {
+			if engineType == spec.EngineType {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("invalid engine type %v provided", spec.EngineType)
 		}
 	}
 
-	return fmt.Errorf("invalid engine type %v provided", spec.EngineType)
+	return nil
 }
