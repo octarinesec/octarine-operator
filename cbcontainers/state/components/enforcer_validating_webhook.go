@@ -216,6 +216,8 @@ func (obj *EnforcerValidatingWebhookK8sObject) getResourcesList() []string {
 		"cronjobs",
 		"ingresses",
 		"customresourcedefinitions",
+		"deploymentconfigs",
+		"routes",
 	}
 }
 
