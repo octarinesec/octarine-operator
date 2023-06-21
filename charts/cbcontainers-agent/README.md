@@ -55,7 +55,7 @@ If you want to change that set the `agentNamespce` value in your `values.yaml` f
 In order for the agent components to function correctly and be able to communicate with the CBC backend an access token is required.
 
 This token is located in a secret.
-By default the secret is named `"cbcontainers-access-token"`, but that is configurable via the `accessTokenSecretName` property.
+By default, the secret is named `"cbcontainers-access-token"`, but that is configurable via the `accessTokenSecretName` property.
 
 If that secret does not exist, the operator will not start any of the agent components.
 
