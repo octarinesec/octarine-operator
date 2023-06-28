@@ -6036,6 +6036,8 @@ spec:
                 type: object
               namespace:
                 default: cbcontainers-dataplane
+                description: Namespace is deprecated and the value has no effect.
+                  Do not use.
                 type: string
               version:
                 type: string

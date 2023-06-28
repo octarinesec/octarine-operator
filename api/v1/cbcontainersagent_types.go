@@ -30,7 +30,12 @@ type CBContainersAgentSpec struct {
 	ClusterName string                   `json:"clusterName,required"`
 	Version     string                   `json:"version,required"`
 	Gateways    CBContainersGatewaysSpec `json:"gateways,required"`
+	// The field below remains to avoid moving the CRD from v1 to v2.
+	// It MUST not be used as agent namespace should be controlled outside the operator itself.
+	// This is because a custom namespace in the CRD requires high privileges by the operator across the whole cluster to be able to "switch" namespaces on demand.
+
 	// +kubebuilder:default:="cbcontainers-dataplane"
+	// Namespace is deprecated and the value has no effect. Do not use.
 	Namespace string `json:"namespace,omitempty"`
 	// +kubebuilder:default:="cbcontainers-access-token"
 	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
