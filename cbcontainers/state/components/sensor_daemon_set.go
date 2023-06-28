@@ -120,7 +120,7 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 		daemonSet.Spec.Template.Spec.HostPID = false
 	}
 
-	daemonSet.Namespace = agentSpec.Namespace
+	daemonSet.Namespace = obj.Namespace
 	obj.mutateLabels(daemonSet, agentSpec)
 	obj.mutateAnnotations(daemonSet, agentSpec)
 	obj.mutateVolumes(daemonSet, agentSpec)

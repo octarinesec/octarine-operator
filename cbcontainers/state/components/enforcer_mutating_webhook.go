@@ -65,10 +65,10 @@ func (obj *EnforcerMutatingWebhookK8sObject) MutateK8sObject(k8sObject client.Ob
 
 	enforcer := &agentSpec.Components.Basic.Enforcer
 	obj.mutateWebhookConfigurationLabels(webhookConfiguration, enforcer)
-	return obj.mutateWebhooks(webhookConfiguration, enforcer, agentSpec.Namespace)
+	return obj.mutateWebhooks(webhookConfiguration, enforcer)
 }
 
-func (obj *EnforcerMutatingWebhookK8sObject) mutateWebhooks(webhookConfiguration adapters.WebhookConfigurationAdapter, enforcer *cbcontainersv1.CBContainersEnforcerSpec, serviceNamespace string) error {
+func (obj *EnforcerMutatingWebhookK8sObject) mutateWebhooks(webhookConfiguration adapters.WebhookConfigurationAdapter, enforcer *cbcontainersv1.CBContainersEnforcerSpec) error {
 	var resourcesWebhookObj adapters.WebhookAdapter
 
 	initializeWebhooks := false
@@ -93,7 +93,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) mutateWebhooks(webhookConfiguration
 		resourcesWebhookObj = updatedWebhooks[0]
 	}
 
-	obj.mutateResourcesWebhook(resourcesWebhookObj, enforcer.WebhookTimeoutSeconds, enforcer.FailurePolicy, serviceNamespace)
+	obj.mutateResourcesWebhook(resourcesWebhookObj, enforcer.WebhookTimeoutSeconds, enforcer.FailurePolicy)
 	return nil
 }
 
@@ -107,7 +107,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) findWebhookByName(webhooks []adapte
 	return nil, false
 }
 
-func (obj *EnforcerMutatingWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook adapters.WebhookAdapter, timeoutSeconds int32, failurePolicy, serviceNamespace string) {
+func (obj *EnforcerMutatingWebhookK8sObject) mutateResourcesWebhook(resourcesWebhook adapters.WebhookAdapter, timeoutSeconds int32, failurePolicy string) {
 	resourcesWebhook.SetName(MutatingWebhookName)
 	resourcesWebhook.SetFailurePolicy(failurePolicy)
 	resourcesWebhook.SetSideEffects(MutatingWebhookSideEffect)
@@ -123,7 +123,7 @@ func (obj *EnforcerMutatingWebhookK8sObject) mutateResourcesWebhook(resourcesWeb
 	}
 	resourcesWebhook.SetCABundle(obj.tlsSecretValues.CaCert)
 	resourcesWebhook.SetServiceName(EnforcerName)
-	resourcesWebhook.SetServiceNamespace(serviceNamespace)
+	resourcesWebhook.SetServiceNamespace(obj.ServiceNamespace)
 	resourcesWebhook.SetServicePath(&MutatingWebhookPath)
 }
 

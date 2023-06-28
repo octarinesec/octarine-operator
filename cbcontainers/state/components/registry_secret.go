@@ -46,7 +46,7 @@ func (obj *RegistrySecretK8sObject) MutateK8sObject(k8sObject client.Object, spe
 
 	secret.Type = obj.registrySecretValues.Type
 	secret.Data = obj.registrySecretValues.Data
-	secret.Namespace = spec.Namespace
+	secret.Namespace = obj.Namespace
 
 	return nil
 }

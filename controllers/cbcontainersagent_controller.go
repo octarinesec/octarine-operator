@@ -52,6 +52,8 @@ type CBContainersAgentController struct {
 	ClusterProcessor AgentProcessor
 	StateApplier     StateApplier
 	K8sVersion       string
+	// Namespace is the kubernetes namespace for all agent components
+	Namespace string
 }
 
 func (r *CBContainersAgentController) getContainersAgentObject(ctx context.Context) (*cbcontainersv1.CBContainersAgent, error) {
@@ -137,7 +139,7 @@ func (r *CBContainersAgentController) getRegistrySecretValues(ctx context.Contex
 }
 
 func (r *CBContainersAgentController) getAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (string, error) {
-	accessTokenSecretNamespacedName := types.NamespacedName{Name: cbContainersCluster.Spec.AccessTokenSecretName, Namespace: cbContainersCluster.Spec.Namespace}
+	accessTokenSecretNamespacedName := types.NamespacedName{Name: cbContainersCluster.Spec.AccessTokenSecretName, Namespace: r.Namespace}
 	accessTokenSecret := &corev1.Secret{}
 	if err := r.Get(ctx, accessTokenSecretNamespacedName, accessTokenSecret); err != nil {
 		return "", fmt.Errorf("couldn't find access token secret k8s object: %v", err)

@@ -39,9 +39,10 @@ type StateApplier struct {
 	imageScanningReporterService    *components.ImageScanningReporterServiceK8sObject
 	applier                         AgentComponentApplier
 	log                             logr.Logger
+	agentNamespace                  string
 }
 
-func NewStateApplier(apiReader client.Reader, agentComponentApplier AgentComponentApplier, k8sVersion string, tlsSecretsValuesCreator components.TlsSecretsValuesCreator, log logr.Logger) *StateApplier {
+func NewStateApplier(apiReader client.Reader, agentComponentApplier AgentComponentApplier, k8sVersion, agentNamespace string, tlsSecretsValuesCreator components.TlsSecretsValuesCreator, log logr.Logger) *StateApplier {
 	return &StateApplier{
 		desiredConfigMap:                components.NewConfigurationK8sObject(),
 		desiredRegistrySecret:           components.NewRegistrySecretK8sObject(),
@@ -60,6 +61,7 @@ func NewStateApplier(apiReader client.Reader, agentComponentApplier AgentCompone
 		imageScanningReporterService:    components.NewImageScanningReporterServiceK8sObject(),
 		applier:                         agentComponentApplier,
 		log:                             log,
+		agentNamespace:                  agentNamespace,
 	}
 }
 
@@ -69,13 +71,7 @@ func (c *StateApplier) GetPriorityClassEmptyK8sObject() client.Object {
 
 func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, registrySecret *models.RegistrySecretValues, setOwner applymentOptions.OwnerSetter) (bool, error) {
 	applyOptions := applymentOptions.NewApplyOptions().SetOwnerSetter(setOwner)
-
-	// The namespace field of the agent spec should always be populated, because it has a default value
-	// but just in case include this check here in case it turns out to be empty in the future.
-	// By default all objects have the "cbcontainers-dataplane" as namespace.
-	if agentSpec.Namespace != "" {
-		c.setNamespace(agentSpec.Namespace)
-	}
+	c.setNamespace(c.agentNamespace)
 
 	coreMutated, err := c.applyCoreComponents(ctx, agentSpec, registrySecret, applyOptions)
 	if err != nil {

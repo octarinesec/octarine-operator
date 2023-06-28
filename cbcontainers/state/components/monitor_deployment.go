@@ -76,7 +76,7 @@ func (obj *MonitorDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, 
 		deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
 
-	deployment.Namespace = agentSpec.Namespace
+	deployment.Namespace = obj.Namespace
 	deployment.Spec.Replicas = &MonitorReplicas
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels

@@ -47,7 +47,7 @@ func (obj *EnforcerTlsK8sObject) MutateK8sObject(k8sObject client.Object, spec *
 		return fmt.Errorf("expected Secret K8s object")
 	}
 
-	secret.Namespace = spec.Namespace
+	secret.Namespace = obj.Namespace
 	tlsSecretValues, err := obj.tlsSecretsValuesCreator.CreateTlsSecretsValues(types.NamespacedName{Name: EnforcerName, Namespace: obj.Namespace})
 	if err != nil {
 		return err

@@ -55,7 +55,7 @@ func (obj *ImageScanningReporterDeploymentK8sObject) MutateK8sObject(k8sObject c
 	}
 
 	clusterScanning := &agentSpec.Components.ClusterScanning
-	deployment.Namespace = agentSpec.Namespace
+	deployment.Namespace = obj.Namespace
 	imageScanningReporter := &clusterScanning.ImageScanningReporter
 	obj.initiateDeployment(deployment, agentSpec)
 	obj.mutateLabels(deployment, imageScanningReporter)

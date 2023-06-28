@@ -46,7 +46,7 @@ func (obj *ResolverServiceK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
 	service.Spec.ClusterIP = coreV1.ClusterIPNone
 
-	service.Namespace = agentSpec.Namespace
+	service.Namespace = obj.Namespace
 	service.Spec.Selector = map[string]string{
 		resolverLabelKey: ResolverName,
 	}

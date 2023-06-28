@@ -43,7 +43,7 @@ func (obj *ImageScanningReporterServiceK8sObject) MutateK8sObject(k8sObject clie
 
 	imageScanningReporter := &agentSpec.Components.ClusterScanning.ImageScanningReporter
 
-	service.Namespace = agentSpec.Namespace
+	service.Namespace = obj.Namespace
 	service.Labels = imageScanningReporter.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
 	service.Spec.Selector = map[string]string{

@@ -32,6 +32,8 @@ type ClusterControllerTestMocks struct {
 
 const (
 	MyClusterTokenValue = "my-token-value"
+	// agentNamespace helps validate we don't depend on a hardcoded namespace anywhere
+	agentNamespace = "dummy-namespace"
 )
 
 var (
@@ -70,9 +72,10 @@ func testCBContainersClusterController(t *testing.T, setups ...SetupClusterContr
 	}
 
 	controller := &controllers.CBContainersAgentController{
-		Client: mocksObjects.client,
-		Log:    logrTesting.NewTestLogger(t),
-		Scheme: &runtime.Scheme{},
+		Client:    mocksObjects.client,
+		Log:       logrTesting.NewTestLogger(t),
+		Scheme:    &runtime.Scheme{},
+		Namespace: agentNamespace,
 
 		ClusterProcessor: mocksObjects.ClusterProcessor,
 		StateApplier:     mocksObjects.StateApplier,
@@ -90,7 +93,7 @@ func setupClusterCustomResource(testMocks *ClusterControllerTestMocks) {
 }
 
 func setUpTokenSecretValues(testMocks *ClusterControllerTestMocks) {
-	accessTokenSecretNamespacedName := types.NamespacedName{Name: ClusterAccessTokenSecretName, Namespace: commonState.DataPlaneNamespaceName}
+	accessTokenSecretNamespacedName := types.NamespacedName{Name: ClusterAccessTokenSecretName, Namespace: agentNamespace}
 	testMocks.client.EXPECT().Get(testMocks.ctx, accessTokenSecretNamespacedName, &corev1.Secret{}).
 		Do(func(ctx context.Context, namespacedName types.NamespacedName, secret *corev1.Secret, _ ...interface{}) {
 			secret.Data = map[string][]byte{
@@ -132,7 +135,7 @@ func TestFindingMoreThanOneClusterResourceShouldReturnError(t *testing.T) {
 
 func TestGetTokenSecretErrorShouldReturnError(t *testing.T) {
 	_, err := testCBContainersClusterController(t, setupClusterCustomResource, func(testMocks *ClusterControllerTestMocks) {
-		accessTokenSecretNamespacedName := types.NamespacedName{Name: ClusterAccessTokenSecretName, Namespace: commonState.DataPlaneNamespaceName}
+		accessTokenSecretNamespacedName := types.NamespacedName{Name: ClusterAccessTokenSecretName, Namespace: agentNamespace}
 		testMocks.client.EXPECT().Get(testMocks.ctx, accessTokenSecretNamespacedName, &corev1.Secret{}).Return(fmt.Errorf(""))
 	})
 
@@ -141,7 +144,7 @@ func TestGetTokenSecretErrorShouldReturnError(t *testing.T) {
 
 func TestTokenSecretWithoutTokenValueShouldReturnError(t *testing.T) {
 	_, err := testCBContainersClusterController(t, setupClusterCustomResource, func(testMocks *ClusterControllerTestMocks) {
-		accessTokenSecretNamespacedName := types.NamespacedName{Name: ClusterAccessTokenSecretName, Namespace: commonState.DataPlaneNamespaceName}
+		accessTokenSecretNamespacedName := types.NamespacedName{Name: ClusterAccessTokenSecretName, Namespace: agentNamespace}
 		testMocks.client.EXPECT().Get(testMocks.ctx, accessTokenSecretNamespacedName, &corev1.Secret{}).Return(nil)
 	})
 

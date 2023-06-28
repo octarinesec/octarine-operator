@@ -84,8 +84,7 @@ func (obj *EnforcerDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	if objectsDiffer(deployment.Spec.Template.Spec.ImagePullSecrets, desiredImagePullSecrets) {
 		deployment.Spec.Template.Spec.ImagePullSecrets = desiredImagePullSecrets
 	}
-	obj.Namespace = agentSpec.Namespace
-	deployment.Namespace = agentSpec.Namespace
+	deployment.Namespace = obj.Namespace
 	obj.mutateAnnotations(deployment, enforcer)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, enforcer)

@@ -89,7 +89,7 @@ func (obj *ResolverDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 		}
 	}
 
-	deployment.Namespace = agentSpec.Namespace
+	deployment.Namespace = obj.Namespace
 	deployment.Spec.Replicas = replicasCount
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels

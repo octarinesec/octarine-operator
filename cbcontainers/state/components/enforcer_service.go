@@ -45,7 +45,7 @@ func (obj *EnforcerServiceK8sObject) MutateK8sObject(k8sObject client.Object, ag
 
 	service.Labels = enforcer.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
-	service.Namespace = agentSpec.Namespace
+	service.Namespace = obj.Namespace
 	service.Spec.Selector = map[string]string{
 		EnforcerLabelKey: EnforcerName,
 	}
