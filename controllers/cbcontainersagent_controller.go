@@ -73,16 +73,19 @@ func (r *CBContainersAgentController) getContainersAgentObject(ctx context.Conte
 	return &cbContainersAgentsList.Items[0], nil
 }
 
+// The following values must be kept in-sync with constants for generated RBAC to work properly:
+// - default dataplane namespace (see common.DataPlaneNamespaceName)
+
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersagents,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersagents/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersagents/finalizers,verbs=update
-// +kubebuilder:rbac:groups=core,resources={configmaps,secrets},verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=scheduling.k8s.io,resources=priorityclasses,verbs=*
-// +kubebuilder:rbac:groups={apps,core},resources={deployments,services,daemonsets},verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources={validatingwebhookconfigurations,mutatingwebhookconfigurations},verbs=*
 // +kubebuilder:rbac:groups={core},resources={nodes},verbs=list
 // +kubebuilder:rbac:groups={core},resources={namespaces},verbs=get
 // +kubebuilder:rbac:groups={policy},resources={podsecuritypolicies},verbs=use,resourceNames={cbcontainers-manager-psp}
+// +kubebuilder:rbac:groups={apps,core},resources={deployments,services,daemonsets},namespace=cbcontainers-dataplane,verbs=get;list;watch;create;update;patch;delete;deletecollection
+// +kubebuilder:rbac:groups=core,resources={configmaps,secrets},namespace=cbcontainers-dataplane,verbs=get;list;watch;create;update;patch;delete;deletecollection
 
 func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("\n\n")
@@ -96,6 +99,7 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	if cbContainersAgent == nil {
+		r.Log.Info("No CBContainersAgent object found")
 		return ctrl.Result{}, nil
 	}
 

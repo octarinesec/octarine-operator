@@ -82,6 +82,14 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
+	setupLog.Info("Getting the namespace where operator is running and which should host the agent")
+	operatorNamespace := os.Getenv("OPERATOR_NAMESPACE")
+	if operatorNamespace == "" {
+		setupLog.Info(fmt.Sprintf("Operator namespace variable was not found. Falling back to default %s", common.DataPlaneNamespaceName))
+		operatorNamespace = common.DataPlaneNamespaceName
+	}
+	setupLog.Info(fmt.Sprintf("Operator and agent namespace: %s", operatorNamespace))
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
@@ -90,13 +98,14 @@ func main() {
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "d27fd235.operator.containers.carbonblack.io",
 		Logger:                 ctrl.Log,
+		Namespace:              operatorNamespace,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	clusterIdentifier, k8sVersion, operatorNamespace := extractConfigurationVariables(mgr)
+	clusterIdentifier, k8sVersion := extractConfigurationVariables(mgr)
 
 	cbContainersAgentLogger := ctrl.Log.WithName("controllers").WithName("CBContainersAgent")
 	if err = (&controllers.CBContainersAgentController{
@@ -130,7 +139,7 @@ func main() {
 	}
 }
 
-func extractConfigurationVariables(mgr manager.Manager) (clusterIdentifier string, k8sVersion string, operatorNamespace string) {
+func extractConfigurationVariables(mgr manager.Manager) (clusterIdentifier string, k8sVersion string) {
 	setupLog.Info(fmt.Sprintf("Getting Cluster Identifier: %v uid", NamespaceIdentifier))
 	namespace := &coreV1.Namespace{}
 	apiReader := mgr.GetAPIReader()
@@ -150,14 +159,6 @@ func extractConfigurationVariables(mgr manager.Manager) (clusterIdentifier strin
 	}
 	k8sVersion = nodesList.Items[0].Status.NodeInfo.KubeletVersion
 	setupLog.Info(fmt.Sprintf("K8s version is: %v", k8sVersion))
-
-	setupLog.Info("Getting the namespace where operator is running and which should host the agent")
-	operatorNamespace = os.Getenv("OPERATOR_NAMESPACE")
-	if operatorNamespace == "" {
-		setupLog.Info(fmt.Sprintf("Operator namespace variable was not found. Falling back to default %s", common.DataPlaneNamespaceName))
-		operatorNamespace = common.DataPlaneNamespaceName
-	}
-	setupLog.Info(fmt.Sprintf("Operator and agent namespace: %s", operatorNamespace))
 
 	return
 }
