@@ -64,7 +64,20 @@ rules:
   resources:
   - priorityclasses
   verbs:
-  - '*'
+  - create
+  - list
+  - watch
+- apiGroups:
+  - scheduling.k8s.io
+  resourceNames:
+  - cbcontainers-dataplane-priority-class
+  resources:
+  - priorityclasses
+  verbs:
+  - delete
+  - get
+  - patch
+  - update
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
