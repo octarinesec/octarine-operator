@@ -21,15 +21,7 @@ There are 8 required fields that need to be provided by the user:
 | `spec.gateways.hardeningEventsGatewayHost` | The URL of the CBC Hardening events Gateway       |
 | `spec.gateways.runtimeEventsGatewayHost`   | The URL of the CBC Runtime events Gateway         |
 
-After setting these required fields in a `values.yaml` file you can install the chart from our repo:
-
-```sh
-helm repo add vmware TODO-chart-repo/TODO-chart-name -f values.yaml
-helm repo update
-helm install cbcontainers-agent TODO-chart-repo/TODO-chart-name -f values.yaml --namespace cbcontainers-dataplane
-```
-
-or from source
+After setting these required fields in a `values.yaml` file you can install the chart from source
 
 ```sh
 cd charts/cbcontainers-agent
@@ -46,9 +38,14 @@ For all the possible values see <https://github.com/octarinesec/octarine-operato
 
 ### Namespace
 
-By default the CBContainers agent will be installed in the `cbcontainers-dataplane` namespace.
+The CBContainers agent will be running in the same namespace as the deployed operator. This is by design as only 1 running agent per cluster is supported.
+To customize that namespace, see [operator-chart](../cbcontainers-operator).
 
-If you want to change that set the `agentNamespce` value in your `values.yaml` file.
+The actual namespace where helm tracks the release (see [--namespace flag](https://helm.sh/docs/helm/helm_install/)) is not important to the agent chart, 
+but the recommended approach is to also use the same namespace as the operator chart.
+
+The `agentNamespace` value is only required if the agent chart is responsible for deploying the agent's secret as well. See [secret detection](#secret-creation) for details.
+If the secret is pre-created before deploying the agent, then `agentNamespace` has no effect.  
 
 ### Secret creation
 
