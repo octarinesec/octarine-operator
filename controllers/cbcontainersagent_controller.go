@@ -76,13 +76,15 @@ func (r *CBContainersAgentController) getContainersAgentObject(ctx context.Conte
 // The following values must be kept in-sync with constants for generated RBAC to work properly:
 // - default dataplane namespace (see common.DataPlaneNamespaceName)
 // - cluster-wide dataplane priority class  (see common.DataPlanePriorityClassName) - avoids access to all priority classes on the cluster
+// - the cluster-wide webhooks (see components.EnforcerName) - avoids access to all webhooks on the cluster
 
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersagents,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersagents/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersagents/finalizers,verbs=update
 // +kubebuilder:rbac:groups=scheduling.k8s.io,resources=priorityclasses,verbs=delete;get;patch;update,resourceNames=cbcontainers-dataplane-priority-class
 // +kubebuilder:rbac:groups=scheduling.k8s.io,resources=priorityclasses,verbs=create;list;watch
-// +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources={validatingwebhookconfigurations,mutatingwebhookconfigurations},verbs=*
+// +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources={validatingwebhookconfigurations,mutatingwebhookconfigurations},verbs=delete;get;patch;update,resourceNames=cbcontainers-hardening-enforcer
+// +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources={validatingwebhookconfigurations,mutatingwebhookconfigurations},verbs=create;list;watch
 // +kubebuilder:rbac:groups={core},resources={nodes},verbs=list
 // +kubebuilder:rbac:groups={core},resources={namespaces},verbs=get
 // +kubebuilder:rbac:groups={policy},resources={podsecuritypolicies},verbs=use,resourceNames={cbcontainers-manager-psp}
