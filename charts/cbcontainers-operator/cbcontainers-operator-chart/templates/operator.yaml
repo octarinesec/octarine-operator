@@ -1846,34 +1846,17 @@ spec:
                             default: {}
                             properties:
                               CRIO:
-                                default: { }
-                                description: CRIO holds configuration values specific
-                                  to the CRI-O container engine
+                                default: {}
+                                description: CRIO holds configuration values specific to the CRI-O container engine
                                 properties:
                                   configPath:
-                                    description: ConfigPath can be used to set the
-                                      path to CRI-O's configuration file. If not specified,
-                                      the default location is used (/etc/crio/crio.conf).
-                                      See https://github.com/cri-o/cri-o/blob/main/docs/crio.conf.5.md
-                                      for more information.
+                                    description: ConfigPath can be used to set the path to CRI-O's configuration file. If not specified, the default location is used (/etc/crio/crio.conf). See https://github.com/cri-o/cri-o/blob/main/docs/crio.conf.5.md for more information.
                                     type: string
                                   storageConfigPath:
-                                    description: StorageConfigPath can be used to
-                                      set the path to the storage configuration file
-                                      used by CRI-O (if any). If not specified, the
-                                      default location for storage is used (/etc/containers/storage.conf).
-                                      The files does not need to exist. See https://github.com/containers/storage/blob/main/docs/containers-storage.conf.5.md
-                                      for more information
+                                    description: StorageConfigPath can be used to set the path to the storage configuration file used by CRI-O (if any). If not specified, the default location for storage is used (/etc/containers/storage.conf). The files does not need to exist. See https://github.com/containers/storage/blob/main/docs/containers-storage.conf.5.md for more information
                                     type: string
                                   storagePath:
-                                    description: StoragePath can be used to set the
-                                      path used by CRI-O to store images on each node.
-                                      This path will be mounted on the cluster scanner
-                                      to provide access to the node's images. If the
-                                      path does not match what CRI-O uses on the nodes,
-                                      then images will not be found and scanned as
-                                      expected. If not specified, the default location
-                                      of CRI-O is used (/var/lib/containers/storage).
+                                    description: StoragePath can be used to set the path used by CRI-O to store images on each node. This path will be mounted on the cluster scanner to provide access to the node's images. If the path does not match what CRI-O uses on the nodes, then images will not be found and scanned as expected. If not specified, the default location of CRI-O is used (/var/lib/containers/storage).
                                     type: string
                                 type: object
                               endpoint:
@@ -2558,6 +2541,103 @@ spec:
                             type: object
                         type: object
                     type: object
+                  cndr:
+                    description: CBContainersCndrSpec defines the desired state of CBContainersCndr
+                    properties:
+                      companyCodeSecretName:
+                        default: cbcontainers-company-code
+                        type: string
+                      enabled:
+                        default: false
+                        type: boolean
+                      sensor:
+                        default: {}
+                        properties:
+                          daemonSetAnnotations:
+                            additionalProperties:
+                              type: string
+                            default: {}
+                            type: object
+                          env:
+                            additionalProperties:
+                              type: string
+                            default: {}
+                            type: object
+                          image:
+                            default:
+                              repository: cbartifactory/cndr
+                            properties:
+                              pullPolicy:
+                                default: IfNotPresent
+                                description: PullPolicy describes a policy for if/when to pull a container image
+                                type: string
+                              pullSecrets:
+                                description: "PullSecrets is a list of secret names, which will be used to pull the container image(s). \n The secrets must already exist."
+                                items:
+                                  type: string
+                                type: array
+                              repository:
+                                type: string
+                              tag:
+                                type: string
+                            type: object
+                          labels:
+                            additionalProperties:
+                              type: string
+                            default: {}
+                            type: object
+                          logLevel:
+                            default: info
+                            type: string
+                          podTemplateAnnotations:
+                            additionalProperties:
+                              type: string
+                            default: {}
+                            type: object
+                          prometheus:
+                            default:
+                              port: 7071
+                            properties:
+                              enabled:
+                                default: false
+                                type: boolean
+                              port:
+                                type: integer
+                            type: object
+                          resources:
+                            default:
+                              limits:
+                                cpu: 500m
+                                memory: 1024Mi
+                              requests:
+                                cpu: 30m
+                                memory: 64Mi
+                            description: ResourceRequirements describes the compute resource requirements.
+                            properties:
+                              limits:
+                                additionalProperties:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                description: 'Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                                type: object
+                              requests:
+                                additionalProperties:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                description: 'Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                                type: object
+                            type: object
+                          verbosity_level:
+                            default: 2
+                            type: integer
+                        type: object
+                    type: object
                   runtimeProtection:
                     default: {}
                     description: CBContainersRuntimeProtectionSpec defines the desired state of CBContainersRuntime
@@ -3075,6 +3155,10 @@ spec:
                               type: string
                             default: {}
                             type: object
+                          nodesToReplicasRatio:
+                            default: 5
+                            format: int32
+                            type: integer
                           podTemplateAnnotations:
                             additionalProperties:
                               type: string
@@ -3128,7 +3212,6 @@ spec:
                                 type: integer
                             type: object
                           replicasCount:
-                            default: 1
                             format: int32
                             type: integer
                           resources:
@@ -3381,6 +3464,7 @@ spec:
                 type: object
               namespace:
                 default: cbcontainers-dataplane
+                description: Namespace is deprecated and the value has no effect. Do not use.
                 type: string
               version:
                 type: string
@@ -3472,59 +3556,12 @@ rules:
   - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   creationTimestamp: null
   name: cbcontainers-manager-role
+  namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
 rules:
-- apiGroups:
-  - ""
-  - discovery.k8s.io
-  resources:
-  - endpoints
-  - endpointslices
-  - services
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - admissionregistration.k8s.io
-  resources:
-  - mutatingwebhookconfigurations
-  - validatingwebhookconfigurations
-  verbs:
-  - '*'
-- apiGroups:
-  - apiextensions.k8s.io
-  - apps
-  - batch
-  - ""
-  - extensions
-  - networking.k8s.io
-  - rbac
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterrolebindings
-  - cronjobs
-  - customresourcedefinitions
-  - daemonsets
-  - deployments
-  - ingresses
-  - jobs
-  - namespaces
-  - networkpolicies
-  - nodes
-  - pods
-  - replicasets
-  - replicationcontrollers
-  - rolebindings
-  - services
-  - statefulsets
-  verbs:
-  - get
-  - list
-  - watch
 - apiGroups:
   - apps
   - ""
@@ -3535,6 +3572,7 @@ rules:
   verbs:
   - create
   - delete
+  - deletecollection
   - get
   - list
   - patch
@@ -3548,11 +3586,52 @@ rules:
   verbs:
   - create
   - delete
+  - deletecollection
   - get
   - list
   - patch
   - update
   - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: cbcontainers-manager-role
+rules:
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  verbs:
+  - create
+  - list
+  - watch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resourceNames:
+  - cbcontainers-hardening-enforcer
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  verbs:
+  - delete
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - list
 - apiGroups:
   - operator.containers.carbonblack.io
   resources:
@@ -3592,7 +3671,20 @@ rules:
   resources:
   - priorityclasses
   verbs:
-  - '*'
+  - create
+  - list
+  - watch
+- apiGroups:
+  - scheduling.k8s.io
+  resourceNames:
+  - cbcontainers-dataplane-priority-class
+  resources:
+  - priorityclasses
+  verbs:
+  - delete
+  - get
+  - patch
+  - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -3621,6 +3713,20 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: cbcontainers-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: cbcontainers-operator
+  namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cbcontainers-manager-namespaced-rolebinding
+  namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cbcontainers-manager-role
 subjects:
 - kind: ServiceAccount
   name: cbcontainers-operator
@@ -3691,6 +3797,7 @@ spec:
   ports:
   - name: https
     port: 8443
+    protocol: TCP
     targetPort: https
   selector:
     control-plane: operator
