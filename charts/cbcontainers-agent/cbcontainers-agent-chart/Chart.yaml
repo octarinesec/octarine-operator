@@ -2,5 +2,5 @@ apiVersion: v2
 name: cbcontainers-agent
 description: A Helm chart for installing the CBContainers Agent
 type: application
-version: 1.0.0
-appVersion: "2.11.0"
+version: 2.0.0
+appVersion: "2.12.1"
