@@ -495,12 +495,11 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.C
 	for name, hostPath := range cndrHostPaths {
 		index := commonState.EnsureAndGetVolumeMountIndexForName(container, name)
 		_, readOnly := cndrReadOnlyMounts[name]
-		if mountName, ok := cndrVolumeMounts[name]; ok {
-			commonState.MutateVolumeMount(container, index, mountName, readOnly)
-		} else {
-			// If not exits use the host path
-			commonState.MutateVolumeMount(container, index, hostPath.Path, readOnly)
+		mountPath, ok := cndrVolumeMounts[name]
+		if !ok {
+			mountPath = hostPath.Path
 		}
+		commonState.MutateVolumeMount(container, index, mountPath, readOnly)
 	}
 
 	// mutate mount for container-runtimes unix sockets files for the container tracking processor
