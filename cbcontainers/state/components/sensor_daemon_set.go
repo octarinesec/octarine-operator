@@ -84,7 +84,9 @@ var (
 		"root": hostRootPath,
 	}
 	cndrReadOnlyMounts = map[string]struct{}{
-		"root": {},
+		"root":       {},
+		"boot":       {},
+		"os-release": {},
 	}
 )
 
