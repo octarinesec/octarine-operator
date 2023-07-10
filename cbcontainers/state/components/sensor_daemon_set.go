@@ -35,6 +35,7 @@ const (
 	dockerRuntimeEndpoint             = "/var/run/dockershim.sock"
 	dockerSock                        = "/var/run/docker.sock"
 	crioRuntimeEndpoint               = "/var/run/crio/crio.sock"
+	hostRootPath                      = "/var/opt/root"
 
 	// configuredContainerRuntimeVolumeName is used when the customer has specified a non-standard runtime endpoint in the CRD
 	// as this means we need a special volume+mount for this endpoint
@@ -76,6 +77,16 @@ var (
 		"boot":        {Path: "/boot", Type: &hostPathDirectory},
 		"cb-data-dir": {Path: "/var/opt/carbonblack", Type: &hostPathDirectoryOrCreate},
 		"os-release":  {Path: "/etc/os-release", Type: &hostPathFile},
+		"root":        {Path: "/", Type: &hostPathDirectory},
+	}
+	// Optional to have a different mount volume that the host path. If not exits the host path will be used.
+	cndrVolumeMounts = map[string]string{
+		"root": hostRootPath,
+	}
+	cndrReadOnlyMounts = map[string]struct{}{
+		"root":       {},
+		"boot":       {},
+		"os-release": {},
 	}
 )
 
@@ -449,9 +460,14 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrContainer(container *coreV1.Conta
 func (obj *SensorDaemonSetK8sObject) mutateCndrEnvVars(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
 	cndrSpec := agentSpec.Components.Cndr
 
+	customEnvs := []coreV1.EnvVar{
+		{Name: "HOST_ROOT_PATH", Value: hostRootPath},
+	}
+
 	envVarBuilder := commonState.NewEnvVarBuilder().
 		WithCommonDataPlane(agentSpec.AccessTokenSecretName).
 		WithEventsGateway(&agentSpec.Gateways.HardeningEventsGateway).
+		WithCustom(customEnvs...).
 		WithEnvVarFromSecret(cndrCompanyCodeVarName, cndrSpec.CompanyCodeSecretName, cndrCompanyCodeKeyName).
 		WithSpec(cndrSpec.Sensor.Env)
 
@@ -478,7 +494,12 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.C
 	// mutate mount for required host dirs by the linux sensor
 	for name, hostPath := range cndrHostPaths {
 		index := commonState.EnsureAndGetVolumeMountIndexForName(container, name)
-		commonState.MutateVolumeMount(container, index, fmt.Sprintf("%v", hostPath.Path), false)
+		_, readOnly := cndrReadOnlyMounts[name]
+		mountPath, ok := cndrVolumeMounts[name]
+		if !ok {
+			mountPath = hostPath.Path
+		}
+		commonState.MutateVolumeMount(container, index, mountPath, readOnly)
 	}
 
 	// mutate mount for container-runtimes unix sockets files for the container tracking processor
