@@ -36,6 +36,7 @@ type CBContainersAgentSpec struct {
 
 	// +kubebuilder:default:="cbcontainers-dataplane"
 	// Namespace is deprecated and the value has no effect. Do not use.
+	// Deprecated: The operator and agent always run in the same namespace. See documentation for ways to customize this namespace.
 	Namespace string `json:"namespace,omitempty"`
 	// +kubebuilder:default:="cbcontainers-access-token"
 	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`

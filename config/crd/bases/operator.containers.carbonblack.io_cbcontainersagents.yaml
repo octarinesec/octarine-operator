@@ -6036,8 +6036,9 @@ spec:
                 type: object
               namespace:
                 default: cbcontainers-dataplane
-                description: Namespace is deprecated and the value has no effect.
-                  Do not use.
+                description: 'Namespace is deprecated and the value has no effect.
+                  Do not use. Deprecated: The operator and agent always run in the
+                  same namespace. See documentation for ways to customize this namespace.'
                 type: string
               version:
                 type: string
