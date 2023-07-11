@@ -41,23 +41,23 @@ type StateApplier struct {
 	log                             logr.Logger
 }
 
-func NewStateApplier(apiReader client.Reader, agentComponentApplier AgentComponentApplier, k8sVersion string, tlsSecretsValuesCreator components.TlsSecretsValuesCreator, log logr.Logger) *StateApplier {
+func NewStateApplier(apiReader client.Reader, agentComponentApplier AgentComponentApplier, k8sVersion, agentNamespace string, tlsSecretsValuesCreator components.TlsSecretsValuesCreator, log logr.Logger) *StateApplier {
 	return &StateApplier{
-		desiredConfigMap:                components.NewConfigurationK8sObject(),
-		desiredRegistrySecret:           components.NewRegistrySecretK8sObject(),
+		desiredConfigMap:                components.NewConfigurationK8sObject(agentNamespace),
+		desiredRegistrySecret:           components.NewRegistrySecretK8sObject(agentNamespace),
 		desiredPriorityClass:            components.NewPriorityClassK8sObject(k8sVersion),
-		desiredMonitorDeployment:        components.NewMonitorDeploymentK8sObject(),
-		enforcerTlsSecret:               components.NewEnforcerTlsK8sObject(tlsSecretsValuesCreator),
-		enforcerDeployment:              components.NewEnforcerDeploymentK8sObject(),
-		enforcerService:                 components.NewEnforcerServiceK8sObject(),
-		enforcerValidatingWebhook:       components.NewEnforcerValidatingWebhookK8sObject(k8sVersion),
-		enforcerMutatingWebhook:         components.NewEnforcerMutatingWebhookK8sObject(k8sVersion),
-		stateReporterDeployment:         components.NewStateReporterDeploymentK8sObject(),
-		resolverDeployment:              components.NewResolverDeploymentK8sObject(apiReader),
-		resolverService:                 components.NewResolverServiceK8sObject(),
-		sensorDaemonSet:                 components.NewSensorDaemonSetK8sObject(),
-		imageScanningReporterDeployment: components.NewImageScanningReporterDeploymentK8sObject(),
-		imageScanningReporterService:    components.NewImageScanningReporterServiceK8sObject(),
+		desiredMonitorDeployment:        components.NewMonitorDeploymentK8sObject(agentNamespace),
+		enforcerTlsSecret:               components.NewEnforcerTlsK8sObject(agentNamespace, tlsSecretsValuesCreator),
+		enforcerDeployment:              components.NewEnforcerDeploymentK8sObject(agentNamespace),
+		enforcerService:                 components.NewEnforcerServiceK8sObject(agentNamespace),
+		enforcerValidatingWebhook:       components.NewEnforcerValidatingWebhookK8sObject(agentNamespace, k8sVersion),
+		enforcerMutatingWebhook:         components.NewEnforcerMutatingWebhookK8sObject(agentNamespace, k8sVersion),
+		stateReporterDeployment:         components.NewStateReporterDeploymentK8sObject(agentNamespace),
+		resolverDeployment:              components.NewResolverDeploymentK8sObject(agentNamespace, apiReader),
+		resolverService:                 components.NewResolverServiceK8sObject(agentNamespace),
+		sensorDaemonSet:                 components.NewSensorDaemonSetK8sObject(agentNamespace),
+		imageScanningReporterDeployment: components.NewImageScanningReporterDeploymentK8sObject(agentNamespace),
+		imageScanningReporterService:    components.NewImageScanningReporterServiceK8sObject(agentNamespace),
 		applier:                         agentComponentApplier,
 		log:                             log,
 	}
@@ -69,13 +69,6 @@ func (c *StateApplier) GetPriorityClassEmptyK8sObject() client.Object {
 
 func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, registrySecret *models.RegistrySecretValues, setOwner applymentOptions.OwnerSetter) (bool, error) {
 	applyOptions := applymentOptions.NewApplyOptions().SetOwnerSetter(setOwner)
-
-	// The namespace field of the agent spec should always be populated, because it has a default value
-	// but just in case include this check here in case it turns out to be empty in the future.
-	// By default all objects have the "cbcontainers-dataplane" as namespace.
-	if agentSpec.Namespace != "" {
-		c.setNamespace(agentSpec.Namespace)
-	}
 
 	coreMutated, err := c.applyCoreComponents(ctx, agentSpec, registrySecret, applyOptions)
 	if err != nil {
@@ -141,24 +134,6 @@ func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbconta
 	}
 
 	return coreMutated || mutatedEnforcer || mutatedStateReporter || mutatedRuntimeResolver || mutatedComponentsDaemonSet || runtimeResolverDeleted || mutatedImageScanningReporter || imageScanningReporterDeleted || componentsDamonSetDeleted, nil
-}
-
-// setNamespace sets the namespace to all the desired K8s objects which are namespaced.
-func (c *StateApplier) setNamespace(namespace string) {
-	c.desiredConfigMap.Namespace = namespace
-	c.desiredRegistrySecret.Namespace = namespace
-	c.desiredMonitorDeployment.Namespace = namespace
-	c.enforcerTlsSecret.Namespace = namespace
-	c.enforcerDeployment.Namespace = namespace
-	c.enforcerService.Namespace = namespace
-	c.enforcerValidatingWebhook.ServiceNamespace = namespace
-	c.enforcerMutatingWebhook.ServiceNamespace = namespace
-	c.stateReporterDeployment.Namespace = namespace
-	c.resolverDeployment.Namespace = namespace
-	c.resolverService.Namespace = namespace
-	c.sensorDaemonSet.Namespace = namespace
-	c.imageScanningReporterDeployment.Namespace = namespace
-	c.imageScanningReporterService.Namespace = namespace
 }
 
 func (c *StateApplier) applyCoreComponents(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, registrySecret *models.RegistrySecretValues, applyOptions *applymentOptions.ApplyOptions) (bool, error) {

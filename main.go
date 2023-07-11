@@ -23,10 +23,13 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/operator"
+	"go.uber.org/zap/zapcore"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	coreV1 "k8s.io/api/core/v1"
 
@@ -72,11 +75,20 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	opts := zap.Options{
 		Development: true,
+		TimeEncoder: zapcore.RFC3339TimeEncoder,
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	setupLog.Info("Getting the namespace where operator is running and which should host the agent")
+	operatorNamespace := os.Getenv("OPERATOR_NAMESPACE")
+	if operatorNamespace == "" {
+		setupLog.Info(fmt.Sprintf("Operator namespace variable was not found. Falling back to default %s", common.DataPlaneNamespaceName))
+		operatorNamespace = common.DataPlaneNamespaceName
+	}
+	setupLog.Info(fmt.Sprintf("Operator and agent namespace: %s", operatorNamespace))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -86,31 +98,14 @@ func main() {
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "d27fd235.operator.containers.carbonblack.io",
 		Logger:                 ctrl.Log,
+		Namespace:              operatorNamespace,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	setupLog.Info(fmt.Sprintf("Getting Cluster Identifier: %v uid", NamespaceIdentifier))
-	namespace := &coreV1.Namespace{}
-	apiReader := mgr.GetAPIReader()
-	if err = apiReader.Get(context.Background(), client.ObjectKey{Namespace: NamespaceIdentifier, Name: NamespaceIdentifier}, namespace); err != nil {
-		setupLog.Error(err, fmt.Sprintf("unable to get the %v namespace", NamespaceIdentifier))
-		os.Exit(1)
-	}
-	clusterIdentifier := string(namespace.UID)
-
-	setupLog.Info(fmt.Sprintf("Cluster Identifier: %v", clusterIdentifier))
-
-	setupLog.Info("Getting Nodes list")
-	nodesList := &coreV1.NodeList{}
-	if err := apiReader.List(context.Background(), nodesList); err != nil || nodesList.Items == nil || len(nodesList.Items) < 1 {
-		setupLog.Error(err, "couldn't get nodes list")
-		os.Exit(1)
-	}
-	k8sVersion := nodesList.Items[0].Status.NodeInfo.KubeletVersion
-	setupLog.Info(fmt.Sprintf("K8s version is: %v", k8sVersion))
+	clusterIdentifier, k8sVersion := extractConfigurationVariables(mgr)
 
 	cbContainersAgentLogger := ctrl.Log.WithName("controllers").WithName("CBContainersAgent")
 	if err = (&controllers.CBContainersAgentController{
@@ -118,8 +113,9 @@ func main() {
 		Log:              cbContainersAgentLogger,
 		Scheme:           mgr.GetScheme(),
 		K8sVersion:       k8sVersion,
+		Namespace:        operatorNamespace,
 		ClusterProcessor: processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator(), operator.NewEnvVersionProvider(), clusterIdentifier),
-		StateApplier:     state.NewStateApplier(mgr.GetAPIReader(), agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
+		StateApplier:     state.NewStateApplier(mgr.GetAPIReader(), agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, operatorNamespace, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")
 		os.Exit(1)
@@ -141,4 +137,28 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func extractConfigurationVariables(mgr manager.Manager) (clusterIdentifier string, k8sVersion string) {
+	setupLog.Info(fmt.Sprintf("Getting Cluster Identifier: %v uid", NamespaceIdentifier))
+	namespace := &coreV1.Namespace{}
+	apiReader := mgr.GetAPIReader()
+	if err := apiReader.Get(context.Background(), client.ObjectKey{Namespace: NamespaceIdentifier, Name: NamespaceIdentifier}, namespace); err != nil {
+		setupLog.Error(err, fmt.Sprintf("unable to get the %v namespace", NamespaceIdentifier))
+		os.Exit(1)
+	}
+	clusterIdentifier = string(namespace.UID)
+
+	setupLog.Info(fmt.Sprintf("Cluster Identifier: %v", clusterIdentifier))
+
+	setupLog.Info("Getting Nodes list")
+	nodesList := &coreV1.NodeList{}
+	if err := apiReader.List(context.Background(), nodesList); err != nil || nodesList.Items == nil || len(nodesList.Items) < 1 {
+		setupLog.Error(err, "couldn't get nodes list")
+		os.Exit(1)
+	}
+	k8sVersion = nodesList.Items[0].Status.NodeInfo.KubeletVersion
+	setupLog.Info(fmt.Sprintf("K8s version is: %v", k8sVersion))
+
+	return
 }

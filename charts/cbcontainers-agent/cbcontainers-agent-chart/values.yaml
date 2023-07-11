@@ -9,5 +9,5 @@ clusterGroup: ""
 # clusterName is the name that will be used for the cluster that the agent is installed on
 clusterName: ""
 # agentNamespace is the name of the namespace in which the agent will be installed
-# that namespace should exist before the chart is installed
+# that namespace must exist before the chart is installed and must match the namespace where the operator is deployed
 agentNamespace: "cbcontainers-dataplane"

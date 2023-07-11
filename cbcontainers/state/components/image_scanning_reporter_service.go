@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -21,9 +20,9 @@ type ImageScanningReporterServiceK8sObject struct {
 	Namespace string
 }
 
-func NewImageScanningReporterServiceK8sObject() *ImageScanningReporterServiceK8sObject {
+func NewImageScanningReporterServiceK8sObject(namespace string) *ImageScanningReporterServiceK8sObject {
 	return &ImageScanningReporterServiceK8sObject{
-		Namespace: commonState.DataPlaneNamespaceName,
+		Namespace: namespace,
 	}
 }
 
@@ -43,7 +42,6 @@ func (obj *ImageScanningReporterServiceK8sObject) MutateK8sObject(k8sObject clie
 
 	imageScanningReporter := &agentSpec.Components.ClusterScanning.ImageScanningReporter
 
-	service.Namespace = agentSpec.Namespace
 	service.Labels = imageScanningReporter.Labels
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
 	service.Spec.Selector = map[string]string{

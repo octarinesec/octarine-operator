@@ -148,7 +148,6 @@ func testStateApplier(t *testing.T, setup StateApplierTestSetup, k8sVersion, nam
 	agentSpec := &cbcontainersv1.CBContainersAgentSpec{
 		Account:     Account,
 		ClusterName: Cluster,
-		Namespace:   namespace,
 		Gateways: cbcontainersv1.CBContainersGatewaysSpec{
 			ApiGateway: cbcontainersv1.CBContainersApiGatewaySpec{
 				Scheme:  ApiGateWayScheme,
@@ -190,7 +189,7 @@ func testStateApplier(t *testing.T, setup StateApplierTestSetup, k8sVersion, nam
 
 	setup(mockObjects)
 
-	stateApplier := state.NewStateApplier(testUtilsMocks.NewMockReader(ctrl), mockObjects.componentApplier, k8sVersion, mockObjects.secretValuesCreator, logrTesting.NewTestLogger(t))
+	stateApplier := state.NewStateApplier(testUtilsMocks.NewMockReader(ctrl), mockObjects.componentApplier, k8sVersion, namespace, mockObjects.secretValuesCreator, logrTesting.NewTestLogger(t))
 	return stateApplier.ApplyDesiredState(context.Background(), agentSpec, &models.RegistrySecretValues{}, nil)
 }
 

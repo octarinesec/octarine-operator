@@ -95,9 +95,9 @@ type SensorDaemonSetK8sObject struct {
 	Namespace string
 }
 
-func NewSensorDaemonSetK8sObject() *SensorDaemonSetK8sObject {
+func NewSensorDaemonSetK8sObject(namespace string) *SensorDaemonSetK8sObject {
 	return &SensorDaemonSetK8sObject{
-		Namespace: commonState.DataPlaneNamespaceName,
+		Namespace: namespace,
 	}
 }
 
@@ -131,7 +131,6 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 		daemonSet.Spec.Template.Spec.HostPID = false
 	}
 
-	daemonSet.Namespace = agentSpec.Namespace
 	obj.mutateLabels(daemonSet, agentSpec)
 	obj.mutateAnnotations(daemonSet, agentSpec)
 	obj.mutateVolumes(daemonSet, agentSpec)

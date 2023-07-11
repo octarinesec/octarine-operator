@@ -7,7 +7,6 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/adapters"
-	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -36,10 +35,10 @@ type EnforcerValidatingWebhookK8sObject struct {
 	ServiceNamespace string
 }
 
-func NewEnforcerValidatingWebhookK8sObject(kubeletVersion string) *EnforcerValidatingWebhookK8sObject {
+func NewEnforcerValidatingWebhookK8sObject(serviceNamespace, kubeletVersion string) *EnforcerValidatingWebhookK8sObject {
 	return &EnforcerValidatingWebhookK8sObject{
 		kubeletVersion:   kubeletVersion,
-		ServiceNamespace: commonState.DataPlaneNamespaceName,
+		ServiceNamespace: serviceNamespace,
 	}
 }
 

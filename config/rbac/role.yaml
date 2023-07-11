@@ -12,35 +12,21 @@ rules:
   - mutatingwebhookconfigurations
   - validatingwebhookconfigurations
   verbs:
-  - '*'
-- apiGroups:
-  - apps
-  - ""
-  resources:
-  - daemonsets
-  - deployments
-  - services
-  verbs:
   - create
-  - delete
-  - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
-  - ""
+  - admissionregistration.k8s.io
+  resourceNames:
+  - cbcontainers-hardening-enforcer
   resources:
-  - configmaps
-  - secrets
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
   verbs:
-  - create
   - delete
   - get
-  - list
   - patch
   - update
-  - watch
 - apiGroups:
   - ""
   resources:
@@ -92,4 +78,56 @@ rules:
   resources:
   - priorityclasses
   verbs:
-  - '*'
+  - create
+  - list
+  - watch
+- apiGroups:
+  - scheduling.k8s.io
+  resourceNames:
+  - cbcontainers-dataplane-priority-class
+  resources:
+  - priorityclasses
+  verbs:
+  - delete
+  - get
+  - patch
+  - update
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: manager-role
+  namespace: cbcontainers-dataplane
+rules:
+- apiGroups:
+  - apps
+  - ""
+  resources:
+  - daemonsets
+  - deployments
+  - services
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - get
+  - list
+  - patch
+  - update
+  - watch

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -20,9 +19,9 @@ type ResolverServiceK8sObject struct {
 	Namespace string
 }
 
-func NewResolverServiceK8sObject() *ResolverServiceK8sObject {
+func NewResolverServiceK8sObject(namespace string) *ResolverServiceK8sObject {
 	return &ResolverServiceK8sObject{
-		Namespace: commonState.DataPlaneNamespaceName,
+		Namespace: namespace,
 	}
 }
 
@@ -46,7 +45,6 @@ func (obj *ResolverServiceK8sObject) MutateK8sObject(k8sObject client.Object, ag
 	service.Spec.Type = coreV1.ServiceTypeClusterIP
 	service.Spec.ClusterIP = coreV1.ClusterIPNone
 
-	service.Namespace = agentSpec.Namespace
 	service.Spec.Selector = map[string]string{
 		resolverLabelKey: ResolverName,
 	}

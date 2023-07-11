@@ -17,9 +17,9 @@ type ConfigurationK8sObject struct {
 	Namespace string
 }
 
-func NewConfigurationK8sObject() *ConfigurationK8sObject {
+func NewConfigurationK8sObject(namespace string) *ConfigurationK8sObject {
 	return &ConfigurationK8sObject{
-		Namespace: commonState.DataPlaneNamespaceName,
+		Namespace: namespace,
 	}
 }
 
@@ -35,12 +35,11 @@ func (obj *ConfigurationK8sObject) MutateK8sObject(k8sObject client.Object, agen
 		return fmt.Errorf("expected ConfigMap K8s object")
 	}
 
-	configMap.Namespace = agentSpec.Namespace
 	configMap.Data = map[string]string{
 		commonState.DataPlaneConfigmapAccountKey:            agentSpec.Account,
 		commonState.DataPlaneConfigmapClusterKey:            agentSpec.ClusterName,
 		commonState.DataPlaneConfigmapAgentVersionKey:       agentSpec.Version,
-		commonState.DataPlaneConfigmapDataplaneNamespaceKey: agentSpec.Namespace,
+		commonState.DataPlaneConfigmapDataplaneNamespaceKey: obj.Namespace,
 		commonState.DataPlaneConfigmapApiSchemeKey:          agentSpec.Gateways.ApiGateway.Scheme,
 		commonState.DataPlaneConfigmapApiHostKey:            agentSpec.Gateways.ApiGateway.Host,
 		commonState.DataPlaneConfigmapApiPortKey:            strconv.Itoa(agentSpec.Gateways.ApiGateway.Port),

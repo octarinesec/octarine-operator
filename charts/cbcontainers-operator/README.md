@@ -12,30 +12,22 @@ The chart can be installed as is, without any customization or modifications.
 
 You can create the Helm release in any namespace that you want.
 
-You can also customize the namespace in which the operator is installed.
+You can also customize the namespace in which the operator itself is installed.
 See [Customization](#namespace).
 
 ### Installing the operator chart
 
-Now, install the actual helm chart in the namespace based on the chosen option 1 or 2 above.
-
-```sh
-helm repo add vmware TODO-chart-repo/TODO-chart-name
-helm repo update
-helm install cbcontainers-operator TODO-chart-repo/TODO-chart-name --namespace X
-```
-
-or from source:
+Now, install the actual helm chart from source:
 
 ```sh
 cd charts/cbcontainers-operator
-helm install cbcontainers-operator ./cbcontainers-operator-chart --namespace X
+helm install cbcontainers-operator ./cbcontainers-operator-chart
 ```
 
 ## Customization
 
 | Parameter                        | Description                                         | Default                                                                            |
-| -------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------- |
+|----------------------------------|-----------------------------------------------------|------------------------------------------------------------------------------------|
 | `spec.operator.image.repository` | The repository of the operator image                | `cbartifactory/octarine-operator`                                                  |
 | `spec.operator.image.version`    | The version of the operator image                   | The latest version of the operator image                                           |
 | `spec.operator.resources`        | Carbon Black Container Operator resources           | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}` |
@@ -50,6 +42,16 @@ If you want to change that, set the `operatorNamespace` field in your `values.ya
 
 The chart will automatically create the namespace that you have chosen to install the operator into.
 If you don't want to do that (because you have already created the namespace), set the `createOperatorNamespace` field in your `values.yaml` file to `false`.
+
+If the namespace is pre-created, then it must also be labeled properly or the operator and agent might not reconcile successfully. 
+The commands below show an example of creating a custom namespace, labeling and installing the operator inside.
+
+```sh
+NAMESPACE=<choose_your_value>
+kubectl create namespace $NAMESPACE
+kubectl label namespace $NAMESPACE control-plane=operator octarine=ignore
+helm install cbcontainers-operator ./cbcontainers-operator-chart --set createOperatorNamespace=false,operatorNamespace=$NAMESPACE
+```
 
 ### CRD Installation
 
@@ -71,7 +73,7 @@ For more info see <https://github.com/octarinesec/octarine-operator/tree/master#
 
 ## Templates
 
-This chart consists of two [templates](cbcontainers-operator-chart/templates).
+This chart consists of four [templates](cbcontainers-operator-chart/templates).
 
 The [operator.yaml](cbcontainers-operator-chart/templates/operator.yaml) file contains all resources, apart from the operator deployment.
 It is generated via `kustomize`.
@@ -81,3 +83,6 @@ The [deployment.yaml](cbcontainers-operator-chart/templates/deployment.yaml) fil
 It is derived from [this Kustomize configuration](../../config/manager) but because it needs to be configurable via Helm it is heavily templated.
 Because of that it cannot be generated automatically, so it should be maintained by hand.
 If any changes are make to the [Kustomize configuration](../../config/manager), they should also be reflected in that file.
+
+The [dataplane_rbac.yaml](cbcontainers-operator-chart/templates/dataplane_rbac.yaml) and [dataplane_service_accounts](cbcontainers-operator-chart/templates/dataplane_service_accounts.yaml) 
+files contain necessary RBAC objects for the agent to work as expected. 

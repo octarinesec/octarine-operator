@@ -32,9 +32,9 @@ type StateReporterDeploymentK8sObject struct {
 	Namespace string
 }
 
-func NewStateReporterDeploymentK8sObject() *StateReporterDeploymentK8sObject {
+func NewStateReporterDeploymentK8sObject(namespace string) *StateReporterDeploymentK8sObject {
 	return &StateReporterDeploymentK8sObject{
-		Namespace: commonState.DataPlaneNamespaceName,
+		Namespace: namespace,
 	}
 }
 
@@ -72,7 +72,6 @@ func (obj *StateReporterDeploymentK8sObject) MutateK8sObject(k8sObject client.Ob
 		deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
 
-	deployment.Namespace = agentSpec.Namespace
 	deployment.Spec.Replicas = &StateReporterReplicas
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels

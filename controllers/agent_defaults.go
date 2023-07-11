@@ -2,7 +2,6 @@ package controllers
 
 import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 )
 
 func (r *CBContainersAgentController) setAgentDefaults(agentSpec *cbcontainersv1.CBContainersAgentSpec) error {
@@ -14,13 +13,6 @@ func (r *CBContainersAgentController) setAgentDefaults(agentSpec *cbcontainersv1
 
 	if err := r.setComponentsDefaults(&agentSpec.Components); err != nil {
 		return err
-	}
-
-	// The namespace field of the agent spec should always be populated, because it has a default value,
-	// but just in case include this check here in case it turns out to be empty in the future.
-	// By default all objects have the "cbcontainers-dataplane" as namespace.
-	if agentSpec.Namespace == "" {
-		agentSpec.Namespace = common.DataPlaneNamespaceName
 	}
 
 	return nil

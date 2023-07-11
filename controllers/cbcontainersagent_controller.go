@@ -52,6 +52,8 @@ type CBContainersAgentController struct {
 	ClusterProcessor AgentProcessor
 	StateApplier     StateApplier
 	K8sVersion       string
+	// Namespace is the kubernetes namespace for all agent components
+	Namespace string
 }
 
 func (r *CBContainersAgentController) getContainersAgentObject(ctx context.Context) (*cbcontainersv1.CBContainersAgent, error) {
@@ -71,16 +73,23 @@ func (r *CBContainersAgentController) getContainersAgentObject(ctx context.Conte
 	return &cbContainersAgentsList.Items[0], nil
 }
 
+// The following values must be kept in-sync with constants for generated RBAC to work properly:
+// - default dataplane namespace (see common.DataPlaneNamespaceName)
+// - cluster-wide dataplane priority class  (see common.DataPlanePriorityClassName) - avoids access to all priority classes on the cluster
+// - the cluster-wide webhooks (see components.EnforcerName) - avoids access to all webhooks on the cluster
+
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersagents,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersagents/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=operator.containers.carbonblack.io,resources=cbcontainersagents/finalizers,verbs=update
-// +kubebuilder:rbac:groups=core,resources={configmaps,secrets},verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=scheduling.k8s.io,resources=priorityclasses,verbs=*
-// +kubebuilder:rbac:groups={apps,core},resources={deployments,services,daemonsets},verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources={validatingwebhookconfigurations,mutatingwebhookconfigurations},verbs=*
+// +kubebuilder:rbac:groups=scheduling.k8s.io,resources=priorityclasses,verbs=delete;get;patch;update,resourceNames=cbcontainers-dataplane-priority-class
+// +kubebuilder:rbac:groups=scheduling.k8s.io,resources=priorityclasses,verbs=create;list;watch
+// +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources={validatingwebhookconfigurations,mutatingwebhookconfigurations},verbs=delete;get;patch;update,resourceNames=cbcontainers-hardening-enforcer
+// +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources={validatingwebhookconfigurations,mutatingwebhookconfigurations},verbs=create;list;watch
 // +kubebuilder:rbac:groups={core},resources={nodes},verbs=list
 // +kubebuilder:rbac:groups={core},resources={namespaces},verbs=get
 // +kubebuilder:rbac:groups={policy},resources={podsecuritypolicies},verbs=use,resourceNames={cbcontainers-manager-psp}
+// +kubebuilder:rbac:groups={apps,core},resources={deployments,services,daemonsets},namespace=cbcontainers-dataplane,verbs=get;list;watch;create;update;patch;delete;deletecollection
+// +kubebuilder:rbac:groups=core,resources={configmaps,secrets},namespace=cbcontainers-dataplane,verbs=get;list;watch;create;update;patch;delete;deletecollection
 
 func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("\n\n")
@@ -94,6 +103,7 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	if cbContainersAgent == nil {
+		r.Log.Info("No CBContainersAgent object found")
 		return ctrl.Result{}, nil
 	}
 
@@ -137,7 +147,7 @@ func (r *CBContainersAgentController) getRegistrySecretValues(ctx context.Contex
 }
 
 func (r *CBContainersAgentController) getAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (string, error) {
-	accessTokenSecretNamespacedName := types.NamespacedName{Name: cbContainersCluster.Spec.AccessTokenSecretName, Namespace: cbContainersCluster.Spec.Namespace}
+	accessTokenSecretNamespacedName := types.NamespacedName{Name: cbContainersCluster.Spec.AccessTokenSecretName, Namespace: r.Namespace}
 	accessTokenSecret := &corev1.Secret{}
 	if err := r.Get(ctx, accessTokenSecretNamespacedName, accessTokenSecret); err != nil {
 		return "", fmt.Errorf("couldn't find access token secret k8s object: %v", err)

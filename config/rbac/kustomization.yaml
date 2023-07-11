@@ -1,6 +1,8 @@
 resources:
 - role.yaml
-- dataplane_roles.yaml
+- dataplane/dataplane_roles.yaml
+- dataplane/role_binding.yaml
+- dataplane/service_account.yaml
 - role_binding.yaml
 - leader_election_role.yaml
 - leader_election_role_binding.yaml
