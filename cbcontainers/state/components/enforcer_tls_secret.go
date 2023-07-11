@@ -5,7 +5,6 @@ import (
 
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
-	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -26,10 +25,10 @@ type EnforcerTlsK8sObject struct {
 	Namespace string
 }
 
-func NewEnforcerTlsK8sObject(tlsSecretsValuesCreator TlsSecretsValuesCreator) *EnforcerTlsK8sObject {
+func NewEnforcerTlsK8sObject(namespace string, tlsSecretsValuesCreator TlsSecretsValuesCreator) *EnforcerTlsK8sObject {
 	return &EnforcerTlsK8sObject{
 		tlsSecretsValuesCreator: tlsSecretsValuesCreator,
-		Namespace:               commonState.DataPlaneNamespaceName,
+		Namespace:               namespace,
 	}
 }
 
@@ -47,7 +46,6 @@ func (obj *EnforcerTlsK8sObject) MutateK8sObject(k8sObject client.Object, spec *
 		return fmt.Errorf("expected Secret K8s object")
 	}
 
-	secret.Namespace = obj.Namespace
 	tlsSecretValues, err := obj.tlsSecretsValuesCreator.CreateTlsSecretsValues(types.NamespacedName{Name: EnforcerName, Namespace: obj.Namespace})
 	if err != nil {
 		return err

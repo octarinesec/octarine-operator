@@ -42,9 +42,9 @@ type EnforcerDeploymentK8sObject struct {
 	Namespace string
 }
 
-func NewEnforcerDeploymentK8sObject() *EnforcerDeploymentK8sObject {
+func NewEnforcerDeploymentK8sObject(namespace string) *EnforcerDeploymentK8sObject {
 	return &EnforcerDeploymentK8sObject{
-		Namespace: commonState.DataPlaneNamespaceName,
+		Namespace: namespace,
 	}
 }
 
@@ -84,7 +84,6 @@ func (obj *EnforcerDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	if objectsDiffer(deployment.Spec.Template.Spec.ImagePullSecrets, desiredImagePullSecrets) {
 		deployment.Spec.Template.Spec.ImagePullSecrets = desiredImagePullSecrets
 	}
-	deployment.Namespace = obj.Namespace
 	obj.mutateAnnotations(deployment, enforcer)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, enforcer)

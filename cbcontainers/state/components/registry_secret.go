@@ -18,9 +18,9 @@ type RegistrySecretK8sObject struct {
 	Namespace string
 }
 
-func NewRegistrySecretK8sObject() *RegistrySecretK8sObject {
+func NewRegistrySecretK8sObject(namespace string) *RegistrySecretK8sObject {
 	return &RegistrySecretK8sObject{
-		Namespace: commonState.DataPlaneNamespaceName,
+		Namespace: namespace,
 	}
 }
 
@@ -46,7 +46,6 @@ func (obj *RegistrySecretK8sObject) MutateK8sObject(k8sObject client.Object, spe
 
 	secret.Type = obj.registrySecretValues.Type
 	secret.Data = obj.registrySecretValues.Data
-	secret.Namespace = obj.Namespace
 
 	return nil
 }

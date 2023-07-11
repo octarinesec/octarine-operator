@@ -37,9 +37,9 @@ type MonitorDeploymentK8sObject struct {
 	Namespace string
 }
 
-func NewMonitorDeploymentK8sObject() *MonitorDeploymentK8sObject {
+func NewMonitorDeploymentK8sObject(namespace string) *MonitorDeploymentK8sObject {
 	return &MonitorDeploymentK8sObject{
-		Namespace: commonState.DataPlaneNamespaceName,
+		Namespace: namespace,
 	}
 }
 
@@ -76,7 +76,6 @@ func (obj *MonitorDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, 
 		deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
 
-	deployment.Namespace = obj.Namespace
 	deployment.Spec.Replicas = &MonitorReplicas
 	deployment.ObjectMeta.Labels = desiredLabels
 	deployment.Spec.Selector.MatchLabels = desiredLabels

@@ -34,9 +34,9 @@ type ImageScanningReporterDeploymentK8sObject struct {
 	Namespace string
 }
 
-func NewImageScanningReporterDeploymentK8sObject() *ImageScanningReporterDeploymentK8sObject {
+func NewImageScanningReporterDeploymentK8sObject(namespace string) *ImageScanningReporterDeploymentK8sObject {
 	return &ImageScanningReporterDeploymentK8sObject{
-		Namespace: commonState.DataPlaneNamespaceName,
+		Namespace: namespace,
 	}
 }
 
@@ -55,7 +55,6 @@ func (obj *ImageScanningReporterDeploymentK8sObject) MutateK8sObject(k8sObject c
 	}
 
 	clusterScanning := &agentSpec.Components.ClusterScanning
-	deployment.Namespace = obj.Namespace
 	imageScanningReporter := &clusterScanning.ImageScanningReporter
 	obj.initiateDeployment(deployment, agentSpec)
 	obj.mutateLabels(deployment, imageScanningReporter)

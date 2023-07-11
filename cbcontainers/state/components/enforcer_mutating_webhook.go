@@ -34,10 +34,10 @@ type EnforcerMutatingWebhookK8sObject struct {
 	ServiceNamespace string
 }
 
-func NewEnforcerMutatingWebhookK8sObject(kubeletVersion string) *EnforcerMutatingWebhookK8sObject {
+func NewEnforcerMutatingWebhookK8sObject(serviceNamespace, kubeletVersion string) *EnforcerMutatingWebhookK8sObject {
 	return &EnforcerMutatingWebhookK8sObject{
 		kubeletVersion:   kubeletVersion,
-		ServiceNamespace: commonState.DataPlaneNamespaceName,
+		ServiceNamespace: serviceNamespace,
 	}
 }
 
