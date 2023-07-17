@@ -91,6 +91,10 @@ type CBContainersAgentStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=cbcontainersagents,scope=Cluster
+// +kubebuilder:printcolumn:name="Version",type="string",JSONPath=".spec.version",description="Version of the deployed agent"
+// +kubebuilder:printcolumn:name="Cluster image scanning",type="boolean",JSONPath=".spec.components.clusterScanning.enabled",description="Whether cluster image scanning is enabled"
+// +kubebuilder:printcolumn:name="Runtime protection",type="string",JSONPath=".spec.components.runtimeProtection.enabled",description="Whether runtime protection is enabled"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // CBContainersAgent is the Schema for the cbcontainersagents API
 // +kubebuilder:subresource:status
