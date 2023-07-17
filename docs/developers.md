@@ -89,9 +89,13 @@ Therefore, a special `make` target works around this by replacing all instance o
 
 Defaulting is not supported by `v1beta1` versions of CRDs so warnings are expected when generating those since kubebuilder.
 
-## Debugging locally
+### Debugging locally
 
 To debug locally, run `make run-delve` which will build and start a delve debugger in headless mode.
 Then use your editor to start a remote session and connect to the delve instance.
 
 For goland, the built-in `go remote` configuration works fine.
+
+### Custom namespace
+
+In case the operator is not deployed in the default namespace (`cbcontainers-dataplane`), the OPERATOR_NAMESPACE env variable should be set when using `make run` or `make run-delve` above. 
