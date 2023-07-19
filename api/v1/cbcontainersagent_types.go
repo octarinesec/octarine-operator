@@ -86,6 +86,10 @@ func (s CBContainersComponentsSettings) ShouldCreateDefaultImagePullSecrets() bo
 type CBContainersAgentStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// ObservedGeneration is the last Custom resource generation that was fully reconciled.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 // +kubebuilder:object:root=true
