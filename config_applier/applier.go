@@ -11,6 +11,12 @@ import (
 )
 
 // TODO: Use interfaces for dependencies?
+// TODO: Env_var to enable
+// TODO: Configurable polling interval
+
+const (
+	timeoutSingleIteration = time.Second * 30
+)
 
 var versions = []string{"2.12.1", "2.10.0", "2.12.0", "2.11.0"}
 
@@ -19,75 +25,111 @@ var (
 	fal = false
 )
 
+type APIGateway interface {
+	// Get Compatibility matrix
+	// Update status of change (ack/error)
+	// Get pending changes
+	// Set status for change (acknowledge/error)
+}
+
 type Applier struct {
 	K8sClient client.Client
 	Logger    logr.Logger
+	Gateway   APIGateway
+}
+
+type pendingChangesResponse struct {
+	ConfigurationChanges []pendingChange `json:"configuration_changes"`
 }
 
 type pendingChange struct {
-	ID                    string
-	Version               *string
-	EnableClusterScanning *bool
-	EnableRuntime         *bool
+	ID                    string  `json:"id"`
+	Version               *string `json:"version"`
+	EnableClusterScanning *bool   `json:"enable_cluster_scanning"`
+	EnableRuntime         *bool   `json:"enable_runtime"`
 }
 
-func (applier *Applier) RunLoop() {
-	// TODO: stop on signal
+type configurationChangeStatusRequest struct {
+	ID     string `json:"id"`
+	Status string `json:"status"`
+	Reason string `json:"reason"`
+}
+
+type changeStatus string
+
+var (
+	statusPending      changeStatus = "PENDING"
+	statusAcknowledged changeStatus = "ACKNOWLEDGED"
+	statusFailed       changeStatus = "FAILED"
+)
+
+func (applier *Applier) RunLoop(signalsContext context.Context) {
+	pollingSleepDuration := 20 * time.Second
+	pollingTimer := time.NewTicker(pollingSleepDuration)
+	defer pollingTimer.Stop()
+
 	for {
-		applier.Logger.Info("Running config check iteration")
-
-		// TODO: Fix pointers vs non-pointers
-		change, err := applier.getPendingChange()
-		if err != nil {
-			// TODO
-			applier.Logger.Error(err, "failed to get existing CR")
-			continue
+		select {
+		case <-signalsContext.Done():
+			applier.Logger.Info("Received cancel signal, turning off configuration applier")
+			return
+		case <-pollingTimer.C:
+			// Nothing to do; this is the polling sleep case
 		}
-		if change == nil {
-			applier.Logger.Info("No pending remote configuration changes found")
-			// TODO: Polling interval
-			time.Sleep(10 * time.Second)
-			continue
-		}
+		// TODO: Pass context down?
+		applier.Logger.Info("RUNNING ITERATION")
+		applier.configCheckIteration(signalsContext)
+	}
+}
 
-		applier.Logger.Info("Applying change", "change", change)
-		err = applier.applyChange(*change)
-		if err != nil {
-			// TODO
-			applier.Logger.Error(err, "failed to apply change")
-			// TODO: REport error ?
-			continue
-		}
+func (applier *Applier) configCheckIteration(ctx context.Context) {
+	ctx, cancel := context.WithTimeout(ctx, timeoutSingleIteration)
+	defer cancel()
 
-		err = applier.acknowledgeChange(*change)
-		if err != nil {
-			// TODO
-			panic(err)
-		}
+	applier.Logger.Info("Checking for pending remote configuration changes...")
 
-		time.Sleep(40 * time.Second)
+	change, err := applier.getPendingChange(ctx)
+	if err != nil {
+		applier.Logger.Error(err, "Failed to get pending configuration changes")
+		return
+	}
+	if change == nil {
+		applier.Logger.Info("No pending remote configuration changes found")
+		return
 	}
 
-	// TODO: Staggering in case of multiple changes?
+	applier.Logger.Info("Applying remote configuration change", "change", change)
+	err = applier.applyChange(ctx, change)
+	if err != nil {
+		applier.Logger.Error(err, "Failed to apply configuration change", "changeID", change.ID)
+		// Intentional fallthrough so we always update the status of the change on the backend
+	}
+
+	if errStatusUpdate := applier.updateChangeStatus(ctx, change, err); errStatusUpdate != nil {
+		applier.Logger.Error(err, "Failed to update the status of a configuration change; it might be re-applied again in the future")
+		return
+	}
+
+	return
 }
 
-func (applier *Applier) getPendingChange() (*pendingChange, error) {
+func (applier *Applier) getPendingChange(ctx context.Context) (*pendingChange, error) {
 	rand := randomChange()
 	return rand, nil
 }
 
-func (applier *Applier) acknowledgeChange(change pendingChange) error {
+func (applier *Applier) updateChangeStatus(ctx context.Context, change *pendingChange, err error) error {
 
 	return nil
 }
 
-func (applier *Applier) applyChange(change pendingChange) error {
-	cr, err := applier.getCR()
+func (applier *Applier) applyChange(ctx context.Context, change *pendingChange) error {
+	cr, err := applier.getContainerAgentCR(ctx)
 	if err != nil {
 		return err
 	}
 	if cr == nil {
-		// TODO: Log
+		applier.Logger.Info("No CBContainersAgent instance found")
 		return nil
 	}
 
@@ -102,17 +144,19 @@ func (applier *Applier) applyChange(change pendingChange) error {
 		cr.Spec.Components.RuntimeProtection.Enabled = change.EnableRuntime
 	}
 
-	// Apply
 	// TODO:  Handle Conflict response and retry
-	err = applier.K8sClient.Update(context.TODO(), cr)
+	err = applier.K8sClient.Update(ctx, cr)
 	return err
 }
 
-func (applier *Applier) getCR() (*cbcontainersv1.CBContainersAgent, error) {
+// getContainerAgentCR loads exactly 0 or 1 CBContainersAgent definitions
+// if no resource is defined, nil is returned
+// in case more than 1 resource is defined (which is not supported), only the first one is returned
+func (applier *Applier) getContainerAgentCR(ctx context.Context) (*cbcontainersv1.CBContainersAgent, error) {
+	// keep implementation in-sync with CBContainersAgentController.getContainersAgentObject() to ensure both operate on the same agent instance
 
-	// TODO: Copied from the controller
 	cbContainersAgentsList := &cbcontainersv1.CBContainersAgentList{}
-	if err := applier.K8sClient.List(context.TODO(), cbContainersAgentsList); err != nil {
+	if err := applier.K8sClient.List(ctx, cbContainersAgentsList); err != nil {
 		return nil, fmt.Errorf("couldn't list CBContainersAgent k8s objects: %v", err)
 	}
 
@@ -120,10 +164,7 @@ func (applier *Applier) getCR() (*cbcontainersv1.CBContainersAgent, error) {
 		return nil, nil
 	}
 
-	if len(cbContainersAgentsList.Items) > 1 {
-		return nil, fmt.Errorf("there is more than 1 CBContainersAgent k8s object, please delete unwanted resources")
-	}
-
+	// We don't log a warning if len >=2 as the controller already warns users about that
 	return &cbContainersAgentsList.Items[0], nil
 }
 

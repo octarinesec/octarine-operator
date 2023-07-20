@@ -25,14 +25,16 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/operator"
+	"github.com/vmware/cbcontainers-operator/config_applier"
 	"go.uber.org/zap/zapcore"
+	coreV1 "k8s.io/api/core/v1"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sync"
 	"strings"
 
-	coreV1 "k8s.io/api/core/v1"
 
 	"github.com/vmware/cbcontainers-operator/cbcontainers/processors"
 
@@ -167,11 +169,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
-	}
+	signalsContext := ctrl.SetupSignalHandler()
+	k8sClient := mgr.GetClient()
+	applier := config_applier.Applier{K8sClient: k8sClient, Logger: ctrl.Log.WithName("configurator")}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		setupLog.Info("starting manager")
+		if err := mgr.Start(signalsContext); err != nil {
+			setupLog.Error(err, "problem running manager")
+			os.Exit(1)
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		setupLog.Info("starting configuration monitor")
+		applier.RunLoop(signalsContext)
+	}()
+
+	wg.Wait()
 }
 
 func extractConfigurationVariables(mgr manager.Manager) (clusterIdentifier string, k8sVersion string) {
