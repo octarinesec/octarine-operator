@@ -50,7 +50,7 @@ endif
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.24
+ENVTEST_K8S_VERSION = 1.26
 OPERATOR_REPLICAS ?= 1
 
 CRD_OPTIONS ?= "crd:crdVersions=v1"
@@ -101,7 +101,7 @@ help: ## Display this help.
 .PHONY: manifests
 manifests: controller-gen controller-gen-old  ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-# This is needed since controller-gen does not support empty object/maps like {} but they are helpful to propagate default values up from nested objects
+# This is needed since controller-gen2 does not support empty object/maps like {} but they are helpful to propagate default values up from nested objects
 	for filename in $$(ls config/crd/bases) ; do \
 		XT=config/crd/bases/$$filename ; \
 		sed 's/default: <>/default: {}/g' $$XT >> $$XT.temp ; \
@@ -130,7 +130,7 @@ test: manifests generate fmt vet envtest ## Run tests.
 ##@ Build
 
 .PHONY: build
-build: generate fmt vet ## Build manager binary.
+build: manifests generate fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
 # Run against the configured Kubernetes cluster in the KUBECONFIG env var
@@ -224,7 +224,7 @@ ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v4.5.5
-CONTROLLER_TOOLS_VERSION ?= v0.9.0
+CONTROLLER_TOOLS_VERSION ?= v0.11.1
 CONTROLLER_TOOLS_OLD_VERSION ?= v0.6.2
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
@@ -234,12 +234,12 @@ $(KUSTOMIZE): $(LOCALBIN)
 	test -s $(LOCALBIN)/kustomize || { curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); }
 
 .PHONY: controller-gen
-controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
+controller-gen: $(CONTROLLER_GEN) ## Download controller-gen2 locally if necessary.
 $(CONTROLLER_GEN): $(LOCALBIN)
 	test -s $(LOCALBIN)/controller-gen || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
 
 .PHONY: controller-gen-old
-controller-gen-old: $(CONTROLLER_GEN_OLD) ## Download controller-gen-old locally if necessary.
+controller-gen-old: $(CONTROLLER_GEN_OLD) ## Download controller-gen2-old locally if necessary.
 $(CONTROLLER_GEN_OLD): $(LOCALBINOLD)
 	test -s $(LOCALBINOLD)/controller-gen || GOBIN=$(LOCALBINOLD) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_OLD_VERSION)
 
