@@ -35,5 +35,9 @@ func (r *CBContainersAgentController) setComponentsDefaults(components *cbcontai
 		return err
 	}
 
+	if err := r.setSettingsComponentsDefaults(components.Settings); err != nil {
+		return err
+	}
+
 	return nil
 }

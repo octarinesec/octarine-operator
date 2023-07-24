@@ -57,6 +57,7 @@ type CBContainersComponentsSpec struct {
 }
 
 type CBContainersComponentsSettings struct {
+	// +kubebuilder:default:=[{key: "operator", value: "Exists"}]
 	DaemonSetsTolerations []coreV1.Toleration `json:"daemonSetsTolerations,omitempty"`
 	// CreateDefaultImagePullSecrets controls whether or not to create the secrets
 	// needed to pull the containers images from the default repository.
