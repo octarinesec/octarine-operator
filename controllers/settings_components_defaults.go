@@ -12,7 +12,7 @@ func (r *CBContainersAgentController) setSettingsComponentsDefaults(settings cbc
 
 	if settings.DaemonSetsTolerations == nil || len(settings.DaemonSetsTolerations) == 0 {
 		settings.DaemonSetsTolerations = []coreV1.Toleration{
-			{Key: "operator", Value: "Exists"},
+			{Operator: coreV1.TolerationOpExists},
 		}
 	}
 
