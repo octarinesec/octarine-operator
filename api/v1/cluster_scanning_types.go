@@ -52,17 +52,13 @@ type CBContainersClusterScannerAgentSpec struct {
 
 type CLIFlags struct {
 	// +kubebuilder:default:=false
-	SkipSecretsDetection bool `json:"skipSecretsDetection"`
+	SkipSecretsDetection bool `json:"skipSecretsDetection,omitempty"`
 	// +kubebuilder:default:=<>
-	SkipDirsOrFiles []string `json:"skipDirsOrFiles"`
+	SkipDirsOrFiles []string `json:"skipDirsOrFiles,omitempty"`
 	// +kubebuilder:default:=false
-	ScanBaseLayer bool `json:"scanBaseLayer"`
+	ScanBaseLayer bool `json:"scanBaseLayer,omitempty"`
 	// +kubebuilder:default:=false
-	IgnoreBuiltInRegex bool `json:"ignoreBuiltInRegex"`
-	// +kubebuilder:default:=-1
-	KeywordsEntropyLevel int `json:"keywordsEntropyLevel"`
-	// +kubebuilder:default:=-1
-	HighEntropyLevel int `json:"highEntropyLevel"`
+	IgnoreBuiltInRegex bool `json:"ignoreBuiltInRegex,omitempty"`
 }
 
 // CBContainersClusterScanningSpec defines the desired state of CBContainersClusterScanning

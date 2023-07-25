@@ -527,8 +527,6 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 		{Name: "CLUSTER_SCANNER_CLI_FLAGS_SKIP_DIRS_OR_FILES", Value: strings.Join(clusterScannerSpec.CLIFlags.SkipDirsOrFiles, ",")},
 		{Name: "CLUSTER_SCANNER_CLI_FLAGS_SCAN_BASE_LAYER", Value: strconv.FormatBool(clusterScannerSpec.CLIFlags.ScanBaseLayer)},
 		{Name: "CLUSTER_SCANNER_CLI_FLAGS_IGNORE_BUILT_IN_REGEX", Value: strconv.FormatBool(clusterScannerSpec.CLIFlags.IgnoreBuiltInRegex)},
-		{Name: "CLUSTER_SCANNER_CLI_FLAGS_KEYWORDS_ENTROPY_LEVEL", Value: fmt.Sprintf("%d", clusterScannerSpec.CLIFlags.KeywordsEntropyLevel)},
-		{Name: "CLUSTER_SCANNER_CLI_FLAGS_HIGH_ENTROPY_LEVEL", Value: fmt.Sprintf("%d", clusterScannerSpec.CLIFlags.HighEntropyLevel)},
 	}
 
 	if clusterScannerSpec.K8sContainerEngine.Endpoint != "" && clusterScannerSpec.K8sContainerEngine.EngineType != "" {
