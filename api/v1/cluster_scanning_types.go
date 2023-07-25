@@ -46,6 +46,23 @@ type CBContainersClusterScannerAgentSpec struct {
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 	// +kubebuilder:default:=<>
 	K8sContainerEngine K8sContainerEngineSpec `json:"k8sContainerEngine,omitempty"`
+	// +kubebuilder:default:=<>
+	CLIFlags CLIFlags `json:"cliFlags"`
+}
+
+type CLIFlags struct {
+	// +kubebuilder:default:=false
+	SkipSecretsDetection bool `json:"skipSecretsDetection"`
+	// +kubebuilder:default:=<>
+	SkipDirsOrFiles []string `json:"skipDirsOrFiles"`
+	// +kubebuilder:default:=false
+	ScanBaseLayer bool `json:"scanBaseLayer"`
+	// +kubebuilder:default:=false
+	IgnoreBuiltInRegex bool `json:"ignoreBuiltInRegex"`
+	// +kubebuilder:default:=-1
+	KeywordsEntropyLevel int `json:"keywordsEntropyLevel"`
+	// +kubebuilder:default:=-1
+	HighEntropyLevel int `json:"highEntropyLevel"`
 }
 
 // CBContainersClusterScanningSpec defines the desired state of CBContainersClusterScanning
