@@ -93,6 +93,15 @@ This is the CR you'll need to deploy in order to trigger the operator to deploy 
 | `nodeSelector`                               | Carbon Black Container Component node selector                                         | `{}`                                                          |
 | `affinity`                                   | Carbon Black Container Component affinity                                              | `{}`                                                          |
 
+### Centralized Proxy parameters
+| Parameter                                      | Description                                                                     | Default                                                                             |
+|------------------------------------------------|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
+| `spec.components.settings.proxy.enabled`       | Enables applying the centralized proxy settings to all components               | false                                                                               |
+| `spec.components.settings.proxy.httpProxy`     | The HTTP proxy server address to be used                                        | Empty string                                                                        |
+| `spec.components.settings.proxy.httpProxy`     | The HTTPS proxy server address to be used                                       | Empty string                                                                        |
+| `spec.components.settings.proxy.noProxy`       | A comma separated list of hosts to which to connect without a proxy             | Empty string                                                                        |
+| `spec.components.settings.proxy.noProxySuffix` | A comma separated list of hosts which to append to the `noProxy` list of values | The API server IP addresses, followed by `cbcontainers-dataplane.svc.cluster.local` |
+
 ### Other Components Optional parameters
 | Parameter                                        | Description                                                                            | Default                                                       |
 |--------------------------------------------------|----------------------------------------------------------------------------------------|---------------------------------------------------------------|

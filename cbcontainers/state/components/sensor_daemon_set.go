@@ -408,7 +408,8 @@ func (obj *SensorDaemonSetK8sObject) mutateRuntimeEnvVars(container *coreV1.Cont
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
 		WithCustom(customEnvs...).
-		WithSpec(sensorSpec.Env)
+		WithSpec(sensorSpec.Env).
+		WithProxySettings(agentSpec.Components.Settings.Proxy)
 	commonState.MutateEnvVars(container, envVarBuilder)
 }
 
@@ -468,7 +469,8 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrEnvVars(container *coreV1.Contain
 		WithEventsGateway(&agentSpec.Gateways.HardeningEventsGateway).
 		WithCustom(customEnvs...).
 		WithEnvVarFromSecret(cndrCompanyCodeVarName, cndrSpec.CompanyCodeSecretName, cndrCompanyCodeKeyName).
-		WithSpec(cndrSpec.Sensor.Env)
+		WithSpec(cndrSpec.Sensor.Env).
+		WithProxySettings(agentSpec.Components.Settings.Proxy)
 
 	commonState.MutateEnvVars(container, envVarBuilder)
 }
@@ -536,7 +538,8 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 		WithEnvVarFromResource("CLUSTER_SCANNER_REQUESTS_MEMORY", ClusterScanningContainerName, "requests.memory").
 		WithEnvVarFromField("CLUSTER_SCANNER_NODE_NAME", "spec.nodeName", "v1").
 		WithSpec(clusterScannerSpec.Env).
-		WithGatewayTLS()
+		WithGatewayTLS().
+		WithProxySettings(agentSpec.Components.Settings.Proxy)
 
 	commonState.MutateEnvVars(container, envVarBuilder)
 }

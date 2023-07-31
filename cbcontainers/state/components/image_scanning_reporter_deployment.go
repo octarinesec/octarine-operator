@@ -61,7 +61,7 @@ func (obj *ImageScanningReporterDeploymentK8sObject) MutateK8sObject(k8sObject c
 	obj.mutateAnnotations(deployment, imageScanningReporter)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, imageScanningReporter)
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, imageScanningReporter, &agentSpec.Gateways.HardeningEventsGateway, agentSpec.Version, agentSpec.AccessTokenSecretName)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, agentSpec)
 	commonState.NewNodeTermsBuilder(&deployment.Spec.Template.Spec).Build()
 
 	return nil
@@ -127,27 +127,30 @@ func (obj *ImageScanningReporterDeploymentK8sObject) mutateAffinityAndNodeSelect
 	templatePodSpec.NodeSelector = imageScanningReporterSpec.NodeSelector
 }
 
-func (obj *ImageScanningReporterDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, imageScanningReporterSpec *cbcontainersv1.CBContainersImageScanningReporterSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *ImageScanningReporterDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, agentSpec *cbcontainersv1.CBContainersAgentSpec) {
 	if len(templatePodSpec.Containers) != 1 {
 		container := coreV1.Container{}
 		templatePodSpec.Containers = []coreV1.Container{container}
 	}
 
-	obj.mutateContainer(&templatePodSpec.Containers[0], imageScanningReporterSpec, eventsGatewaySpec, version, accessTokenSecretName)
+	obj.mutateContainer(&templatePodSpec.Containers[0], agentSpec)
 }
 
-func (obj *ImageScanningReporterDeploymentK8sObject) mutateContainer(container *coreV1.Container, imageScanningReporterSpec *cbcontainersv1.CBContainersImageScanningReporterSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *ImageScanningReporterDeploymentK8sObject) mutateContainer(container *coreV1.Container, agentSpec *cbcontainersv1.CBContainersAgentSpec) {
+	imageScanningReporterSpec := &agentSpec.Components.ClusterScanning.ImageScanningReporter
 	container.Name = ImageScanningReporterName
 	container.Resources = imageScanningReporterSpec.Resources
-	obj.mutateImageScanningReporterEnvVars(container, imageScanningReporterSpec, accessTokenSecretName, eventsGatewaySpec)
-	commonState.MutateImage(container, imageScanningReporterSpec.Image, version)
+	obj.mutateImageScanningReporterEnvVars(container, agentSpec)
+	commonState.MutateImage(container, imageScanningReporterSpec.Image, agentSpec.Version)
 	commonState.MutateContainerHTTPProbes(container, imageScanningReporterSpec.Probes)
 	obj.mutateSecurityContext(container)
 	obj.mutateContainerPorts(container)
 	obj.mutateVolumesMounts(container)
 }
 
-func (obj *ImageScanningReporterDeploymentK8sObject) mutateImageScanningReporterEnvVars(container *coreV1.Container, imageScanningReporterSpec *cbcontainersv1.CBContainersImageScanningReporterSpec, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec) {
+func (obj *ImageScanningReporterDeploymentK8sObject) mutateImageScanningReporterEnvVars(container *coreV1.Container, agentSpec *cbcontainersv1.CBContainersAgentSpec) {
+	imageScanningReporterSpec := &agentSpec.Components.ClusterScanning.ImageScanningReporter
+
 	customEnvs := []coreV1.EnvVar{
 		{Name: "IMAGE_SCANNING_REPORTER_PROMETHEUS_PORT", Value: fmt.Sprintf("%d", imageScanningReporterSpec.Prometheus.Port)},
 		{Name: "IMAGE_SCANNING_REPORTER_PROVES_PORT", Value: fmt.Sprintf("%d", imageScanningReporterSpec.Probes.Port)},
@@ -155,10 +158,11 @@ func (obj *ImageScanningReporterDeploymentK8sObject) mutateImageScanningReporter
 	}
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
-		WithCommonDataPlane(accessTokenSecretName).
-		WithEventsGateway(eventsGatewaySpec).
+		WithCommonDataPlane(agentSpec.AccessTokenSecretName).
+		WithEventsGateway(&agentSpec.Gateways.HardeningEventsGateway).
 		WithCustom(customEnvs...).
-		WithSpec(imageScanningReporterSpec.Env)
+		WithSpec(imageScanningReporterSpec.Env).
+		WithProxySettings(agentSpec.Components.Settings.Proxy)
 	commonState.MutateEnvVars(container, envVarBuilder)
 }
 
