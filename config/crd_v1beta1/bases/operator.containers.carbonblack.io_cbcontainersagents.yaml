@@ -3181,6 +3181,19 @@ spec:
                   properties:
                     clusterScanner:
                       properties:
+                        cliFlags:
+                          properties:
+                            ignoreBuiltInRegex:
+                              type: boolean
+                            scanBaseLayer:
+                              type: boolean
+                            skipDirsOrFiles:
+                              items:
+                                type: string
+                              type: array
+                            skipSecretsDetection:
+                              type: boolean
+                          type: object
                         daemonSetAnnotations:
                           additionalProperties:
                             type: string
