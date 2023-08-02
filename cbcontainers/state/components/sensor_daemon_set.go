@@ -173,6 +173,10 @@ func (obj *SensorDaemonSetK8sObject) mutateLabels(daemonSet *appsV1.DaemonSet, a
 		applyment.EnforceMapContains(desiredLabels, agentSpec.Components.ClusterScanning.ClusterScannerAgent.Labels)
 	}
 
+	if commonState.IsEnabled(agentSpec.Components.Cndr.Enabled) {
+		applyment.EnforceMapContains(desiredLabels, agentSpec.Components.Cndr.Sensor.Labels)
+	}
+
 	daemonSet.ObjectMeta.Labels = desiredLabels
 	daemonSet.Spec.Selector.MatchLabels = desiredLabels
 	daemonSet.Spec.Template.ObjectMeta.Labels = desiredLabels
@@ -196,6 +200,15 @@ func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonS
 		applyment.EnforceMapContains(daemonSet.ObjectMeta.Annotations, clusterScanner.DaemonSetAnnotations)
 		applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, clusterScanner.PodTemplateAnnotations)
 		if *clusterScanner.Prometheus.Enabled {
+			prometheusEnabled = true
+		}
+	}
+
+	if isCndrEnbaled(agentSpec.Components.Cndr) {
+		cndr := agentSpec.Components.Cndr.Sensor
+		applyment.EnforceMapContains(daemonSet.ObjectMeta.Annotations, cndr.DaemonSetAnnotations)
+		applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, cndr.PodTemplateAnnotations)
+		if *cndr.Prometheus.Enabled {
 			prometheusEnabled = true
 		}
 	}
@@ -479,6 +492,7 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumes(templatePodSpec *coreV1.P
 		routeIndex := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, name)
 		templatePodSpec.Volumes[routeIndex].HostPath = hostPath
 	}
+	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
