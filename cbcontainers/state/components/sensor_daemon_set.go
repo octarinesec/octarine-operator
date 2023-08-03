@@ -2,6 +2,8 @@ package components
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	cbContainersV1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
@@ -382,7 +384,7 @@ func (obj *SensorDaemonSetK8sObject) mutateRuntimeContainer(container *coreV1.Co
 	container.Name = RuntimeContainerName
 	container.Resources = sensorSpec.Resources
 	container.Command = []string{runtimeSensorRunCommand}
-	commonState.MutateImage(container, sensorSpec.Image, agentSpec.Version)
+	commonState.MutateImage(container, sensorSpec.Image, agentSpec.Version, agentSpec.Components.Settings.DefaultImagesRegistry)
 	commonState.MutateContainerFileProbes(container, sensorSpec.Probes)
 	if commonState.IsEnabled(sensorSpec.Prometheus.Enabled) {
 		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(sensorSpec.Prometheus.Port)}}
@@ -408,7 +410,8 @@ func (obj *SensorDaemonSetK8sObject) mutateRuntimeEnvVars(container *coreV1.Cont
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
 		WithCustom(customEnvs...).
-		WithSpec(sensorSpec.Env)
+		WithSpec(sensorSpec.Env).
+		WithProxySettings(agentSpec.Components.Settings.Proxy)
 	commonState.MutateEnvVars(container, envVarBuilder)
 }
 
@@ -431,7 +434,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(container *co
 
 	container.Name = ClusterScanningContainerName
 	container.Resources = clusterScannerSpec.Resources
-	commonState.MutateImage(container, clusterScannerSpec.Image, agentSpec.Version)
+	commonState.MutateImage(container, clusterScannerSpec.Image, agentSpec.Version, agentSpec.Components.Settings.DefaultImagesRegistry)
 	commonState.MutateContainerFileProbes(container, clusterScannerSpec.Probes)
 	if commonState.IsEnabled(clusterScannerSpec.Prometheus.Enabled) {
 		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(clusterScannerSpec.Prometheus.Port)}}
@@ -447,7 +450,7 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrContainer(container *coreV1.Conta
 
 	container.Name = CndrContainerName
 	container.Resources = cndrSpec.Resources
-	commonState.MutateImage(container, cndrSpec.Image, agentSpec.Version)
+	commonState.MutateImage(container, cndrSpec.Image, agentSpec.Version, agentSpec.Components.Settings.DefaultImagesRegistry)
 	if commonState.IsEnabled(cndrSpec.Prometheus.Enabled) {
 		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(cndrSpec.Prometheus.Port)}}
 	}
@@ -468,7 +471,8 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrEnvVars(container *coreV1.Contain
 		WithEventsGateway(&agentSpec.Gateways.HardeningEventsGateway).
 		WithCustom(customEnvs...).
 		WithEnvVarFromSecret(cndrCompanyCodeVarName, cndrSpec.CompanyCodeSecretName, cndrCompanyCodeKeyName).
-		WithSpec(cndrSpec.Sensor.Env)
+		WithSpec(cndrSpec.Sensor.Env).
+		WithProxySettings(agentSpec.Components.Settings.Proxy)
 
 	commonState.MutateEnvVars(container, envVarBuilder)
 }
@@ -522,6 +526,10 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_SCHEME", Value: ImageScanningReporterDesiredContainerPortName},
 		{Name: "CLUSTER_SCANNER_LIVENESS_PATH", Value: clusterScannerSpec.Probes.LivenessPath},
 		{Name: "CLUSTER_SCANNER_READINESS_PATH", Value: clusterScannerSpec.Probes.ReadinessPath},
+		{Name: "CLUSTER_SCANNER_CLI_FLAGS_SKIP_SECRETS_DETECTION", Value: strconv.FormatBool(clusterScannerSpec.CLIFlags.SkipSecretsDetection)},
+		{Name: "CLUSTER_SCANNER_CLI_FLAGS_SKIP_DIRS_OR_FILES", Value: strings.Join(clusterScannerSpec.CLIFlags.SkipDirsOrFiles, ",")},
+		{Name: "CLUSTER_SCANNER_CLI_FLAGS_SCAN_BASE_LAYER", Value: strconv.FormatBool(clusterScannerSpec.CLIFlags.ScanBaseLayer)},
+		{Name: "CLUSTER_SCANNER_CLI_FLAGS_IGNORE_BUILT_IN_REGEX", Value: strconv.FormatBool(clusterScannerSpec.CLIFlags.IgnoreBuiltInRegex)},
 	}
 
 	if clusterScannerSpec.K8sContainerEngine.Endpoint != "" && clusterScannerSpec.K8sContainerEngine.EngineType != "" {
@@ -537,7 +545,8 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 		WithEnvVarFromResource("CLUSTER_SCANNER_REQUESTS_MEMORY", ClusterScanningContainerName, "requests.memory").
 		WithEnvVarFromField("CLUSTER_SCANNER_NODE_NAME", "spec.nodeName", "v1").
 		WithSpec(clusterScannerSpec.Env).
-		WithGatewayTLS()
+		WithGatewayTLS().
+		WithProxySettings(agentSpec.Components.Settings.Proxy)
 
 	commonState.MutateEnvVars(container, envVarBuilder)
 }

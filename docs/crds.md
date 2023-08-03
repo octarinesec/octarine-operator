@@ -5,6 +5,7 @@
 The operator implements controllers for the Carbon Black Container custom resources definitions:
 
 ### 1. Carbon Black Container Agent CR
+
 <u>cbcontainersagents.operator.containers.carbonblack.io</u>
 
 This is the CR you'll need to deploy in order to trigger the operator to deploy the data plane components.
@@ -58,18 +59,22 @@ This is the CR you'll need to deploy in order to trigger the operator to deploy 
 
 ### Cluster Scanning Components Optional parameters
 
-| Parameter                                                                                  | Description                                                                                                                | Default                                                                              |
-|--------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| `spec.components.clusterScanning.enabled`                                                  | Carbon Black Container flag to control Cluster Scanning components deployment                                              | true                                                                                 |
-| `spec.components.clusterScanning.imageScanningReporter.image.repository`                   | Carbon Black Container Image Scanning Reporter image repository                                                            | `cbartifactory/image-scanning-reporter`                                              |
-| `spec.components.clusterScanning.clusterScanner.image.repository`                          | Carbon Black Container Cluster Scanner Agent image repository                                                              | `cbartifactory/cluster-scanner`                                                      |
-| `spec.components.clusterScanning.imageScanningReporter.resources`                          | Carbon Black Container Image Scanning Reporter resources                                                                   | `{requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "1024Mi", cpu: "900m"}}` |
-| `spec.components.clusterScanning.clusterScanner.resources`                                 | Carbon Black Container Cluster Scanner resources                                                                           | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "1024Mi", cpu: "500m"}}`  |
-| `spec.components.clusterScanning.clusterScanner.k8sContainerEngine.engineType`             | Carbon Black Container Cluster Scanner k8s container engine type. One of the options: `containerd`/`docker-daemon`/`cri-o` |                                                                                      |
-| `spec.components.clusterScanning.clusterScanner.k8sContainerEngine.endpoint`               | Carbon Black Container Cluster Scanner k8s container engine endpoint path                                                  |                                                                                      |
-| `spec.components.clusterScanning.clusterScanner.k8sContainerEngine.CRIO.storagePath`       | Carbon Black Container Cluster Scanner override default image storage path (CRI-O only)                                    |                                                                                      |
-| `spec.components.clusterScanning.clusterScanner.k8sContainerEngine.CRIO.storageConfigPath` | Carbon Black Container Cluster Scanner override default image storage config path (CRI-O only)                             |                                                                                      |
-| `spec.components.clusterScanning.clusterScanner.k8sContainerEngine.CRIO.configPath`        | Carbon Black Container Cluster Scanner override default CRI-O config path (CRI-O only)                                     |                                                                                      |
+| Parameter                                                                                  | Description                                                                                                                         | Default                                                                              |
+|--------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| `spec.components.clusterScanning.enabled`                                                  | Carbon Black Container flag to control Cluster Scanning components deployment                                                       | true                                                                                 |
+| `spec.components.clusterScanning.imageScanningReporter.image.repository`                   | Carbon Black Container Image Scanning Reporter image repository                                                                     | `cbartifactory/image-scanning-reporter`                                              |
+| `spec.components.clusterScanning.clusterScanner.image.repository`                          | Carbon Black Container Cluster Scanner Agent image repository                                                                       | `cbartifactory/cluster-scanner`                                                      |
+| `spec.components.clusterScanning.imageScanningReporter.resources`                          | Carbon Black Container Image Scanning Reporter resources                                                                            | `{requests: {memory: "64Mi", cpu: "200m"}, limits: {memory: "1024Mi", cpu: "900m"}}` |
+| `spec.components.clusterScanning.clusterScanner.resources`                                 | Carbon Black Container Cluster Scanner resources                                                                                    | `{requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "1024Mi", cpu: "500m"}}`  |
+| `spec.components.clusterScanning.clusterScanner.k8sContainerEngine.engineType`             | Carbon Black Container Cluster Scanner k8s container engine type. One of the options: `containerd`/`docker-daemon`/`cri-o`          |                                                                                      |
+| `spec.components.clusterScanning.clusterScanner.k8sContainerEngine.endpoint`               | Carbon Black Container Cluster Scanner k8s container engine endpoint path                                                           |                                                                                      |
+| `spec.components.clusterScanning.clusterScanner.k8sContainerEngine.CRIO.storagePath`       | Carbon Black Container Cluster Scanner override default image storage path (CRI-O only)                                             |                                                                                      |
+| `spec.components.clusterScanning.clusterScanner.k8sContainerEngine.CRIO.storageConfigPath` | Carbon Black Container Cluster Scanner override default image storage config path (CRI-O only)                                      |                                                                                      |
+| `spec.components.clusterScanning.clusterScanner.k8sContainerEngine.CRIO.configPath`        | Carbon Black Container Cluster Scanner override default CRI-O config path (CRI-O only)                                              |                                                                                      |
+| `spec.components.clusterScanning.clusterScanner.cliFlags.skipSecretsDetection`             | Carbon Black Container Cluster Scanner flag of whether the scan should skip scan for secrets                                        | false                                                                                |
+| `spec.components.clusterScanning.clusterScanner.cliFlags.skipDirsOrFiles`                  | Carbon Black Container Cluster Scanner flag of files or directories to not scan for secrets                                         |                                                                                      |
+| `spec.components.clusterScanning.clusterScanner.cliFlags.scanBaseLayer`                    | Carbon Black Container Cluster Scanner flag of whether the scan should scan the base layers for secrets                             | false                                                                                |
+| `spec.components.clusterScanning.clusterScanner.cliFlags.ignoreBuiltInRegex`               | Carbon Black Container Cluster Scanner flag of whether the scan should ignore the builtin regexes of files to skip secret detection | false                                                                                |
 
 ### Components Common Optional parameters
 
@@ -93,7 +98,17 @@ This is the CR you'll need to deploy in order to trigger the operator to deploy 
 | `nodeSelector`                               | Carbon Black Container Component node selector                                         | `{}`                                                          |
 | `affinity`                                   | Carbon Black Container Component affinity                                              | `{}`                                                          |
 
+### Centralized Proxy parameters
+| Parameter                                      | Description                                                                     | Default                                                                             |
+|------------------------------------------------|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
+| `spec.components.settings.proxy.enabled`       | Enables applying the centralized proxy settings to all components               | false                                                                               |
+| `spec.components.settings.proxy.httpProxy`     | The HTTP proxy server address to be used                                        | Empty string                                                                        |
+| `spec.components.settings.proxy.httpProxy`     | The HTTPS proxy server address to be used                                       | Empty string                                                                        |
+| `spec.components.settings.proxy.noProxy`       | A comma separated list of hosts to which to connect without a proxy             | Empty string                                                                        |
+| `spec.components.settings.proxy.noProxySuffix` | A comma separated list of hosts which to append to the `noProxy` list of values | The API server IP addresses, followed by `cbcontainers-dataplane.svc.cluster.local` |
+
 ### Other Components Optional parameters
+
 | Parameter                                        | Description                                                                            | Default                                                       |
 |--------------------------------------------------|----------------------------------------------------------------------------------------|---------------------------------------------------------------|
 | `spec.components.settings.daemonSetsTolerations` | Carbon Black DaemonSet Component Tolerations                                           | Empty array                                                   |
