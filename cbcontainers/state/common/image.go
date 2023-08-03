@@ -9,8 +9,8 @@ import (
 
 func MutateImage(container *coreV1.Container, desiredImage cbcontainersv1.CBContainersImageSpec, desiredVersion, defaultRegistry string) {
 	registry := defaultRegistry
-	if desiredImage.Registry != "" {
-		registry = desiredImage.Registry
+	if desiredImage.Registry != nil {
+		registry = *desiredImage.Registry
 	}
 
 	if registry != "" {
