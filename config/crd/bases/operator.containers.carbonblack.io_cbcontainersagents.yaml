@@ -1050,6 +1050,8 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              registry:
+                                type: string
                               repository:
                                 type: string
                               tag:
@@ -2178,6 +2180,8 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              registry:
+                                type: string
                               repository:
                                 type: string
                               tag:
@@ -3288,6 +3292,8 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              registry:
+                                type: string
                               repository:
                                 type: string
                               tag:
@@ -3457,6 +3463,8 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              registry:
+                                type: string
                               repository:
                                 type: string
                               tag:
@@ -4610,6 +4618,8 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              registry:
+                                type: string
                               repository:
                                 type: string
                               tag:
@@ -4781,6 +4791,8 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              registry:
+                                type: string
                               repository:
                                 type: string
                               tag:
@@ -5877,6 +5889,8 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              registry:
+                                type: string
                               repository:
                                 type: string
                               tag:
@@ -6043,6 +6057,8 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              registry:
+                                type: string
                               repository:
                                 type: string
                               tag:
@@ -6218,6 +6234,10 @@ spec:
                               type: string
                           type: object
                         type: array
+                      defaultImagesRegistry:
+                        description: DefaultImagesRegistry is the default registry
+                          to use with the agent images
+                        type: string
                       imagePullSecrets:
                         description: "ImagePullSecrets is a list of image pull secret
                           names, which will be used to pull the container image(s)
@@ -6227,7 +6247,6 @@ spec:
                           type: string
                         type: array
                       proxy:
-                        default: {}
                         description: Proxy controls the optional centralized HTTP
                           & HTTPS proxy settings, that can be applied to all components
                           at once. One can still have a per-component proxy settings
