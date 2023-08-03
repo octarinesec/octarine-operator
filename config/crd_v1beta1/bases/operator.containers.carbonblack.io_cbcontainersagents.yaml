@@ -8,6 +8,22 @@ metadata:
   creationTimestamp: null
   name: cbcontainersagents.operator.containers.carbonblack.io
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.version
+    description: Version of the deployed agent
+    name: Version
+    type: string
+  - JSONPath: .spec.components.clusterScanning.enabled
+    description: Whether cluster image scanning is enabled
+    name: Cluster image scanning
+    type: boolean
+  - JSONPath: .spec.components.runtimeProtection.enabled
+    description: Whether runtime protection is enabled
+    name: Runtime protection
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
   group: operator.containers.carbonblack.io
   names:
     kind: CBContainersAgent

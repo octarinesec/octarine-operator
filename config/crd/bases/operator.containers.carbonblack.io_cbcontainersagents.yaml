@@ -15,7 +15,23 @@ spec:
     singular: cbcontainersagent
   scope: Cluster
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - description: Version of the deployed agent
+      jsonPath: .spec.version
+      name: Version
+      type: string
+    - description: Whether cluster image scanning is enabled
+      jsonPath: .spec.components.clusterScanning.enabled
+      name: Cluster image scanning
+      type: boolean
+    - description: Whether runtime protection is enabled
+      jsonPath: .spec.components.runtimeProtection.enabled
+      name: Runtime protection
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: CBContainersAgent is the Schema for the cbcontainersagents API
