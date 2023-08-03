@@ -222,7 +222,6 @@ func (obj *SensorDaemonSetK8sObject) getExpectedVolumeCount(agentSpec *cbContain
 
 	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
 		clusterScannerSpec := &agentSpec.Components.ClusterScanning.ClusterScannerAgent
-		expectedVolumesCount += 1 // RootCA
 		if clusterScannerSpec.K8sContainerEngine.Endpoint != "" {
 			expectedVolumesCount += 1
 		}
@@ -235,6 +234,8 @@ func (obj *SensorDaemonSetK8sObject) getExpectedVolumeCount(agentSpec *cbContain
 	if isCndrEnbaled(agentSpec.Components.Cndr) {
 		expectedVolumesCount += len(cndrHostPaths)
 	}
+
+	expectedVolumesCount += 1 // RootCA
 
 	return expectedVolumesCount
 }
