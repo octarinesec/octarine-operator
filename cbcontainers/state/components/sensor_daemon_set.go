@@ -173,10 +173,6 @@ func (obj *SensorDaemonSetK8sObject) mutateLabels(daemonSet *appsV1.DaemonSet, a
 		applyment.EnforceMapContains(desiredLabels, agentSpec.Components.ClusterScanning.ClusterScannerAgent.Labels)
 	}
 
-	if isCndrEnbaled(agentSpec.Components.Cndr) {
-		applyment.EnforceMapContains(desiredLabels, agentSpec.Components.Cndr.Sensor.Labels)
-	}
-
 	daemonSet.ObjectMeta.Labels = desiredLabels
 	daemonSet.Spec.Selector.MatchLabels = desiredLabels
 	daemonSet.Spec.Template.ObjectMeta.Labels = desiredLabels
@@ -200,15 +196,6 @@ func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonS
 		applyment.EnforceMapContains(daemonSet.ObjectMeta.Annotations, clusterScanner.DaemonSetAnnotations)
 		applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, clusterScanner.PodTemplateAnnotations)
 		if *clusterScanner.Prometheus.Enabled {
-			prometheusEnabled = true
-		}
-	}
-
-	if isCndrEnbaled(agentSpec.Components.Cndr) {
-		cndr := agentSpec.Components.Cndr.Sensor
-		applyment.EnforceMapContains(daemonSet.ObjectMeta.Annotations, cndr.DaemonSetAnnotations)
-		applyment.EnforceMapContains(daemonSet.Spec.Template.ObjectMeta.Annotations, cndr.PodTemplateAnnotations)
-		if *cndr.Prometheus.Enabled {
 			prometheusEnabled = true
 		}
 	}
