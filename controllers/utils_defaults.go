@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"strings"
@@ -152,4 +153,19 @@ func initNetLookupHost() func(_ string) ([]string, error) {
 		}
 	}
 	return net.LookupHost
+}
+
+func GetDefaultNoProxyValue(namespace string) (string, error) {
+	const k8sAPIServiceDomain = "kubernetes.default.svc"
+
+	// We use a DNS lookup to get an accurate IP list of the API server
+	noProxyItems, err := netLookupHost(k8sAPIServiceDomain)
+	if err != nil {
+		return "", fmt.Errorf("unable to fetch Kubernetes API server addresses by querying %q: %w", k8sAPIServiceDomain, err)
+	}
+
+	// we should be able to connect to a <service-name>.svc.cluster.local without
+	// the need for a proxy
+	noProxyItems = append(noProxyItems, namespace+".svc.cluster.local")
+	return strings.Join(noProxyItems, ","), nil
 }

@@ -1,9 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-	"strings"
-
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	coreV1 "k8s.io/api/core/v1"
 )
@@ -35,18 +32,10 @@ func (r *CBContainersAgentController) setProxySettingsComponentsDefaults(proxy *
 	}
 
 	if proxy.NoProxySuffix == nil {
-		const k8sAPIServiceDomain = "kubernetes.default.svc"
-
-		// We use a DNS lookup to get an accurate IP list of the API server
-		noProxyItems, err := netLookupHost(k8sAPIServiceDomain)
+		noProxySuffix, err := GetDefaultNoProxyValue(r.Namespace)
 		if err != nil {
-			return fmt.Errorf("unable to fetch Kubernetes API server addresses by querying %q: %w", k8sAPIServiceDomain, err)
+			return err
 		}
-
-		// we should be able to connect to a <service-name>.svc.cluster.local without
-		// the need for a proxy
-		noProxyItems = append(noProxyItems, r.Namespace+".svc.cluster.local")
-		noProxySuffix := strings.Join(noProxyItems, ",")
 		proxy.NoProxySuffix = &noProxySuffix
 	}
 
