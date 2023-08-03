@@ -259,6 +259,9 @@ func (obj *SensorDaemonSetK8sObject) mutateVolumes(daemonSet *appsV1.DaemonSet, 
 	if isCndrEnbaled(agentSpec.Components.Cndr) {
 		obj.mutateCndrVolumes(&daemonSet.Spec.Template.Spec, &agentSpec.Components.Cndr.Sensor)
 	}
+
+	// mutate root-cas volume, for https certificates
+	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateTolerations(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {
@@ -483,7 +486,6 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrVolumes(templatePodSpec *coreV1.P
 		routeIndex := commonState.EnsureAndGetVolumeIndexForName(templatePodSpec, name)
 		templatePodSpec.Volumes[routeIndex].HostPath = hostPath
 	}
-	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateCndrVolumesMounts(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
@@ -607,9 +609,6 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec
 	}
 	templatePodSpec.Volumes[crioConfigIx].HostPath.Path = configPath
 	// End CRI-O config
-
-	// mutate root-cas volume, for https certificates
-	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
