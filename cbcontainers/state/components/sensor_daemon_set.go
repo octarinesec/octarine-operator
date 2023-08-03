@@ -222,7 +222,6 @@ func (obj *SensorDaemonSetK8sObject) getExpectedVolumeCount(agentSpec *cbContain
 
 	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) {
 		clusterScannerSpec := &agentSpec.Components.ClusterScanning.ClusterScannerAgent
-		expectedVolumesCount += 1 // RootCA
 		if clusterScannerSpec.K8sContainerEngine.Endpoint != "" {
 			expectedVolumesCount += 1
 		}
@@ -235,6 +234,8 @@ func (obj *SensorDaemonSetK8sObject) getExpectedVolumeCount(agentSpec *cbContain
 	if isCndrEnbaled(agentSpec.Components.Cndr) {
 		expectedVolumesCount += len(cndrHostPaths)
 	}
+
+	expectedVolumesCount += 1 // RootCA
 
 	return expectedVolumesCount
 }
@@ -259,6 +260,9 @@ func (obj *SensorDaemonSetK8sObject) mutateVolumes(daemonSet *appsV1.DaemonSet, 
 	if isCndrEnbaled(agentSpec.Components.Cndr) {
 		obj.mutateCndrVolumes(&daemonSet.Spec.Template.Spec, &agentSpec.Components.Cndr.Sensor)
 	}
+
+	// mutate root-cas volume, for https certificates
+	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateTolerations(daemonSet *appsV1.DaemonSet, agentSpec *cbContainersV1.CBContainersAgentSpec) {
@@ -606,9 +610,6 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumes(templatePodSpec
 	}
 	templatePodSpec.Volumes[crioConfigIx].HostPath.Path = configPath
 	// End CRI-O config
-
-	// mutate root-cas volume, for https certificates
-	commonState.MutateVolumesToIncludeRootCAsVolume(templatePodSpec)
 }
 
 func (obj *SensorDaemonSetK8sObject) mutateClusterScannerVolumesMounts(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
