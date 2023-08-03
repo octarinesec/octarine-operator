@@ -173,7 +173,7 @@ func (obj *SensorDaemonSetK8sObject) mutateLabels(daemonSet *appsV1.DaemonSet, a
 		applyment.EnforceMapContains(desiredLabels, agentSpec.Components.ClusterScanning.ClusterScannerAgent.Labels)
 	}
 
-	if commonState.IsEnabled(agentSpec.Components.Cndr.Enabled) {
+	if isCndrEnbaled(agentSpec.Components.Cndr) {
 		applyment.EnforceMapContains(desiredLabels, agentSpec.Components.Cndr.Sensor.Labels)
 	}
 

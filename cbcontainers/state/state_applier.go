@@ -122,7 +122,7 @@ func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbconta
 
 	if common.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) ||
 		common.IsEnabled(agentSpec.Components.RuntimeProtection.Enabled) ||
-		common.IsEnabled(agentSpec.Components.Cndr.Enabled) {
+		(agentSpec.Components.Cndr != nil && common.IsEnabled(agentSpec.Components.Cndr.Enabled)) {
 		mutatedComponentsDaemonSet, err = c.applyComponentsDamonSet(ctx, agentSpec, applyOptions)
 		if err != nil {
 			return false, err
