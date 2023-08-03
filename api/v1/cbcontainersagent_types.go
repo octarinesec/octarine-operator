@@ -73,6 +73,14 @@ type CBContainersComponentsSettings struct {
 	//
 	// The secrets must already exist.
 	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
+
+	// Proxy controls the optional centralized HTTP & HTTPS proxy settings, that can be applied
+	// to all components at once. One can still have a per-component proxy settings by using the
+	// good old environment variables. However, here we have an additional advantage of taking
+	// care of determining the necessary `NO_PROXY` settings.
+	//
+	// +kubebuilder:default:=<>
+	Proxy *CBContainersProxySettings `json:"proxy,omitempty"`
 }
 
 func (s CBContainersComponentsSettings) ShouldCreateDefaultImagePullSecrets() bool {
@@ -81,6 +89,39 @@ func (s CBContainersComponentsSettings) ShouldCreateDefaultImagePullSecrets() bo
 		return true
 	}
 	return *s.CreateDefaultImagePullSecrets
+}
+
+type CBContainersProxySettings struct {
+	// Enabled controls if the proxy settings are applied or not
+	//
+	// +kubebuilder:default:=false
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// HttpProxy points to the URL of the HTTP proxy.
+	// If set, it'll result in an additional HTTP_PROXY environment variable defined for all
+	// components. When a component already has HTTP_PROXY defined through the CRD, HttpProxy won't
+	// be used, using the component's original HTTP_PROXY value instead.
+	HttpProxy *string `json:"httpProxy,omitempty"`
+
+	// HttpsProxy points to the URL of the HTTPS proxy.
+	// If set, it'll result in an additional HTTPS_PROXY environment variable defined for all
+	// components. When a component already has HTTPS_PROXY defined through the CRD, HttpsProxy won't
+	// be used, using the component's original HTTPS_PROXY value instead.
+	HttpsProxy *string `json:"httpsProxy,omitempty"`
+
+	// NoProxy can contain a comma separated list of hosts to which all components can connect
+	// without using a proxy. If set, it'll result in an additional NO_PROXY environment variable
+	// defined for all components. When a component already has NO_PROXY defined through the CRD, NoProxy won't
+	// be used, using the component's original NO_PROXY value instead.
+	NoProxy *string `json:"noProxy,omitempty"`
+
+	// NoProxySuffix can be an empty string or contain a comma separated list of hosts which can
+	// be safely appended to the `NoProxy` values or to the component specific NO_PROXY environment
+	// variable. NoProxySuffix is defaulted to a list of the Kubernetes API server IP addresses and
+	// to the service domain suffix of the installation namespace (usually
+	// cbcontainers-dataplane.svc.cluster.local). It's exposed more as a means by which to control
+	// the defaults.
+	NoProxySuffix *string `json:"noProxySuffix,omitempty"`
 }
 
 // CBContainersAgentStatus defines the observed state of CBContainersAgent

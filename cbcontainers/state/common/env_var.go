@@ -1,12 +1,13 @@
 package common
 
 import (
-	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
 	"strconv"
+	"strings"
 
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	coreV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 const (
@@ -22,6 +23,9 @@ const (
 	agentVersionVarName     = "OCTARINE_AGENT_VERSION"
 	tlsSkipVerifyVarName    = "TLS_INSECURE_SKIP_VERIFY"
 	tlsRootCAsPathVarName   = "TLS_ROOT_CAS_PATH"
+	proxyNoProxyVarName     = "NO_PROXY"
+	proxyHttpProxyVarName   = "HTTP_PROXY"
+	proxyHttpsProxyVarName  = "HTTPS_PROXY"
 )
 
 type EnvVarBuilder struct {
@@ -58,6 +62,44 @@ func (b *EnvVarBuilder) WithCustom(customEnvsToAdd ...coreV1.EnvVar) *EnvVarBuil
 		b.envVars[customEnvVar.Name] = customEnvVar
 	}
 
+	return b
+}
+
+func (b *EnvVarBuilder) WithProxySettings(proxySettings *cbcontainersv1.CBContainersProxySettings) *EnvVarBuilder {
+	if proxySettings == nil || proxySettings.Enabled == nil || *proxySettings.Enabled == false {
+		return b
+	}
+
+	var userNoProxy string
+	if noProxyVar, ok := b.envVars[proxyNoProxyVarName]; ok {
+		userNoProxy = noProxyVar.Value
+	} else if proxySettings.NoProxy != nil {
+		userNoProxy = *proxySettings.NoProxy
+	}
+
+	userNoProxy = strings.Trim(userNoProxy, ",")
+	cbNoProxy := strings.Trim(*proxySettings.NoProxySuffix, ",")
+
+	noProxyVal := strings.Join([]string{userNoProxy, cbNoProxy}, ",")
+	// if one of userNoProxy or cbNoProxy is empty, we'll get a leading or trailing comma
+	noProxyVal = strings.Trim(noProxyVal, ",") // thus, we strip it here
+	b.envVars[proxyNoProxyVarName] = coreV1.EnvVar{Name: proxyNoProxyVarName, Value: noProxyVal}
+
+	b.withDefaultValueOrNothing(proxyHttpProxyVarName, proxySettings.HttpProxy).
+		withDefaultValueOrNothing(proxyHttpsProxyVarName, proxySettings.HttpsProxy)
+
+	return b
+}
+
+func (b *EnvVarBuilder) withDefaultValueOrNothing(envName string, defValue *string) *EnvVarBuilder {
+	var value string
+	if envVar, ok := b.envVars[envName]; ok {
+		value = envVar.Value
+	} else if defValue != nil {
+		value = *defValue
+	}
+
+	b.envVars[envName] = coreV1.EnvVar{Name: envName, Value: value}
 	return b
 }
 

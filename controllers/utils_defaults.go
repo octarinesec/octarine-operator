@@ -1,6 +1,11 @@
 package controllers
 
 import (
+	"fmt"
+	"net"
+	"os"
+	"strings"
+
 	"github.com/vmware/cbcontainers-operator/api/v1"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -135,4 +140,32 @@ func setDefaultResource(list coreV1.ResourceList, resourceName coreV1.ResourceNa
 	}
 
 	return nil
+}
+
+var netLookupHost = initNetLookupHost()
+
+func initNetLookupHost() func(_ string) ([]string, error) {
+	// If we are running in a unit test, we need a more
+	// predictable implementation of netLookupHost
+	if strings.HasSuffix(os.Args[0], ".test") {
+		return func(_ string) ([]string, error) {
+			return []string{"10.96.0.1"}, nil
+		}
+	}
+	return net.LookupHost
+}
+
+func GetDefaultNoProxyValue(namespace string) (string, error) {
+	const k8sAPIServiceDomain = "kubernetes.default.svc"
+
+	// We use a DNS lookup to get an accurate IP list of the API server
+	noProxyItems, err := netLookupHost(k8sAPIServiceDomain)
+	if err != nil {
+		return "", fmt.Errorf("unable to fetch Kubernetes API server addresses by querying %q: %w", k8sAPIServiceDomain, err)
+	}
+
+	// we should be able to connect to a <service-name>.svc.cluster.local without
+	// the need for a proxy
+	noProxyItems = append(noProxyItems, namespace+".svc.cluster.local")
+	return strings.Join(noProxyItems, ","), nil
 }

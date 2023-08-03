@@ -86,7 +86,7 @@ func (obj *StateReporterDeploymentK8sObject) MutateK8sObject(k8sObject client.Ob
 	}
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, stateReporter)
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, stateReporter, &agentSpec.Gateways.HardeningEventsGateway, agentSpec.Version, agentSpec.AccessTokenSecretName)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, agentSpec)
 	commonState.NewNodeTermsBuilder(&deployment.Spec.Template.Spec).Build()
 
 	return nil
@@ -105,26 +105,29 @@ func (obj *StateReporterDeploymentK8sObject) mutateAffinityAndNodeSelector(templ
 	templatePodSpec.NodeSelector = stateReporterSpec.NodeSelector
 }
 
-func (obj *StateReporterDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, stateReporterSpec *cbContainersV1.CBContainersStateReporterSpec, eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *StateReporterDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, agentSpec *cbContainersV1.CBContainersAgentSpec) {
 	if len(templatePodSpec.Containers) != 1 {
 		container := coreV1.Container{}
 		templatePodSpec.Containers = []coreV1.Container{container}
 	}
 
-	obj.mutateContainer(&templatePodSpec.Containers[0], stateReporterSpec, eventsGatewaySpec, version, accessTokenSecretName)
+	obj.mutateContainer(&templatePodSpec.Containers[0], agentSpec)
 }
 
-func (obj *StateReporterDeploymentK8sObject) mutateContainer(container *coreV1.Container, stateReporterSpec *cbContainersV1.CBContainersStateReporterSpec, eventsGatewaySpec *cbContainersV1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *StateReporterDeploymentK8sObject) mutateContainer(container *coreV1.Container, agentSpec *cbContainersV1.CBContainersAgentSpec) {
+	stateReporterSpec := &agentSpec.Components.Basic.StateReporter
+
 	container.Name = StateReporterName
 	container.Resources = stateReporterSpec.Resources
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
-		WithCommonDataPlane(accessTokenSecretName).
-		WithEventsGateway(eventsGatewaySpec).
-		WithSpec(stateReporterSpec.Env)
+		WithCommonDataPlane(agentSpec.AccessTokenSecretName).
+		WithEventsGateway(&agentSpec.Gateways.HardeningEventsGateway).
+		WithSpec(stateReporterSpec.Env).
+		WithProxySettings(agentSpec.Components.Settings.Proxy)
 	commonState.MutateEnvVars(container, envVarBuilder)
 
-	commonState.MutateImage(container, stateReporterSpec.Image, version)
+	commonState.MutateImage(container, stateReporterSpec.Image, agentSpec.Version)
 	commonState.MutateContainerHTTPProbes(container, stateReporterSpec.Probes)
 	obj.mutateSecurityContext(container)
 	obj.mutateVolumesMounts(container)

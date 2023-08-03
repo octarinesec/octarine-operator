@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"strings"
 
 	coreV1 "k8s.io/api/core/v1"
 
@@ -55,13 +56,42 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
-const NamespaceIdentifier = "default"
+const (
+	NamespaceIdentifier = "default"
+	httpProxyEnv        = "HTTP_PROXY"
+	httpsProxyEnv       = "HTTPS_PROXY"
+	noProxyEnv          = "NO_PROXY"
+)
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(operatorcontainerscarbonblackiov1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
+}
+
+func setupNoProxyEnv(namespace string) error {
+	httpProxyLen := len(strings.TrimSpace(os.Getenv(httpProxyEnv)))
+	httpsProxyLen := len(strings.TrimSpace(os.Getenv(httpsProxyEnv)))
+	_, foundNoProxyVar := os.LookupEnv(noProxyEnv)
+
+	// Don't set NO_PROXY if we don't have any proxies defined, or we already
+	// have a NO_PROXY env var present (even if it's empty)
+	if httpProxyLen+httpsProxyLen == 0 || foundNoProxyVar {
+		return nil
+	}
+
+	noProxy, err := controllers.GetDefaultNoProxyValue(namespace)
+	if err != nil {
+		return fmt.Errorf("unable to detect default NO_PROXY value: %w", err)
+	}
+
+	if err = os.Setenv(noProxyEnv, noProxy); err != nil {
+		return fmt.Errorf("could not set NO_PROXY value: %w", err)
+	}
+
+	setupLog.Info(fmt.Sprintf("using NO_PROXY value %q", noProxy))
+	return nil
 }
 
 func main() {
@@ -89,6 +119,11 @@ func main() {
 		operatorNamespace = common.DataPlaneNamespaceName
 	}
 	setupLog.Info(fmt.Sprintf("Operator and agent namespace: %s", operatorNamespace))
+
+	if err := setupNoProxyEnv(operatorNamespace); err != nil {
+		setupLog.Error(err, "unable to setup default proxy settings")
+		os.Exit(1)
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
