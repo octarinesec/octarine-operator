@@ -346,7 +346,7 @@ func TestMutateImageWithTag(t *testing.T) {
 		PullPolicy: expectedPullPolicy,
 	}
 	container := &coreV1.Container{}
-	MutateImage(container, imageSpec, "3.0.0")
+	MutateImage(container, imageSpec, "3.0.0", "")
 	require.Equal(t, expectedImage, container.Image)
 	require.Equal(t, expectedPullPolicy, container.ImagePullPolicy)
 }
@@ -360,7 +360,36 @@ func TestMutateImageWithoutTag(t *testing.T) {
 		PullPolicy: expectedPullPolicy,
 	}
 	container := &coreV1.Container{}
-	MutateImage(container, imageSpec, "3.0.0")
+	MutateImage(container, imageSpec, "3.0.0", "")
+	require.Equal(t, expectedImage, container.Image)
+	require.Equal(t, expectedPullPolicy, container.ImagePullPolicy)
+}
+
+func TestMutateImageWithDefaultRegistry(t *testing.T) {
+	expectedImage := "example.com/cbartifactory/test:3.0.0"
+	expectedPullPolicy := coreV1.PullPolicy("IfNotPresent")
+	imageSpec := cbcontainersv1.CBContainersImageSpec{
+		Repository: "cbartifactory/test",
+		Tag:        "",
+		PullPolicy: expectedPullPolicy,
+	}
+	container := &coreV1.Container{}
+	MutateImage(container, imageSpec, "3.0.0", "example.com")
+	require.Equal(t, expectedImage, container.Image)
+	require.Equal(t, expectedPullPolicy, container.ImagePullPolicy)
+}
+
+func TestMutateImageWithRegistry(t *testing.T) {
+	expectedImage := "example2.com/cbartifactory/test:3.0.0"
+	expectedPullPolicy := coreV1.PullPolicy("IfNotPresent")
+	imageSpec := cbcontainersv1.CBContainersImageSpec{
+		Registry:   "example2.com",
+		Repository: "cbartifactory/test",
+		Tag:        "",
+		PullPolicy: expectedPullPolicy,
+	}
+	container := &coreV1.Container{}
+	MutateImage(container, imageSpec, "3.0.0", "example.com")
 	require.Equal(t, expectedImage, container.Image)
 	require.Equal(t, expectedPullPolicy, container.ImagePullPolicy)
 }

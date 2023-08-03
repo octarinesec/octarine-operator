@@ -5,6 +5,7 @@ import (
 )
 
 type CBContainersImageSpec struct {
+	Registry   string `json:"registry,omitempty"`
 	Repository string `json:"repository,omitempty"`
 	Tag        string `json:"tag,omitempty"`
 	// +kubebuilder:default:="IfNotPresent"

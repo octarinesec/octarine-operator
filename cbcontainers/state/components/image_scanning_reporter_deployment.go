@@ -141,7 +141,7 @@ func (obj *ImageScanningReporterDeploymentK8sObject) mutateContainer(container *
 	container.Name = ImageScanningReporterName
 	container.Resources = imageScanningReporterSpec.Resources
 	obj.mutateImageScanningReporterEnvVars(container, agentSpec)
-	commonState.MutateImage(container, imageScanningReporterSpec.Image, agentSpec.Version)
+	commonState.MutateImage(container, imageScanningReporterSpec.Image, agentSpec.Version, agentSpec.Components.Settings.DefaultImagesRegistry)
 	commonState.MutateContainerHTTPProbes(container, imageScanningReporterSpec.Probes)
 	obj.mutateSecurityContext(container)
 	obj.mutateContainerPorts(container)

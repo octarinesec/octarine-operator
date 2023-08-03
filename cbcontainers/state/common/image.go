@@ -7,12 +7,21 @@ import (
 	coreV1 "k8s.io/api/core/v1"
 )
 
-func MutateImage(container *coreV1.Container, desiredImage cbcontainersv1.CBContainersImageSpec, desiredVersion string) {
+func MutateImage(container *coreV1.Container, desiredImage cbcontainersv1.CBContainersImageSpec, desiredVersion, defaultRegistry string) {
+	registry := defaultRegistry
+	if desiredImage.Registry != "" {
+		registry = desiredImage.Registry
+	}
+
+	if registry != "" {
+		registry += "/"
+	}
+
 	desiredTag := desiredImage.Tag
 	if desiredTag == "" {
 		desiredTag = desiredVersion
 	}
-	desiredFullImage := fmt.Sprintf("%s:%s", desiredImage.Repository, desiredTag)
+	desiredFullImage := fmt.Sprintf("%s%s:%s", registry, desiredImage.Repository, desiredTag)
 
 	container.Image = desiredFullImage
 	container.ImagePullPolicy = desiredImage.PullPolicy

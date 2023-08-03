@@ -74,12 +74,14 @@ type CBContainersComponentsSettings struct {
 	// The secrets must already exist.
 	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
 
+	// DefaultImagesRegistry is the default registry to use with the agent images
+	DefaultImagesRegistry string `json:"defaultImagesRegistry,omitempty"`
+
 	// Proxy controls the optional centralized HTTP & HTTPS proxy settings, that can be applied
 	// to all components at once. One can still have a per-component proxy settings by using the
 	// good old environment variables. However, here we have an additional advantage of taking
 	// care of determining the necessary `NO_PROXY` settings.
 	//
-	// +kubebuilder:default:=<>
 	Proxy *CBContainersProxySettings `json:"proxy,omitempty"`
 }
 
