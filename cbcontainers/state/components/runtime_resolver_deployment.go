@@ -205,7 +205,8 @@ func (obj *ResolverDeploymentK8sObject) mutateEnvVars(
 		WithCommonDataPlane(accessTokenSecretName).
 		WithEventsGateway(eventsGatewaySpec).
 		WithCustom(customEnvs...).
-		WithSpec(resolverSpec.Env)
+		WithSpec(resolverSpec.Env).
+		WithProxySettings(agentSpec.Components.Settings.Proxy)
 	commonState.MutateEnvVars(container, envVarBuilder)
 }
 

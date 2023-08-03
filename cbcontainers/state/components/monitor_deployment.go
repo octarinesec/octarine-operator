@@ -90,7 +90,7 @@ func (obj *MonitorDeploymentK8sObject) MutateK8sObject(k8sObject client.Object, 
 	}
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, monitor)
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, monitor, &agentSpec.Gateways.CoreEventsGateway, agentSpec.Version, agentSpec.AccessTokenSecretName)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, agentSpec)
 	commonState.NewNodeTermsBuilder(&deployment.Spec.Template.Spec).Build()
 
 	return nil
@@ -109,28 +109,31 @@ func (obj *MonitorDeploymentK8sObject) mutateAffinityAndNodeSelector(templatePod
 	templatePodSpec.NodeSelector = monitorSpec.NodeSelector
 }
 
-func (obj *MonitorDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, monitorSpec *cbcontainersv1.CBContainersMonitorSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *MonitorDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, agentSpec *cbcontainersv1.CBContainersAgentSpec) {
 	if len(templatePodSpec.Containers) != 1 {
 		container := coreV1.Container{}
 		templatePodSpec.Containers = []coreV1.Container{container}
 	}
 
-	obj.mutateContainer(&templatePodSpec.Containers[0], monitorSpec, eventsGatewaySpec, version, accessTokenSecretName)
+	obj.mutateContainer(&templatePodSpec.Containers[0], agentSpec)
 }
 
-func (obj *MonitorDeploymentK8sObject) mutateContainer(container *coreV1.Container, monitorSpec *cbcontainersv1.CBContainersMonitorSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *MonitorDeploymentK8sObject) mutateContainer(container *coreV1.Container, agentSpec *cbcontainersv1.CBContainersAgentSpec) {
+	monitorSpec := &agentSpec.Components.Basic.Monitor
+
 	container.Name = MonitorName
 	container.Resources = monitorSpec.Resources
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
-		WithCommonDataPlane(accessTokenSecretName).
-		WithEventsGateway(eventsGatewaySpec).
+		WithCommonDataPlane(agentSpec.AccessTokenSecretName).
+		WithEventsGateway(&agentSpec.Gateways.CoreEventsGateway).
 		WithEnvVarFromConfigmap(MonitorAgentVersionEnvVarKey, commonState.DataPlaneConfigmapAgentVersionKey).
 		WithEnvVarFromConfigmap(MonitorDataplaneNamespaceEnvVarKey, commonState.DataPlaneConfigmapDataplaneNamespaceKey).
-		WithSpec(monitorSpec.Env)
+		WithSpec(monitorSpec.Env).
+		WithProxySettings(agentSpec.Components.Settings.Proxy)
 	commonState.MutateEnvVars(container, envVarBuilder)
 
-	commonState.MutateImage(container, monitorSpec.Image, version)
+	commonState.MutateImage(container, monitorSpec.Image, agentSpec.Version)
 	commonState.MutateContainerHTTPProbes(container, monitorSpec.Probes)
 	obj.mutateSecurityContext(container)
 	obj.mutateVolumesMounts(container)

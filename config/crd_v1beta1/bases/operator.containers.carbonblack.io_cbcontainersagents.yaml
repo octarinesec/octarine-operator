@@ -1067,6 +1067,29 @@ spec:
                           description: ResourceRequirements describes the compute
                             resource requirements.
                           properties:
+                            claims:
+                              description: "Claims lists the names of resources, defined
+                                in spec.resourceClaims, that are used by this container.
+                                \n This is an alpha field and requires enabling the
+                                DynamicResourceAllocation feature gate. \n This field
+                                is immutable."
+                              items:
+                                description: ResourceClaim references one entry in
+                                  PodSpec.ResourceClaims.
+                                properties:
+                                  name:
+                                    description: Name must match the name of one entry
+                                      in pod.spec.resourceClaims of the Pod where
+                                      this field is used. It makes that resource available
+                                      inside a container.
+                                    type: string
+                                required:
+                                - name
+                                type: object
+                              type: array
+                              x-kubernetes-list-map-keys:
+                              - name
+                              x-kubernetes-list-type: map
                             limits:
                               additionalProperties:
                                 anyOf:
@@ -2083,6 +2106,29 @@ spec:
                           description: ResourceRequirements describes the compute
                             resource requirements.
                           properties:
+                            claims:
+                              description: "Claims lists the names of resources, defined
+                                in spec.resourceClaims, that are used by this container.
+                                \n This is an alpha field and requires enabling the
+                                DynamicResourceAllocation feature gate. \n This field
+                                is immutable."
+                              items:
+                                description: ResourceClaim references one entry in
+                                  PodSpec.ResourceClaims.
+                                properties:
+                                  name:
+                                    description: Name must match the name of one entry
+                                      in pod.spec.resourceClaims of the Pod where
+                                      this field is used. It makes that resource available
+                                      inside a container.
+                                    type: string
+                                required:
+                                - name
+                                type: object
+                              type: array
+                              x-kubernetes-list-map-keys:
+                              - name
+                              x-kubernetes-list-type: map
                             limits:
                               additionalProperties:
                                 anyOf:
@@ -3096,6 +3142,29 @@ spec:
                           description: ResourceRequirements describes the compute
                             resource requirements.
                           properties:
+                            claims:
+                              description: "Claims lists the names of resources, defined
+                                in spec.resourceClaims, that are used by this container.
+                                \n This is an alpha field and requires enabling the
+                                DynamicResourceAllocation feature gate. \n This field
+                                is immutable."
+                              items:
+                                description: ResourceClaim references one entry in
+                                  PodSpec.ResourceClaims.
+                                properties:
+                                  name:
+                                    description: Name must match the name of one entry
+                                      in pod.spec.resourceClaims of the Pod where
+                                      this field is used. It makes that resource available
+                                      inside a container.
+                                    type: string
+                                required:
+                                - name
+                                type: object
+                              type: array
+                              x-kubernetes-list-map-keys:
+                              - name
+                              x-kubernetes-list-type: map
                             limits:
                               additionalProperties:
                                 anyOf:
@@ -3128,6 +3197,19 @@ spec:
                   properties:
                     clusterScanner:
                       properties:
+                        cliFlags:
+                          properties:
+                            ignoreBuiltInRegex:
+                              type: boolean
+                            scanBaseLayer:
+                              type: boolean
+                            skipDirsOrFiles:
+                              items:
+                                type: string
+                              type: array
+                            skipSecretsDetection:
+                              type: boolean
+                          type: object
                         daemonSetAnnotations:
                           additionalProperties:
                             type: string
@@ -3236,6 +3318,29 @@ spec:
                           description: ResourceRequirements describes the compute
                             resource requirements.
                           properties:
+                            claims:
+                              description: "Claims lists the names of resources, defined
+                                in spec.resourceClaims, that are used by this container.
+                                \n This is an alpha field and requires enabling the
+                                DynamicResourceAllocation feature gate. \n This field
+                                is immutable."
+                              items:
+                                description: ResourceClaim references one entry in
+                                  PodSpec.ResourceClaims.
+                                properties:
+                                  name:
+                                    description: Name must match the name of one entry
+                                      in pod.spec.resourceClaims of the Pod where
+                                      this field is used. It makes that resource available
+                                      inside a container.
+                                    type: string
+                                required:
+                                - name
+                                type: object
+                              type: array
+                              x-kubernetes-list-map-keys:
+                              - name
+                              x-kubernetes-list-type: map
                             limits:
                               additionalProperties:
                                 anyOf:
@@ -4261,6 +4366,29 @@ spec:
                           description: ResourceRequirements describes the compute
                             resource requirements.
                           properties:
+                            claims:
+                              description: "Claims lists the names of resources, defined
+                                in spec.resourceClaims, that are used by this container.
+                                \n This is an alpha field and requires enabling the
+                                DynamicResourceAllocation feature gate. \n This field
+                                is immutable."
+                              items:
+                                description: ResourceClaim references one entry in
+                                  PodSpec.ResourceClaims.
+                                properties:
+                                  name:
+                                    description: Name must match the name of one entry
+                                      in pod.spec.resourceClaims of the Pod where
+                                      this field is used. It makes that resource available
+                                      inside a container.
+                                    type: string
+                                required:
+                                - name
+                                type: object
+                              type: array
+                              x-kubernetes-list-map-keys:
+                              - name
+                              x-kubernetes-list-type: map
                             limits:
                               additionalProperties:
                                 anyOf:
@@ -4343,6 +4471,29 @@ spec:
                           description: ResourceRequirements describes the compute
                             resource requirements.
                           properties:
+                            claims:
+                              description: "Claims lists the names of resources, defined
+                                in spec.resourceClaims, that are used by this container.
+                                \n This is an alpha field and requires enabling the
+                                DynamicResourceAllocation feature gate. \n This field
+                                is immutable."
+                              items:
+                                description: ResourceClaim references one entry in
+                                  PodSpec.ResourceClaims.
+                                properties:
+                                  name:
+                                    description: Name must match the name of one entry
+                                      in pod.spec.resourceClaims of the Pod where
+                                      this field is used. It makes that resource available
+                                      inside a container.
+                                    type: string
+                                required:
+                                - name
+                                type: object
+                              type: array
+                              x-kubernetes-list-map-keys:
+                              - name
+                              x-kubernetes-list-type: map
                             limits:
                               additionalProperties:
                                 anyOf:
@@ -5383,6 +5534,29 @@ spec:
                           description: ResourceRequirements describes the compute
                             resource requirements.
                           properties:
+                            claims:
+                              description: "Claims lists the names of resources, defined
+                                in spec.resourceClaims, that are used by this container.
+                                \n This is an alpha field and requires enabling the
+                                DynamicResourceAllocation feature gate. \n This field
+                                is immutable."
+                              items:
+                                description: ResourceClaim references one entry in
+                                  PodSpec.ResourceClaims.
+                                properties:
+                                  name:
+                                    description: Name must match the name of one entry
+                                      in pod.spec.resourceClaims of the Pod where
+                                      this field is used. It makes that resource available
+                                      inside a container.
+                                    type: string
+                                required:
+                                - name
+                                type: object
+                              type: array
+                              x-kubernetes-list-map-keys:
+                              - name
+                              x-kubernetes-list-type: map
                             limits:
                               additionalProperties:
                                 anyOf:
@@ -5479,6 +5653,29 @@ spec:
                           description: ResourceRequirements describes the compute
                             resource requirements.
                           properties:
+                            claims:
+                              description: "Claims lists the names of resources, defined
+                                in spec.resourceClaims, that are used by this container.
+                                \n This is an alpha field and requires enabling the
+                                DynamicResourceAllocation feature gate. \n This field
+                                is immutable."
+                              items:
+                                description: ResourceClaim references one entry in
+                                  PodSpec.ResourceClaims.
+                                properties:
+                                  name:
+                                    description: Name must match the name of one entry
+                                      in pod.spec.resourceClaims of the Pod where
+                                      this field is used. It makes that resource available
+                                      inside a container.
+                                    type: string
+                                required:
+                                - name
+                                type: object
+                              type: array
+                              x-kubernetes-list-map-keys:
+                              - name
+                              x-kubernetes-list-type: map
                             limits:
                               additionalProperties:
                                 anyOf:
@@ -5565,6 +5762,54 @@ spec:
                       items:
                         type: string
                       type: array
+                    proxy:
+                      description: Proxy controls the optional centralized HTTP &
+                        HTTPS proxy settings, that can be applied to all components
+                        at once. One can still have a per-component proxy settings
+                        by using the good old environment variables. However, here
+                        we have an additional advantage of taking care of determining
+                        the necessary `NO_PROXY` settings.
+                      properties:
+                        enabled:
+                          description: Enabled controls if the proxy settings are
+                            applied or not
+                          type: boolean
+                        httpProxy:
+                          description: HttpProxy points to the URL of the HTTP proxy.
+                            If set, it'll result in an additional HTTP_PROXY environment
+                            variable defined for all components. When a component
+                            already has HTTP_PROXY defined through the CRD, HttpProxy
+                            won't be used, using the component's original HTTP_PROXY
+                            value instead.
+                          type: string
+                        httpsProxy:
+                          description: HttpsProxy points to the URL of the HTTPS proxy.
+                            If set, it'll result in an additional HTTPS_PROXY environment
+                            variable defined for all components. When a component
+                            already has HTTPS_PROXY defined through the CRD, HttpsProxy
+                            won't be used, using the component's original HTTPS_PROXY
+                            value instead.
+                          type: string
+                        noProxy:
+                          description: NoProxy can contain a comma separated list
+                            of hosts to which all components can connect without using
+                            a proxy. If set, it'll result in an additional NO_PROXY
+                            environment variable defined for all components. When
+                            a component already has NO_PROXY defined through the CRD,
+                            NoProxy won't be used, using the component's original
+                            NO_PROXY value instead.
+                          type: string
+                        noProxySuffix:
+                          description: NoProxySuffix can be an empty string or contain
+                            a comma separated list of hosts which can be safely appended
+                            to the `NoProxy` values or to the component specific NO_PROXY
+                            environment variable. NoProxySuffix is defaulted to a
+                            list of the Kubernetes API server IP addresses and to
+                            the service domain suffix of the installation namespace
+                            (usually cbcontainers-dataplane.svc.cluster.local). It's
+                            exposed more as a means by which to control the defaults.
+                          type: string
+                      type: object
                   type: object
               type: object
             gateways:

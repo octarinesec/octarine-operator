@@ -19,10 +19,10 @@ agentNamespace: "cbcontainers-dataplane"
 # gateways is the collection of gateways that will be used to communicate with the CBC backend
 gateways:
   gatewayTLS:
-  apiGatewayHost: https://api.gateway.com
-  coreEventsGatewayHost: https://events.gateway.com
-  hardeningEventsGatewayHost: https://hardening.events.gateway.com
-  runtimeEventsGatewayHost: https://runtime.events.gateway.com
+  apiGatewayHost: api.gateway.com
+  coreEventsGatewayHost: events.gateway.com
+  hardeningEventsGatewayHost: hardening.events.gateway.com
+  runtimeEventsGatewayHost: runtime.events.gateway.com
 # components is the set of components that will be installed
 components:
   # basic is the configuration of the basic features

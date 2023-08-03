@@ -87,7 +87,7 @@ func (obj *EnforcerDeploymentK8sObject) MutateK8sObject(k8sObject client.Object,
 	obj.mutateAnnotations(deployment, enforcer)
 	obj.mutateVolumes(&deployment.Spec.Template.Spec)
 	obj.mutateAffinityAndNodeSelector(&deployment.Spec.Template.Spec, enforcer)
-	obj.mutateContainersList(&deployment.Spec.Template.Spec, enforcer, &agentSpec.Gateways.HardeningEventsGateway, agentSpec.Version, agentSpec.AccessTokenSecretName)
+	obj.mutateContainersList(&deployment.Spec.Template.Spec, agentSpec)
 	commonState.NewNodeTermsBuilder(&deployment.Spec.Template.Spec).Build()
 
 	return nil
@@ -132,27 +132,31 @@ func (obj *EnforcerDeploymentK8sObject) mutateAffinityAndNodeSelector(templatePo
 	templatePodSpec.NodeSelector = enforcerSpec.NodeSelector
 }
 
-func (obj *EnforcerDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, enforcerSpec *cbcontainersv1.CBContainersEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *EnforcerDeploymentK8sObject) mutateContainersList(templatePodSpec *coreV1.PodSpec, agentSpec *cbcontainersv1.CBContainersAgentSpec) {
 	if len(templatePodSpec.Containers) != 1 {
 		container := coreV1.Container{}
 		templatePodSpec.Containers = []coreV1.Container{container}
 	}
 
-	obj.mutateContainer(&templatePodSpec.Containers[0], enforcerSpec, eventsGatewaySpec, version, accessTokenSecretName)
+	obj.mutateContainer(&templatePodSpec.Containers[0], agentSpec)
 }
 
-func (obj *EnforcerDeploymentK8sObject) mutateContainer(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersEnforcerSpec, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec, version, accessTokenSecretName string) {
+func (obj *EnforcerDeploymentK8sObject) mutateContainer(container *coreV1.Container, agentSpec *cbcontainersv1.CBContainersAgentSpec) {
+	enforcerSpec := &agentSpec.Components.Basic.Enforcer
+
 	container.Name = EnforcerName
 	container.Resources = enforcerSpec.Resources
-	obj.mutateEnforcerEnvVars(container, enforcerSpec, accessTokenSecretName, eventsGatewaySpec)
-	commonState.MutateImage(container, enforcerSpec.Image, version)
+	obj.mutateEnforcerEnvVars(container, agentSpec)
+	commonState.MutateImage(container, enforcerSpec.Image, agentSpec.Version)
 	commonState.MutateContainerHTTPProbes(container, enforcerSpec.Probes)
 	obj.mutateSecurityContext(container)
 	obj.mutateContainerPorts(container)
 	obj.mutateVolumesMounts(container)
 }
 
-func (obj *EnforcerDeploymentK8sObject) mutateEnforcerEnvVars(container *coreV1.Container, enforcerSpec *cbcontainersv1.CBContainersEnforcerSpec, accessTokenSecretName string, eventsGatewaySpec *cbcontainersv1.CBContainersEventsGatewaySpec) {
+func (obj *EnforcerDeploymentK8sObject) mutateEnforcerEnvVars(container *coreV1.Container, agentSpec *cbcontainersv1.CBContainersAgentSpec) {
+	enforcerSpec := &agentSpec.Components.Basic.Enforcer
+
 	customEnvs := []coreV1.EnvVar{
 		{Name: "GUARDRAILS_ENFORCER_KEY_FILE_PATH", Value: fmt.Sprintf("%s/key", DesiredTlsSecretVolumeMountPath)},
 		{Name: "GUARDRAILS_ENFORCER_CERT_FILE_PATH", Value: fmt.Sprintf("%s/signed_cert", DesiredTlsSecretVolumeMountPath)},
@@ -162,10 +166,11 @@ func (obj *EnforcerDeploymentK8sObject) mutateEnforcerEnvVars(container *coreV1.
 	}
 
 	envVarBuilder := commonState.NewEnvVarBuilder().
-		WithCommonDataPlane(accessTokenSecretName).
-		WithEventsGateway(eventsGatewaySpec).
+		WithCommonDataPlane(agentSpec.AccessTokenSecretName).
+		WithEventsGateway(&agentSpec.Gateways.HardeningEventsGateway).
 		WithCustom(customEnvs...).
-		WithSpec(enforcerSpec.Env)
+		WithSpec(enforcerSpec.Env).
+		WithProxySettings(agentSpec.Components.Settings.Proxy)
 	commonState.MutateEnvVars(container, envVarBuilder)
 }
 

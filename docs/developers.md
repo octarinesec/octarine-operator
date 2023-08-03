@@ -2,7 +2,7 @@
 
 ## Developer Guide
 
-SDK version = 1.27.0
+SDK version = 1.29.0
 
 ### Deploying the operator without using an image
 

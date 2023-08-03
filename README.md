@@ -16,7 +16,7 @@ The Carbon Black Cloud Container Operator utilizes the operator-framework to cre
 
 | Operator version| Supported Dataplanes |
 |-----------------|----------------------|
-| v5.6.0          | 2.10.0, 2.11.0       |
+| v5.6.2          | 2.10.0, 2.11.0       |
 | v5.5.0          | 2.10.0, 2.11.0       |
 | v5.4.0          | 2.10.0, 2.11.0       |
 
@@ -27,7 +27,7 @@ Kubernetes 1.16+ is supported.
 
 ### From script:
 ```
-export OPERATOR_VERSION=v5.6.0
+export OPERATOR_VERSION=v5.6.2
 export OPERATOR_SCRIPT_URL=https://setup.containers.carbonblack.io/$OPERATOR_VERSION/operator-apply.sh
 curl -s $OPERATOR_SCRIPT_URL | bash
 ```
@@ -250,7 +250,35 @@ spec:
 
 ## Using HTTP proxy
 
-Configuring the Carbon Black Cloud Container services to use HTTP proxy can be done by setting HTTP_PROXY, HTTPS_PROXY and NO_PROXY environment variables.
+Configuring the Carbon Black Cloud Container services to use HTTP proxy can be done by enabling the centralized proxy settings or by setting HTTP_PROXY, HTTPS_PROXY and NO_PROXY environment variables manually.
+The centralized proxy settings apply an HTTP proxy configuration for all components, while the manual setting of environment variables allows this to be done on a per component basis.
+If both HTTP proxy environment variables and centralized proxy settings are provided, the environment variables would take precedence.
+The operator does not make use of the centralized proxy settings, so you have to use the environment variables for it instead.
+
+### Configure centralized proxy settings
+
+Update the `CBContainersAgent` CR with the centralized proxy settings (`kubectl edit cbcontainersagents.operator.containers.carbonblack.io cbcontainers-agent`):
+
+```yaml
+spec:
+  components:
+    settings:
+      proxy:
+        enabled: true
+        httpProxy: "<proxy-url>"
+        httpsProxy: "<proxy-url>"
+        noProxy: "<exclusion1>,<exclusion2>"
+```
+
+You can disable the centralized proxy settings without having to delete them, by setting the `enabled` key above to `false`.
+
+By default, the centralized proxy settings take care of determining the API server IP address(es) and the necessary proxy exclusions for the cbcontainers-dataplane namespace.
+These determined values are automatically appended to the `noProxy` values from above or the specified `NO_PROXY` environment variable for a particular component.
+However, if you wish to change those pre-determined values, you can specify the `noProxySuffix` key at the same level as the `noProxy` key.
+It has the same format as the `noProxy` key and its values are treated in the same way as if they were pre-determined.
+One can also force nothing to be appended to `noProxy` or `NO_PROXY` by setting `noProxySuffix` to an empty string.
+
+### Configure HTTP proxy environment variables (per component proxy settings)
 
 In order to configure those environment variables in the Operator, use the following command to patch the Operator deployment:
 ```sh
@@ -305,7 +333,9 @@ Finding the API-server IP:
 kubectl -n default get service kubernetes -o=jsonpath='{..clusterIP}'
 ```
 
-When using non transparent HTTPS proxy you will need to configure the agent to use the proxy certificate authority:
+### Other proxy considerations
+
+When using non-transparent HTTPS proxy you will need to configure the agent to use the proxy certificate authority:
 ```yaml
 spec:
   gateways:
