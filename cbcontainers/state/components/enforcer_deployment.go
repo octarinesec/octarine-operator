@@ -147,7 +147,7 @@ func (obj *EnforcerDeploymentK8sObject) mutateContainer(container *coreV1.Contai
 	container.Name = EnforcerName
 	container.Resources = enforcerSpec.Resources
 	obj.mutateEnforcerEnvVars(container, agentSpec)
-	commonState.MutateImage(container, enforcerSpec.Image, agentSpec.Version)
+	commonState.MutateImage(container, enforcerSpec.Image, agentSpec.Version, agentSpec.Components.Settings.DefaultImagesRegistry)
 	commonState.MutateContainerHTTPProbes(container, enforcerSpec.Probes)
 	obj.mutateSecurityContext(container)
 	obj.mutateContainerPorts(container)

@@ -384,7 +384,7 @@ func (obj *SensorDaemonSetK8sObject) mutateRuntimeContainer(container *coreV1.Co
 	container.Name = RuntimeContainerName
 	container.Resources = sensorSpec.Resources
 	container.Command = []string{runtimeSensorRunCommand}
-	commonState.MutateImage(container, sensorSpec.Image, agentSpec.Version)
+	commonState.MutateImage(container, sensorSpec.Image, agentSpec.Version, agentSpec.Components.Settings.DefaultImagesRegistry)
 	commonState.MutateContainerFileProbes(container, sensorSpec.Probes)
 	if commonState.IsEnabled(sensorSpec.Prometheus.Enabled) {
 		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(sensorSpec.Prometheus.Port)}}
@@ -434,7 +434,7 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerContainer(container *co
 
 	container.Name = ClusterScanningContainerName
 	container.Resources = clusterScannerSpec.Resources
-	commonState.MutateImage(container, clusterScannerSpec.Image, agentSpec.Version)
+	commonState.MutateImage(container, clusterScannerSpec.Image, agentSpec.Version, agentSpec.Components.Settings.DefaultImagesRegistry)
 	commonState.MutateContainerFileProbes(container, clusterScannerSpec.Probes)
 	if commonState.IsEnabled(clusterScannerSpec.Prometheus.Enabled) {
 		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(clusterScannerSpec.Prometheus.Port)}}
@@ -450,7 +450,7 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrContainer(container *coreV1.Conta
 
 	container.Name = CndrContainerName
 	container.Resources = cndrSpec.Resources
-	commonState.MutateImage(container, cndrSpec.Image, agentSpec.Version)
+	commonState.MutateImage(container, cndrSpec.Image, agentSpec.Version, agentSpec.Components.Settings.DefaultImagesRegistry)
 	if commonState.IsEnabled(cndrSpec.Prometheus.Enabled) {
 		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(cndrSpec.Prometheus.Port)}}
 	}

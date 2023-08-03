@@ -133,7 +133,7 @@ func (obj *MonitorDeploymentK8sObject) mutateContainer(container *coreV1.Contain
 		WithProxySettings(agentSpec.Components.Settings.Proxy)
 	commonState.MutateEnvVars(container, envVarBuilder)
 
-	commonState.MutateImage(container, monitorSpec.Image, agentSpec.Version)
+	commonState.MutateImage(container, monitorSpec.Image, agentSpec.Version, agentSpec.Components.Settings.DefaultImagesRegistry)
 	commonState.MutateContainerHTTPProbes(container, monitorSpec.Probes)
 	obj.mutateSecurityContext(container)
 	obj.mutateVolumesMounts(container)

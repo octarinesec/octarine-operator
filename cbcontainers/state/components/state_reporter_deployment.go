@@ -127,7 +127,7 @@ func (obj *StateReporterDeploymentK8sObject) mutateContainer(container *coreV1.C
 		WithProxySettings(agentSpec.Components.Settings.Proxy)
 	commonState.MutateEnvVars(container, envVarBuilder)
 
-	commonState.MutateImage(container, stateReporterSpec.Image, agentSpec.Version)
+	commonState.MutateImage(container, stateReporterSpec.Image, agentSpec.Version, agentSpec.Components.Settings.DefaultImagesRegistry)
 	commonState.MutateContainerHTTPProbes(container, stateReporterSpec.Probes)
 	obj.mutateSecurityContext(container)
 	obj.mutateVolumesMounts(container)

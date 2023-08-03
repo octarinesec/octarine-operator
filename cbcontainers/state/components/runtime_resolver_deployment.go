@@ -166,7 +166,7 @@ func (obj *ResolverDeploymentK8sObject) mutateContainer(
 
 	container.Name = ResolverName
 	container.Resources = resolverSpec.Resources
-	commonState.MutateImage(container, resolverSpec.Image, agentSpec.Version)
+	commonState.MutateImage(container, resolverSpec.Image, agentSpec.Version, agentSpec.Components.Settings.DefaultImagesRegistry)
 	commonState.MutateContainerHTTPProbes(container, resolverSpec.Probes)
 	obj.mutateEnvVars(container, agentSpec)
 	obj.mutateContainerPorts(container, agentSpec)
