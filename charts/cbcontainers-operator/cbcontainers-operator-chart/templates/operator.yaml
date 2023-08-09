@@ -1831,6 +1831,22 @@ spec:
                       clusterScanner:
                         default: {}
                         properties:
+                          cliFlags:
+                            default: { }
+                            properties:
+                              enableSecretDetection:
+                                default: false
+                                type: boolean
+                              ignoreBuildInRegex:
+                                default: false
+                                type: boolean
+                              scanBaseLayers:
+                                default: false
+                                type: boolean
+                              skipDirsOrFiles:
+                                items:
+                                  type: string
+                                type: array
                           daemonSetAnnotations:
                             additionalProperties:
                               type: string
