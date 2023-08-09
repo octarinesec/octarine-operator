@@ -3205,16 +3205,16 @@ spec:
                       properties:
                         cliFlags:
                           properties:
-                            ignoreBuiltInRegex:
+                            enableSecretDetection:
                               type: boolean
-                            scanBaseLayer:
+                            ignoreBuildInRegex:
+                              type: boolean
+                            scanBaseLayers:
                               type: boolean
                             skipDirsOrFiles:
                               items:
                                 type: string
                               type: array
-                            skipSecretsDetection:
-                              type: boolean
                           type: object
                         daemonSetAnnotations:
                           additionalProperties:

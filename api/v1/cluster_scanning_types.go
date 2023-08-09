@@ -52,13 +52,13 @@ type CBContainersClusterScannerAgentSpec struct {
 
 type CLIFlags struct {
 	// +kubebuilder:default:=false
-	SkipSecretsDetection bool `json:"skipSecretsDetection,omitempty"`
+	EnableSecretDetection bool `json:"enableSecretDetection,omitempty"`
 	// +kubebuilder:default:={}
 	SkipDirsOrFiles []string `json:"skipDirsOrFiles,omitempty"`
 	// +kubebuilder:default:=false
-	ScanBaseLayer bool `json:"scanBaseLayer,omitempty"`
+	ScanBaseLayers bool `json:"scanBaseLayers,omitempty"`
 	// +kubebuilder:default:=false
-	IgnoreBuiltInRegex bool `json:"ignoreBuiltInRegex,omitempty"`
+	IgnoreBuildInRegex bool `json:"ignoreBuildInRegex,omitempty"`
 }
 
 // CBContainersClusterScanningSpec defines the desired state of CBContainersClusterScanning

@@ -529,10 +529,10 @@ func (obj *SensorDaemonSetK8sObject) mutateClusterScannerEnvVars(container *core
 		{Name: "CLUSTER_SCANNER_IMAGE_SCANNING_REPORTER_SCHEME", Value: ImageScanningReporterDesiredContainerPortName},
 		{Name: "CLUSTER_SCANNER_LIVENESS_PATH", Value: clusterScannerSpec.Probes.LivenessPath},
 		{Name: "CLUSTER_SCANNER_READINESS_PATH", Value: clusterScannerSpec.Probes.ReadinessPath},
-		{Name: "CLUSTER_SCANNER_CLI_FLAGS_SKIP_SECRETS_DETECTION", Value: strconv.FormatBool(clusterScannerSpec.CLIFlags.SkipSecretsDetection)},
+		{Name: "CLUSTER_SCANNER_CLI_FLAGS_ENABLE_SECRET_DETECTION", Value: strconv.FormatBool(clusterScannerSpec.CLIFlags.EnableSecretDetection)},
 		{Name: "CLUSTER_SCANNER_CLI_FLAGS_SKIP_DIRS_OR_FILES", Value: strings.Join(clusterScannerSpec.CLIFlags.SkipDirsOrFiles, ",")},
-		{Name: "CLUSTER_SCANNER_CLI_FLAGS_SCAN_BASE_LAYER", Value: strconv.FormatBool(clusterScannerSpec.CLIFlags.ScanBaseLayer)},
-		{Name: "CLUSTER_SCANNER_CLI_FLAGS_IGNORE_BUILT_IN_REGEX", Value: strconv.FormatBool(clusterScannerSpec.CLIFlags.IgnoreBuiltInRegex)},
+		{Name: "CLUSTER_SCANNER_CLI_FLAGS_SCAN_BASE_LAYERS", Value: strconv.FormatBool(clusterScannerSpec.CLIFlags.ScanBaseLayers)},
+		{Name: "CLUSTER_SCANNER_CLI_FLAGS_IGNORE_BUILD_IN_REGEX", Value: strconv.FormatBool(clusterScannerSpec.CLIFlags.IgnoreBuildInRegex)},
 	}
 
 	if clusterScannerSpec.K8sContainerEngine.Endpoint != "" && clusterScannerSpec.K8sContainerEngine.EngineType != "" {
