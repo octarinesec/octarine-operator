@@ -3439,19 +3439,19 @@ spec:
                           cliFlags:
                             default: {}
                             properties:
-                              ignoreBuiltInRegex:
+                              enableSecretDetection:
                                 default: false
                                 type: boolean
-                              scanBaseLayer:
+                              ignoreBuildInRegex:
+                                default: false
+                                type: boolean
+                              scanBaseLayers:
                                 default: false
                                 type: boolean
                               skipDirsOrFiles:
                                 items:
                                   type: string
                                 type: array
-                              skipSecretsDetection:
-                                default: false
-                                type: boolean
                             type: object
                           daemonSetAnnotations:
                             additionalProperties:
