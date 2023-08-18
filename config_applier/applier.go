@@ -93,7 +93,7 @@ func (applier *Applier) RunLoop(signalsContext context.Context) {
 	}
 }
 
-func (applier *Applier) RunIteration(ctx context.Context) {
+func (applier *Applier) RunIteration(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, timeoutSingleIteration)
 	defer cancel()
 
@@ -102,26 +102,27 @@ func (applier *Applier) RunIteration(ctx context.Context) {
 	change, err := applier.getPendingChange(ctx)
 	if err != nil {
 		applier.Logger.Error(err, "Failed to get pending configuration changes")
-		return
+		return err // TODO
 	}
+
 	if change == nil {
 		applier.Logger.Info("No pending remote configuration changes found")
-		return
+		return nil
 	}
 
 	applier.Logger.Info("Applying remote configuration change", "change", change)
 	cr, err := applier.applyChange(ctx, change)
 	if err != nil {
 		applier.Logger.Error(err, "Failed to apply configuration change", "changeID", change.ID)
-		// Intentional fallthrough so we always update the status of the change on the backend
+		// Intentional fallthrough so we always update the status of the change on the backend, including failed status
 	}
 
 	if errStatusUpdate := applier.updateChangeStatus(ctx, change, cr, err); errStatusUpdate != nil {
 		applier.Logger.Error(err, "Failed to update the status of a configuration change; it might be re-applied again in the future")
-		return
+		return errStatusUpdate // TODO
 	}
 
-	return
+	return nil
 }
 
 func (applier *Applier) getPendingChange(ctx context.Context) (*ConfigurationChange, error) {

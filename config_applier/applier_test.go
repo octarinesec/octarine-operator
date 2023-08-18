@@ -2,6 +2,7 @@ package config_applier_test
 
 import (
 	"context"
+	"errors"
 	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -71,7 +72,66 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 		return nil
 	})
 
-	applier.RunIteration(context.Background())
+	err := applier.RunIteration(context.Background())
+	assert.NoError(t, err)
 }
 
-// TODO: Any  changes with status NOT pending are ignored
+func TestWhenThereAreNoPendingChangesNothingHappens(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	testCases := []struct {
+		name            string
+		dataFromService []config_applier.ConfigurationChange
+	}{
+		{
+			name:            "empty list",
+			dataFromService: []config_applier.ConfigurationChange{},
+		},
+		{
+			name: "list is not empty but there are no PENDING changes",
+			dataFromService: []config_applier.ConfigurationChange{
+				{ID: "123", Status: "non-existent"},
+				{ID: "234", Status: "FAILED"},
+				{ID: "345", Status: "ACKNOWLEDGED"},
+				{ID: "456", Status: "SUCCEEDED"},
+			},
+		},
+	}
+
+	for _, tC := range testCases {
+		t.Run(tC.name, func(t *testing.T) {
+			mockAPI := mocksConfigApplier.NewMockConfigurationAPI(ctrl)
+			applier := config_applier.Applier{
+				K8sClient: nil,
+				Logger:    logr.Discard(),
+				Api:       mockAPI,
+			}
+
+			mockAPI.EXPECT().GetConfigurationChanges(gomock.Any()).Return(tC.dataFromService, nil)
+			mockAPI.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).Times(0)
+
+			err := applier.RunIteration(context.Background())
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestWhenConfigurationAPIReturnsErrorForListShouldPropagateErr(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAPI := mocksConfigApplier.NewMockConfigurationAPI(ctrl)
+	applier := config_applier.Applier{
+		K8sClient: nil,
+		Logger:    logr.Discard(),
+		Api:       mockAPI,
+	}
+
+	errFromService := errors.New("some error")
+	mockAPI.EXPECT().GetConfigurationChanges(gomock.Any()).Return(nil, errFromService)
+
+	returnedErr := applier.RunIteration(context.Background())
+	assert.Error(t, returnedErr)
+	assert.ErrorIs(t, returnedErr, errFromService, "expected returned error to match or wrap error from service")
+}
