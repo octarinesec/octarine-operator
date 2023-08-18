@@ -99,10 +99,10 @@ func (applier *Applier) RunIteration(ctx context.Context) error {
 
 	applier.Logger.Info("Checking for pending remote configuration changes...")
 
-	change, err := applier.getPendingChange(ctx)
-	if err != nil {
-		applier.Logger.Error(err, "Failed to get pending configuration changes")
-		return err // TODO
+	change, errGettingChanges := applier.getPendingChange(ctx)
+	if errGettingChanges != nil {
+		applier.Logger.Error(errGettingChanges, "Failed to get pending configuration changes")
+		return errGettingChanges // TODO
 	}
 
 	if change == nil {
@@ -111,18 +111,18 @@ func (applier *Applier) RunIteration(ctx context.Context) error {
 	}
 
 	applier.Logger.Info("Applying remote configuration change", "change", change)
-	cr, err := applier.applyChange(ctx, change)
-	if err != nil {
-		applier.Logger.Error(err, "Failed to apply configuration change", "changeID", change.ID)
+	cr, errApplyingCR := applier.applyChange(ctx, change)
+	if errApplyingCR != nil {
+		applier.Logger.Error(errApplyingCR, "Failed to apply configuration change", "changeID", change.ID)
 		// Intentional fallthrough so we always update the status of the change on the backend, including failed status
 	}
 
-	if errStatusUpdate := applier.updateChangeStatus(ctx, change, cr, err); errStatusUpdate != nil {
-		applier.Logger.Error(err, "Failed to update the status of a configuration change; it might be re-applied again in the future")
+	if errStatusUpdate := applier.updateChangeStatus(ctx, change, cr, errApplyingCR); errStatusUpdate != nil {
+		applier.Logger.Error(errStatusUpdate, "Failed to update the status of a configuration change; it might be re-applied again in the future")
 		return errStatusUpdate // TODO
 	}
 
-	return nil
+	return errApplyingCR
 }
 
 func (applier *Applier) getPendingChange(ctx context.Context) (*ConfigurationChange, error) {
@@ -139,14 +139,24 @@ func (applier *Applier) getPendingChange(ctx context.Context) (*ConfigurationCha
 	return nil, nil
 }
 
-func (applier *Applier) updateChangeStatus(ctx context.Context, change *ConfigurationChange, cr *cbcontainersv1.CBContainersAgent, err error) error {
-	statusUpdate := ConfigurationChangeStatusUpdate{
-		ID:                change.ID,
-		Status:            string(statusAcknowledged),
-		Reason:            "", // TODO
-		AppliedGeneration: cr.Generation,
-		AppliedTimestamp:  time.Now().UTC().Format(time.RFC3339),
+func (applier *Applier) updateChangeStatus(ctx context.Context, change *ConfigurationChange, cr *cbcontainersv1.CBContainersAgent, encounteredError error) error {
+	var statusUpdate ConfigurationChangeStatusUpdate
+	if encounteredError == nil {
+		statusUpdate = ConfigurationChangeStatusUpdate{
+			ID:                change.ID,
+			Status:            string(statusAcknowledged),
+			Reason:            "", // TODO
+			AppliedGeneration: cr.Generation,
+			AppliedTimestamp:  time.Now().UTC().Format(time.RFC3339),
+		}
+	} else {
+		statusUpdate = ConfigurationChangeStatusUpdate{
+			ID:     change.ID,
+			Status: string(statusFailed),
+			Reason: encounteredError.Error(), // TODO
+		}
 	}
+
 	return applier.Api.UpdateConfigurationChangeStatus(ctx, statusUpdate)
 }
 
@@ -176,7 +186,7 @@ func (applier *Applier) applyChange(ctx context.Context, change *ConfigurationCh
 	err = applier.K8sClient.Update(ctx, cr)
 	generationAfter := cr.ObjectMeta.Generation
 	applier.Logger.Info("Updated object", "oldGeneration", generationBefore, "newGeneration", generationAfter, "err", err)
-	return cr, nil
+	return cr, err
 }
 
 // getContainerAgentCR loads exactly 0 or 1 CBContainersAgent definitions
@@ -187,7 +197,7 @@ func (applier *Applier) getContainerAgentCR(ctx context.Context) (*cbcontainersv
 
 	cbContainersAgentsList := &cbcontainersv1.CBContainersAgentList{}
 	if err := applier.K8sClient.List(ctx, cbContainersAgentsList); err != nil {
-		return nil, fmt.Errorf("couldn't list CBContainersAgent k8s objects: %v", err)
+		return nil, fmt.Errorf("couldn't list CBContainersAgent k8s objects: %w", err)
 	}
 
 	if cbContainersAgentsList.Items == nil || len(cbContainersAgentsList.Items) == 0 {
