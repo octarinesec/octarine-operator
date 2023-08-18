@@ -19,6 +19,8 @@ const (
 	timeoutSingleIteration = time.Second * 30
 )
 
+// TODO: Log ChangeID on every log
+
 var versions = []string{"2.12.1", "2.10.0", "2.12.0", "2.11.0"}
 
 var (
@@ -166,8 +168,7 @@ func (applier *Applier) applyChange(ctx context.Context, change *ConfigurationCh
 		return nil, err
 	}
 	if cr == nil {
-		applier.Logger.Info("No CBContainersAgent instance found")
-		return nil, nil
+		return nil, fmt.Errorf("no CBContainerAgent instance found, cannot apply change")
 	}
 
 	// TODO: Validation!

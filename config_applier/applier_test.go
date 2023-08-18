@@ -184,14 +184,6 @@ func TestWhenGettingCRFromAPIServerFailsChangeIsUpdatedAsFailed(t *testing.T) {
 			return nil
 		})
 
-	//mockClient.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).
-	//	DoAndReturn(func(_ context.Context, item any, _ ...any) error {
-	//		asCb, ok := item.(*cbcontainersv1.CBContainersAgent)
-	//		require.True(t, ok)
-	//		asCb.ObjectMeta.Generation++
-	//		return nil
-	//	})
-
 	returnedErr := applier.RunIteration(context.Background())
 	assert.Error(t, returnedErr)
 	assert.ErrorIs(t, returnedErr, errFromService, "expected returned error to match or wrap error from service")
@@ -244,10 +236,87 @@ func TestWhenUpdatingCRFailsChangeIsUpdatedAsFailed(t *testing.T) {
 	assert.ErrorIs(t, returnedErr, errFromService, "expected returned error to match or wrap error from service")
 }
 
-// Update fails, marks as failed
+func TestWhenUpdatingStatusToBackendFailsShouldReturnError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-// Update to backend fails, returns err
+	mockK8sClient := mocks.NewMockClient(ctrl)
+	mockAPI := mocksConfigApplier.NewMockConfigurationAPI(ctrl)
 
-// TODO: No CR, pending change -> nothing happens but warning?
+	applier := config_applier.Applier{
+		K8sClient: mockK8sClient,
+		Logger:    logr.Discard(),
+		Api:       mockAPI,
+	}
+
+	configChange := config_applier.RandomChange()
+	mockAPI.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]config_applier.ConfigurationChange{*configChange}, nil)
+
+	mockK8sClient.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersAgentList{}).
+		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersAgentList, _ ...any) {
+			list.Items = []cbcontainersv1.CBContainersAgent{
+				{
+					TypeMeta: metav1.TypeMeta{},
+					ObjectMeta: metav1.ObjectMeta{
+						Generation: 1,
+					},
+					Spec:   cbcontainersv1.CBContainersAgentSpec{},
+					Status: cbcontainersv1.CBContainersAgentStatus{},
+				},
+			}
+		})
+
+	mockK8sClient.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, item any, _ ...any) error {
+			asCb, ok := item.(*cbcontainersv1.CBContainersAgent)
+			require.True(t, ok)
+			asCb.ObjectMeta.Generation++
+			return nil
+		})
+
+	errFromService := errors.New("some error")
+	mockAPI.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).Return(errFromService)
+
+	returnedErr := applier.RunIteration(context.Background())
+	assert.Error(t, returnedErr)
+	assert.ErrorIs(t, errFromService, returnedErr, "expected returned error to match or wrap error from service")
+}
+
+func TestWhenThereIsNoCRInstalledChangeIsUpdatedAsFailed(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockK8sClient := mocks.NewMockClient(ctrl)
+	mockAPI := mocksConfigApplier.NewMockConfigurationAPI(ctrl)
+
+	applier := config_applier.Applier{
+		K8sClient: mockK8sClient,
+		Logger:    logr.Discard(),
+		Api:       mockAPI,
+	}
+
+	configChange := config_applier.RandomChange()
+	mockAPI.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]config_applier.ConfigurationChange{*configChange}, nil)
+
+	mockK8sClient.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersAgentList{}).
+		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersAgentList, _ ...any) {
+			list.Items = []cbcontainersv1.CBContainersAgent{}
+		})
+
+	mockAPI.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, update config_applier.ConfigurationChangeStatusUpdate) error {
+			assert.Equal(t, configChange.ID, update.ID)
+			assert.Equal(t, "FAILED", update.Status)
+			assert.NotEmpty(t, update.Reason)
+			assert.Equal(t, int64(0), update.AppliedGeneration)
+			assert.Empty(t, update.AppliedTimestamp)
+
+			return nil
+		})
+
+	err := applier.RunIteration(context.Background())
+	assert.Error(t, err)
+	// TODO: Specific error exposed for this?
+}
 
 // Scheduler -> failed; increased retry
