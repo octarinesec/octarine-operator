@@ -42,8 +42,10 @@ func (controller *RemoteConfigurationController) RunLoop(signalsContext context.
 		err := controller.applier.RunIteration(signalsContext)
 
 		if err != nil {
+			controller.logger.Error(err, "Configuration applier iteration failed, will retry again")
 			pollingTimer.resetErr()
 		} else {
+			controller.logger.Info("Completed configuration applier iteration, sleeping")
 			pollingTimer.resetSuccess()
 		}
 	}

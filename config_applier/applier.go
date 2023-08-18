@@ -5,28 +5,20 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-	"math/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
 	"time"
 )
 
 // TODO: Use interfaces for dependencies?
 // TODO: Env_var to enable
 // TODO: Configurable polling interval
+// TODO: Recover panics to avoid crashing the operator?
 
 const (
 	timeoutSingleIteration = time.Second * 30
 )
 
 // TODO: Log ChangeID on every log
-
-var versions = []string{"2.12.1", "2.10.0", "2.12.0", "2.11.0"}
-
-var (
-	tr  = true
-	fal = false
-)
 
 type ConfigurationAPI interface {
 	// Get Compatibility matrix
@@ -42,57 +34,6 @@ type Applier struct {
 	K8sClient client.Client
 	Logger    logr.Logger
 	Api       ConfigurationAPI
-}
-
-type pendingChangesResponse struct {
-	ConfigurationChanges []ConfigurationChange `json:"configuration_changes"`
-}
-
-type ConfigurationChange struct {
-	ID                    string  `json:"id"`
-	Status                string  `json:"status"`
-	AgentVersion          *string `json:"agent_version"`
-	EnableClusterScanning *bool   `json:"enable_cluster_scanning"`
-	EnableRuntime         *bool   `json:"enable_runtime"`
-}
-
-type ConfigurationChangeStatusUpdate struct {
-	ID     string `json:"id"`
-	Status string `json:"status"`
-	Reason string `json:"reason"`
-	// AppliedGeneration tracks the generation of the Custom resource where the change was applied
-	AppliedGeneration int64 `json:"applied_generation"`
-	// AppliedTimestamp records when the change was applied in RFC3339 format
-	AppliedTimestamp string `json:"applied_timestamp"`
-
-	// TODO: CLuster and group. Cluster identifier?
-}
-
-type changeStatus string
-
-var (
-	statusPending      changeStatus = "PENDING"
-	statusAcknowledged changeStatus = "ACKNOWLEDGED" // TODO: Acknowledged or applied?
-	statusFailed       changeStatus = "FAILED"
-)
-
-func (applier *Applier) RunLoop(signalsContext context.Context) {
-	pollingSleepDuration := 20 * time.Second
-	pollingTimer := time.NewTicker(pollingSleepDuration)
-	defer pollingTimer.Stop()
-
-	for {
-		select {
-		case <-signalsContext.Done():
-			applier.Logger.Info("Received cancel signal, turning off configuration applier")
-			return
-		case <-pollingTimer.C:
-			// Nothing to do; this is the polling sleep case
-		}
-		// TODO: Pass context down?
-		applier.Logger.Info("RUNNING ITERATION")
-		applier.RunIteration(signalsContext) // TODO!!!
-	}
 }
 
 func (applier *Applier) RunIteration(ctx context.Context) error {
@@ -207,44 +148,4 @@ func (applier *Applier) getContainerAgentCR(ctx context.Context) (*cbcontainersv
 
 	// We don't log a warning if len >=2 as the controller already warns users about that
 	return &cbContainersAgentsList.Items[0], nil
-}
-
-func RandomChange() *ConfigurationChange {
-	csRand, runtimeRand, versionRand := rand.Int(), rand.Int(), rand.Intn(len(versions)+1)
-
-	csRand, runtimeRand, versionRand = 1, 2, 3
-	if versionRand == len(versions) {
-		return nil
-	}
-
-	changeVersion := &versions[versionRand]
-
-	var changeClusterScanning *bool
-	var changeRuntime *bool
-
-	switch csRand % 5 {
-	case 1, 3:
-		changeClusterScanning = &tr
-	case 2, 4:
-		changeClusterScanning = &fal
-	default:
-		changeClusterScanning = nil
-	}
-
-	switch runtimeRand % 5 {
-	case 1, 3:
-		changeRuntime = &tr
-	case 2, 4:
-		changeRuntime = &fal
-	default:
-		changeRuntime = nil
-	}
-
-	return &ConfigurationChange{
-		ID:                    strconv.Itoa(rand.Int()),
-		AgentVersion:          changeVersion,
-		EnableClusterScanning: changeClusterScanning,
-		EnableRuntime:         changeRuntime,
-		Status:                string(statusPending),
-	}
 }

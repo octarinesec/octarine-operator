@@ -17,6 +17,10 @@ import (
 	"time"
 )
 
+// TODO: Compatibility checks
+// TODO: Adding CNDR to the config options
+// TODO: Properly handle version + custom image to override the custom image
+
 func setupApplier(ctrl *gomock.Controller, k8sClient client.Client, api config_applier.ConfigurationAPI) config_applier.Applier {
 	if k8sClient == nil {
 		k8sClient = mocks.NewMockClient(ctrl)

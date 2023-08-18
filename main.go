@@ -32,9 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sync"
 	"strings"
-
+	"sync"
 
 	"github.com/vmware/cbcontainers-operator/cbcontainers/processors"
 
@@ -169,9 +168,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	// TODO: Prettify
+	// TODO: Check env var
+
 	signalsContext := ctrl.SetupSignalHandler()
 	k8sClient := mgr.GetClient()
-	applier := config_applier.Applier{K8sClient: k8sClient, Logger: ctrl.Log.WithName("configurator")}
+	log := ctrl.Log.WithName("configurator")
+	api := config_applier.DummyAPI{}
+	applier := &config_applier.Applier{K8sClient: k8sClient, Logger: log, Api: api}
+	applierController := config_applier.NewRemoteConfigurationController(applier, log)
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -187,7 +192,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		setupLog.Info("starting configuration monitor")
-		applier.RunLoop(signalsContext)
+		applierController.RunLoop(signalsContext)
 	}()
 
 	wg.Wait()
