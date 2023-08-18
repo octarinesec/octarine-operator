@@ -7,6 +7,7 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"math/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strconv"
 	"time"
 )
 
@@ -25,41 +26,51 @@ var (
 	fal = false
 )
 
-type APIGateway interface {
+type ConfigurationAPI interface {
 	// Get Compatibility matrix
 	// Update status of change (ack/error)
 	// Get pending changes
 	// Set status for change (acknowledge/error)
+
+	GetConfigurationChanges() ([]ConfigurationChange, error)
+	UpdateConfigurationChangeStatus(ConfigurationChangeStatusUpdate) error
 }
 
 type Applier struct {
 	K8sClient client.Client
 	Logger    logr.Logger
-	Gateway   APIGateway
+	Api       ConfigurationAPI
 }
 
 type pendingChangesResponse struct {
-	ConfigurationChanges []pendingChange `json:"configuration_changes"`
+	ConfigurationChanges []ConfigurationChange `json:"configuration_changes"`
 }
 
-type pendingChange struct {
+type ConfigurationChange struct {
 	ID                    string  `json:"id"`
-	Version               *string `json:"version"`
+	Status                string  `json:"status"`
+	AgentVersion          *string `json:"agent_version"`
 	EnableClusterScanning *bool   `json:"enable_cluster_scanning"`
 	EnableRuntime         *bool   `json:"enable_runtime"`
 }
 
-type configurationChangeStatusRequest struct {
+type ConfigurationChangeStatusUpdate struct {
 	ID     string `json:"id"`
 	Status string `json:"status"`
 	Reason string `json:"reason"`
+	// AppliedGeneration tracks the generation of the Custom resource where the change was applied
+	AppliedGeneration int64 `json:"applied_generation"`
+	// AppliedTimestamp records when the change was applied in RFC3339 format
+	AppliedTimestamp string `json:"applied_timestamp"`
+
+	// TODO: CLuster and group. Cluster identifier?
 }
 
 type changeStatus string
 
 var (
 	statusPending      changeStatus = "PENDING"
-	statusAcknowledged changeStatus = "ACKNOWLEDGED"
+	statusAcknowledged changeStatus = "ACKNOWLEDGED" // TODO: Acknowledged or applied?
 	statusFailed       changeStatus = "FAILED"
 )
 
@@ -78,11 +89,11 @@ func (applier *Applier) RunLoop(signalsContext context.Context) {
 		}
 		// TODO: Pass context down?
 		applier.Logger.Info("RUNNING ITERATION")
-		applier.configCheckIteration(signalsContext)
+		applier.RunIteration(signalsContext) // TODO!!!
 	}
 }
 
-func (applier *Applier) configCheckIteration(ctx context.Context) {
+func (applier *Applier) RunIteration(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(ctx, timeoutSingleIteration)
 	defer cancel()
 
@@ -99,13 +110,13 @@ func (applier *Applier) configCheckIteration(ctx context.Context) {
 	}
 
 	applier.Logger.Info("Applying remote configuration change", "change", change)
-	err = applier.applyChange(ctx, change)
+	cr, err := applier.applyChange(ctx, change)
 	if err != nil {
 		applier.Logger.Error(err, "Failed to apply configuration change", "changeID", change.ID)
 		// Intentional fallthrough so we always update the status of the change on the backend
 	}
 
-	if errStatusUpdate := applier.updateChangeStatus(ctx, change, err); errStatusUpdate != nil {
+	if errStatusUpdate := applier.updateChangeStatus(ctx, change, cr, err); errStatusUpdate != nil {
 		applier.Logger.Error(err, "Failed to update the status of a configuration change; it might be re-applied again in the future")
 		return
 	}
@@ -113,29 +124,44 @@ func (applier *Applier) configCheckIteration(ctx context.Context) {
 	return
 }
 
-func (applier *Applier) getPendingChange(ctx context.Context) (*pendingChange, error) {
-	rand := randomChange()
-	return rand, nil
+func (applier *Applier) getPendingChange(ctx context.Context) (*ConfigurationChange, error) {
+	changes, err := applier.Api.GetConfigurationChanges()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, change := range changes {
+		if change.Status == string(statusPending) {
+			return &change, nil
+		}
+	}
+	return nil, nil
 }
 
-func (applier *Applier) updateChangeStatus(ctx context.Context, change *pendingChange, err error) error {
-
-	return nil
+func (applier *Applier) updateChangeStatus(ctx context.Context, change *ConfigurationChange, cr *cbcontainersv1.CBContainersAgent, err error) error {
+	statusUpdate := ConfigurationChangeStatusUpdate{
+		ID:                change.ID,
+		Status:            string(statusAcknowledged),
+		Reason:            "", // TODO
+		AppliedGeneration: cr.Generation,
+		AppliedTimestamp:  time.Now().UTC().Format(time.RFC3339),
+	}
+	return applier.Api.UpdateConfigurationChangeStatus(statusUpdate)
 }
 
-func (applier *Applier) applyChange(ctx context.Context, change *pendingChange) error {
+func (applier *Applier) applyChange(ctx context.Context, change *ConfigurationChange) (*cbcontainersv1.CBContainersAgent, error) {
 	cr, err := applier.getContainerAgentCR(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if cr == nil {
 		applier.Logger.Info("No CBContainersAgent instance found")
-		return nil
+		return nil, nil
 	}
 
 	// TODO: Validation!
-	if change.Version != nil {
-		cr.Spec.Version = *change.Version
+	if change.AgentVersion != nil {
+		cr.Spec.Version = *change.AgentVersion
 	}
 	if change.EnableClusterScanning != nil {
 		cr.Spec.Components.ClusterScanning.Enabled = change.EnableClusterScanning
@@ -144,9 +170,12 @@ func (applier *Applier) applyChange(ctx context.Context, change *pendingChange) 
 		cr.Spec.Components.RuntimeProtection.Enabled = change.EnableRuntime
 	}
 
+	generationBefore := cr.ObjectMeta.Generation
 	// TODO:  Handle Conflict response and retry
 	err = applier.K8sClient.Update(ctx, cr)
-	return err
+	generationAfter := cr.ObjectMeta.Generation
+	applier.Logger.Info("Updated object", "oldGeneration", generationBefore, "newGeneration", generationAfter, "err", err)
+	return cr, nil
 }
 
 // getContainerAgentCR loads exactly 0 or 1 CBContainersAgent definitions
@@ -168,8 +197,10 @@ func (applier *Applier) getContainerAgentCR(ctx context.Context) (*cbcontainersv
 	return &cbContainersAgentsList.Items[0], nil
 }
 
-func randomChange() *pendingChange {
+func RandomChange() *ConfigurationChange {
 	csRand, runtimeRand, versionRand := rand.Int(), rand.Int(), rand.Intn(len(versions)+1)
+
+	csRand, runtimeRand, versionRand = 1, 2, 3
 	if versionRand == len(versions) {
 		return nil
 	}
@@ -197,9 +228,11 @@ func randomChange() *pendingChange {
 		changeRuntime = nil
 	}
 
-	return &pendingChange{
-		Version:               changeVersion,
+	return &ConfigurationChange{
+		ID:                    strconv.Itoa(rand.Int()),
+		AgentVersion:          changeVersion,
 		EnableClusterScanning: changeClusterScanning,
 		EnableRuntime:         changeRuntime,
+		Status:                string(statusPending),
 	}
 }
