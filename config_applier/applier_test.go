@@ -35,7 +35,7 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 	// TODO: Compatiblity check
 
 	configChange := config_applier.RandomChange()
-	mockAPI.EXPECT().GetConfigurationChanges().Return([]config_applier.ConfigurationChange{*configChange}, nil)
+	mockAPI.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]config_applier.ConfigurationChange{*configChange}, nil)
 
 	mockK8sClient.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersAgentList{}).
 		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersAgentList, _ ...any) {
@@ -59,7 +59,7 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 			return nil
 		})
 
-	mockAPI.EXPECT().UpdateConfigurationChangeStatus(gomock.Any()).DoAndReturn(func(update config_applier.ConfigurationChangeStatusUpdate) error {
+	mockAPI.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, update config_applier.ConfigurationChangeStatusUpdate) error {
 		assert.Equal(t, configChange.ID, update.ID)
 		assert.Equal(t, int64(2), update.AppliedGeneration)
 		assert.Equal(t, "ACKNOWLEDGED", update.Status)

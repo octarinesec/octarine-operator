@@ -32,8 +32,8 @@ type ConfigurationAPI interface {
 	// Get pending changes
 	// Set status for change (acknowledge/error)
 
-	GetConfigurationChanges() ([]ConfigurationChange, error)
-	UpdateConfigurationChangeStatus(ConfigurationChangeStatusUpdate) error
+	GetConfigurationChanges(context.Context) ([]ConfigurationChange, error)
+	UpdateConfigurationChangeStatus(context.Context, ConfigurationChangeStatusUpdate) error
 }
 
 type Applier struct {
@@ -125,7 +125,7 @@ func (applier *Applier) RunIteration(ctx context.Context) {
 }
 
 func (applier *Applier) getPendingChange(ctx context.Context) (*ConfigurationChange, error) {
-	changes, err := applier.Api.GetConfigurationChanges()
+	changes, err := applier.Api.GetConfigurationChanges(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (applier *Applier) updateChangeStatus(ctx context.Context, change *Configur
 		AppliedGeneration: cr.Generation,
 		AppliedTimestamp:  time.Now().UTC().Format(time.RFC3339),
 	}
-	return applier.Api.UpdateConfigurationChangeStatus(statusUpdate)
+	return applier.Api.UpdateConfigurationChangeStatus(ctx, statusUpdate)
 }
 
 func (applier *Applier) applyChange(ctx context.Context, change *ConfigurationChange) (*cbcontainersv1.CBContainersAgent, error) {

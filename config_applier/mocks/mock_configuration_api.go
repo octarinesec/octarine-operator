@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -35,30 +36,30 @@ func (m *MockConfigurationAPI) EXPECT() *MockConfigurationAPIMockRecorder {
 }
 
 // GetConfigurationChanges mocks base method.
-func (m *MockConfigurationAPI) GetConfigurationChanges() ([]config_applier.ConfigurationChange, error) {
+func (m *MockConfigurationAPI) GetConfigurationChanges(arg0 context.Context) ([]config_applier.ConfigurationChange, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConfigurationChanges")
+	ret := m.ctrl.Call(m, "GetConfigurationChanges", arg0)
 	ret0, _ := ret[0].([]config_applier.ConfigurationChange)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetConfigurationChanges indicates an expected call of GetConfigurationChanges.
-func (mr *MockConfigurationAPIMockRecorder) GetConfigurationChanges() *gomock.Call {
+func (mr *MockConfigurationAPIMockRecorder) GetConfigurationChanges(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfigurationChanges", reflect.TypeOf((*MockConfigurationAPI)(nil).GetConfigurationChanges))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfigurationChanges", reflect.TypeOf((*MockConfigurationAPI)(nil).GetConfigurationChanges), arg0)
 }
 
 // UpdateConfigurationChangeStatus mocks base method.
-func (m *MockConfigurationAPI) UpdateConfigurationChangeStatus(arg0 config_applier.ConfigurationChangeStatusUpdate) error {
+func (m *MockConfigurationAPI) UpdateConfigurationChangeStatus(arg0 context.Context, arg1 config_applier.ConfigurationChangeStatusUpdate) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateConfigurationChangeStatus", arg0)
+	ret := m.ctrl.Call(m, "UpdateConfigurationChangeStatus", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateConfigurationChangeStatus indicates an expected call of UpdateConfigurationChangeStatus.
-func (mr *MockConfigurationAPIMockRecorder) UpdateConfigurationChangeStatus(arg0 interface{}) *gomock.Call {
+func (mr *MockConfigurationAPIMockRecorder) UpdateConfigurationChangeStatus(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateConfigurationChangeStatus", reflect.TypeOf((*MockConfigurationAPI)(nil).UpdateConfigurationChangeStatus), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateConfigurationChangeStatus", reflect.TypeOf((*MockConfigurationAPI)(nil).UpdateConfigurationChangeStatus), arg0, arg1)
 }
