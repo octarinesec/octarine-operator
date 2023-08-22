@@ -175,7 +175,7 @@ func main() {
 	k8sClient := mgr.GetClient()
 	log := ctrl.Log.WithName("configurator")
 	api := config_applier.DummyAPI{}
-	applier := &config_applier.Applier{K8sClient: k8sClient, Logger: log, Api: api}
+	applier := config_applier.NewApplier(k8sClient, api, log)
 	applierController := config_applier.NewRemoteConfigurationController(applier, log)
 
 	var wg sync.WaitGroup

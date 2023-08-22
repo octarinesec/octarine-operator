@@ -9,10 +9,10 @@ import (
 	"time"
 )
 
-// TODO: Use interfaces for dependencies?
 // TODO: Env_var to enable
 // TODO: Configurable polling interval
 // TODO: Recover panics to avoid crashing the operator?
+// TODO: Respect proxy config
 
 const (
 	timeoutSingleIteration = time.Second * 30
@@ -20,7 +20,7 @@ const (
 
 // TODO: Log ChangeID on every log
 
-type ConfigurationAPI interface {
+type ConfigurationChangesAPI interface {
 	// Get Compatibility matrix
 	// Update status of change (ack/error)
 	// Get pending changes
@@ -31,37 +31,43 @@ type ConfigurationAPI interface {
 }
 
 type Applier struct {
-	K8sClient client.Client
-	Logger    logr.Logger
-	Api       ConfigurationAPI
+	k8sClient  client.Client
+	logger     logr.Logger
+	changesAPI ConfigurationChangesAPI
 }
+
+func NewApplier(k8sClient client.Client, api ConfigurationChangesAPI, logger logr.Logger) *Applier {
+	return &Applier{k8sClient: k8sClient, logger: logger, changesAPI: api}
+}
+
+//func NewApplier(k8sClient client.)
 
 func (applier *Applier) RunIteration(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, timeoutSingleIteration)
 	defer cancel()
 
-	applier.Logger.Info("Checking for pending remote configuration changes...")
+	applier.logger.Info("Checking for pending remote configuration changes...")
 
 	change, errGettingChanges := applier.getPendingChange(ctx)
 	if errGettingChanges != nil {
-		applier.Logger.Error(errGettingChanges, "Failed to get pending configuration changes")
+		applier.logger.Error(errGettingChanges, "Failed to get pending configuration changes")
 		return errGettingChanges // TODO
 	}
 
 	if change == nil {
-		applier.Logger.Info("No pending remote configuration changes found")
+		applier.logger.Info("No pending remote configuration changes found")
 		return nil
 	}
 
-	applier.Logger.Info("Applying remote configuration change", "change", change)
+	applier.logger.Info("Applying remote configuration change", "change", change)
 	cr, errApplyingCR := applier.applyChange(ctx, change)
 	if errApplyingCR != nil {
-		applier.Logger.Error(errApplyingCR, "Failed to apply configuration change", "changeID", change.ID)
+		applier.logger.Error(errApplyingCR, "Failed to apply configuration change", "changeID", change.ID)
 		// Intentional fallthrough so we always update the status of the change on the backend, including failed status
 	}
 
 	if errStatusUpdate := applier.updateChangeStatus(ctx, change, cr, errApplyingCR); errStatusUpdate != nil {
-		applier.Logger.Error(errStatusUpdate, "Failed to update the status of a configuration change; it might be re-applied again in the future")
+		applier.logger.Error(errStatusUpdate, "Failed to update the status of a configuration change; it might be re-applied again in the future")
 		return errStatusUpdate // TODO
 	}
 
@@ -69,7 +75,7 @@ func (applier *Applier) RunIteration(ctx context.Context) error {
 }
 
 func (applier *Applier) getPendingChange(ctx context.Context) (*ConfigurationChange, error) {
-	changes, err := applier.Api.GetConfigurationChanges(ctx)
+	changes, err := applier.changesAPI.GetConfigurationChanges(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +106,7 @@ func (applier *Applier) updateChangeStatus(ctx context.Context, change *Configur
 		}
 	}
 
-	return applier.Api.UpdateConfigurationChangeStatus(ctx, statusUpdate)
+	return applier.changesAPI.UpdateConfigurationChangeStatus(ctx, statusUpdate)
 }
 
 func (applier *Applier) applyChange(ctx context.Context, change *ConfigurationChange) (*cbcontainersv1.CBContainersAgent, error) {
@@ -125,9 +131,9 @@ func (applier *Applier) applyChange(ctx context.Context, change *ConfigurationCh
 
 	generationBefore := cr.ObjectMeta.Generation
 	// TODO:  Handle Conflict response and retry
-	err = applier.K8sClient.Update(ctx, cr)
+	err = applier.k8sClient.Update(ctx, cr)
 	generationAfter := cr.ObjectMeta.Generation
-	applier.Logger.Info("Updated object", "oldGeneration", generationBefore, "newGeneration", generationAfter, "err", err)
+	applier.logger.Info("Updated object", "oldGeneration", generationBefore, "newGeneration", generationAfter, "err", err)
 	return cr, err
 }
 
@@ -138,7 +144,7 @@ func (applier *Applier) getContainerAgentCR(ctx context.Context) (*cbcontainersv
 	// keep implementation in-sync with CBContainersAgentController.getContainersAgentObject() to ensure both operate on the same agent instance
 
 	cbContainersAgentsList := &cbcontainersv1.CBContainersAgentList{}
-	if err := applier.K8sClient.List(ctx, cbContainersAgentsList); err != nil {
+	if err := applier.k8sClient.List(ctx, cbContainersAgentsList); err != nil {
 		return nil, fmt.Errorf("couldn't list CBContainersAgent k8s objects: %w", err)
 	}
 

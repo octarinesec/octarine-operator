@@ -29,6 +29,15 @@ func (d DummyAPI) UpdateConfigurationChangeStatus(ctx context.Context, update Co
 	return nil
 }
 
+func RandomNonNilChange() *ConfigurationChange {
+	for {
+		c := RandomChange()
+		if c != nil {
+			return c
+		}
+	}
+}
+
 func RandomChange() *ConfigurationChange {
 	csRand, runtimeRand, versionRand := rand.Int(), rand.Int(), rand.Intn(len(versions)+1)
 
