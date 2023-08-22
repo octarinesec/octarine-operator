@@ -84,6 +84,7 @@ type ConfigurationChange struct {
 	AgentVersion          *string `json:"agent_version"`
 	EnableClusterScanning *bool   `json:"enable_cluster_scanning"`
 	EnableRuntime         *bool   `json:"enable_runtime"`
+	EnableCNDR            *bool   `json:"enable_cndr"`
 }
 
 type ConfigurationChangeStatusUpdate struct {

@@ -128,6 +128,12 @@ func (applier *Applier) applyChange(ctx context.Context, change *ConfigurationCh
 	if change.EnableRuntime != nil {
 		cr.Spec.Components.RuntimeProtection.Enabled = change.EnableRuntime
 	}
+	if change.EnableCNDR != nil {
+		if cr.Spec.Components.Cndr == nil {
+			cr.Spec.Components.Cndr = &cbcontainersv1.CBContainersCndrSpec{}
+		}
+		cr.Spec.Components.Cndr.Enabled = change.EnableCNDR
+	}
 
 	generationBefore := cr.ObjectMeta.Generation
 	// TODO:  Handle Conflict response and retry
