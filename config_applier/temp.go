@@ -85,6 +85,7 @@ type ConfigurationChange struct {
 	EnableClusterScanning *bool   `json:"enable_cluster_scanning"`
 	EnableRuntime         *bool   `json:"enable_runtime"`
 	EnableCNDR            *bool   `json:"enable_cndr"`
+	Timestamp             string  `json:"timestamp"`
 }
 
 type ConfigurationChangeStatusUpdate struct {

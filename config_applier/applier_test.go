@@ -131,6 +131,56 @@ func TestWhenThereAreNoPendingChangesNothingHappens(t *testing.T) {
 	}
 }
 
+func TestWhenThereAreMultiplePendingChangesTheOldestIsSelected(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	applier, mocks := setupApplier(ctrl)
+
+	olderChange := config_applier.RandomNonNilChange()
+	newerChange := config_applier.RandomNonNilChange()
+
+	expectedVersion := "version-for-older-change"
+	versionThatShouldNotBe := "version-for-newer-change"
+	olderChange.AgentVersion = &expectedVersion
+	newerChange.AgentVersion = &versionThatShouldNotBe
+	olderChange.Timestamp = time.Now().UTC().Add(-2 * time.Hour).Format(time.RFC3339)
+	newerChange.Timestamp = time.Now().UTC().Add(-1 * time.Hour).Format(time.RFC3339)
+
+	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]config_applier.ConfigurationChange{*newerChange, *olderChange}, nil)
+
+	mocks.k8sClient.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersAgentList{}).
+		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersAgentList, _ ...any) {
+			list.Items = []cbcontainersv1.CBContainersAgent{
+				{
+					TypeMeta: metav1.TypeMeta{},
+					ObjectMeta: metav1.ObjectMeta{
+						Generation: 1,
+					},
+					Spec:   cbcontainersv1.CBContainersAgentSpec{},
+					Status: cbcontainersv1.CBContainersAgentStatus{},
+				},
+			}
+		})
+
+	mocks.k8sClient.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, item any, _ ...any) error {
+			asCb, ok := item.(*cbcontainersv1.CBContainersAgent)
+			require.True(t, ok)
+
+			assert.Equal(t, expectedVersion, asCb.Spec.Version)
+			return nil
+		})
+
+	mocks.api.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, update config_applier.ConfigurationChangeStatusUpdate) error {
+		assert.Equal(t, olderChange.ID, update.ID)
+		return nil
+	})
+
+	err := applier.RunIteration(context.Background())
+	assert.NoError(t, err)
+}
+
 func TestWhenConfigurationAPIReturnsErrorForListShouldPropagateErr(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

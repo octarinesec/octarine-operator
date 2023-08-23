@@ -6,6 +6,7 @@ import (
 	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sort"
 	"time"
 )
 
@@ -75,6 +76,10 @@ func (applier *Applier) getPendingChange(ctx context.Context) (*ConfigurationCha
 		return nil, err
 	}
 
+	sort.SliceStable(changes, func(i, j int) bool {
+		return changes[i].Timestamp < changes[j].Timestamp
+	})
+
 	for _, change := range changes {
 		if change.Status == string(statusPending) {
 			return &change, nil
@@ -136,7 +141,7 @@ func (applier *Applier) getContainerAgentCR(ctx context.Context) (*cbcontainersv
 		return nil, fmt.Errorf("couldn't list CBContainersAgent k8s objects: %w", err)
 	}
 
-	if cbContainersAgentsList.Items == nil || len(cbContainersAgentsList.Items) == 0 {
+	if len(cbContainersAgentsList.Items) == 0 {
 		return nil, nil
 	}
 
