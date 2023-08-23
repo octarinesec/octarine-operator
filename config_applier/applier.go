@@ -22,9 +22,6 @@ const (
 
 type ConfigurationChangesAPI interface {
 	// Get Compatibility matrix
-	// Update status of change (ack/error)
-	// Get pending changes
-	// Set status for change (acknowledge/error)
 
 	GetConfigurationChanges(context.Context) ([]ConfigurationChange, error)
 	UpdateConfigurationChangeStatus(context.Context, ConfigurationChangeStatusUpdate) error
@@ -39,8 +36,6 @@ type Applier struct {
 func NewApplier(k8sClient client.Client, api ConfigurationChangesAPI, logger logr.Logger) *Applier {
 	return &Applier{k8sClient: k8sClient, logger: logger, changesAPI: api}
 }
-
-//func NewApplier(k8sClient client.)
 
 func (applier *Applier) RunIteration(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, timeoutSingleIteration)
@@ -60,13 +55,13 @@ func (applier *Applier) RunIteration(ctx context.Context) error {
 	}
 
 	applier.logger.Info("Applying remote configuration change", "change", change)
-	cr, errApplyingCR := applier.applyChange(ctx, change)
+	cr, errApplyingCR := applier.applyChange(ctx, *change)
 	if errApplyingCR != nil {
 		applier.logger.Error(errApplyingCR, "Failed to apply configuration change", "changeID", change.ID)
 		// Intentional fallthrough so we always update the status of the change on the backend, including failed status
 	}
 
-	if errStatusUpdate := applier.updateChangeStatus(ctx, change, cr, errApplyingCR); errStatusUpdate != nil {
+	if errStatusUpdate := applier.updateChangeStatus(ctx, *change, cr, errApplyingCR); errStatusUpdate != nil {
 		applier.logger.Error(errStatusUpdate, "Failed to update the status of a configuration change; it might be re-applied again in the future")
 		return errStatusUpdate // TODO
 	}
@@ -88,7 +83,7 @@ func (applier *Applier) getPendingChange(ctx context.Context) (*ConfigurationCha
 	return nil, nil
 }
 
-func (applier *Applier) updateChangeStatus(ctx context.Context, change *ConfigurationChange, cr *cbcontainersv1.CBContainersAgent, encounteredError error) error {
+func (applier *Applier) updateChangeStatus(ctx context.Context, change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent, encounteredError error) error {
 	var statusUpdate ConfigurationChangeStatusUpdate
 	if encounteredError == nil {
 		statusUpdate = ConfigurationChangeStatusUpdate{
@@ -109,7 +104,7 @@ func (applier *Applier) updateChangeStatus(ctx context.Context, change *Configur
 	return applier.changesAPI.UpdateConfigurationChangeStatus(ctx, statusUpdate)
 }
 
-func (applier *Applier) applyChange(ctx context.Context, change *ConfigurationChange) (*cbcontainersv1.CBContainersAgent, error) {
+func (applier *Applier) applyChange(ctx context.Context, change ConfigurationChange) (*cbcontainersv1.CBContainersAgent, error) {
 	cr, err := applier.getContainerAgentCR(ctx)
 	if err != nil {
 		return nil, err
@@ -118,27 +113,14 @@ func (applier *Applier) applyChange(ctx context.Context, change *ConfigurationCh
 		return nil, fmt.Errorf("no CBContainerAgent instance found, cannot apply change")
 	}
 
-	// TODO: Validation!
-	if change.AgentVersion != nil {
-		cr.Spec.Version = *change.AgentVersion
-	}
-	if change.EnableClusterScanning != nil {
-		cr.Spec.Components.ClusterScanning.Enabled = change.EnableClusterScanning
-	}
-	if change.EnableRuntime != nil {
-		cr.Spec.Components.RuntimeProtection.Enabled = change.EnableRuntime
-	}
-	if change.EnableCNDR != nil {
-		if cr.Spec.Components.Cndr == nil {
-			cr.Spec.Components.Cndr = &cbcontainersv1.CBContainersCndrSpec{}
-		}
-		cr.Spec.Components.Cndr.Enabled = change.EnableCNDR
-	}
+	applyChange(change, cr)
 
 	generationBefore := cr.ObjectMeta.Generation
-	// TODO:  Handle Conflict response and retry
+
 	err = applier.k8sClient.Update(ctx, cr)
 	generationAfter := cr.ObjectMeta.Generation
+
+	// TODO: remove
 	applier.logger.Info("Updated object", "oldGeneration", generationBefore, "newGeneration", generationAfter, "err", err)
 	return cr, err
 }
