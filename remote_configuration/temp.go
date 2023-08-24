@@ -29,11 +29,11 @@ func (d DummyAPI) UpdateConfigurationChangeStatus(ctx context.Context, update Co
 	return nil
 }
 
-func RandomNonNilChange() *ConfigurationChange {
+func RandomNonNilChange() ConfigurationChange {
 	for {
 		c := RandomChange()
 		if c != nil {
-			return c
+			return *c
 		}
 	}
 }
