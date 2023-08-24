@@ -37,8 +37,18 @@ func (configurator *Configurator) RunIteration(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, timeoutSingleIteration)
 	defer cancel()
 
-	configurator.logger.Info("Checking for pending remote configuration changes...")
+	configurator.logger.Info("Checking for installed agent...")
+	cr, errGettingCR := configurator.getContainerAgentCR(ctx)
+	if errGettingCR != nil {
+		configurator.logger.Error(errGettingCR, "Failed to get CBContainerAgent resource, cannot continue")
+		return errGettingCR
+	}
+	if cr == nil {
+		configurator.logger.Info("No CBContainerAgent installed, there is nothing to configure")
+		return nil
+	}
 
+	configurator.logger.Info("Checking for pending remote configuration changes...")
 	change, errGettingChanges := configurator.getPendingChange(ctx)
 	if errGettingChanges != nil {
 		configurator.logger.Error(errGettingChanges, "Failed to get pending configuration changes")
@@ -50,8 +60,8 @@ func (configurator *Configurator) RunIteration(ctx context.Context) error {
 		return nil
 	}
 
-	configurator.logger.Info("Applying remote configuration change", "change", change)
-	cr, errApplyingCR := configurator.applyChange(ctx, *change)
+	configurator.logger.Info("Applying remote configuration change to CBContainerAgent resource", "change", change)
+	errApplyingCR := configurator.applyChange(ctx, *change, cr)
 	if errApplyingCR != nil {
 		configurator.logger.Error(errApplyingCR, "Failed to apply configuration change", "changeID", change.ID)
 		// Intentional fallthrough as we always update the status of the change on the backend, including failed status
@@ -62,6 +72,7 @@ func (configurator *Configurator) RunIteration(ctx context.Context) error {
 		return errStatusUpdate
 	}
 
+	// If we failed to apply the CR, we still report this to the backend but want to return the apply error here to propagate properly
 	return errApplyingCR
 }
 
@@ -104,19 +115,11 @@ func (configurator *Configurator) updateChangeStatus(ctx context.Context, change
 	return configurator.changesAPI.UpdateConfigurationChangeStatus(ctx, statusUpdate)
 }
 
-func (configurator *Configurator) applyChange(ctx context.Context, change ConfigurationChange) (*cbcontainersv1.CBContainersAgent, error) {
-	cr, err := configurator.getContainerAgentCR(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if cr == nil {
-		return nil, fmt.Errorf("no CBContainerAgent instance found, cannot apply change")
-	}
-
-	applyChangesToCR(change, cr)
-
-	err = configurator.k8sClient.Update(ctx, cr)
-	return cr, err
+// applyChange will sync the required changes and push them to the k8s api-server
+// the input agent will be modified after this function and will no longer match the original
+func (configurator *Configurator) applyChange(ctx context.Context, change ConfigurationChange, agent *cbcontainersv1.CBContainersAgent) error {
+	applyChangesToCR(change, agent)
+	return configurator.k8sClient.Update(ctx, agent)
 }
 
 // getContainerAgentCR loads exactly 0 or 1 CBContainersAgent definitions
