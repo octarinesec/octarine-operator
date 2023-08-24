@@ -25,7 +25,7 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/operator"
-	"github.com/vmware/cbcontainers-operator/config_applier"
+	"github.com/vmware/cbcontainers-operator/remote_configuration"
 	"go.uber.org/zap/zapcore"
 	coreV1 "k8s.io/api/core/v1"
 	"os"
@@ -175,9 +175,9 @@ func main() {
 	signalsContext := ctrl.SetupSignalHandler()
 	k8sClient := mgr.GetClient()
 	log := ctrl.Log.WithName("configurator")
-	api := config_applier.DummyAPI{}
-	applier := config_applier.NewApplier(k8sClient, api, log)
-	applierController := config_applier.NewRemoteConfigurationController(applier, log)
+	api := remote_configuration.DummyAPI{}
+	applier := remote_configuration.NewConfigurator(k8sClient, api, log)
+	applierController := remote_configuration.NewRemoteConfigurationController(applier, log)
 
 	var wg sync.WaitGroup
 	wg.Add(2)

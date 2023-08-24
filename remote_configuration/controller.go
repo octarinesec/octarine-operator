@@ -1,4 +1,4 @@
-package config_applier
+package remote_configuration
 
 import (
 	"context"

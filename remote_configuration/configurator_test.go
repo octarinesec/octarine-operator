@@ -1,4 +1,4 @@
-package config_applier_test
+package remote_configuration_test
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	k8sMocks "github.com/vmware/cbcontainers-operator/cbcontainers/test_utils/mocks"
-	"github.com/vmware/cbcontainers-operator/config_applier"
-	mocksConfigApplier "github.com/vmware/cbcontainers-operator/config_applier/mocks"
+	"github.com/vmware/cbcontainers-operator/remote_configuration"
+	mocksConfigurator "github.com/vmware/cbcontainers-operator/remote_configuration/mocks"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 	"time"
@@ -24,37 +24,36 @@ import (
 // TODO: Reads cluster, etc from CR correctly?
 // TODO: Respects proxy
 // TODO: Review gomock.any usages here
-// TODO: version tests
 // TODO: Multiple changes are applied according to timestamp
 
-type applierMocks struct {
+type configuratorMocks struct {
 	k8sClient *k8sMocks.MockClient
-	api       *mocksConfigApplier.MockConfigurationChangesAPI
+	api       *mocksConfigurator.MockConfigurationChangesAPI
 }
 
-func setupApplier(ctrl *gomock.Controller) (*config_applier.Applier, applierMocks) {
+func setupConfigurator(ctrl *gomock.Controller) (*remote_configuration.Configurator, configuratorMocks) {
 	k8sClient := k8sMocks.NewMockClient(ctrl)
-	api := mocksConfigApplier.NewMockConfigurationChangesAPI(ctrl)
+	api := mocksConfigurator.NewMockConfigurationChangesAPI(ctrl)
 
-	applier := config_applier.NewApplier(k8sClient, api, logr.Discard())
-	mocksHolder := applierMocks{
+	configurator := remote_configuration.NewConfigurator(k8sClient, api, logr.Discard())
+	mocksHolder := configuratorMocks{
 		k8sClient: k8sClient,
 		api:       api,
 	}
 
-	return applier, mocksHolder
+	return configurator, mocksHolder
 }
 
 func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	applier, mocks := setupApplier(ctrl)
+	configurator, mocks := setupConfigurator(ctrl)
 
 	// TODO: Compatiblity check
 
-	configChange := config_applier.RandomNonNilChange()
-	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]config_applier.ConfigurationChange{*configChange}, nil)
+	configChange := remote_configuration.RandomNonNilChange()
+	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]remote_configuration.ConfigurationChange{*configChange}, nil)
 
 	mocks.k8sClient.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersAgentList{}).
 		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersAgentList, _ ...any) {
@@ -79,7 +78,7 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 			return nil
 		})
 
-	mocks.api.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, update config_applier.ConfigurationChangeStatusUpdate) error {
+	mocks.api.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, update remote_configuration.ConfigurationChangeStatusUpdate) error {
 		assert.Equal(t, configChange.ID, update.ID)
 		assert.Equal(t, int64(2), update.AppliedGeneration)
 		assert.Equal(t, "ACKNOWLEDGED", update.Status)
@@ -91,22 +90,22 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 		return nil
 	})
 
-	err := applier.RunIteration(context.Background())
+	err := configurator.RunIteration(context.Background())
 	assert.NoError(t, err)
 }
 
 func TestWhenThereAreNoPendingChangesNothingHappens(t *testing.T) {
 	testCases := []struct {
 		name            string
-		dataFromService []config_applier.ConfigurationChange
+		dataFromService []remote_configuration.ConfigurationChange
 	}{
 		{
 			name:            "empty list",
-			dataFromService: []config_applier.ConfigurationChange{},
+			dataFromService: []remote_configuration.ConfigurationChange{},
 		},
 		{
 			name: "list is not empty but there are no PENDING changes",
-			dataFromService: []config_applier.ConfigurationChange{
+			dataFromService: []remote_configuration.ConfigurationChange{
 				{ID: "123", Status: "non-existent"},
 				{ID: "234", Status: "FAILED"},
 				{ID: "345", Status: "ACKNOWLEDGED"},
@@ -120,12 +119,12 @@ func TestWhenThereAreNoPendingChangesNothingHappens(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			applier, mocks := setupApplier(ctrl)
+			configurator, mocks := setupConfigurator(ctrl)
 
 			mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return(tC.dataFromService, nil)
 			mocks.api.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).Times(0)
 
-			err := applier.RunIteration(context.Background())
+			err := configurator.RunIteration(context.Background())
 			assert.NoError(t, err)
 		})
 	}
@@ -135,10 +134,10 @@ func TestWhenThereAreMultiplePendingChangesTheOldestIsSelected(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	applier, mocks := setupApplier(ctrl)
+	configurator, mocks := setupConfigurator(ctrl)
 
-	olderChange := config_applier.RandomNonNilChange()
-	newerChange := config_applier.RandomNonNilChange()
+	olderChange := remote_configuration.RandomNonNilChange()
+	newerChange := remote_configuration.RandomNonNilChange()
 
 	expectedVersion := "version-for-older-change"
 	versionThatShouldNotBe := "version-for-newer-change"
@@ -147,7 +146,7 @@ func TestWhenThereAreMultiplePendingChangesTheOldestIsSelected(t *testing.T) {
 	olderChange.Timestamp = time.Now().UTC().Add(-2 * time.Hour).Format(time.RFC3339)
 	newerChange.Timestamp = time.Now().UTC().Add(-1 * time.Hour).Format(time.RFC3339)
 
-	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]config_applier.ConfigurationChange{*newerChange, *olderChange}, nil)
+	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]remote_configuration.ConfigurationChange{*newerChange, *olderChange}, nil)
 
 	mocks.k8sClient.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersAgentList{}).
 		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersAgentList, _ ...any) {
@@ -172,12 +171,12 @@ func TestWhenThereAreMultiplePendingChangesTheOldestIsSelected(t *testing.T) {
 			return nil
 		})
 
-	mocks.api.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, update config_applier.ConfigurationChangeStatusUpdate) error {
+	mocks.api.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, update remote_configuration.ConfigurationChangeStatusUpdate) error {
 		assert.Equal(t, olderChange.ID, update.ID)
 		return nil
 	})
 
-	err := applier.RunIteration(context.Background())
+	err := configurator.RunIteration(context.Background())
 	assert.NoError(t, err)
 }
 
@@ -185,12 +184,12 @@ func TestWhenConfigurationAPIReturnsErrorForListShouldPropagateErr(t *testing.T)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	applier, mocks := setupApplier(ctrl)
+	configurator, mocks := setupConfigurator(ctrl)
 
 	errFromService := errors.New("some error")
 	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return(nil, errFromService)
 
-	returnedErr := applier.RunIteration(context.Background())
+	returnedErr := configurator.RunIteration(context.Background())
 	assert.Error(t, returnedErr)
 	assert.ErrorIs(t, returnedErr, errFromService, "expected returned error to match or wrap error from service")
 }
@@ -199,16 +198,16 @@ func TestWhenGettingCRFromAPIServerFailsChangeIsUpdatedAsFailed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	applier, mocks := setupApplier(ctrl)
+	configurator, mocks := setupConfigurator(ctrl)
 
-	configChange := config_applier.RandomNonNilChange()
-	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]config_applier.ConfigurationChange{*configChange}, nil)
+	configChange := remote_configuration.RandomNonNilChange()
+	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]remote_configuration.ConfigurationChange{*configChange}, nil)
 
 	errFromService := errors.New("some error")
 	mocks.k8sClient.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersAgentList{}).Return(errFromService)
 
 	mocks.api.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, update config_applier.ConfigurationChangeStatusUpdate) error {
+		DoAndReturn(func(_ context.Context, update remote_configuration.ConfigurationChangeStatusUpdate) error {
 			assert.Equal(t, configChange.ID, update.ID)
 			assert.Equal(t, "FAILED", update.Status)
 			assert.NotEmpty(t, update.Reason)
@@ -218,7 +217,7 @@ func TestWhenGettingCRFromAPIServerFailsChangeIsUpdatedAsFailed(t *testing.T) {
 			return nil
 		})
 
-	returnedErr := applier.RunIteration(context.Background())
+	returnedErr := configurator.RunIteration(context.Background())
 	assert.Error(t, returnedErr)
 	assert.ErrorIs(t, returnedErr, errFromService, "expected returned error to match or wrap error from service")
 }
@@ -227,10 +226,10 @@ func TestWhenUpdatingCRFailsChangeIsUpdatedAsFailed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	applier, mocks := setupApplier(ctrl)
+	configurator, mocks := setupConfigurator(ctrl)
 
-	configChange := config_applier.RandomNonNilChange()
-	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]config_applier.ConfigurationChange{*configChange}, nil)
+	configChange := remote_configuration.RandomNonNilChange()
+	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]remote_configuration.ConfigurationChange{*configChange}, nil)
 
 	mocks.k8sClient.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersAgentList{}).
 		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersAgentList, _ ...any) {
@@ -248,7 +247,7 @@ func TestWhenUpdatingCRFailsChangeIsUpdatedAsFailed(t *testing.T) {
 	mocks.k8sClient.EXPECT().Update(gomock.Any(), gomock.Any()).Return(errFromService)
 
 	mocks.api.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, update config_applier.ConfigurationChangeStatusUpdate) error {
+		DoAndReturn(func(_ context.Context, update remote_configuration.ConfigurationChangeStatusUpdate) error {
 			assert.Equal(t, configChange.ID, update.ID)
 			assert.Equal(t, "FAILED", update.Status)
 			assert.NotEmpty(t, update.Reason)
@@ -258,7 +257,7 @@ func TestWhenUpdatingCRFailsChangeIsUpdatedAsFailed(t *testing.T) {
 			return nil
 		})
 
-	returnedErr := applier.RunIteration(context.Background())
+	returnedErr := configurator.RunIteration(context.Background())
 	assert.Error(t, returnedErr)
 	assert.ErrorIs(t, returnedErr, errFromService, "expected returned error to match or wrap error from service")
 }
@@ -267,10 +266,10 @@ func TestWhenUpdatingStatusToBackendFailsShouldReturnError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	applier, mocks := setupApplier(ctrl)
+	configurator, mocks := setupConfigurator(ctrl)
 
-	configChange := config_applier.RandomNonNilChange()
-	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]config_applier.ConfigurationChange{*configChange}, nil)
+	configChange := remote_configuration.RandomNonNilChange()
+	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]remote_configuration.ConfigurationChange{*configChange}, nil)
 
 	mocks.k8sClient.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersAgentList{}).
 		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersAgentList, _ ...any) {
@@ -297,7 +296,7 @@ func TestWhenUpdatingStatusToBackendFailsShouldReturnError(t *testing.T) {
 	errFromService := errors.New("some error")
 	mocks.api.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).Return(errFromService)
 
-	returnedErr := applier.RunIteration(context.Background())
+	returnedErr := configurator.RunIteration(context.Background())
 	assert.Error(t, returnedErr)
 	assert.ErrorIs(t, errFromService, returnedErr, "expected returned error to match or wrap error from service")
 }
@@ -306,10 +305,10 @@ func TestWhenThereIsNoCRInstalledChangeIsUpdatedAsFailed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	applier, mocks := setupApplier(ctrl)
+	configurator, mocks := setupConfigurator(ctrl)
 
-	configChange := config_applier.RandomNonNilChange()
-	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]config_applier.ConfigurationChange{*configChange}, nil)
+	configChange := remote_configuration.RandomNonNilChange()
+	mocks.api.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]remote_configuration.ConfigurationChange{*configChange}, nil)
 
 	mocks.k8sClient.EXPECT().List(gomock.Any(), &cbcontainersv1.CBContainersAgentList{}).
 		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersAgentList, _ ...any) {
@@ -317,7 +316,7 @@ func TestWhenThereIsNoCRInstalledChangeIsUpdatedAsFailed(t *testing.T) {
 		})
 
 	mocks.api.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, update config_applier.ConfigurationChangeStatusUpdate) error {
+		DoAndReturn(func(_ context.Context, update remote_configuration.ConfigurationChangeStatusUpdate) error {
 			assert.Equal(t, configChange.ID, update.ID)
 			assert.Equal(t, "FAILED", update.Status)
 			assert.NotEmpty(t, update.Reason)
@@ -327,7 +326,7 @@ func TestWhenThereIsNoCRInstalledChangeIsUpdatedAsFailed(t *testing.T) {
 			return nil
 		})
 
-	err := applier.RunIteration(context.Background())
+	err := configurator.RunIteration(context.Background())
 	assert.Error(t, err)
 	// TODO: Specific error exposed for this?
 }

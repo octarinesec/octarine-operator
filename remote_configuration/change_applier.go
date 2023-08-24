@@ -1,4 +1,4 @@
-package config_applier
+package remote_configuration
 
 import cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 
