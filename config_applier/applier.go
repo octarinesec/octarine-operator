@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-// TODO: Env_var to enable
 // TODO: Respect proxy config
 
 const (

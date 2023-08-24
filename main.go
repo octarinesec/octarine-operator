@@ -58,10 +58,12 @@ var (
 )
 
 const (
-	NamespaceIdentifier = "default"
-	httpProxyEnv        = "HTTP_PROXY"
-	httpsProxyEnv       = "HTTPS_PROXY"
-	noProxyEnv          = "NO_PROXY"
+	NamespaceIdentifier         = "default"
+	httpProxyEnv                = "HTTP_PROXY"
+	httpsProxyEnv               = "HTTPS_PROXY"
+	noProxyEnv                  = "NO_PROXY"
+	namespaceEnv                = "OPERATOR_NAMESPACE"
+	enableRemoteConfiguratorEnv = "ENABLE_REMOTE_CONFIGURATOR"
 )
 
 func init() {
@@ -114,7 +116,7 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	setupLog.Info("Getting the namespace where operator is running and which should host the agent")
-	operatorNamespace := os.Getenv("OPERATOR_NAMESPACE")
+	operatorNamespace := os.Getenv(namespaceEnv)
 	if operatorNamespace == "" {
 		setupLog.Info(fmt.Sprintf("Operator namespace variable was not found. Falling back to default %s", common.DataPlaneNamespaceName))
 		operatorNamespace = common.DataPlaneNamespaceName
@@ -169,7 +171,6 @@ func main() {
 	}
 
 	// TODO: Prettify
-	// TODO: Check env var
 
 	signalsContext := ctrl.SetupSignalHandler()
 	k8sClient := mgr.GetClient()
@@ -191,8 +192,14 @@ func main() {
 	}()
 	go func() {
 		defer wg.Done()
-		setupLog.Info("starting configuration monitor")
-		applierController.RunLoop(signalsContext)
+
+		enableConfigurator := os.Getenv(enableRemoteConfiguratorEnv)
+		if enableConfigurator == "true" {
+			setupLog.Info("Starting remote configurator")
+			applierController.RunLoop(signalsContext)
+		} else {
+			setupLog.Info(fmt.Sprintf("Environment variable %s is not set to true, remote configuration feature will be disabled", enableRemoteConfiguratorEnv))
+		}
 	}()
 
 	wg.Wait()
