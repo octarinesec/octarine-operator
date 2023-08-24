@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+const (
+	sleepDuration = 20 * time.Second
+	maxRetries    = 10 // 1024s or ~17 minutes at peak
+)
+
 type configurationApplier interface {
 	RunIteration(ctx context.Context) error
 }
@@ -21,13 +26,10 @@ func NewRemoteConfigurationController(applier configurationApplier, logger logr.
 }
 
 func (controller *RemoteConfigurationController) RunLoop(signalsContext context.Context) {
-	// TODO: Parameters vs consts
-
-	pollingSleepDuration := 20 * time.Second
 	pollingTimer := backoffTicker{
-		Ticker:        time.NewTicker(pollingSleepDuration),
-		sleepDuration: pollingSleepDuration,
-		maxRetries:    10, // 1024s or ~17minutes max
+		Ticker:        time.NewTicker(sleepDuration),
+		sleepDuration: sleepDuration,
+		maxRetries:    maxRetries,
 	}
 	defer pollingTimer.Stop()
 
@@ -42,7 +44,7 @@ func (controller *RemoteConfigurationController) RunLoop(signalsContext context.
 		err := controller.applier.RunIteration(signalsContext)
 
 		if err != nil {
-			controller.logger.Error(err, "Configuration applier iteration failed, will retry again")
+			controller.logger.Error(err, "Configuration applier iteration failed, it will be retried on next iteration period")
 			pollingTimer.resetErr()
 		} else {
 			controller.logger.Info("Completed configuration applier iteration, sleeping")

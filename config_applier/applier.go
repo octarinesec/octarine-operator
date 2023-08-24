@@ -11,12 +11,10 @@ import (
 )
 
 // TODO: Env_var to enable
-// TODO: Configurable polling interval
-// TODO: Recover panics to avoid crashing the operator?
 // TODO: Respect proxy config
 
 const (
-	timeoutSingleIteration = time.Second * 30
+	timeoutSingleIteration = time.Second * 60
 )
 
 type ConfigurationChangesAPI interface {
@@ -45,7 +43,7 @@ func (applier *Applier) RunIteration(ctx context.Context) error {
 	change, errGettingChanges := applier.getPendingChange(ctx)
 	if errGettingChanges != nil {
 		applier.logger.Error(errGettingChanges, "Failed to get pending configuration changes")
-		return errGettingChanges // TODO
+		return errGettingChanges
 	}
 
 	if change == nil {
@@ -62,7 +60,7 @@ func (applier *Applier) RunIteration(ctx context.Context) error {
 
 	if errStatusUpdate := applier.updateChangeStatus(ctx, *change, cr, errApplyingCR); errStatusUpdate != nil {
 		applier.logger.Error(errStatusUpdate, "Failed to update the status of a configuration change; it might be re-applied again in the future")
-		return errStatusUpdate // TODO
+		return errStatusUpdate
 	}
 
 	return errApplyingCR
