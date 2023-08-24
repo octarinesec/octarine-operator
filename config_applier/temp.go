@@ -19,7 +19,7 @@ type DummyAPI struct {
 func (d DummyAPI) GetConfigurationChanges(ctx context.Context) ([]ConfigurationChange, error) {
 	c := RandomChange()
 	if c != nil {
-		return []ConfigurationChange{*RandomChange()}, nil
+		return []ConfigurationChange{*c}, nil
 
 	}
 	return nil, nil
@@ -39,7 +39,7 @@ func RandomNonNilChange() *ConfigurationChange {
 }
 
 func RandomChange() *ConfigurationChange {
-	csRand, runtimeRand, versionRand := rand.Int(), rand.Int(), rand.Intn(len(versions)+1)
+	csRand, runtimeRand, cndrRand, versionRand := rand.Int(), rand.Int(), rand.Int(), rand.Intn(len(versions)+1)
 
 	//csRand, runtimeRand, versionRand = 1, 2, 3
 	if versionRand == len(versions) {
@@ -50,6 +50,7 @@ func RandomChange() *ConfigurationChange {
 
 	var changeClusterScanning *bool
 	var changeRuntime *bool
+	var changeCNDR *bool
 
 	switch csRand % 5 {
 	case 1, 3:
@@ -69,11 +70,18 @@ func RandomChange() *ConfigurationChange {
 		changeRuntime = nil
 	}
 
+	if changeVersion != nil && *changeVersion == "3.0.0" && cndrRand%2 == 0 {
+		changeCNDR = &tr
+	} else {
+		changeCNDR = &fal
+	}
+
 	return &ConfigurationChange{
 		ID:                    strconv.Itoa(rand.Int()),
 		AgentVersion:          changeVersion,
 		EnableClusterScanning: changeClusterScanning,
 		EnableRuntime:         changeRuntime,
+		EnableCNDR:            changeCNDR,
 		Status:                string(statusPending),
 	}
 }

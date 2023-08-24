@@ -101,7 +101,7 @@ func TestFeatureTogglesAreAppliedCorrectly(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			applyChange(testCase.change, &testCase.initialCR)
+			applyChangesToCR(testCase.change, &testCase.initialCR)
 			testCase.assertFinalCR(t, &testCase.initialCR)
 		})
 	}
@@ -113,7 +113,7 @@ func TestVersionIsAppliedCorrectly(t *testing.T) {
 	cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: originalVersion}}
 	change := ConfigurationChange{AgentVersion: &newVersion}
 
-	applyChange(change, &cr)
+	applyChangesToCR(change, &cr)
 	assert.Equal(t, newVersion, cr.Spec.Version)
 }
 
@@ -122,7 +122,7 @@ func TestMissingVersionDoesNotModifyCR(t *testing.T) {
 	cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: originalVersion}}
 	change := ConfigurationChange{AgentVersion: nil, EnableRuntime: truePtr}
 
-	applyChange(change, &cr)
+	applyChangesToCR(change, &cr)
 	assert.Equal(t, originalVersion, cr.Spec.Version)
 
 }
@@ -187,7 +187,7 @@ func TestVersionOverwritesCustomTagsByRemovingThem(t *testing.T) {
 	newVersion := "new-version"
 	change := ConfigurationChange{AgentVersion: &newVersion}
 
-	applyChange(change, &cr)
+	applyChangesToCR(change, &cr)
 
 	assert.Equal(t, newVersion, cr.Spec.Version)
 	// To avoid keeping "custom" tags forever, the apply change should instead reset all such fields

@@ -19,8 +19,6 @@ const (
 	timeoutSingleIteration = time.Second * 30
 )
 
-// TODO: Log ChangeID on every log
-
 type ConfigurationChangesAPI interface {
 	// Get Compatibility matrix
 
@@ -59,7 +57,7 @@ func (applier *Applier) RunIteration(ctx context.Context) error {
 	cr, errApplyingCR := applier.applyChange(ctx, *change)
 	if errApplyingCR != nil {
 		applier.logger.Error(errApplyingCR, "Failed to apply configuration change", "changeID", change.ID)
-		// Intentional fallthrough so we always update the status of the change on the backend, including failed status
+		// Intentional fallthrough as we always update the status of the change on the backend, including failed status
 	}
 
 	if errStatusUpdate := applier.updateChangeStatus(ctx, *change, cr, errApplyingCR); errStatusUpdate != nil {
@@ -118,15 +116,9 @@ func (applier *Applier) applyChange(ctx context.Context, change ConfigurationCha
 		return nil, fmt.Errorf("no CBContainerAgent instance found, cannot apply change")
 	}
 
-	applyChange(change, cr)
-
-	generationBefore := cr.ObjectMeta.Generation
+	applyChangesToCR(change, cr)
 
 	err = applier.k8sClient.Update(ctx, cr)
-	generationAfter := cr.ObjectMeta.Generation
-
-	// TODO: remove
-	applier.logger.Info("Updated object", "oldGeneration", generationBefore, "newGeneration", generationAfter, "err", err)
 	return cr, err
 }
 

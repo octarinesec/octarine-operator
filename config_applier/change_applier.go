@@ -2,7 +2,7 @@ package config_applier
 
 import cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 
-func applyChange(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) {
+func applyChangesToCR(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) {
 	// TODO: Validation?
 
 	resetVersion := func(ptrToField *string) {
