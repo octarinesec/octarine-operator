@@ -80,7 +80,7 @@ func (todo *TODO) validateSensorAndFeatureCompatibility(targetVersion string, ch
 		return false, fmt.Sprintf("sensor version %s does not support cloud-native detect and response feature", targetVersion)
 	}
 
-	return false, ""
+	return true, ""
 }
 
 func applyChangesToCR(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) {

@@ -81,16 +81,80 @@ func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
 	}
 }
 
+func TestValidateSucceedsIfSensorSupportsRequestedFeature(t *testing.T) {
+	testCases := []struct {
+		name       string
+		change     ConfigurationChange
+		sensorMeta Sensor
+	}{
+		{
+			name: "cluster scanning",
+			change: ConfigurationChange{
+				EnableClusterScanning: truePtr,
+			},
+			sensorMeta: Sensor{
+				SupportsClusterScanning: true,
+			},
+		},
+		{
+			name: "runtime protection",
+			change: ConfigurationChange{
+				EnableRuntime: truePtr,
+			},
+			sensorMeta: Sensor{
+				SupportsRuntime: true,
+			},
+		},
+		{
+			name: "CNDR",
+			change: ConfigurationChange{
+				EnableCNDR: truePtr,
+			},
+			sensorMeta: Sensor{
+				SupportsCndr: true,
+			},
+		},
+	}
+
+	for _, tC := range testCases {
+		version := "dummy-version"
+		tC.sensorMeta.Version = version
+		target := TODO{
+			SensorData: []Sensor{tC.sensorMeta},
+		}
+
+		t.Run(fmt.Sprintf("no version in change, %s is supported by current agent", tC.name), func(t *testing.T) {
+			tC.change.AgentVersion = nil
+			cr := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: version}}
+
+			valid, msg := target.ValidateChange(tC.change, cr)
+
+			assert.True(t, valid)
+			assert.Empty(t, msg)
+		})
+
+		t.Run(fmt.Sprintf("change also applies agent version, %s is supported by that version", tC.name), func(t *testing.T) {
+			tC.change.AgentVersion = &version
+			cr := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: "some-other-verson"}}
+
+			valid, msg := target.ValidateChange(tC.change, cr)
+
+			assert.True(t, valid)
+			assert.Empty(t, msg)
+		})
+	}
+}
+
 func TestValidateFailsIfSensorAndOperatorAreNotCompatible(t *testing.T) {
 	testCases := []struct {
-		name                 string
-		versionToApply       string
-		operatorCompatiblity models.OperatorCompatibility
+		name                  string
+		versionToApply        string
+		operatorCompatibility models.OperatorCompatibility
 	}{
 		{
 			name:           "sensor version is too high",
 			versionToApply: "5.0.0",
-			operatorCompatiblity: models.OperatorCompatibility{
+			operatorCompatibility: models.OperatorCompatibility{
 				MinAgent: models.AgentMinVersionNone,
 				MaxAgent: "4.0.0",
 			},
@@ -98,7 +162,7 @@ func TestValidateFailsIfSensorAndOperatorAreNotCompatible(t *testing.T) {
 		{
 			name:           "sensor version is too low",
 			versionToApply: "0.9",
-			operatorCompatiblity: models.OperatorCompatibility{
+			operatorCompatibility: models.OperatorCompatibility{
 				MinAgent: "1.0.0",
 				MaxAgent: models.AgentMaxVersionLatest,
 			},
@@ -109,7 +173,7 @@ func TestValidateFailsIfSensorAndOperatorAreNotCompatible(t *testing.T) {
 		t.Run(tC.name, func(t *testing.T) {
 			target := TODO{
 				SensorData:                []Sensor{{Version: tC.versionToApply}},
-				OperatorCompatibilityData: tC.operatorCompatiblity,
+				OperatorCompatibilityData: tC.operatorCompatibility,
 			}
 
 			change := ConfigurationChange{AgentVersion: &tC.versionToApply}
@@ -118,6 +182,63 @@ func TestValidateFailsIfSensorAndOperatorAreNotCompatible(t *testing.T) {
 			valid, msg := target.ValidateChange(change, cr)
 			assert.False(t, valid)
 			assert.NotEmpty(t, msg)
+		})
+	}
+}
+
+func TestValidateSucceedsIfSensorAndOperatorAreCompatible(t *testing.T) {
+	testCases := []struct {
+		name                  string
+		versionToApply        string
+		operatorCompatibility models.OperatorCompatibility
+	}{
+		{
+			name:           "sensor version is at lower end",
+			versionToApply: "5.0.0",
+			operatorCompatibility: models.OperatorCompatibility{
+				MinAgent: "5.0.0",
+				MaxAgent: "6.0.0",
+			},
+		},
+		{
+			name:           "sensor version is at upper end",
+			versionToApply: "0.9",
+			operatorCompatibility: models.OperatorCompatibility{
+				MinAgent: "0.1.0",
+				MaxAgent: "0.9.0",
+			},
+		},
+		{
+			name:           "sensor version is within range",
+			versionToApply: "2.3.4",
+			operatorCompatibility: models.OperatorCompatibility{
+				MinAgent: "1.0.0",
+				MaxAgent: "2.4",
+			},
+		},
+		{
+			name:           "operator supports 'infinite' versions",
+			versionToApply: "5.0.0",
+			operatorCompatibility: models.OperatorCompatibility{
+				MinAgent: models.AgentMinVersionNone,
+				MaxAgent: models.AgentMaxVersionLatest,
+			},
+		},
+	}
+
+	for _, tC := range testCases {
+		t.Run(tC.name, func(t *testing.T) {
+			target := TODO{
+				SensorData:                []Sensor{{Version: tC.versionToApply}},
+				OperatorCompatibilityData: tC.operatorCompatibility,
+			}
+
+			change := ConfigurationChange{AgentVersion: &tC.versionToApply}
+			cr := &cbcontainersv1.CBContainersAgent{}
+
+			valid, msg := target.ValidateChange(change, cr)
+			assert.True(t, valid)
+			assert.Empty(t, msg)
 		})
 	}
 }
