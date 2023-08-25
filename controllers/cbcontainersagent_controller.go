@@ -19,6 +19,9 @@ package controllers
 import (
 	"context"
 	"fmt"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"time"
 
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/adapters"
 	appsV1 "k8s.io/api/apps/v1"
@@ -35,6 +38,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+)
+
+const (
+	// conflictRetryTime should be used when hitting 409 status from the API Server on CR updates
+	// for this case it is better to use a fixed requeue duration instead of the default exponential backoff to prevent multiple concurrent changes from holding back the reconcile queue without reason
+	conflictRetryTime = 3 * time.Second
 )
 
 type StateApplier interface {
@@ -138,6 +147,17 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	r.Log.Info("Finished reconciling", "Requiring", stateWasChanged)
+
+	if err = r.updateCRStatus(ctx, cbContainersAgent, stateWasChanged); err != nil {
+		if k8sErrors.IsConflict(err) {
+			r.Log.Info("Custom resource was changed during reconciliation, scheduling another iteration to fully update status")
+			// Something changed in the CR while we were doing updates, requeue in a bit to get fresh data
+			// Note: this is the recommended approach for operator-sdk instead of retrying the Get->Update cycle within a reconciliation
+			return ctrl.Result{RequeueAfter: conflictRetryTime}, nil
+		}
+		return ctrl.Result{}, fmt.Errorf("failed to update CBContainersAgent status: %w", err)
+	}
+
 	r.Log.Info("\n\n")
 	return ctrl.Result{Requeue: stateWasChanged}, nil
 }
@@ -161,9 +181,20 @@ func (r *CBContainersAgentController) getAccessToken(ctx context.Context, cbCont
 	return accessToken, nil
 }
 
+func (r *CBContainersAgentController) updateCRStatus(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, agentStateWasChanged bool) error {
+	// If we don't expect more changes (i.e. nothing changed in reality) and we haven't updated the status, we do so now.
+	if !agentStateWasChanged && cbContainersCluster.Status.ObservedGeneration < cbContainersCluster.ObjectMeta.Generation {
+		r.Log.Info("Updating CBContainersAgent status")
+		cbContainersCluster.Status.ObservedGeneration = cbContainersCluster.ObjectMeta.Generation
+		return r.Client.Status().Update(ctx, cbContainersCluster)
+	}
+	return nil
+}
+
 func (r *CBContainersAgentController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&cbcontainersv1.CBContainersAgent{}).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Secret{}).
 		Owns(adapters.EmptyPriorityClassForVersion(r.K8sVersion)).
