@@ -7,12 +7,84 @@ import (
 	"testing"
 )
 
+// TODO: add secret detection
+
 var (
 	trueV    = true
 	truePtr  = &trueV
 	falseV   = false
 	falsePtr = &falseV
 )
+
+func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
+	testCases := []struct {
+		name       string
+		change     ConfigurationChange
+		sensorMeta Sensor
+	}{
+		{
+			name: "cluster scanning",
+			change: ConfigurationChange{
+				EnableClusterScanning: truePtr,
+			},
+			sensorMeta: Sensor{
+				SupportsClusterScanning: false,
+			},
+		},
+		{
+			name: "runtime protection",
+			change: ConfigurationChange{
+				EnableRuntime: truePtr,
+			},
+			sensorMeta: Sensor{
+				SupportsRuntime: false,
+			},
+		},
+		{
+			name: "CNDR",
+			change: ConfigurationChange{
+				EnableCNDR: truePtr,
+			},
+			sensorMeta: Sensor{
+				SupportsCndr: false,
+			},
+		},
+	}
+
+	for _, tC := range testCases {
+		version := "dummy-version"
+		tC.sensorMeta.Version = version
+		target := TODO{
+			SensorData: []Sensor{tC.sensorMeta},
+		}
+
+		t.Run(fmt.Sprintf("no version in change, %s not supported by current agent", tC.name), func(t *testing.T) {
+			tC.change.AgentVersion = nil
+			cr := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: version}}
+
+			valid, msg := target.ValidateChange(tC.change, cr)
+
+			assert.False(t, valid)
+			assert.NotEmpty(t, msg)
+		})
+
+		t.Run(fmt.Sprintf("change also applies agent version, %s not supported by that version", tC.name), func(t *testing.T) {
+			tC.change.AgentVersion = &version
+			cr := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: "some-other-verson"}}
+
+			valid, msg := target.ValidateChange(tC.change, cr)
+
+			assert.False(t, valid)
+			assert.NotEmpty(t, msg)
+		})
+	}
+	// sensor does not support 1,2,3,4 features -> should return error
+
+	// Must validate when NO version upgrade is done -> validates against current version
+	// When version upgrade is done -> validates against new version instead
+
+	//a, b := target.ValidateChange()
+}
 
 func TestFeatureTogglesAreAppliedCorrectly(t *testing.T) {
 	type appliedChangeTest struct {
