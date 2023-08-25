@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"testing"
 )
 
@@ -78,12 +79,47 @@ func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
 			assert.NotEmpty(t, msg)
 		})
 	}
-	// sensor does not support 1,2,3,4 features -> should return error
+}
 
-	// Must validate when NO version upgrade is done -> validates against current version
-	// When version upgrade is done -> validates against new version instead
+func TestValidateFailsIfSensorAndOperatorAreNotCompatible(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		versionToApply       string
+		operatorCompatiblity models.OperatorCompatibility
+	}{
+		{
+			name:           "sensor version is too high",
+			versionToApply: "5.0.0",
+			operatorCompatiblity: models.OperatorCompatibility{
+				MinAgent: models.AgentMinVersionNone,
+				MaxAgent: "4.0.0",
+			},
+		},
+		{
+			name:           "sensor version is too low",
+			versionToApply: "0.9",
+			operatorCompatiblity: models.OperatorCompatibility{
+				MinAgent: "1.0.0",
+				MaxAgent: models.AgentMaxVersionLatest,
+			},
+		},
+	}
 
-	//a, b := target.ValidateChange()
+	for _, tC := range testCases {
+		t.Run(tC.name, func(t *testing.T) {
+			target := TODO{
+				SensorData:                []Sensor{{Version: tC.versionToApply}},
+				OperatorCompatibilityData: tC.operatorCompatiblity,
+			}
+
+			change := ConfigurationChange{AgentVersion: &tC.versionToApply}
+			cr := &cbcontainersv1.CBContainersAgent{}
+
+			valid, msg := target.ValidateChange(change, cr)
+			assert.False(t, valid)
+			assert.NotEmpty(t, msg)
+		})
+	}
 }
 
 func TestFeatureTogglesAreAppliedCorrectly(t *testing.T) {

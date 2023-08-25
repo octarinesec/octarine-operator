@@ -17,7 +17,6 @@ type Sensor struct {
 }
 
 type TODO struct {
-	OperatorVersion           string
 	SensorData                []Sensor
 	OperatorCompatibilityData models.OperatorCompatibility
 }
@@ -33,40 +32,55 @@ func (todo *TODO) ValidateChange(change ConfigurationChange, cr *cbcontainersv1.
 		versionToValidate = cr.Spec.Version
 	}
 
-	sensor, err := todo.findMatchingSensor(versionToValidate)
-	if err != nil {
+	if sensorAndOperatorCompatible, msg := todo.validateOperatorAndSensorVersionCompatibility(versionToValidate); !sensorAndOperatorCompatible {
+		return false, msg
+	}
+
+	return todo.validateSensorAndFeatureCompatibility(versionToValidate, change, cr)
+}
+
+func (todo *TODO) findMatchingSensor(sensorVersion string) (*Sensor, string) {
+	for _, sensor := range todo.SensorData {
+		if sensor.Version == sensorVersion {
+			return &sensor, ""
+		}
+	}
+
+	return nil, fmt.Sprintf("could not find sensor metadata for version %s", sensorVersion)
+}
+
+func (todo *TODO) validateOperatorAndSensorVersionCompatibility(sensorVersion string) (bool, string) {
+	if err := todo.OperatorCompatibilityData.CheckCompatibility(sensorVersion); err != nil {
 		return false, err.Error()
+	}
+	return true, ""
+}
+
+func (todo *TODO) validateSensorAndFeatureCompatibility(targetVersion string, change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) (bool, string) {
+	sensor, msg := todo.findMatchingSensor(targetVersion)
+	if sensor == nil {
+		return false, msg
 	}
 
 	if change.EnableClusterScanning != nil &&
 		*change.EnableClusterScanning == true &&
 		!sensor.SupportsClusterScanning {
-		return false, fmt.Sprintf("sensor version %s does not support cluster scanning feature", versionToValidate)
+		return false, fmt.Sprintf("sensor version %s does not support cluster scanning feature", targetVersion)
 	}
 
 	if change.EnableRuntime != nil &&
 		*change.EnableRuntime == true &&
 		!sensor.SupportsRuntime {
-		return false, fmt.Sprintf("sensor version %s does not support runtime protection feature", versionToValidate)
+		return false, fmt.Sprintf("sensor version %s does not support runtime protection feature", targetVersion)
 	}
 
 	if change.EnableCNDR != nil &&
 		*change.EnableCNDR == true &&
 		!sensor.SupportsCndr {
-		return false, fmt.Sprintf("sensor version %s does not support cloud-native detect and response feature", versionToValidate)
+		return false, fmt.Sprintf("sensor version %s does not support cloud-native detect and response feature", targetVersion)
 	}
 
 	return false, ""
-}
-
-func (todo *TODO) findMatchingSensor(sensorVersion string) (*Sensor, error) {
-	for _, sensor := range todo.SensorData {
-		if sensor.Version == sensorVersion {
-			return &sensor, nil
-		}
-	}
-
-	return nil, fmt.Errorf("could not find sensor metadata for version %s", sensorVersion)
 }
 
 func applyChangesToCR(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) {
