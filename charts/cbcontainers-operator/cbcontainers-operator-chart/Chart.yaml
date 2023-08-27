@@ -3,4 +3,4 @@ name: cbcontainers-operator
 description: A Helm chart for installing the CBContainers operator
 type: application
 version: 2.0.0
-appVersion: v5.6.2
+appVersion: v6.0.0
