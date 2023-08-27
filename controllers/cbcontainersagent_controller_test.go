@@ -3,7 +3,11 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"reflect"
 	"testing"
+	"time"
 
 	logrTesting "github.com/go-logr/logr/testing"
 	"github.com/golang/mock/gomock"
@@ -25,8 +29,9 @@ type SetupClusterControllerTest func(*ClusterControllerTestMocks)
 
 type ClusterControllerTestMocks struct {
 	client           *testUtilsMocks.MockClient
-	ClusterProcessor *mocks.MockClusterProcessor
-	StateApplier     *mocks.MockStateApplier
+	statusWriter     *testUtilsMocks.MockStatusWriter
+	clusterProcessor *mocks.MockClusterProcessor
+	stateApplier     *mocks.MockStateApplier
 	ctx              context.Context
 }
 
@@ -60,11 +65,16 @@ func testCBContainersClusterController(t *testing.T, setups ...SetupClusterContr
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockStatusWriter := testUtilsMocks.NewMockStatusWriter(ctrl)
+	mockK8SClient := testUtilsMocks.NewMockClient(ctrl)
+	mockK8SClient.EXPECT().Status().Return(mockStatusWriter).AnyTimes()
+
 	mocksObjects := &ClusterControllerTestMocks{
 		ctx:              context.TODO(),
-		client:           testUtilsMocks.NewMockClient(ctrl),
-		ClusterProcessor: mocks.NewMockClusterProcessor(ctrl),
-		StateApplier:     mocks.NewMockStateApplier(ctrl),
+		client:           mockK8SClient,
+		statusWriter:     mockStatusWriter,
+		clusterProcessor: mocks.NewMockClusterProcessor(ctrl),
+		stateApplier:     mocks.NewMockStateApplier(ctrl),
 	}
 
 	for _, setup := range setups {
@@ -77,19 +87,26 @@ func testCBContainersClusterController(t *testing.T, setups ...SetupClusterContr
 		Scheme:    &runtime.Scheme{},
 		Namespace: agentNamespace,
 
-		ClusterProcessor: mocksObjects.ClusterProcessor,
-		StateApplier:     mocksObjects.StateApplier,
+		ClusterProcessor: mocksObjects.clusterProcessor,
+		StateApplier:     mocksObjects.stateApplier,
 	}
 
 	return controller.Reconcile(mocksObjects.ctx, ctrlRuntime.Request{})
 }
 
-func setupClusterCustomResource(testMocks *ClusterControllerTestMocks) {
-	testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersAgentList{}).
-		Do(func(ctx context.Context, list *cbcontainersv1.CBContainersAgentList, _ ...interface{}) {
-			list.Items = ClusterCustomResourceItems
-		}).
-		Return(nil)
+func setupClusterCustomResource(items ...cbcontainersv1.CBContainersAgent) SetupClusterControllerTest {
+	if len(items) == 0 {
+		items = make([]cbcontainersv1.CBContainersAgent, len(ClusterCustomResourceItems))
+		copy(items, ClusterCustomResourceItems)
+	}
+
+	return func(testMocks *ClusterControllerTestMocks) {
+		testMocks.client.EXPECT().List(testMocks.ctx, &cbcontainersv1.CBContainersAgentList{}).
+			Do(func(ctx context.Context, list *cbcontainersv1.CBContainersAgentList, _ ...interface{}) {
+				list.Items = items
+			}).
+			Return(nil)
+	}
 }
 
 func setUpTokenSecretValues(testMocks *ClusterControllerTestMocks) {
@@ -134,7 +151,7 @@ func TestFindingMoreThanOneClusterResourceShouldReturnError(t *testing.T) {
 }
 
 func TestGetTokenSecretErrorShouldReturnError(t *testing.T) {
-	_, err := testCBContainersClusterController(t, setupClusterCustomResource, func(testMocks *ClusterControllerTestMocks) {
+	_, err := testCBContainersClusterController(t, setupClusterCustomResource(), func(testMocks *ClusterControllerTestMocks) {
 		accessTokenSecretNamespacedName := types.NamespacedName{Name: ClusterAccessTokenSecretName, Namespace: agentNamespace}
 		testMocks.client.EXPECT().Get(testMocks.ctx, accessTokenSecretNamespacedName, &corev1.Secret{}).Return(fmt.Errorf(""))
 	})
@@ -143,7 +160,7 @@ func TestGetTokenSecretErrorShouldReturnError(t *testing.T) {
 }
 
 func TestTokenSecretWithoutTokenValueShouldReturnError(t *testing.T) {
-	_, err := testCBContainersClusterController(t, setupClusterCustomResource, func(testMocks *ClusterControllerTestMocks) {
+	_, err := testCBContainersClusterController(t, setupClusterCustomResource(), func(testMocks *ClusterControllerTestMocks) {
 		accessTokenSecretNamespacedName := types.NamespacedName{Name: ClusterAccessTokenSecretName, Namespace: agentNamespace}
 		testMocks.client.EXPECT().Get(testMocks.ctx, accessTokenSecretNamespacedName, &corev1.Secret{}).Return(nil)
 	})
@@ -155,26 +172,26 @@ func TestClusterReconcile(t *testing.T) {
 	secretValues := &models.RegistrySecretValues{Data: map[string][]byte{test_utils.RandomString(): {}}}
 
 	t.Run("When processor returns error, reconcile should return error", func(t *testing.T) {
-		_, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
-			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(nil, fmt.Errorf(""))
+		_, err := testCBContainersClusterController(t, setupClusterCustomResource(), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&ClusterCustomResourceItems[0]), MyClusterTokenValue).Return(nil, fmt.Errorf(""))
 		})
 
 		require.Error(t, err)
 	})
 
 	t.Run("When state applier returns error, reconcile should return error", func(t *testing.T) {
-		_, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
-			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
-			testMocks.StateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0].Spec, secretValues, gomock.Any()).Return(false, fmt.Errorf(""))
+		_, err := testCBContainersClusterController(t, setupClusterCustomResource(), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&ClusterCustomResourceItems[0]), MyClusterTokenValue).Return(secretValues, nil)
+			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&ClusterCustomResourceItems[0].Spec), secretValues, gomock.Any()).Return(false, fmt.Errorf(""))
 		})
 
 		require.Error(t, err)
 	})
 
 	t.Run("When state applier returns state was changed, reconcile should return Requeue true", func(t *testing.T) {
-		result, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
-			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
-			testMocks.StateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0].Spec, secretValues, gomock.Any()).Return(true, nil)
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&ClusterCustomResourceItems[0]), MyClusterTokenValue).Return(secretValues, nil)
+			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&ClusterCustomResourceItems[0].Spec), secretValues, gomock.Any()).Return(true, nil)
 		})
 
 		require.NoError(t, err)
@@ -182,12 +199,152 @@ func TestClusterReconcile(t *testing.T) {
 	})
 
 	t.Run("When state applier returns state was not changed, reconcile should return default Requeue", func(t *testing.T) {
-		result, err := testCBContainersClusterController(t, setupClusterCustomResource, setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
-			testMocks.ClusterProcessor.EXPECT().Process(&ClusterCustomResourceItems[0], MyClusterTokenValue).Return(secretValues, nil)
-			testMocks.StateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, &ClusterCustomResourceItems[0].Spec, secretValues, gomock.Any()).Return(false, nil)
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&ClusterCustomResourceItems[0]), MyClusterTokenValue).Return(secretValues, nil)
+			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&ClusterCustomResourceItems[0].Spec), secretValues, gomock.Any()).Return(false, nil)
 		})
 
 		require.NoError(t, err)
 		require.Equal(t, result, ctrlRuntime.Result{})
 	})
+}
+
+func TestStatusUpdates(t *testing.T) {
+	secretValues := &models.RegistrySecretValues{Data: map[string][]byte{test_utils.RandomString(): {}}}
+
+	t.Run("When state has changed, the ObservedGeneration should not be updated", func(t *testing.T) {
+		resourceWithStatus := ClusterCustomResourceItems[0]
+		resourceWithStatus.ObjectMeta.Generation = 2
+		resourceWithStatus.Status.ObservedGeneration = 1
+
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceWithStatus), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&resourceWithStatus), MyClusterTokenValue).Return(secretValues, nil)
+			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&resourceWithStatus.Spec), secretValues, gomock.Any()).Return(true, nil)
+			testMocks.statusWriter.EXPECT().Update(gomock.Any(), gomock.Any()).MaxTimes(0)
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, result, ctrlRuntime.Result{Requeue: true})
+	})
+
+	t.Run("when state has not changed but the CR and status generations are the same, ObservedGeneration should not be updated", func(t *testing.T) {
+		resourceWithStatus := ClusterCustomResourceItems[0]
+		resourceWithStatus.ObjectMeta.Generation = 1
+		resourceWithStatus.Status.ObservedGeneration = 1
+
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceWithStatus), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&resourceWithStatus), MyClusterTokenValue).Return(secretValues, nil)
+			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&resourceWithStatus.Spec), secretValues, gomock.Any()).Return(false, nil)
+			testMocks.statusWriter.EXPECT().Update(gomock.Any(), gomock.Any()).MaxTimes(0)
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, result, ctrlRuntime.Result{})
+	})
+
+	t.Run("When state has not changed and the CR and status generations differ, ObservedGeneration should be updated", func(t *testing.T) {
+		resourceBeforeReconcile := ClusterCustomResourceItems[0]
+		resourceBeforeReconcile.ObjectMeta.Generation = 2
+		resourceBeforeReconcile.Status.ObservedGeneration = 1
+
+		expectedResourceWithUpdatedStatus := resourceBeforeReconcile
+		expectedResourceWithUpdatedStatus.Status.ObservedGeneration = expectedResourceWithUpdatedStatus.Generation
+
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceBeforeReconcile), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&resourceBeforeReconcile), MyClusterTokenValue).Return(secretValues, nil)
+			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&resourceBeforeReconcile.Spec), secretValues, gomock.Any()).Return(false, nil)
+			testMocks.statusWriter.EXPECT().Update(testMocks.ctx, MatchAgentResource(&expectedResourceWithUpdatedStatus), gomock.Any()).Times(1).Return(nil)
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, result, ctrlRuntime.Result{})
+	})
+
+	t.Run("When updating status and getting a conflict, a requeue should be scheduled", func(t *testing.T) {
+		resourceBeforeReconcile := ClusterCustomResourceItems[0]
+		resourceBeforeReconcile.ObjectMeta.Generation = 2
+		resourceBeforeReconcile.Status.ObservedGeneration = 1
+
+		expectedResourceWithUpdatedStatus := resourceBeforeReconcile
+		expectedResourceWithUpdatedStatus.Status.ObservedGeneration = expectedResourceWithUpdatedStatus.Generation
+
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceBeforeReconcile), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&resourceBeforeReconcile), MyClusterTokenValue).Return(secretValues, nil)
+			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&resourceBeforeReconcile.Spec), secretValues, gomock.Any()).Return(false, nil)
+			testMocks.statusWriter.EXPECT().Update(testMocks.ctx, MatchAgentResource(&expectedResourceWithUpdatedStatus), gomock.Any()).Return(k8sErrors.NewConflict(schema.GroupResource{}, "conflict", nil))
+		})
+
+		require.NoError(t, err)
+		require.Greater(t, result.RequeueAfter, time.Duration(0))
+	})
+
+	t.Run("When updating status and getting error that is not conflict, a error should be returned", func(t *testing.T) {
+		resourceBeforeReconcile := ClusterCustomResourceItems[0]
+		resourceBeforeReconcile.ObjectMeta.Generation = 2
+		resourceBeforeReconcile.Status.ObservedGeneration = 1
+
+		expectedResourceWithUpdatedStatus := resourceBeforeReconcile
+		expectedResourceWithUpdatedStatus.Status.ObservedGeneration = expectedResourceWithUpdatedStatus.Generation
+
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceBeforeReconcile), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&resourceBeforeReconcile), MyClusterTokenValue).Return(secretValues, nil)
+			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&resourceBeforeReconcile.Spec), secretValues, gomock.Any()).Return(false, nil)
+			testMocks.statusWriter.EXPECT().Update(testMocks.ctx, MatchAgentResource(&expectedResourceWithUpdatedStatus), gomock.Any()).Return(fmt.Errorf("some error"))
+		})
+
+		require.Error(t, err)
+		require.Equal(t, result, ctrlRuntime.Result{})
+	})
+}
+
+// partialCBContainersAgentMatcher matches a given cbcontainersv1.CBContainersAgent parameter based on some fields only
+// this should be used when the object returned to the controller and the one passed to the controller's processor differ due to default values being set
+// so any fields that have defaults should _not_ be compared in this matcher, the rest can be added if it makes sense
+type partialCBContainersAgentMatcher struct {
+	expected *cbcontainersv1.CBContainersAgent
+}
+
+func (p *partialCBContainersAgentMatcher) Matches(x interface{}) bool {
+	actual, ok := x.(*cbcontainersv1.CBContainersAgent)
+	if !ok {
+		return false
+	}
+
+	return p.expected.Spec.Version == actual.Spec.Version &&
+		p.expected.Spec.ClusterName == actual.Spec.ClusterName &&
+		p.expected.Spec.Account == actual.Spec.Account &&
+		reflect.DeepEqual(p.expected.ObjectMeta, actual.ObjectMeta) &&
+		p.expected.Status == actual.Status
+}
+
+func (p *partialCBContainersAgentMatcher) String() string {
+	return fmt.Sprintf("matches a CBContainers CR to (%v) but only looks at interesting fields", p.expected)
+}
+
+// partialCBContainersSpecMatcher is the same as partialCBContainersSpecMatcher but for the spec only
+type partialCBContainersSpecMatcher struct {
+	expected *cbcontainersv1.CBContainersAgentSpec
+}
+
+func (p *partialCBContainersSpecMatcher) Matches(x interface{}) bool {
+	actual, ok := x.(*cbcontainersv1.CBContainersAgentSpec)
+	if !ok {
+		return false
+	}
+
+	return p.expected.Version == actual.Version &&
+		p.expected.ClusterName == actual.ClusterName &&
+		p.expected.Account == actual.Account
+}
+
+func (p *partialCBContainersSpecMatcher) String() string {
+	return fmt.Sprintf("matches a CBContainers spec to (%v) but only looks at interesting fields", p.expected)
+}
+
+func MatchAgentResource(expected *cbcontainersv1.CBContainersAgent) gomock.Matcher {
+	return &partialCBContainersAgentMatcher{expected: expected}
+}
+
+func MatchAgentSpec(expected *cbcontainersv1.CBContainersAgentSpec) gomock.Matcher {
+	return &partialCBContainersSpecMatcher{expected: expected}
 }

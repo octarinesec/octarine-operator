@@ -257,6 +257,11 @@ The operator does not make use of the centralized proxy settings, so you have to
 
 ### Configure centralized proxy settings
 
+In order to configure the proxy environment variables in the Operator, use the following command to patch the Operator deployment:
+```sh
+kubectl set env -n cbcontainers-dataplane deployment cbcontainers-operator HTTP_PROXY="<proxy-url>" HTTPS_PROXY="<proxy-url>" NO_PROXY="<kubernetes-api-server-ip>/<range>"
+```
+
 Update the `CBContainersAgent` CR with the centralized proxy settings (`kubectl edit cbcontainersagents.operator.containers.carbonblack.io cbcontainers-agent`):
 
 ```yaml
@@ -279,11 +284,6 @@ It has the same format as the `noProxy` key and its values are treated in the sa
 One can also force nothing to be appended to `noProxy` or `NO_PROXY` by setting `noProxySuffix` to an empty string.
 
 ### Configure HTTP proxy environment variables (per component proxy settings)
-
-In order to configure those environment variables in the Operator, use the following command to patch the Operator deployment:
-```sh
-kubectl set env -n cbcontainers-dataplane deployment cbcontainers-operator HTTP_PROXY="<proxy-url>" HTTPS_PROXY="<proxy-url>" NO_PROXY="<kubernetes-api-server-ip>/<range>"
-```
 
 In order to configure those environment variables for the basic, Runtime and Image Scanning  components,
 update the `CBContainersAgent` CR using the proxy environment variables (`kubectl edit cbcontainersagents.operator.containers.carbonblack.io cbcontainers-agent`):
