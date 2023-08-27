@@ -6419,7 +6419,7 @@ kind: ServiceAccount
 metadata:
   name: cbcontainers-operator
   namespace: {{ default "cbcontainers-dataplane" .Values.operatorNamespace }}
-{{- if and (eq (int .Capabilities.KubeVersion.Major) 1) (lt (int .Capabilities.KubeVersion.Minor) 25) }}
+{{- if and (eq (int .Capabilities.KubeVersion.Major) 1) (lt (int (.Capabilities.KubeVersion.Minor | replace "+" "")) 25) }}
 ---
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
