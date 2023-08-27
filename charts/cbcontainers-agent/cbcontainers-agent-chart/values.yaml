@@ -11,3 +11,11 @@ clusterName: ""
 # agentNamespace is the name of the namespace in which the agent will be installed
 # that namespace must exist before the chart is installed and must match the namespace where the operator is deployed
 agentNamespace: "cbcontainers-dataplane"
+gateways:
+  apiGatewayHost: ""
+  coreEventsGatewayHost: ""
+  hardeningEventsGatewayHost: ""
+  runtimeEventsGatewayHost: ""
+components:
+  cndr:
+    enabled: true

@@ -20,8 +20,8 @@ See [Customization](#namespace).
 Now, install the actual helm chart from source:
 
 ```sh
+git checkout v6.0.0 # Move to the latest version of the operator
 cd charts/cbcontainers-operator
-git checkout v5.6.2 # install the latest version of the operator
 helm install cbcontainers-operator ./cbcontainers-operator-chart
 ```
 
