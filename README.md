@@ -27,7 +27,7 @@ Kubernetes 1.18+ is supported.
 
 ### From script:
 ```
-export OPERATOR_VERSION=v6.0.0
+export OPERATOR_VERSION=v6.0.1
 export OPERATOR_SCRIPT_URL=https://setup.containers.carbonblack.io/$OPERATOR_VERSION/operator-apply.sh
 curl -s $OPERATOR_SCRIPT_URL | bash
 ```
