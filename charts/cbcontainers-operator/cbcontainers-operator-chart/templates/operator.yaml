@@ -3593,7 +3593,7 @@ spec:
                               default:
                                 limits:
                                   cpu: 2000m
-                                  memory: 4Gi
+                                  memory: 6Gi
                                 requests:
                                   cpu: 30m
                                   memory: 64Mi
