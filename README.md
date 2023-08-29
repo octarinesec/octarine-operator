@@ -179,7 +179,7 @@ resources:
     memory: 1Gi
   limits:
     cpu: 2000m
-    memory: 4Gi
+    memory: 6Gi
 ```
 
 If your images are larger than 1GB, and you want to scan them, you'll need to allocate higher memory resources in the 
