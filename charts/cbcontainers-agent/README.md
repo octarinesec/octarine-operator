@@ -49,6 +49,7 @@ If the secret is pre-created before deploying the agent, then `agentNamespace` h
 
 ### Secret creation
 
+#### Carbon Black Api Key
 In order for the agent components to function correctly and be able to communicate with the CBC backend an access token is required.
 
 This token is located in a secret.
@@ -58,6 +59,28 @@ If that secret does not exist, the operator will not start any of the agent comp
 
 If you want to create the secret as part of the chart installation provide the `accessToken` value to the chart.
 
+*DO NOT* store the token in your source code
+
+Inject this value as part of your pipeline in a secure way!
+
 This means storing the secret as plain text in your `values.yaml` file.
 
 If you prefer to create the `Secret` yourself in an alternative and more secure way, don't set the `accessToken` value and the chart will not create the `Secret` objects.
+
+#### Carbon Black Company Codes
+In order for the agent CNDR component to function correctly and be able to communicate with the CBC backend a company code is required.
+
+This code is located in a secret.
+By default, the secret is named `"cbcontainers-company-code"`, but that is configurable via the `components.cndr.companyCodeSecretName` property.
+
+If that secret does not exist, the CNDR component will fail.
+
+If you want to create the secret as part of the chart installation provide the `companyCode` value to the chart.
+
+*DO NOT* store the code in your source code
+
+Inject this value as part of your pipeline in a secure way!
+
+This means storing the secret as plain text in your `values.yaml` file.
+
+If you prefer to create the `Secret` yourself in an alternative and more secure way, don't set the `companyCode` value and the chart will not create the `Secret` objects.
