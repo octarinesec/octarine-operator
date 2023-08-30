@@ -76,11 +76,12 @@ var (
 	hostPathDirectory         = coreV1.HostPathDirectory
 	hostPathDirectoryOrCreate = coreV1.HostPathDirectoryOrCreate
 	hostPathFile              = coreV1.HostPathFile
+	hostPathFileOrCreate      = coreV1.HostPathFileOrCreate
 	cndrHostPaths             = map[string]*coreV1.HostPathVolumeSource{
 		"boot":           {Path: "/boot", Type: &hostPathDirectory},
 		"cb-data-dir":    {Path: "/var/opt/carbonblack", Type: &hostPathDirectoryOrCreate},
 		"os-release":     {Path: "/etc/os-release", Type: &hostPathFile},
-		"redhat-release": {Path: "/etc/redhat-release", Type: &hostPathFile},
+		"redhat-release": {Path: "/etc/redhat-release", Type: &hostPathFileOrCreate},
 		"root":           {Path: "/", Type: &hostPathDirectory},
 	}
 	// Optional to have a different mount volume that the host path. If not exits the host path will be used.
