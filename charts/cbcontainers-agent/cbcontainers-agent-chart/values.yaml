@@ -1,5 +1,7 @@
-# accessToken is the API token used by the agent to communicate with the backend
+# Optional: accessToken is the API token used by the agent to communicate with the backend
 accessToken: ""
+# Optional: companyCode is the Company codes used by the agent to install the Endpoints solution
+companyCode: ""
 # orgKey is the ID of the organization account
 orgKey: ""
 # version is the version of the agent that will be installed
