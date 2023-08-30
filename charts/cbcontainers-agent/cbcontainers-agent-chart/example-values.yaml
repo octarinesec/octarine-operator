@@ -6,7 +6,7 @@ accessToken: ""
 # orgKey is the ID of the organization account
 orgKey: "ABC123"
 # version is the version of the agent that will be installed
-version: "3.0.0"
+version: "3.0.1"
 # clusterGroup is the group that the cluster will belong to.
 clusterGroup: "default"
 # clusterName is the name that will be used for the cluster that the agent is installed on
@@ -205,3 +205,5 @@ components:
         enabled: false
   cndr:
     enabled: true
+    # accessTokenSecretName is the name of the Kubernetes object of type Secret that holds the values of the Company Code
+    companyCodeSecretName: "my-company-code-secret-name"
