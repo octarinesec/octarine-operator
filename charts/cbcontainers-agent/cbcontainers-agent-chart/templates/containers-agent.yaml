@@ -2,6 +2,10 @@ apiVersion: operator.containers.carbonblack.io/v1
 kind: CBContainersAgent
 metadata:
   name: cbcontainers-agent
+  {{- with .Values.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   account: {{ required "orgKey is required" .Values.orgKey }}
   clusterName: "{{ required "clusterGroup is required" .Values.clusterGroup }}:{{ required "clusterName is required" .Values.clusterName }}"

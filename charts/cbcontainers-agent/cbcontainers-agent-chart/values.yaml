@@ -16,6 +16,7 @@ gateways:
   coreEventsGatewayHost: ""
   hardeningEventsGatewayHost: ""
   runtimeEventsGatewayHost: ""
+labels:
 components:
   cndr:
     enabled: true

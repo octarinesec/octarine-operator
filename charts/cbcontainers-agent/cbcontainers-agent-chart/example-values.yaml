@@ -23,6 +23,8 @@ gateways:
   coreEventsGatewayHost: events.gateway.com
   hardeningEventsGatewayHost: hardening.events.gateway.com
   runtimeEventsGatewayHost: runtime.events.gateway.com
+labels:
+  my-key: my-value
 # components is the set of components that will be installed
 components:
   settings:
