@@ -26,6 +26,7 @@ After setting these required fields in a `values.yaml` file you can install the 
 ```sh
 git checkout v6.0.1 # Move to the latest version of the operator
 cd charts/cbcontainers-agent
+git checkout v6.0.0 # install the latest version of the operator
 helm install cbcontainers-agent ./cbcontainers-agent-chart -f values.yaml --namespace cbcontainers-dataplane
 ```
 
