@@ -25,7 +25,7 @@ After setting these required fields in a `values.yaml` file you can install the 
 
 ```sh
 cd charts/cbcontainers-agent
-helm install cbcontainers-agent ./cbcontainers-agent-chart
+helm install cbcontainers-agent ./cbcontainers-agent-chart -n cbcontainers-dataplane
 ```
 
 ## Customization
