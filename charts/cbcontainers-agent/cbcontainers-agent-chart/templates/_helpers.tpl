@@ -8,3 +8,14 @@
 {{- end -}}
 {{- end -}}
 
+{{/* Get the name of the secret that contains the company code */}}
+{{- define "cbcontainers-agent.company-code-name" -}}
+{{- $secret := . -}}
+{{- if $secret -}}
+"{{- $secret -}}"
+{{- else -}}
+"cbcontainers-company-code"
+{{- end -}}
+{{- end -}}
+
+
