@@ -1,10 +1,12 @@
-package remote_configuration
+package remote_configuration_test
 
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
+	"github.com/vmware/cbcontainers-operator/remote_configuration"
 	"testing"
 )
 
@@ -20,33 +22,33 @@ var (
 func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
 	testCases := []struct {
 		name       string
-		change     ConfigurationChange
-		sensorMeta Sensor
+		change     remote_configuration.ConfigurationChange
+		sensorMeta remote_configuration.Sensor
 	}{
 		{
 			name: "cluster scanning",
-			change: ConfigurationChange{
+			change: remote_configuration.ConfigurationChange{
 				EnableClusterScanning: truePtr,
 			},
-			sensorMeta: Sensor{
+			sensorMeta: remote_configuration.Sensor{
 				SupportsClusterScanning: false,
 			},
 		},
 		{
 			name: "runtime protection",
-			change: ConfigurationChange{
+			change: remote_configuration.ConfigurationChange{
 				EnableRuntime: truePtr,
 			},
-			sensorMeta: Sensor{
+			sensorMeta: remote_configuration.Sensor{
 				SupportsRuntime: false,
 			},
 		},
 		{
 			name: "CNDR",
-			change: ConfigurationChange{
+			change: remote_configuration.ConfigurationChange{
 				EnableCNDR: truePtr,
 			},
-			sensorMeta: Sensor{
+			sensorMeta: remote_configuration.Sensor{
 				SupportsCndr: false,
 			},
 		},
@@ -55,8 +57,8 @@ func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
 	for _, tC := range testCases {
 		version := "dummy-version"
 		tC.sensorMeta.Version = version
-		target := TODO{
-			SensorData: []Sensor{tC.sensorMeta},
+		target := remote_configuration.CustomResourceChanger{
+			SensorData: []remote_configuration.Sensor{tC.sensorMeta},
 		}
 
 		t.Run(fmt.Sprintf("no version in change, %s not supported by current agent", tC.name), func(t *testing.T) {
@@ -84,33 +86,33 @@ func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
 func TestValidateSucceedsIfSensorSupportsRequestedFeature(t *testing.T) {
 	testCases := []struct {
 		name       string
-		change     ConfigurationChange
-		sensorMeta Sensor
+		change     remote_configuration.ConfigurationChange
+		sensorMeta remote_configuration.Sensor
 	}{
 		{
 			name: "cluster scanning",
-			change: ConfigurationChange{
+			change: remote_configuration.ConfigurationChange{
 				EnableClusterScanning: truePtr,
 			},
-			sensorMeta: Sensor{
+			sensorMeta: remote_configuration.Sensor{
 				SupportsClusterScanning: true,
 			},
 		},
 		{
 			name: "runtime protection",
-			change: ConfigurationChange{
+			change: remote_configuration.ConfigurationChange{
 				EnableRuntime: truePtr,
 			},
-			sensorMeta: Sensor{
+			sensorMeta: remote_configuration.Sensor{
 				SupportsRuntime: true,
 			},
 		},
 		{
 			name: "CNDR",
-			change: ConfigurationChange{
+			change: remote_configuration.ConfigurationChange{
 				EnableCNDR: truePtr,
 			},
-			sensorMeta: Sensor{
+			sensorMeta: remote_configuration.Sensor{
 				SupportsCndr: true,
 			},
 		},
@@ -119,8 +121,8 @@ func TestValidateSucceedsIfSensorSupportsRequestedFeature(t *testing.T) {
 	for _, tC := range testCases {
 		version := "dummy-version"
 		tC.sensorMeta.Version = version
-		target := TODO{
-			SensorData: []Sensor{tC.sensorMeta},
+		target := remote_configuration.CustomResourceChanger{
+			SensorData: []remote_configuration.Sensor{tC.sensorMeta},
 		}
 
 		t.Run(fmt.Sprintf("no version in change, %s is supported by current agent", tC.name), func(t *testing.T) {
@@ -171,12 +173,12 @@ func TestValidateFailsIfSensorAndOperatorAreNotCompatible(t *testing.T) {
 
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
-			target := TODO{
-				SensorData:                []Sensor{{Version: tC.versionToApply}},
+			target := remote_configuration.CustomResourceChanger{
+				SensorData:                []remote_configuration.Sensor{{Version: tC.versionToApply}},
 				OperatorCompatibilityData: tC.operatorCompatibility,
 			}
 
-			change := ConfigurationChange{AgentVersion: &tC.versionToApply}
+			change := remote_configuration.ConfigurationChange{AgentVersion: &tC.versionToApply}
 			cr := &cbcontainersv1.CBContainersAgent{}
 
 			valid, msg := target.ValidateChange(change, cr)
@@ -228,12 +230,12 @@ func TestValidateSucceedsIfSensorAndOperatorAreCompatible(t *testing.T) {
 
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
-			target := TODO{
-				SensorData:                []Sensor{{Version: tC.versionToApply}},
+			target := remote_configuration.CustomResourceChanger{
+				SensorData:                []remote_configuration.Sensor{{Version: tC.versionToApply}},
 				OperatorCompatibilityData: tC.operatorCompatibility,
 			}
 
-			change := ConfigurationChange{AgentVersion: &tC.versionToApply}
+			change := remote_configuration.ConfigurationChange{AgentVersion: &tC.versionToApply}
 			cr := &cbcontainersv1.CBContainersAgent{}
 
 			valid, msg := target.ValidateChange(change, cr)
@@ -246,28 +248,30 @@ func TestValidateSucceedsIfSensorAndOperatorAreCompatible(t *testing.T) {
 func TestFeatureTogglesAreAppliedCorrectly(t *testing.T) {
 	type appliedChangeTest struct {
 		name          string
-		change        ConfigurationChange
+		change        remote_configuration.ConfigurationChange
 		initialCR     cbcontainersv1.CBContainersAgent
 		assertFinalCR func(*testing.T, *cbcontainersv1.CBContainersAgent)
 	}
+
+	crVersion := "1.2.3"
 
 	// generateFeatureToggleTestCases produces a set of tests for a single feature toggle in the requested change
 	// The tests validate if each toggle state (true, false, nil) is applied correctly or ignored when it's not needed against the CR's state (true, false, nil)
 	generateFeatureToggleTestCases :=
 		func(feature string,
-			changeFieldSelector func(*ConfigurationChange) **bool,
+			changeFieldSelector func(*remote_configuration.ConfigurationChange) **bool,
 			crFieldSelector func(agent *cbcontainersv1.CBContainersAgent) **bool) []appliedChangeTest {
 
 			var result []appliedChangeTest
 
 			for _, crState := range []*bool{truePtr, falsePtr, nil} {
-				cr := cbcontainersv1.CBContainersAgent{}
+				cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: crVersion}}
 				crFieldPtr := crFieldSelector(&cr)
 				*crFieldPtr = crState
 
 				// Validate that each toggle state works (or doesn't do anything when it matches)
 				for _, changeState := range []*bool{truePtr, falsePtr} {
-					change := ConfigurationChange{}
+					change := remote_configuration.ConfigurationChange{}
 					changeFieldPtr := changeFieldSelector(&change)
 					*changeFieldPtr = changeState
 
@@ -286,7 +290,7 @@ func TestFeatureTogglesAreAppliedCorrectly(t *testing.T) {
 				// Validate that a change with the toggle unset does not modify the CR
 				result = append(result, appliedChangeTest{
 					name:      fmt.Sprintf("missing toggle feature (%s) with CR state (%v)", feature, prettyPrintBoolPtr(crState)),
-					change:    ConfigurationChange{},
+					change:    remote_configuration.ConfigurationChange{},
 					initialCR: cr,
 					assertFinalCR: func(t *testing.T, agent *cbcontainersv1.CBContainersAgent) {
 						crFieldPostChangePtr := crFieldSelector(agent)
@@ -301,21 +305,21 @@ func TestFeatureTogglesAreAppliedCorrectly(t *testing.T) {
 	var testCases []appliedChangeTest
 
 	clusterScannerToggleTestCases := generateFeatureToggleTestCases("cluster scanning",
-		func(change *ConfigurationChange) **bool {
+		func(change *remote_configuration.ConfigurationChange) **bool {
 			return &change.EnableClusterScanning
 		}, func(agent *cbcontainersv1.CBContainersAgent) **bool {
 			return &agent.Spec.Components.ClusterScanning.Enabled
 		})
 
 	runtimeToggleTestCases := generateFeatureToggleTestCases("runtime protection",
-		func(change *ConfigurationChange) **bool {
+		func(change *remote_configuration.ConfigurationChange) **bool {
 			return &change.EnableRuntime
 		}, func(agent *cbcontainersv1.CBContainersAgent) **bool {
 			return &agent.Spec.Components.RuntimeProtection.Enabled
 		})
 
 	cndrToggleTestCases := generateFeatureToggleTestCases("CNDR",
-		func(change *ConfigurationChange) **bool {
+		func(change *remote_configuration.ConfigurationChange) **bool {
 			return &change.EnableCNDR
 		}, func(agent *cbcontainersv1.CBContainersAgent) **bool {
 			if agent.Spec.Components.Cndr == nil {
@@ -330,7 +334,20 @@ func TestFeatureTogglesAreAppliedCorrectly(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			applyChangesToCR(testCase.change, &testCase.initialCR)
+
+			target := remote_configuration.CustomResourceChanger{
+				SensorData: []remote_configuration.Sensor{
+					{
+						Version:                 crVersion,
+						SupportsRuntime:         true,
+						SupportsCndr:            true,
+						SupportsClusterScanning: true,
+					},
+				},
+			}
+			err := target.ApplyChangeToCR(testCase.change, &testCase.initialCR)
+
+			require.NoError(t, err)
 			testCase.assertFinalCR(t, &testCase.initialCR)
 		})
 	}
@@ -340,18 +357,22 @@ func TestVersionIsAppliedCorrectly(t *testing.T) {
 	originalVersion := "my-version-42"
 	newVersion := "new-version"
 	cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: originalVersion}}
-	change := ConfigurationChange{AgentVersion: &newVersion}
+	change := remote_configuration.ConfigurationChange{AgentVersion: &newVersion}
+	target := remote_configuration.CustomResourceChanger{SensorData: []remote_configuration.Sensor{{Version: newVersion}}}
 
-	applyChangesToCR(change, &cr)
+	err := target.ApplyChangeToCR(change, &cr)
+	require.NoError(t, err)
 	assert.Equal(t, newVersion, cr.Spec.Version)
 }
 
 func TestMissingVersionDoesNotModifyCR(t *testing.T) {
 	originalVersion := "my-version-42"
 	cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: originalVersion}}
-	change := ConfigurationChange{AgentVersion: nil, EnableRuntime: truePtr}
+	change := remote_configuration.ConfigurationChange{AgentVersion: nil, EnableRuntime: truePtr}
+	target := remote_configuration.CustomResourceChanger{SensorData: []remote_configuration.Sensor{{Version: originalVersion, SupportsRuntime: true}}}
 
-	applyChangesToCR(change, &cr)
+	err := target.ApplyChangeToCR(change, &cr)
+	require.NoError(t, err)
 	assert.Equal(t, originalVersion, cr.Spec.Version)
 
 }
@@ -414,9 +435,11 @@ func TestVersionOverwritesCustomTagsByRemovingThem(t *testing.T) {
 	}
 
 	newVersion := "new-version"
-	change := ConfigurationChange{AgentVersion: &newVersion}
+	change := remote_configuration.ConfigurationChange{AgentVersion: &newVersion}
+	target := remote_configuration.CustomResourceChanger{SensorData: []remote_configuration.Sensor{{Version: newVersion}}}
 
-	applyChangesToCR(change, &cr)
+	err := target.ApplyChangeToCR(change, &cr)
+	require.NoError(t, err)
 
 	assert.Equal(t, newVersion, cr.Spec.Version)
 	// To avoid keeping "custom" tags forever, the apply change should instead reset all such fields
@@ -429,6 +452,19 @@ func TestVersionOverwritesCustomTagsByRemovingThem(t *testing.T) {
 	assert.Empty(t, cr.Spec.Components.RuntimeProtection.Sensor.Image.Tag)
 	assert.Empty(t, cr.Spec.Components.RuntimeProtection.Resolver.Image.Tag)
 	assert.Empty(t, cr.Spec.Components.Cndr.Sensor.Image.Tag)
+}
+
+func TestInvalidChangeReturnsError(t *testing.T) {
+	version := "test"
+	change := remote_configuration.ConfigurationChange{EnableClusterScanning: truePtr}
+	cr := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: version}}
+	target := remote_configuration.CustomResourceChanger{
+		SensorData: []remote_configuration.Sensor{{Version: version, SupportsClusterScanning: false}},
+	}
+
+	err := target.ApplyChangeToCR(change, cr)
+
+	assert.Error(t, err)
 }
 
 func prettyPrintBoolPtr(v *bool) string {
