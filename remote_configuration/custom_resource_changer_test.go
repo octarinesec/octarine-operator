@@ -3,7 +3,6 @@ package remote_configuration_test
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"github.com/vmware/cbcontainers-operator/remote_configuration"
@@ -23,14 +22,14 @@ func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
 	testCases := []struct {
 		name       string
 		change     remote_configuration.ConfigurationChange
-		sensorMeta remote_configuration.Sensor
+		sensorMeta models.SensorMetadata
 	}{
 		{
 			name: "cluster scanning",
 			change: remote_configuration.ConfigurationChange{
 				EnableClusterScanning: truePtr,
 			},
-			sensorMeta: remote_configuration.Sensor{
+			sensorMeta: models.SensorMetadata{
 				SupportsClusterScanning: false,
 			},
 		},
@@ -39,7 +38,7 @@ func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
 			change: remote_configuration.ConfigurationChange{
 				EnableRuntime: truePtr,
 			},
-			sensorMeta: remote_configuration.Sensor{
+			sensorMeta: models.SensorMetadata{
 				SupportsRuntime: false,
 			},
 		},
@@ -48,7 +47,7 @@ func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
 			change: remote_configuration.ConfigurationChange{
 				EnableCNDR: truePtr,
 			},
-			sensorMeta: remote_configuration.Sensor{
+			sensorMeta: models.SensorMetadata{
 				SupportsCndr: false,
 			},
 		},
@@ -57,8 +56,8 @@ func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
 	for _, tC := range testCases {
 		version := "dummy-version"
 		tC.sensorMeta.Version = version
-		target := remote_configuration.CustomResourceChanger{
-			SensorData: []remote_configuration.Sensor{tC.sensorMeta},
+		target := remote_configuration.ConfigurationChangeValidator{
+			SensorData: []models.SensorMetadata{tC.sensorMeta},
 		}
 
 		t.Run(fmt.Sprintf("no version in change, %s not supported by current agent", tC.name), func(t *testing.T) {
@@ -87,14 +86,14 @@ func TestValidateSucceedsIfSensorSupportsRequestedFeature(t *testing.T) {
 	testCases := []struct {
 		name       string
 		change     remote_configuration.ConfigurationChange
-		sensorMeta remote_configuration.Sensor
+		sensorMeta models.SensorMetadata
 	}{
 		{
 			name: "cluster scanning",
 			change: remote_configuration.ConfigurationChange{
 				EnableClusterScanning: truePtr,
 			},
-			sensorMeta: remote_configuration.Sensor{
+			sensorMeta: models.SensorMetadata{
 				SupportsClusterScanning: true,
 			},
 		},
@@ -103,7 +102,7 @@ func TestValidateSucceedsIfSensorSupportsRequestedFeature(t *testing.T) {
 			change: remote_configuration.ConfigurationChange{
 				EnableRuntime: truePtr,
 			},
-			sensorMeta: remote_configuration.Sensor{
+			sensorMeta: models.SensorMetadata{
 				SupportsRuntime: true,
 			},
 		},
@@ -112,7 +111,7 @@ func TestValidateSucceedsIfSensorSupportsRequestedFeature(t *testing.T) {
 			change: remote_configuration.ConfigurationChange{
 				EnableCNDR: truePtr,
 			},
-			sensorMeta: remote_configuration.Sensor{
+			sensorMeta: models.SensorMetadata{
 				SupportsCndr: true,
 			},
 		},
@@ -121,8 +120,8 @@ func TestValidateSucceedsIfSensorSupportsRequestedFeature(t *testing.T) {
 	for _, tC := range testCases {
 		version := "dummy-version"
 		tC.sensorMeta.Version = version
-		target := remote_configuration.CustomResourceChanger{
-			SensorData: []remote_configuration.Sensor{tC.sensorMeta},
+		target := remote_configuration.ConfigurationChangeValidator{
+			SensorData: []models.SensorMetadata{tC.sensorMeta},
 		}
 
 		t.Run(fmt.Sprintf("no version in change, %s is supported by current agent", tC.name), func(t *testing.T) {
@@ -173,8 +172,8 @@ func TestValidateFailsIfSensorAndOperatorAreNotCompatible(t *testing.T) {
 
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
-			target := remote_configuration.CustomResourceChanger{
-				SensorData:                []remote_configuration.Sensor{{Version: tC.versionToApply}},
+			target := remote_configuration.ConfigurationChangeValidator{
+				SensorData:                []models.SensorMetadata{{Version: tC.versionToApply}},
 				OperatorCompatibilityData: tC.operatorCompatibility,
 			}
 
@@ -230,8 +229,8 @@ func TestValidateSucceedsIfSensorAndOperatorAreCompatible(t *testing.T) {
 
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
-			target := remote_configuration.CustomResourceChanger{
-				SensorData:                []remote_configuration.Sensor{{Version: tC.versionToApply}},
+			target := remote_configuration.ConfigurationChangeValidator{
+				SensorData:                []models.SensorMetadata{{Version: tC.versionToApply}},
 				OperatorCompatibilityData: tC.operatorCompatibility,
 			}
 
@@ -334,20 +333,7 @@ func TestFeatureTogglesAreAppliedCorrectly(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-
-			target := remote_configuration.CustomResourceChanger{
-				SensorData: []remote_configuration.Sensor{
-					{
-						Version:                 crVersion,
-						SupportsRuntime:         true,
-						SupportsCndr:            true,
-						SupportsClusterScanning: true,
-					},
-				},
-			}
-			err := target.ApplyChangeToCR(testCase.change, &testCase.initialCR)
-
-			require.NoError(t, err)
+			remote_configuration.ApplyChangeToCR(testCase.change, &testCase.initialCR)
 			testCase.assertFinalCR(t, &testCase.initialCR)
 		})
 	}
@@ -358,10 +344,8 @@ func TestVersionIsAppliedCorrectly(t *testing.T) {
 	newVersion := "new-version"
 	cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: originalVersion}}
 	change := remote_configuration.ConfigurationChange{AgentVersion: &newVersion}
-	target := remote_configuration.CustomResourceChanger{SensorData: []remote_configuration.Sensor{{Version: newVersion}}}
 
-	err := target.ApplyChangeToCR(change, &cr)
-	require.NoError(t, err)
+	remote_configuration.ApplyChangeToCR(change, &cr)
 	assert.Equal(t, newVersion, cr.Spec.Version)
 }
 
@@ -369,10 +353,8 @@ func TestMissingVersionDoesNotModifyCR(t *testing.T) {
 	originalVersion := "my-version-42"
 	cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: originalVersion}}
 	change := remote_configuration.ConfigurationChange{AgentVersion: nil, EnableRuntime: truePtr}
-	target := remote_configuration.CustomResourceChanger{SensorData: []remote_configuration.Sensor{{Version: originalVersion, SupportsRuntime: true}}}
 
-	err := target.ApplyChangeToCR(change, &cr)
-	require.NoError(t, err)
+	remote_configuration.ApplyChangeToCR(change, &cr)
 	assert.Equal(t, originalVersion, cr.Spec.Version)
 
 }
@@ -436,10 +418,8 @@ func TestVersionOverwritesCustomTagsByRemovingThem(t *testing.T) {
 
 	newVersion := "new-version"
 	change := remote_configuration.ConfigurationChange{AgentVersion: &newVersion}
-	target := remote_configuration.CustomResourceChanger{SensorData: []remote_configuration.Sensor{{Version: newVersion}}}
 
-	err := target.ApplyChangeToCR(change, &cr)
-	require.NoError(t, err)
+	remote_configuration.ApplyChangeToCR(change, &cr)
 
 	assert.Equal(t, newVersion, cr.Spec.Version)
 	// To avoid keeping "custom" tags forever, the apply change should instead reset all such fields
@@ -452,19 +432,6 @@ func TestVersionOverwritesCustomTagsByRemovingThem(t *testing.T) {
 	assert.Empty(t, cr.Spec.Components.RuntimeProtection.Sensor.Image.Tag)
 	assert.Empty(t, cr.Spec.Components.RuntimeProtection.Resolver.Image.Tag)
 	assert.Empty(t, cr.Spec.Components.Cndr.Sensor.Image.Tag)
-}
-
-func TestInvalidChangeReturnsError(t *testing.T) {
-	version := "test"
-	change := remote_configuration.ConfigurationChange{EnableClusterScanning: truePtr}
-	cr := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: version}}
-	target := remote_configuration.CustomResourceChanger{
-		SensorData: []remote_configuration.Sensor{{Version: version, SupportsClusterScanning: false}},
-	}
-
-	err := target.ApplyChangeToCR(change, cr)
-
-	assert.Error(t, err)
 }
 
 func prettyPrintBoolPtr(v *bool) string {

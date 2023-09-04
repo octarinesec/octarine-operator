@@ -18,19 +18,30 @@ const (
 
 type ConfigurationChangesAPI interface {
 	// TODO: Get Compatibility matrix
+	// TODO: Get sensor data
 
 	GetConfigurationChanges(context.Context) ([]ConfigurationChange, error)
 	UpdateConfigurationChangeStatus(context.Context, ConfigurationChangeStatusUpdate) error
 }
 
-type Configurator struct {
-	k8sClient  client.Client
-	logger     logr.Logger
-	changesAPI ConfigurationChangesAPI
+type ChangeValidator interface {
+	ValidateChange(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) (bool, string)
 }
 
-func NewConfigurator(k8sClient client.Client, api ConfigurationChangesAPI, logger logr.Logger) *Configurator {
-	return &Configurator{k8sClient: k8sClient, logger: logger, changesAPI: api}
+type Configurator struct {
+	k8sClient       client.Client
+	logger          logr.Logger
+	changesAPI      ConfigurationChangesAPI
+	changeValidator ChangeValidator
+}
+
+func NewConfigurator(k8sClient client.Client, configChangesAPI ConfigurationChangesAPI, changeValidator ChangeValidator, logger logr.Logger) *Configurator {
+	return &Configurator{
+		k8sClient:       k8sClient,
+		logger:          logger,
+		changesAPI:      configChangesAPI,
+		changeValidator: changeValidator,
+	}
 }
 
 func (configurator *Configurator) RunIteration(ctx context.Context) error {
@@ -94,6 +105,18 @@ func (configurator *Configurator) getPendingChange(ctx context.Context) (*Config
 	return nil, nil
 }
 
+// applyChange will sync the required changes and push them to the k8s api-server
+// the input agent will be modified after this function and will no longer match the original
+func (configurator *Configurator) applyChange(ctx context.Context, change ConfigurationChange, agent *cbcontainersv1.CBContainersAgent) error {
+	if validChange, reason := configurator.changeValidator.ValidateChange(change, agent); !validChange {
+		return fmt.Errorf("provided change with ID (%s) is not applicable due to (%s)", change.ID, reason)
+	}
+
+	ApplyChangeToCR(change, agent)
+
+	return configurator.k8sClient.Update(ctx, agent)
+}
+
 func (configurator *Configurator) updateChangeStatus(ctx context.Context, change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent, encounteredError error) error {
 	var statusUpdate ConfigurationChangeStatusUpdate
 	if encounteredError == nil {
@@ -113,13 +136,6 @@ func (configurator *Configurator) updateChangeStatus(ctx context.Context, change
 	}
 
 	return configurator.changesAPI.UpdateConfigurationChangeStatus(ctx, statusUpdate)
-}
-
-// applyChange will sync the required changes and push them to the k8s api-server
-// the input agent will be modified after this function and will no longer match the original
-func (configurator *Configurator) applyChange(ctx context.Context, change ConfigurationChange, agent *cbcontainersv1.CBContainersAgent) error {
-	applyChangesToCR(change, agent)
-	return configurator.k8sClient.Update(ctx, agent)
 }
 
 // getContainerAgentCR loads exactly 0 or 1 CBContainersAgent definitions

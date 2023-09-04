@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	config_applier "github.com/vmware/cbcontainers-operator/remote_configuration"
+	remote_configuration "github.com/vmware/cbcontainers-operator/remote_configuration"
 )
 
 // MockConfigurationChangesAPI is a mock of ConfigurationChangesAPI interface.
@@ -36,10 +36,10 @@ func (m *MockConfigurationChangesAPI) EXPECT() *MockConfigurationChangesAPIMockR
 }
 
 // GetConfigurationChanges mocks base method.
-func (m *MockConfigurationChangesAPI) GetConfigurationChanges(arg0 context.Context) ([]config_applier.ConfigurationChange, error) {
+func (m *MockConfigurationChangesAPI) GetConfigurationChanges(arg0 context.Context) ([]remote_configuration.ConfigurationChange, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetConfigurationChanges", arg0)
-	ret0, _ := ret[0].([]config_applier.ConfigurationChange)
+	ret0, _ := ret[0].([]remote_configuration.ConfigurationChange)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -51,7 +51,7 @@ func (mr *MockConfigurationChangesAPIMockRecorder) GetConfigurationChanges(arg0 
 }
 
 // UpdateConfigurationChangeStatus mocks base method.
-func (m *MockConfigurationChangesAPI) UpdateConfigurationChangeStatus(arg0 context.Context, arg1 config_applier.ConfigurationChangeStatusUpdate) error {
+func (m *MockConfigurationChangesAPI) UpdateConfigurationChangeStatus(arg0 context.Context, arg1 remote_configuration.ConfigurationChangeStatusUpdate) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateConfigurationChangeStatus", arg0, arg1)
 	ret0, _ := ret[0].(error)

@@ -6,44 +6,7 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 )
 
-// TODO: Move somewhere else
-
-type Sensor struct {
-	Version                 string `json:"version"`
-	IsLatest                bool   `json:"is_latest" `
-	SupportsRuntime         bool   `json:"supports_runtime"`
-	SupportsClusterScanning bool   `json:"supports_cluster_scanning"`
-	SupportsCndr            bool   `json:"supports_cndr"`
-}
-
-type CustomResourceChanger struct {
-	SensorData                []Sensor
-	OperatorCompatibilityData models.OperatorCompatibility
-}
-
-func (changer *CustomResourceChanger) ValidateChange(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) (bool, string) {
-	var versionToValidate string
-
-	// If the change will be modifying the agent version as well, we need to check what the _new_ version supports
-	if change.AgentVersion != nil {
-		versionToValidate = *change.AgentVersion
-	} else {
-		// Otherwise the current agent must actually work with the requested features
-		versionToValidate = cr.Spec.Version
-	}
-
-	if sensorAndOperatorCompatible, msg := changer.validateOperatorAndSensorVersionCompatibility(versionToValidate); !sensorAndOperatorCompatible {
-		return false, msg
-	}
-
-	return changer.validateSensorAndFeatureCompatibility(versionToValidate, change)
-}
-
-func (changer *CustomResourceChanger) ApplyChangeToCR(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
-	if isValid, msg := changer.ValidateChange(change, cr); !isValid {
-		return fmt.Errorf("provided change cannot be applied to the custom resource with reason (%s)", msg)
-	}
-
+func ApplyChangeToCR(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) {
 	resetVersion := func(ptrToField *string) {
 		if ptrToField != nil && *ptrToField != "" {
 			*ptrToField = ""
@@ -76,12 +39,33 @@ func (changer *CustomResourceChanger) ApplyChangeToCR(change ConfigurationChange
 		}
 		cr.Spec.Components.Cndr.Enabled = change.EnableCNDR
 	}
-
-	return nil
 }
 
-func (changer *CustomResourceChanger) findMatchingSensor(sensorVersion string) (*Sensor, string) {
-	for _, sensor := range changer.SensorData {
+type ConfigurationChangeValidator struct {
+	SensorData                []models.SensorMetadata
+	OperatorCompatibilityData models.OperatorCompatibility
+}
+
+func (validator *ConfigurationChangeValidator) ValidateChange(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) (bool, string) {
+	var versionToValidate string
+
+	// If the change will be modifying the agent version as well, we need to check what the _new_ version supports
+	if change.AgentVersion != nil {
+		versionToValidate = *change.AgentVersion
+	} else {
+		// Otherwise the current agent must actually work with the requested features
+		versionToValidate = cr.Spec.Version
+	}
+
+	if sensorAndOperatorCompatible, msg := validator.validateOperatorAndSensorVersionCompatibility(versionToValidate); !sensorAndOperatorCompatible {
+		return false, msg
+	}
+
+	return validator.validateSensorAndFeatureCompatibility(versionToValidate, change)
+}
+
+func (validator *ConfigurationChangeValidator) findMatchingSensor(sensorVersion string) (*models.SensorMetadata, string) {
+	for _, sensor := range validator.SensorData {
 		if sensor.Version == sensorVersion {
 			return &sensor, ""
 		}
@@ -90,15 +74,15 @@ func (changer *CustomResourceChanger) findMatchingSensor(sensorVersion string) (
 	return nil, fmt.Sprintf("could not find sensor metadata for version %s", sensorVersion)
 }
 
-func (changer *CustomResourceChanger) validateOperatorAndSensorVersionCompatibility(sensorVersion string) (bool, string) {
-	if err := changer.OperatorCompatibilityData.CheckCompatibility(sensorVersion); err != nil {
+func (validator *ConfigurationChangeValidator) validateOperatorAndSensorVersionCompatibility(sensorVersion string) (bool, string) {
+	if err := validator.OperatorCompatibilityData.CheckCompatibility(sensorVersion); err != nil {
 		return false, err.Error()
 	}
 	return true, ""
 }
 
-func (changer *CustomResourceChanger) validateSensorAndFeatureCompatibility(targetVersion string, change ConfigurationChange) (bool, string) {
-	sensor, msg := changer.findMatchingSensor(targetVersion)
+func (validator *ConfigurationChangeValidator) validateSensorAndFeatureCompatibility(targetVersion string, change ConfigurationChange) (bool, string) {
+	sensor, msg := validator.findMatchingSensor(targetVersion)
 	if sensor == nil {
 		return false, msg
 	}
