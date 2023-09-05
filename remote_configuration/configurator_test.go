@@ -90,7 +90,7 @@ func TestWhenChangeIsNotApplicableShouldReturnError(t *testing.T) {
 	configChange := remote_configuration.RandomNonNilChange()
 	mocks.configChangesAPI.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]remote_configuration.ConfigurationChange{configChange}, nil)
 
-	mocks.changeValidator.EXPECT().ValidateChange(configChange, cr).Return(false, "your data is wrong pal")
+	mocks.changeValidator.EXPECT().ValidateChange(configChange, cr).Return(errors.New("your data is wrong pal"))
 
 	mocks.configChangesAPI.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, update remote_configuration.ConfigurationChangeStatusUpdate) error {
@@ -306,5 +306,5 @@ func assertUpdateCR(t *testing.T, mock *k8sMocks.MockClient, assert func(*cbcont
 }
 
 func setupChangeValidatorToAcceptAll(mock *mocksConfigurator.MockChangeValidator) {
-	mock.EXPECT().ValidateChange(gomock.Any(), gomock.Any()).Return(true, "")
+	mock.EXPECT().ValidateChange(gomock.Any(), gomock.Any()).Return(nil)
 }

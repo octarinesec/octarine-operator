@@ -36,12 +36,11 @@ func (m *MockChangeValidator) EXPECT() *MockChangeValidatorMockRecorder {
 }
 
 // ValidateChange mocks base method.
-func (m *MockChangeValidator) ValidateChange(arg0 remote_configuration.ConfigurationChange, arg1 *v1.CBContainersAgent) (bool, string) {
+func (m *MockChangeValidator) ValidateChange(arg0 remote_configuration.ConfigurationChange, arg1 *v1.CBContainersAgent) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateChange", arg0, arg1)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(string)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // ValidateChange indicates an expected call of ValidateChange.

@@ -12,6 +12,8 @@ import (
 
 // TODO: Respect proxy config
 
+// TODO: Split errors into visible and not visible
+
 const (
 	timeoutSingleIteration = time.Second * 60
 )
@@ -25,7 +27,7 @@ type ConfigurationChangesAPI interface {
 }
 
 type ChangeValidator interface {
-	ValidateChange(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) (bool, string)
+	ValidateChange(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error
 }
 
 type Configurator struct {
@@ -108,8 +110,8 @@ func (configurator *Configurator) getPendingChange(ctx context.Context) (*Config
 // applyChange will sync the required changes and push them to the k8s api-server
 // the input agent will be modified after this function and will no longer match the original
 func (configurator *Configurator) applyChange(ctx context.Context, change ConfigurationChange, agent *cbcontainersv1.CBContainersAgent) error {
-	if validChange, reason := configurator.changeValidator.ValidateChange(change, agent); !validChange {
-		return fmt.Errorf("provided change with ID (%s) is not applicable due to (%s)", change.ID, reason)
+	if err := configurator.changeValidator.ValidateChange(change, agent); err != nil {
+		return err
 	}
 
 	ApplyChangeToCR(change, agent)

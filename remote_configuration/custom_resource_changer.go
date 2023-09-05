@@ -41,12 +41,51 @@ func ApplyChangeToCR(change ConfigurationChange, cr *cbcontainersv1.CBContainers
 	}
 }
 
+// TODO: Move
+
+type invalidChangeError struct {
+	msg string
+}
+
+func (i invalidChangeError) Error() string {
+	return i.msg
+}
+
+type SensorMetadataAPI interface {
+	GetSensorsMetadata() ([]models.SensorMetadata, error)
+	GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.OperatorCompatibility, error)
+}
+
+type ConfigurationChangeFetcher struct {
+	operatorVersion string
+	api             SensorMetadataAPI
+}
+
+func (fetcher *ConfigurationChangeFetcher) ValidateChange(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
+	compatibilityMatrix, err := fetcher.api.GetCompatibilityMatrixEntryFor(fetcher.operatorVersion)
+	if err != nil {
+		return err
+	}
+
+	sensors, err := fetcher.api.GetSensorsMetadata()
+	if err != nil {
+		return err
+	}
+
+	validator := ConfigurationChangeValidator{
+		SensorData:                sensors,
+		OperatorCompatibilityData: *compatibilityMatrix,
+	}
+
+	return validator.ValidateChange(change, cr)
+}
+
 type ConfigurationChangeValidator struct {
 	SensorData                []models.SensorMetadata
 	OperatorCompatibilityData models.OperatorCompatibility
 }
 
-func (validator *ConfigurationChangeValidator) ValidateChange(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) (bool, string) {
+func (validator *ConfigurationChangeValidator) ValidateChange(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
 	var versionToValidate string
 
 	// If the change will be modifying the agent version as well, we need to check what the _new_ version supports
@@ -57,53 +96,53 @@ func (validator *ConfigurationChangeValidator) ValidateChange(change Configurati
 		versionToValidate = cr.Spec.Version
 	}
 
-	if sensorAndOperatorCompatible, msg := validator.validateOperatorAndSensorVersionCompatibility(versionToValidate); !sensorAndOperatorCompatible {
-		return false, msg
+	if err := validator.validateOperatorAndSensorVersionCompatibility(versionToValidate); err != nil {
+		return err
 	}
 
 	return validator.validateSensorAndFeatureCompatibility(versionToValidate, change)
 }
 
-func (validator *ConfigurationChangeValidator) findMatchingSensor(sensorVersion string) (*models.SensorMetadata, string) {
+func (validator *ConfigurationChangeValidator) findMatchingSensor(sensorVersion string) *models.SensorMetadata {
 	for _, sensor := range validator.SensorData {
 		if sensor.Version == sensorVersion {
-			return &sensor, ""
+			return &sensor
 		}
 	}
 
-	return nil, fmt.Sprintf("could not find sensor metadata for version %s", sensorVersion)
+	return nil
 }
 
-func (validator *ConfigurationChangeValidator) validateOperatorAndSensorVersionCompatibility(sensorVersion string) (bool, string) {
+func (validator *ConfigurationChangeValidator) validateOperatorAndSensorVersionCompatibility(sensorVersion string) error {
 	if err := validator.OperatorCompatibilityData.CheckCompatibility(sensorVersion); err != nil {
-		return false, err.Error()
+		return invalidChangeError{msg: err.Error()}
 	}
-	return true, ""
+	return nil
 }
 
-func (validator *ConfigurationChangeValidator) validateSensorAndFeatureCompatibility(targetVersion string, change ConfigurationChange) (bool, string) {
-	sensor, msg := validator.findMatchingSensor(targetVersion)
+func (validator *ConfigurationChangeValidator) validateSensorAndFeatureCompatibility(targetVersion string, change ConfigurationChange) error {
+	sensor := validator.findMatchingSensor(targetVersion)
 	if sensor == nil {
-		return false, msg
+		return fmt.Errorf("could not find sensor metadata for version %s", targetVersion)
 	}
 
 	if change.EnableClusterScanning != nil &&
 		*change.EnableClusterScanning == true &&
 		!sensor.SupportsClusterScanning {
-		return false, fmt.Sprintf("sensor version %s does not support cluster scanning feature", targetVersion)
+		return invalidChangeError{msg: fmt.Sprintf("sensor version %s does not support cluster scanning feature", targetVersion)}
 	}
 
 	if change.EnableRuntime != nil &&
 		*change.EnableRuntime == true &&
 		!sensor.SupportsRuntime {
-		return false, fmt.Sprintf("sensor version %s does not support runtime protection feature", targetVersion)
+		return invalidChangeError{msg: fmt.Sprintf("sensor version %s does not support runtime protection feature", targetVersion)}
 	}
 
 	if change.EnableCNDR != nil &&
 		*change.EnableCNDR == true &&
 		!sensor.SupportsCndr {
-		return false, fmt.Sprintf("sensor version %s does not support cloud-native detect and response feature", targetVersion)
+		return invalidChangeError{msg: fmt.Sprintf("sensor version %s does not support cloud-native detect and response feature", targetVersion)}
 	}
 
-	return true, ""
+	return nil
 }

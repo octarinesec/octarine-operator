@@ -64,20 +64,18 @@ func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
 			tC.change.AgentVersion = nil
 			cr := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: version}}
 
-			valid, msg := target.ValidateChange(tC.change, cr)
+			err := target.ValidateChange(tC.change, cr)
 
-			assert.False(t, valid)
-			assert.NotEmpty(t, msg)
+			assert.Error(t, err)
 		})
 
 		t.Run(fmt.Sprintf("change also applies agent version, %s not supported by that version", tC.name), func(t *testing.T) {
 			tC.change.AgentVersion = &version
 			cr := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: "some-other-verson"}}
 
-			valid, msg := target.ValidateChange(tC.change, cr)
+			err := target.ValidateChange(tC.change, cr)
 
-			assert.False(t, valid)
-			assert.NotEmpty(t, msg)
+			assert.Error(t, err)
 		})
 	}
 }
@@ -128,20 +126,18 @@ func TestValidateSucceedsIfSensorSupportsRequestedFeature(t *testing.T) {
 			tC.change.AgentVersion = nil
 			cr := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: version}}
 
-			valid, msg := target.ValidateChange(tC.change, cr)
+			err := target.ValidateChange(tC.change, cr)
 
-			assert.True(t, valid)
-			assert.Empty(t, msg)
+			assert.NoError(t, err)
 		})
 
 		t.Run(fmt.Sprintf("change also applies agent version, %s is supported by that version", tC.name), func(t *testing.T) {
 			tC.change.AgentVersion = &version
 			cr := &cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: "some-other-verson"}}
 
-			valid, msg := target.ValidateChange(tC.change, cr)
+			err := target.ValidateChange(tC.change, cr)
 
-			assert.True(t, valid)
-			assert.Empty(t, msg)
+			assert.NoError(t, err)
 		})
 	}
 }
@@ -180,9 +176,8 @@ func TestValidateFailsIfSensorAndOperatorAreNotCompatible(t *testing.T) {
 			change := remote_configuration.ConfigurationChange{AgentVersion: &tC.versionToApply}
 			cr := &cbcontainersv1.CBContainersAgent{}
 
-			valid, msg := target.ValidateChange(change, cr)
-			assert.False(t, valid)
-			assert.NotEmpty(t, msg)
+			err := target.ValidateChange(change, cr)
+			assert.Error(t, err)
 		})
 	}
 }
@@ -237,9 +232,8 @@ func TestValidateSucceedsIfSensorAndOperatorAreCompatible(t *testing.T) {
 			change := remote_configuration.ConfigurationChange{AgentVersion: &tC.versionToApply}
 			cr := &cbcontainersv1.CBContainersAgent{}
 
-			valid, msg := target.ValidateChange(change, cr)
-			assert.True(t, valid)
-			assert.Empty(t, msg)
+			err := target.ValidateChange(change, cr)
+			assert.NoError(t, err)
 		})
 	}
 }
