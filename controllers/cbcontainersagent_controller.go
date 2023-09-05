@@ -29,11 +29,9 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	applymentOptions "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
-	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -54,6 +52,10 @@ type AgentProcessor interface {
 	Process(cbContainersAgent *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error)
 }
 
+type AccessTokenProvider interface {
+	GetCBAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, namespace string) (string, error)
+}
+
 type CBContainersAgentController struct {
 	client.Client
 	Log              logr.Logger
@@ -62,7 +64,8 @@ type CBContainersAgentController struct {
 	StateApplier     StateApplier
 	K8sVersion       string
 	// Namespace is the kubernetes namespace for all agent components
-	Namespace string
+	Namespace           string
+	AccessTokenProvider AccessTokenProvider
 }
 
 func (r *CBContainersAgentController) getContainersAgentObject(ctx context.Context) (*cbcontainersv1.CBContainersAgent, error) {
@@ -124,9 +127,12 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.SetControllerReference(cbContainersAgent, controlledResource, r.Scheme)
 	}
 
-	accessToken, err := r.getAccessToken(context.Background(), cbContainersAgent)
+	accessToken, err := r.AccessTokenProvider.GetCBAccessToken(ctx, cbContainersAgent, r.Namespace)
 	if err != nil {
 		return ctrl.Result{}, err
+	}
+	if accessToken == "" {
+		return ctrl.Result{}, fmt.Errorf("CB access token has empty value, cannot continue")
 	}
 
 	var registrySecret *models.RegistrySecretValues
@@ -164,21 +170,6 @@ func (r *CBContainersAgentController) Reconcile(ctx context.Context, req ctrl.Re
 
 func (r *CBContainersAgentController) getRegistrySecretValues(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (*models.RegistrySecretValues, error) {
 	return r.ClusterProcessor.Process(cbContainersCluster, accessToken)
-}
-
-func (r *CBContainersAgentController) getAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent) (string, error) {
-	accessTokenSecretNamespacedName := types.NamespacedName{Name: cbContainersCluster.Spec.AccessTokenSecretName, Namespace: r.Namespace}
-	accessTokenSecret := &corev1.Secret{}
-	if err := r.Get(ctx, accessTokenSecretNamespacedName, accessTokenSecret); err != nil {
-		return "", fmt.Errorf("couldn't find access token secret k8s object: %v", err)
-	}
-
-	accessToken := string(accessTokenSecret.Data[commonState.AccessTokenSecretKeyName])
-	if accessToken == "" {
-		return "", fmt.Errorf("the k8s secret %v is missing the key %v", accessTokenSecretNamespacedName, commonState.AccessTokenSecretKeyName)
-	}
-
-	return accessToken, nil
 }
 
 func (r *CBContainersAgentController) updateCRStatus(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, agentStateWasChanged bool) error {
