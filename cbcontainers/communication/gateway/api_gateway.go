@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -164,4 +165,17 @@ func (gateway *ApiGateway) GetCompatibilityMatrixEntryFor(operatorVersion string
 	}
 
 	return r, nil
+}
+
+func (gateway *ApiGateway) GetSensorMetadata() ([]models.SensorMetadata, error) {
+	// TODO
+	return nil, nil
+}
+
+func (gateway *ApiGateway) GetConfigurationChanges(context.Context) ([]models.ConfigurationChange, error) {
+	return nil, nil
+}
+
+func (gateway *ApiGateway) UpdateConfigurationChangeStatus(context.Context, models.ConfigurationChangeStatusUpdate) error {
+	return nil
 }

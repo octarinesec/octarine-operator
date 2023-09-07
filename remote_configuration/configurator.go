@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/communication/gateway"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sort"
 	"time"
@@ -18,31 +20,59 @@ const (
 	timeoutSingleIteration = time.Second * 60
 )
 
-type ConfigurationChangesAPI interface {
-	// TODO: Get Compatibility matrix
-	// TODO: Get sensor data
+type ApiGateway interface {
+	GetSensorMetadata() ([]models.SensorMetadata, error)
+	GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.OperatorCompatibility, error)
 
-	GetConfigurationChanges(context.Context) ([]ConfigurationChange, error)
-	UpdateConfigurationChangeStatus(context.Context, ConfigurationChangeStatusUpdate) error
+	GetConfigurationChanges(context.Context) ([]models.ConfigurationChange, error)
+	UpdateConfigurationChangeStatus(context.Context, models.ConfigurationChangeStatusUpdate) error
 }
 
+type AccessTokenProvider interface {
+	GetCBAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, deployedNamespace string) (string, error)
+}
+
+// CBGatewayCreator creates an implementation of ApiGateway that talks to the real backend
+func CBGatewayCreator(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (ApiGateway, error) {
+	creator := gateway.DefaultGatewayCreator{}
+	return creator.CreateGateway(cbContainersCluster, accessToken)
+}
+
+type ApiCreator func(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (ApiGateway, error)
+
 type ChangeValidator interface {
-	ValidateChange(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error
+	ValidateChange(change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error
+}
+
+type CustomResourceSyncer interface {
+	GetCR(ctx context.Context) (*cbcontainersv1.CBContainersAgent, error)
+	ApplyChangeToCR(ctx context.Context, change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent, validator ChangeValidator) error
 }
 
 type Configurator struct {
-	k8sClient       client.Client
-	logger          logr.Logger
-	changesAPI      ConfigurationChangesAPI
-	changeValidator ChangeValidator
+	logger              logr.Logger
+	accessTokenProvider AccessTokenProvider
+	apiCreator          ApiCreator
+	operatorVersion     string
+	deployedNamespace   string
+	syncer              CustomResourceSyncer
 }
 
-func NewConfigurator(k8sClient client.Client, configChangesAPI ConfigurationChangesAPI, changeValidator ChangeValidator, logger logr.Logger) *Configurator {
+func NewConfigurator(
+	gatewayCreator ApiCreator,
+	logger logr.Logger,
+	accessTokenProvider AccessTokenProvider,
+	syncer CustomResourceSyncer,
+	operatorVersion string,
+	deployedNamespace string,
+) *Configurator {
 	return &Configurator{
-		k8sClient:       k8sClient,
-		logger:          logger,
-		changesAPI:      configChangesAPI,
-		changeValidator: changeValidator,
+		logger:              logger,
+		apiCreator:          gatewayCreator,
+		accessTokenProvider: accessTokenProvider,
+		operatorVersion:     operatorVersion,
+		deployedNamespace:   deployedNamespace,
+		syncer:              syncer,
 	}
 }
 
@@ -51,18 +81,23 @@ func (configurator *Configurator) RunIteration(ctx context.Context) error {
 	defer cancel()
 
 	configurator.logger.Info("Checking for installed agent...")
-	cr, errGettingCR := configurator.getContainerAgentCR(ctx)
-	if errGettingCR != nil {
-		configurator.logger.Error(errGettingCR, "Failed to get CBContainerAgent resource, cannot continue")
-		return errGettingCR
+	cr, err := configurator.syncer.GetCR(ctx)
+	if err != nil {
+		configurator.logger.Error(err, "Failed to get CBContainerAgent resource, cannot continue")
+		return err
 	}
 	if cr == nil {
 		configurator.logger.Info("No CBContainerAgent installed, there is nothing to configure")
 		return nil
 	}
 
+	apiGateway, err := configurator.createAPIGateway(ctx, cr)
+	if err != nil {
+		return err // TODO: !
+	}
+
 	configurator.logger.Info("Checking for pending remote configuration changes...")
-	change, errGettingChanges := configurator.getPendingChange(ctx)
+	change, errGettingChanges := configurator.getPendingChange(ctx, apiGateway)
 	if errGettingChanges != nil {
 		configurator.logger.Error(errGettingChanges, "Failed to get pending configuration changes")
 		return errGettingChanges
@@ -74,23 +109,29 @@ func (configurator *Configurator) RunIteration(ctx context.Context) error {
 	}
 
 	configurator.logger.Info("Applying remote configuration change to CBContainerAgent resource", "change", change)
-	errApplyingCR := configurator.applyChange(ctx, *change, cr)
-	if errApplyingCR != nil {
-		configurator.logger.Error(errApplyingCR, "Failed to apply configuration change", "changeID", change.ID)
-		// Intentional fallthrough as we always update the status of the change on the backend, including failed status
+	validator, err := NewConfigurationChangeValidator(configurator.operatorVersion, apiGateway)
+	if err != nil {
+		return err // TODO
 	}
 
-	if errStatusUpdate := configurator.updateChangeStatus(ctx, *change, cr, errApplyingCR); errStatusUpdate != nil {
-		configurator.logger.Error(errStatusUpdate, "Failed to update the status of a configuration change; it might be re-applied again in the future")
-		return errStatusUpdate
+	errApplyingCR := configurator.syncer.ApplyChangeToCR(ctx, *change, cr, validator)
+	if errApplyingCR != nil {
+		// TODO: Validation err?
+
+		// Intentional fallthrough to ack errors as well
+	}
+
+	if err := configurator.updateChangeStatus(ctx, apiGateway, *change, cr, errApplyingCR); err != nil {
+		configurator.logger.Error(err, "Failed to update the status of a configuration change; it might be re-applied again in the future")
+		return err
 	}
 
 	// If we failed to apply the CR, we still report this to the backend but want to return the apply error here to propagate properly
 	return errApplyingCR
 }
 
-func (configurator *Configurator) getPendingChange(ctx context.Context) (*ConfigurationChange, error) {
-	changes, err := configurator.changesAPI.GetConfigurationChanges(ctx)
+func (configurator *Configurator) getPendingChange(ctx context.Context, apiGateway ApiGateway) (*models.ConfigurationChange, error) {
+	changes, err := apiGateway.GetConfigurationChanges(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -107,22 +148,16 @@ func (configurator *Configurator) getPendingChange(ctx context.Context) (*Config
 	return nil, nil
 }
 
-// applyChange will sync the required changes and push them to the k8s api-server
-// the input agent will be modified after this function and will no longer match the original
-func (configurator *Configurator) applyChange(ctx context.Context, change ConfigurationChange, agent *cbcontainersv1.CBContainersAgent) error {
-	if err := configurator.changeValidator.ValidateChange(change, agent); err != nil {
-		return err
-	}
-
-	ApplyChangeToCR(change, agent)
-
-	return configurator.k8sClient.Update(ctx, agent)
-}
-
-func (configurator *Configurator) updateChangeStatus(ctx context.Context, change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent, encounteredError error) error {
-	var statusUpdate ConfigurationChangeStatusUpdate
+func (configurator *Configurator) updateChangeStatus(
+	ctx context.Context,
+	apiGateway ApiGateway,
+	change models.ConfigurationChange,
+	cr *cbcontainersv1.CBContainersAgent,
+	encounteredError error,
+) error {
+	var statusUpdate models.ConfigurationChangeStatusUpdate
 	if encounteredError == nil {
-		statusUpdate = ConfigurationChangeStatusUpdate{
+		statusUpdate = models.ConfigurationChangeStatusUpdate{
 			ID:                change.ID,
 			Status:            string(statusAcknowledged),
 			Reason:            "", // TODO
@@ -130,24 +165,40 @@ func (configurator *Configurator) updateChangeStatus(ctx context.Context, change
 			AppliedTimestamp:  time.Now().UTC().Format(time.RFC3339),
 		}
 	} else {
-		statusUpdate = ConfigurationChangeStatusUpdate{
+		statusUpdate = models.ConfigurationChangeStatusUpdate{
 			ID:     change.ID,
 			Status: string(statusFailed),
 			Reason: encounteredError.Error(), // TODO
 		}
 	}
 
-	return configurator.changesAPI.UpdateConfigurationChangeStatus(ctx, statusUpdate)
+	return apiGateway.UpdateConfigurationChangeStatus(ctx, statusUpdate)
 }
 
-// getContainerAgentCR loads exactly 0 or 1 CBContainersAgent definitions
+func (configurator *Configurator) createAPIGateway(ctx context.Context, cr *cbcontainersv1.CBContainersAgent) (ApiGateway, error) {
+	accessToken, err := configurator.accessTokenProvider.GetCBAccessToken(ctx, cr, configurator.deployedNamespace)
+	if err != nil {
+		return nil, err
+	}
+	return configurator.apiCreator(cr, accessToken)
+}
+
+type ChangeSyncerImpl struct {
+	k8sClient client.Client
+}
+
+func NewChangeSyncerImpl(k8sClient client.Client) *ChangeSyncerImpl {
+	return &ChangeSyncerImpl{k8sClient: k8sClient}
+}
+
+// GetCR loads exactly 0 or 1 CBContainersAgent definitions
 // if no resource is defined, nil is returned
-// in case more than 1 resource is defined (which is not supported), only the first one is returned
-func (configurator *Configurator) getContainerAgentCR(ctx context.Context) (*cbcontainersv1.CBContainersAgent, error) {
+// in case more than 1 resource is defined (which is not generally supported), only the first one is returned
+func (s *ChangeSyncerImpl) GetCR(ctx context.Context) (*cbcontainersv1.CBContainersAgent, error) {
 	// keep implementation in-sync with CBContainersAgentController.getContainersAgentObject() to ensure both operate on the same agent instance
 
 	cbContainersAgentsList := &cbcontainersv1.CBContainersAgentList{}
-	if err := configurator.k8sClient.List(ctx, cbContainersAgentsList); err != nil {
+	if err := s.k8sClient.List(ctx, cbContainersAgentsList); err != nil {
 		return nil, fmt.Errorf("couldn't list CBContainersAgent k8s objects: %w", err)
 	}
 
@@ -158,3 +209,53 @@ func (configurator *Configurator) getContainerAgentCR(ctx context.Context) (*cbc
 	// We don't log a warning if len >=2 as the controller already warns users about that
 	return &cbContainersAgentsList.Items[0], nil
 }
+
+func (s *ChangeSyncerImpl) ApplyChangeToCR(ctx context.Context, change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent, validator ChangeValidator) error {
+	if err := validator.ValidateChange(change, cr); err != nil {
+		return err // TODO
+	}
+
+	s.applyChangeImpl(change, cr)
+
+	return s.k8sClient.Update(ctx, cr)
+}
+
+// TODO receiver
+
+func (s *ChangeSyncerImpl) applyChangeImpl(change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) {
+	resetVersion := func(ptrToField *string) {
+		if ptrToField != nil && *ptrToField != "" {
+			*ptrToField = ""
+		}
+	}
+
+	if change.AgentVersion != nil {
+		cr.Spec.Version = *change.AgentVersion
+
+		resetVersion(&cr.Spec.Components.Basic.Monitor.Image.Tag)
+		resetVersion(&cr.Spec.Components.Basic.Enforcer.Image.Tag)
+		resetVersion(&cr.Spec.Components.Basic.StateReporter.Image.Tag)
+		resetVersion(&cr.Spec.Components.ClusterScanning.ImageScanningReporter.Image.Tag)
+		resetVersion(&cr.Spec.Components.ClusterScanning.ClusterScannerAgent.Image.Tag)
+		resetVersion(&cr.Spec.Components.RuntimeProtection.Sensor.Image.Tag)
+		resetVersion(&cr.Spec.Components.RuntimeProtection.Resolver.Image.Tag)
+		if cr.Spec.Components.Cndr != nil {
+			resetVersion(&cr.Spec.Components.Cndr.Sensor.Image.Tag)
+		}
+	}
+	if change.EnableClusterScanning != nil {
+		cr.Spec.Components.ClusterScanning.Enabled = change.EnableClusterScanning
+	}
+	if change.EnableRuntime != nil {
+		cr.Spec.Components.RuntimeProtection.Enabled = change.EnableRuntime
+	}
+	if change.EnableCNDR != nil {
+		if cr.Spec.Components.Cndr == nil {
+			cr.Spec.Components.Cndr = &cbcontainersv1.CBContainersCndrSpec{}
+		}
+		cr.Spec.Components.Cndr.Enabled = change.EnableCNDR
+	}
+}
+
+// applyChange will sync the required changes and push them to the k8s api-server
+// the input agent will be modified after this function and will no longer match the original

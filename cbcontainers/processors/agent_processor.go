@@ -16,9 +16,7 @@ type APIGateway interface {
 	GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.OperatorCompatibility, error)
 }
 
-type APIGatewayCreator interface {
-	CreateGateway(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (APIGateway, error)
-}
+type APIGatewayCreator func(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (APIGateway, error)
 
 type OperatorVersionProvider interface {
 	GetOperatorVersion() (string, error)
@@ -79,7 +77,7 @@ func (processor *AgentProcessor) initializeIfNeeded(cbContainersCluster *cbconta
 	}
 
 	processor.log.Info("Initializing AgentProcessor components")
-	gateway, err := processor.gatewayCreator.CreateGateway(cbContainersCluster, accessToken)
+	gateway, err := processor.gatewayCreator(cbContainersCluster, accessToken)
 	if err != nil {
 		return err
 	}
@@ -118,7 +116,7 @@ func (processor *AgentProcessor) checkCompatibility(cbContainersAgent *cbcontain
 		}
 		return err
 	}
-	gateway, err := processor.gatewayCreator.CreateGateway(cbContainersAgent, accessToken)
+	gateway, err := processor.gatewayCreator(cbContainersAgent, accessToken)
 	if err != nil {
 		processor.log.Error(err, "skipping compatibility check, error while building API gateway")
 		// if there is an error while building the gateway log it and skip the check

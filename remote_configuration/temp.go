@@ -2,6 +2,7 @@ package remote_configuration
 
 import (
 	"context"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"math/rand"
 	"strconv"
 )
@@ -16,20 +17,20 @@ var (
 type DummyAPI struct {
 }
 
-func (d DummyAPI) GetConfigurationChanges(ctx context.Context) ([]ConfigurationChange, error) {
+func (d DummyAPI) GetConfigurationChanges(ctx context.Context) ([]models.ConfigurationChange, error) {
 	c := RandomChange()
 	if c != nil {
-		return []ConfigurationChange{*c}, nil
+		return []models.ConfigurationChange{*c}, nil
 
 	}
 	return nil, nil
 }
 
-func (d DummyAPI) UpdateConfigurationChangeStatus(ctx context.Context, update ConfigurationChangeStatusUpdate) error {
+func (d DummyAPI) UpdateConfigurationChangeStatus(ctx context.Context, update models.ConfigurationChangeStatusUpdate) error {
 	return nil
 }
 
-func RandomNonNilChange() ConfigurationChange {
+func RandomNonNilChange() models.ConfigurationChange {
 	for {
 		c := RandomChange()
 		if c != nil {
@@ -38,7 +39,7 @@ func RandomNonNilChange() ConfigurationChange {
 	}
 }
 
-func RandomChange() *ConfigurationChange {
+func RandomChange() *models.ConfigurationChange {
 	csRand, runtimeRand, cndrRand, versionRand := rand.Int(), rand.Int(), rand.Int(), rand.Intn(len(versions)+1)
 
 	//csRand, runtimeRand, versionRand = 1, 2, 3
@@ -76,7 +77,7 @@ func RandomChange() *ConfigurationChange {
 		changeCNDR = &fal
 	}
 
-	return &ConfigurationChange{
+	return &models.ConfigurationChange{
 		ID:                    strconv.Itoa(rand.Int()),
 		AgentVersion:          changeVersion,
 		EnableClusterScanning: changeClusterScanning,
@@ -84,28 +85,6 @@ func RandomChange() *ConfigurationChange {
 		EnableCNDR:            changeCNDR,
 		Status:                string(statusPending),
 	}
-}
-
-type ConfigurationChange struct {
-	ID                    string  `json:"id"`
-	Status                string  `json:"status"`
-	AgentVersion          *string `json:"agent_version"`
-	EnableClusterScanning *bool   `json:"enable_cluster_scanning"`
-	EnableRuntime         *bool   `json:"enable_runtime"`
-	EnableCNDR            *bool   `json:"enable_cndr"`
-	Timestamp             string  `json:"timestamp"`
-}
-
-type ConfigurationChangeStatusUpdate struct {
-	ID     string `json:"id"`
-	Status string `json:"status"`
-	Reason string `json:"reason"`
-	// AppliedGeneration tracks the generation of the Custom resource where the change was applied
-	AppliedGeneration int64 `json:"applied_generation"`
-	// AppliedTimestamp records when the change was applied in RFC3339 format
-	AppliedTimestamp string `json:"applied_timestamp"`
-
-	// TODO: CLuster and group. Cluster identifier?
 }
 
 type changeStatus string

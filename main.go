@@ -20,6 +20,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/communication/gateway"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
@@ -145,6 +146,11 @@ func main() {
 
 	clusterIdentifier, k8sVersion := extractConfigurationVariables(mgr)
 
+	// TODO: improve
+	var processorGatewayCreator processors.APIGatewayCreator = func(cbContainersCluster *operatorcontainerscarbonblackiov1.CBContainersAgent, accessToken string) (processors.APIGateway, error) {
+		return gateway.NewDefaultGatewayCreator().CreateGateway(cbContainersCluster, accessToken)
+	}
+
 	cbContainersAgentLogger := ctrl.Log.WithName("controllers").WithName("CBContainersAgent")
 	if err = (&controllers.CBContainersAgentController{
 		Client:              mgr.GetClient(),
@@ -153,7 +159,7 @@ func main() {
 		K8sVersion:          k8sVersion,
 		Namespace:           operatorNamespace,
 		AccessTokenProvider: operator.NewSecretAccessTokenProvider(mgr.GetClient()),
-		ClusterProcessor:    processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator(), operator.NewEnvVersionProvider(), clusterIdentifier),
+		ClusterProcessor:    processors.NewAgentProcessor(cbContainersAgentLogger, processorGatewayCreator, operator.NewEnvVersionProvider(), clusterIdentifier),
 		StateApplier:        state.NewStateApplier(mgr.GetAPIReader(), agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, operatorNamespace, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")
@@ -176,8 +182,15 @@ func main() {
 	signalsContext := ctrl.SetupSignalHandler()
 	k8sClient := mgr.GetClient()
 	log := ctrl.Log.WithName("configurator")
-	api := remote_configuration.DummyAPI{}
-	applier := remote_configuration.NewConfigurator(k8sClient, api, log)
+	syncer := remote_configuration.NewChangeSyncerImpl(k8sClient)
+	versionReader := operator.NewEnvVersionProvider()
+	operatorVersion, err := versionReader.GetOperatorVersion()
+	if err != nil {
+		// TODO
+		panic(err)
+	}
+
+	applier := remote_configuration.NewConfigurator(remote_configuration.CBGatewayCreator, log, operator.NewSecretAccessTokenProvider(k8sClient), syncer, operatorVersion, operatorNamespace)
 	applierController := remote_configuration.NewRemoteConfigurationController(applier, log)
 
 	var wg sync.WaitGroup

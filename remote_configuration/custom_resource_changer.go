@@ -6,7 +6,7 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 )
 
-func ApplyChangeToCR(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) {
+func ApplyChangeToCR(change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) {
 	resetVersion := func(ptrToField *string) {
 		if ptrToField != nil && *ptrToField != "" {
 			*ptrToField = ""
@@ -51,33 +51,22 @@ func (i invalidChangeError) Error() string {
 	return i.msg
 }
 
-type SensorMetadataAPI interface {
-	GetSensorsMetadata() ([]models.SensorMetadata, error)
-	GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.OperatorCompatibility, error)
-}
-
-type ConfigurationChangeFetcher struct {
-	operatorVersion string
-	api             SensorMetadataAPI
-}
-
-func (fetcher *ConfigurationChangeFetcher) ValidateChange(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
-	compatibilityMatrix, err := fetcher.api.GetCompatibilityMatrixEntryFor(fetcher.operatorVersion)
+func NewConfigurationChangeValidator(operatorVersion string, api ApiGateway) (*ConfigurationChangeValidator, error) {
+	compatibilityMatrix, err := api.GetCompatibilityMatrixEntryFor(operatorVersion)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	sensors, err := fetcher.api.GetSensorsMetadata()
+	sensors, err := api.GetSensorMetadata()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	validator := ConfigurationChangeValidator{
+	// TODO: Dereference
+	return &ConfigurationChangeValidator{
 		SensorData:                sensors,
 		OperatorCompatibilityData: *compatibilityMatrix,
-	}
-
-	return validator.ValidateChange(change, cr)
+	}, nil
 }
 
 type ConfigurationChangeValidator struct {
@@ -85,7 +74,7 @@ type ConfigurationChangeValidator struct {
 	OperatorCompatibilityData models.OperatorCompatibility
 }
 
-func (validator *ConfigurationChangeValidator) ValidateChange(change ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
+func (validator *ConfigurationChangeValidator) ValidateChange(change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
 	var versionToValidate string
 
 	// If the change will be modifying the agent version as well, we need to check what the _new_ version supports
@@ -120,7 +109,7 @@ func (validator *ConfigurationChangeValidator) validateOperatorAndSensorVersionC
 	return nil
 }
 
-func (validator *ConfigurationChangeValidator) validateSensorAndFeatureCompatibility(targetVersion string, change ConfigurationChange) error {
+func (validator *ConfigurationChangeValidator) validateSensorAndFeatureCompatibility(targetVersion string, change models.ConfigurationChange) error {
 	sensor := validator.findMatchingSensor(targetVersion)
 	if sensor == nil {
 		return fmt.Errorf("could not find sensor metadata for version %s", targetVersion)

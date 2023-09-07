@@ -1,4 +1,5 @@
 package mocks
 
-//go:generate mockgen -destination mock_configuration_api.go -package mocks github.com/vmware/cbcontainers-operator/remote_configuration ConfigurationChangesAPI
-//go:generate mockgen -destination mock_change_validator.go -package mocks github.com/vmware/cbcontainers-operator/remote_configuration ChangeValidator
+//go:generate mockgen -destination mock_api_gateway.go -package mocks github.com/vmware/cbcontainers-operator/remote_configuration ApiGateway
+//go:generate mockgen -destination mock_access_token_provider.go -package mocks github.com/vmware/cbcontainers-operator/remote_configuration AccessTokenProvider
+//go:generate mockgen -destination mock_resource_syncer.go -package mocks github.com/vmware/cbcontainers-operator/remote_configuration CustomResourceSyncer
