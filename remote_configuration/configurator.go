@@ -182,12 +182,14 @@ func (configurator *Configurator) updateChangeStatus(
 			Reason:            "", // TODO
 			AppliedGeneration: cr.Generation,
 			AppliedTimestamp:  time.Now().UTC().Format(time.RFC3339),
+			ClusterIdentifier: configurator.clusterIdentifier,
 		}
 	} else {
 		statusUpdate = models.ConfigurationChangeStatusUpdate{
-			ID:     change.ID,
-			Status: string(statusFailed),
-			Reason: encounteredError.Error(), // TODO
+			ID:                change.ID,
+			Status:            string(statusFailed),
+			Reason:            encounteredError.Error(), // TODO
+			ClusterIdentifier: configurator.clusterIdentifier,
 		}
 	}
 

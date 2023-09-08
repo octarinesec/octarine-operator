@@ -102,6 +102,7 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 		assert.Equal(t, finalGeneration, update.AppliedGeneration)
 		assert.Equal(t, "ACKNOWLEDGED", update.Status)
 		assert.NotEmpty(t, update.AppliedTimestamp, "applied timestamp should be populated")
+		assert.Equal(t, mocks.stubClusterID, update.ClusterIdentifier)
 
 		parsedTime, err := time.Parse(time.RFC3339, update.AppliedTimestamp)
 		assert.NoError(t, err)
@@ -117,8 +118,6 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 	err := configurator.RunIteration(context.Background())
 	assert.NoError(t, err)
 }
-
-// TODO: reintroduce
 
 func TestWhenChangeIsNotApplicableShouldReturnError(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -150,6 +149,7 @@ func TestWhenChangeIsNotApplicableShouldReturnError(t *testing.T) {
 			assert.NotEmpty(t, update.Reason)
 			assert.Equal(t, int64(0), update.AppliedGeneration)
 			assert.Empty(t, update.AppliedTimestamp)
+			assert.Equal(t, mocks.stubClusterID, update.ClusterIdentifier)
 
 			return nil
 		})
@@ -282,6 +282,7 @@ func TestWhenUpdatingCRFailsChangeIsUpdatedAsFailed(t *testing.T) {
 			assert.NotEmpty(t, update.Reason)
 			assert.Equal(t, int64(0), update.AppliedGeneration)
 			assert.Empty(t, update.AppliedTimestamp)
+			assert.Equal(t, mocks.stubClusterID, update.ClusterIdentifier)
 
 			return nil
 		})

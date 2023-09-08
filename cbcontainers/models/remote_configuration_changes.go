@@ -17,7 +17,8 @@ type ConfigurationChangeStatusUpdate struct {
 	// AppliedGeneration tracks the generation of the Custom resource where the change was applied
 	AppliedGeneration int64 `json:"applied_generation"`
 	// AppliedTimestamp records when the change was applied in RFC3339 format
-	AppliedTimestamp string `json:"applied_timestamp"`
-
-	// TODO: CLuster and group. Cluster identifier?
+	AppliedTimestamp  string `json:"applied_timestamp"`
+	ClusterIdentifier string `json:"cluster_identifier"`
+	ClusterGroup      string `json:"cluster_group"`
+	ClusterName       string `json:"cluster_name"`
 }
