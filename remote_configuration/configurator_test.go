@@ -266,8 +266,7 @@ func TestWhenUpdatingCRFailsChangeIsUpdatedAsFailed(t *testing.T) {
 
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]models.ConfigurationChange{configChange}, nil)
 	setupCRInK8S(mocks.k8sClient, nil)
-	mocks.apiGateway.EXPECT().GetSensorMetadata().Return(nil, nil)
-	mocks.apiGateway.EXPECT().GetCompatibilityMatrixEntryFor(mocks.stubOperatorVersion).Return(&models.OperatorCompatibility{}, nil)
+	setupValidCompatibilityData(mocks.apiGateway, *configChange.AgentVersion, mocks.stubOperatorVersion)
 
 	errFromService := errors.New("some error")
 	mocks.k8sClient.EXPECT().Update(gomock.Any(), gomock.Any()).Return(errFromService)
@@ -297,10 +296,9 @@ func TestWhenUpdatingStatusToBackendFailsShouldReturnError(t *testing.T) {
 	configChange := remote_configuration.RandomNonNilChange()
 
 	setupCRInK8S(mocks.k8sClient, nil)
-	mocks.k8sClient.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	setupValidCompatibilityData(mocks.apiGateway, *configChange.AgentVersion, mocks.stubOperatorVersion)
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any()).Return([]models.ConfigurationChange{configChange}, nil)
-	mocks.apiGateway.EXPECT().GetSensorMetadata().Return(nil, nil)
-	mocks.apiGateway.EXPECT().GetCompatibilityMatrixEntryFor(mocks.stubOperatorVersion).Return(&models.OperatorCompatibility{}, nil)
+	mocks.k8sClient.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
 	errFromService := errors.New("some error")
 	mocks.apiGateway.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).Return(errFromService)

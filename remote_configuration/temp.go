@@ -30,6 +30,8 @@ func (d DummyAPI) UpdateConfigurationChangeStatus(ctx context.Context, update mo
 	return nil
 }
 
+// TODO: non-nil and with version set
+
 func RandomNonNilChange() models.ConfigurationChange {
 	for {
 		c := RandomChange()
@@ -40,10 +42,9 @@ func RandomNonNilChange() models.ConfigurationChange {
 }
 
 func RandomChange() *models.ConfigurationChange {
-	csRand, runtimeRand, cndrRand, versionRand := rand.Int(), rand.Int(), rand.Int(), rand.Intn(len(versions)+1)
+	csRand, runtimeRand, cndrRand, versionRand, nilRand := rand.Int(), rand.Int(), rand.Int(), rand.Intn(len(versions)), rand.Intn(10)
 
-	//csRand, runtimeRand, versionRand = 1, 2, 3
-	if versionRand == len(versions) {
+	if nilRand%5 == 1 {
 		return nil
 	}
 

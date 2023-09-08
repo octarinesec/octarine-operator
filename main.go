@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/communication/gateway"
@@ -182,15 +183,14 @@ func main() {
 	signalsContext := ctrl.SetupSignalHandler()
 	k8sClient := mgr.GetClient()
 	log := ctrl.Log.WithName("configurator")
-	syncer := remote_configuration.NewChangeSyncerImpl(k8sClient)
-	versionReader := operator.NewEnvVersionProvider()
+	versionReader := operator.NewEnvVersionProvider() // TODO: reuse from above
 	operatorVersion, err := versionReader.GetOperatorVersion()
-	if err != nil {
-		// TODO
-		panic(err)
+	if err != nil && !errors.Is(err, operator.ErrNotSemVer) {
+		setupLog.Error(err, "unable to read the running operator's version from environment variable")
+		os.Exit(1)
 	}
 
-	applier := remote_configuration.NewConfigurator(remote_configuration.CBGatewayCreator, log, operator.NewSecretAccessTokenProvider(k8sClient), syncer, operatorVersion, operatorNamespace)
+	applier := remote_configuration.NewConfigurator(k8sClient, remote_configuration.CBGatewayCreator, log, operator.NewSecretAccessTokenProvider(k8sClient), operatorVersion, operatorNamespace)
 	applierController := remote_configuration.NewRemoteConfigurationController(applier, log)
 
 	var wg sync.WaitGroup
