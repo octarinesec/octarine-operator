@@ -17,7 +17,7 @@ var (
 type DummyAPI struct {
 }
 
-func (d DummyAPI) GetConfigurationChanges(ctx context.Context) ([]models.ConfigurationChange, error) {
+func (d DummyAPI) GetConfigurationChanges(ctx context.Context, clusterIdentifier string) ([]models.ConfigurationChange, error) {
 	c := RandomChange()
 	if c != nil {
 		return []models.ConfigurationChange{*c}, nil

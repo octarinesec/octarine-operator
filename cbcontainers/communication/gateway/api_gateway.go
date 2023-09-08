@@ -17,6 +17,8 @@ var (
 	ErrGettingOperatorCompatibility = errors.New("error while getting the operator compatibility")
 )
 
+// TODO: Extract the cluster group + name + ID as separate struct identifying a cluster and used together
+
 type ApiGateway struct {
 	account         string
 	cluster         string
@@ -172,7 +174,7 @@ func (gateway *ApiGateway) GetSensorMetadata() ([]models.SensorMetadata, error) 
 	return nil, nil
 }
 
-func (gateway *ApiGateway) GetConfigurationChanges(context.Context) ([]models.ConfigurationChange, error) {
+func (gateway *ApiGateway) GetConfigurationChanges(ctx context.Context, clusterIdentifier string) ([]models.ConfigurationChange, error) {
 	return nil, nil
 }
 

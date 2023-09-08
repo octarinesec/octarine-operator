@@ -190,7 +190,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	applier := remote_configuration.NewConfigurator(k8sClient, remote_configuration.CBGatewayCreator, log, operator.NewSecretAccessTokenProvider(k8sClient), operatorVersion, operatorNamespace)
+	applier := remote_configuration.NewConfigurator(
+		k8sClient,
+		remote_configuration.CBGatewayCreator,
+		log,
+		operator.NewSecretAccessTokenProvider(k8sClient),
+		operatorVersion,
+		operatorNamespace,
+		clusterIdentifier,
+	)
 	applierController := remote_configuration.NewRemoteConfigurationController(applier, log)
 
 	var wg sync.WaitGroup

@@ -24,7 +24,7 @@ type ApiGateway interface {
 	GetSensorMetadata() ([]models.SensorMetadata, error)
 	GetCompatibilityMatrixEntryFor(operatorVersion string) (*models.OperatorCompatibility, error)
 
-	GetConfigurationChanges(context.Context) ([]models.ConfigurationChange, error)
+	GetConfigurationChanges(ctx context.Context, clusterIdentifier string) ([]models.ConfigurationChange, error)
 	UpdateConfigurationChangeStatus(context.Context, models.ConfigurationChangeStatusUpdate) error
 }
 
@@ -41,12 +41,13 @@ func CBGatewayCreator(cbContainersCluster *cbcontainersv1.CBContainersAgent, acc
 type ApiCreator func(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (ApiGateway, error)
 
 type Configurator struct {
+	k8sClient           client.Client
 	logger              logr.Logger
 	accessTokenProvider AccessTokenProvider
 	apiCreator          ApiCreator
 	operatorVersion     string
 	deployedNamespace   string
-	k8sClient           client.Client
+	clusterIdentifier   string
 }
 
 func NewConfigurator(
@@ -56,6 +57,7 @@ func NewConfigurator(
 	accessTokenProvider AccessTokenProvider,
 	operatorVersion string,
 	deployedNamespace string,
+	clusterIdentifier string,
 ) *Configurator {
 	return &Configurator{
 		k8sClient:           k8sClient,
@@ -64,6 +66,7 @@ func NewConfigurator(
 		accessTokenProvider: accessTokenProvider,
 		operatorVersion:     operatorVersion,
 		deployedNamespace:   deployedNamespace,
+		clusterIdentifier:   clusterIdentifier,
 	}
 }
 
@@ -138,7 +141,7 @@ func (configurator *Configurator) getCR(ctx context.Context) (*cbcontainersv1.CB
 }
 
 func (configurator *Configurator) getPendingChange(ctx context.Context, apiGateway ApiGateway) (*models.ConfigurationChange, error) {
-	changes, err := apiGateway.GetConfigurationChanges(ctx)
+	changes, err := apiGateway.GetConfigurationChanges(ctx, configurator.clusterIdentifier)
 	if err != nil {
 		return nil, err
 	}
