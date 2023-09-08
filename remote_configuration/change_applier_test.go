@@ -14,7 +14,7 @@ func TestFeatureTogglesAreAppliedCorrectly(t *testing.T) {
 		name          string
 		change        models.ConfigurationChange
 		initialCR     cbcontainersv1.CBContainersAgent
-		assertFinalCR func(*testing.T, *cbcontainersv1.CBContainersAgent)
+		assertFinalCR func(*testing.T, cbcontainersv1.CBContainersAgent)
 	}
 
 	crVersion := "1.2.3"
@@ -23,42 +23,43 @@ func TestFeatureTogglesAreAppliedCorrectly(t *testing.T) {
 	// The tests validate if each toggle state (true, false, nil) is applied correctly or ignored when it's not needed against the CR's state (true, false, nil)
 	generateFeatureToggleTestCases :=
 		func(feature string,
-			changeFieldSelector func(*models.ConfigurationChange) **bool,
-			crFieldSelector func(agent *cbcontainersv1.CBContainersAgent) **bool) []appliedChangeTest {
+			changeFieldChanger func(*models.ConfigurationChange, *bool),
+			crFieldChanger func(*cbcontainersv1.CBContainersAgent, *bool),
+			crAsserter func(*testing.T, cbcontainersv1.CBContainersAgent, *bool)) []appliedChangeTest {
 
 			var result []appliedChangeTest
 
 			for _, crState := range []*bool{truePtr, falsePtr, nil} {
-				cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: crVersion}}
-				crFieldPtr := crFieldSelector(&cr)
-				*crFieldPtr = crState
+				crState := crState // Avoid closure issues
 
 				// Validate that each toggle state works (or doesn't do anything when it matches)
-				for _, changeState := range []*bool{truePtr, falsePtr} {
-					change := models.ConfigurationChange{}
-					changeFieldPtr := changeFieldSelector(&change)
-					*changeFieldPtr = changeState
+				for _, changeState := range []*bool{falsePtr, truePtr} {
+					changeState := changeState // Avoid closure issues
 
-					expectedState := changeState // avoid closure issues
+					cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: crVersion}}
+					crFieldChanger(&cr, crState)
+					change := models.ConfigurationChange{}
+					changeFieldChanger(&change, changeState)
+
 					result = append(result, appliedChangeTest{
 						name:      fmt.Sprintf("toggle feature (%s) from (%v) to (%v)", feature, prettyPrintBoolPtr(crState), prettyPrintBoolPtr(changeState)),
 						change:    change,
 						initialCR: cr,
-						assertFinalCR: func(t *testing.T, agent *cbcontainersv1.CBContainersAgent) {
-							crFieldPostChangePtr := crFieldSelector(agent)
-							assert.Equal(t, expectedState, *crFieldPostChangePtr)
+						assertFinalCR: func(t *testing.T, agent cbcontainersv1.CBContainersAgent) {
+							crAsserter(t, agent, changeState)
 						},
 					})
 				}
 
+				cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: crVersion}}
+				crFieldChanger(&cr, crState)
 				// Validate that a change with the toggle unset does not modify the CR
 				result = append(result, appliedChangeTest{
 					name:      fmt.Sprintf("missing toggle feature (%s) with CR state (%v)", feature, prettyPrintBoolPtr(crState)),
 					change:    models.ConfigurationChange{},
 					initialCR: cr,
-					assertFinalCR: func(t *testing.T, agent *cbcontainersv1.CBContainersAgent) {
-						crFieldPostChangePtr := crFieldSelector(agent)
-						assert.Equal(t, *crFieldPtr, *crFieldPostChangePtr)
+					assertFinalCR: func(t *testing.T, agent cbcontainersv1.CBContainersAgent) {
+						crAsserter(t, agent, crState)
 					},
 				})
 			}
@@ -69,39 +70,69 @@ func TestFeatureTogglesAreAppliedCorrectly(t *testing.T) {
 	var testCases []appliedChangeTest
 
 	clusterScannerToggleTestCases := generateFeatureToggleTestCases("cluster scanning",
-		func(change *models.ConfigurationChange) **bool {
-			return &change.EnableClusterScanning
-		}, func(agent *cbcontainersv1.CBContainersAgent) **bool {
-			return &agent.Spec.Components.ClusterScanning.Enabled
+		func(change *models.ConfigurationChange, val *bool) {
+			change.EnableClusterScanning = val
+		}, func(agent *cbcontainersv1.CBContainersAgent, val *bool) {
+			agent.Spec.Components.ClusterScanning.Enabled = val
+		}, func(t *testing.T, agent cbcontainersv1.CBContainersAgent, b *bool) {
+			assert.Equal(t, b, agent.Spec.Components.ClusterScanning.Enabled)
+		})
+
+	secretDetectionToggleTestCases := generateFeatureToggleTestCases("cluster scanning secret detection",
+		func(change *models.ConfigurationChange, val *bool) {
+			change.EnableClusterScanningSecretDetection = val
+		}, func(agent *cbcontainersv1.CBContainersAgent, val *bool) {
+			if val == nil {
+				// Bail out, this value is not valid for the flag
+				return
+			}
+			agent.Spec.Components.ClusterScanning.ClusterScannerAgent.CLIFlags.EnableSecretDetection = *val
+		}, func(t *testing.T, agent cbcontainersv1.CBContainersAgent, b *bool) {
+			if b == nil {
+				// Bail out, this value is not valid for the flag
+				return
+			}
+			assert.Equal(t, *b, agent.Spec.Components.ClusterScanning.ClusterScannerAgent.CLIFlags.EnableSecretDetection)
 		})
 
 	runtimeToggleTestCases := generateFeatureToggleTestCases("runtime protection",
-		func(change *models.ConfigurationChange) **bool {
-			return &change.EnableRuntime
-		}, func(agent *cbcontainersv1.CBContainersAgent) **bool {
-			return &agent.Spec.Components.RuntimeProtection.Enabled
+		func(change *models.ConfigurationChange, val *bool) {
+			change.EnableRuntime = val
+		}, func(agent *cbcontainersv1.CBContainersAgent, val *bool) {
+			agent.Spec.Components.RuntimeProtection.Enabled = val
+		}, func(t *testing.T, agent cbcontainersv1.CBContainersAgent, b *bool) {
+			assert.Equal(t, b, agent.Spec.Components.RuntimeProtection.Enabled)
 		})
 
 	cndrToggleTestCases := generateFeatureToggleTestCases("CNDR",
-		func(change *models.ConfigurationChange) **bool {
-			return &change.EnableCNDR
-		}, func(agent *cbcontainersv1.CBContainersAgent) **bool {
+		func(change *models.ConfigurationChange, val *bool) {
+			change.EnableCNDR = val
+		}, func(agent *cbcontainersv1.CBContainersAgent, val *bool) {
 			if agent.Spec.Components.Cndr == nil {
 				agent.Spec.Components.Cndr = &cbcontainersv1.CBContainersCndrSpec{}
 			}
-			return &agent.Spec.Components.Cndr.Enabled
+			agent.Spec.Components.Cndr.Enabled = val
+		}, func(t *testing.T, agent cbcontainersv1.CBContainersAgent, b *bool) {
+			assert.Equal(t, b, agent.Spec.Components.Cndr.Enabled)
 		})
 
 	testCases = append(testCases, clusterScannerToggleTestCases...)
+	testCases = append(testCases, secretDetectionToggleTestCases...)
 	testCases = append(testCases, runtimeToggleTestCases...)
 	testCases = append(testCases, cndrToggleTestCases...)
 
+	t1 := testCases[0]
+	t2 := testCases[1]
+	t3 := testCases[2]
 	for _, testCase := range testCases {
+		testCase := testCase
 		t.Run(testCase.name, func(t *testing.T) {
+			t.Log(t1, t2, t3)
+
 			target := remote_configuration.ChangeApplier{}
 
 			target.ApplyConfigChangeToCR(testCase.change, &testCase.initialCR)
-			testCase.assertFinalCR(t, &testCase.initialCR)
+			testCase.assertFinalCR(t, testCase.initialCR)
 		})
 	}
 }
