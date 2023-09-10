@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
@@ -65,6 +66,11 @@ func NewStateApplier(apiReader client.Reader, agentComponentApplier AgentCompone
 
 func (c *StateApplier) GetPriorityClassEmptyK8sObject() client.Object {
 	return c.desiredPriorityClass.EmptyK8sObject()
+}
+
+func (c *StateApplier) ShouldProcessEvent(obj client.Object) bool {
+	objNamespacedName := types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}
+	return c.enforcerDeployment.NamespacedName() == objNamespacedName
 }
 
 func (c *StateApplier) ApplyDesiredState(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, registrySecret *models.RegistrySecretValues, setOwner applymentOptions.OwnerSetter) (bool, error) {
