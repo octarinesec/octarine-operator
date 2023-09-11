@@ -146,6 +146,7 @@ func main() {
 	}
 
 	clusterIdentifier, k8sVersion := extractConfigurationVariables(mgr)
+	operatorVersionProvider := operator.NewEnvVersionProvider()
 
 	// TODO: improve
 	var processorGatewayCreator processors.APIGatewayCreator = func(cbContainersCluster *operatorcontainerscarbonblackiov1.CBContainersAgent, accessToken string) (processors.APIGateway, error) {
@@ -160,7 +161,7 @@ func main() {
 		K8sVersion:          k8sVersion,
 		Namespace:           operatorNamespace,
 		AccessTokenProvider: operator.NewSecretAccessTokenProvider(mgr.GetClient()),
-		ClusterProcessor:    processors.NewAgentProcessor(cbContainersAgentLogger, processorGatewayCreator, operator.NewEnvVersionProvider(), clusterIdentifier),
+		ClusterProcessor:    processors.NewAgentProcessor(cbContainersAgentLogger, processorGatewayCreator, operatorVersionProvider, clusterIdentifier),
 		StateApplier:        state.NewStateApplier(mgr.GetAPIReader(), agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, operatorNamespace, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")
@@ -183,8 +184,7 @@ func main() {
 	signalsContext := ctrl.SetupSignalHandler()
 	k8sClient := mgr.GetClient()
 	log := ctrl.Log.WithName("configurator")
-	versionReader := operator.NewEnvVersionProvider() // TODO: reuse from above
-	operatorVersion, err := versionReader.GetOperatorVersion()
+	operatorVersion, err := operatorVersionProvider.GetOperatorVersion()
 	if err != nil && !errors.Is(err, operator.ErrNotSemVer) {
 		setupLog.Error(err, "unable to read the running operator's version from environment variable")
 		os.Exit(1)

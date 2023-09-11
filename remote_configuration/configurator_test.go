@@ -17,11 +17,9 @@ import (
 	"time"
 )
 
-// TODO: Add back the .finish for older mockgens
 // TODO: What error data to show and what not?
 
 // TODO: Reads cluster, etc from CR correctly?
-// TODO: Respects proxy
 // TODO: Review gomock.any usages here
 
 // TODO: error on compatiblity calls
@@ -121,6 +119,7 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 
 func TestWhenChangeIsNotApplicableShouldReturnError(t *testing.T) {
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	configurator, mocks := setupConfigurator(ctrl)
 
@@ -315,6 +314,7 @@ func TestWhenUpdatingStatusToBackendFailsShouldReturnError(t *testing.T) {
 
 func TestWhenThereIsNoCRInstalledNothingHappens(t *testing.T) {
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	configurator, mocks := setupConfigurator(ctrl)
 

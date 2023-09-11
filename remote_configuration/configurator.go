@@ -12,9 +12,8 @@ import (
 	"time"
 )
 
-// TODO: Respect proxy config
-
 // TODO: Split errors into visible and not visible
+// TODO: timeout setup
 
 const (
 	timeoutSingleIteration = time.Second * 60
