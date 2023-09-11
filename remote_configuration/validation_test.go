@@ -9,8 +9,6 @@ import (
 	"testing"
 )
 
-// TODO: add secret detection
-
 var (
 	trueV    = true
 	truePtr  = &trueV
@@ -31,6 +29,15 @@ func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
 			},
 			sensorMeta: models.SensorMetadata{
 				SupportsClusterScanning: false,
+			},
+		},
+		{
+			name: "cluster scanning secret detection",
+			change: models.ConfigurationChange{
+				EnableClusterScanningSecretDetection: truePtr,
+			},
+			sensorMeta: models.SensorMetadata{
+				SupportsClusterScanningSecrets: false,
 			},
 		},
 		{
@@ -93,6 +100,15 @@ func TestValidateSucceedsIfSensorSupportsRequestedFeature(t *testing.T) {
 			},
 			sensorMeta: models.SensorMetadata{
 				SupportsClusterScanning: true,
+			},
+		},
+		{
+			name: "cluster scanning secret detection",
+			change: models.ConfigurationChange{
+				EnableClusterScanningSecretDetection: truePtr,
+			},
+			sensorMeta: models.SensorMetadata{
+				SupportsClusterScanningSecrets: true,
 			},
 		},
 		{

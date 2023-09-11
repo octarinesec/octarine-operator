@@ -86,6 +86,12 @@ func (validator *ConfigurationChangeValidator) validateSensorAndFeatureCompatibi
 		return invalidChangeError{msg: fmt.Sprintf("sensor version %s does not support cluster scanning feature", targetVersion)}
 	}
 
+	if change.EnableClusterScanningSecretDetection != nil &&
+		*change.EnableClusterScanningSecretDetection == true &&
+		!sensor.SupportsClusterScanningSecrets {
+		return invalidChangeError{msg: fmt.Sprintf("sensor version %s does not support secret detection during cluster scanning feature", targetVersion)}
+	}
+
 	if change.EnableRuntime != nil &&
 		*change.EnableRuntime == true &&
 		!sensor.SupportsRuntime {
