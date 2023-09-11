@@ -152,7 +152,7 @@ func (configurator *Configurator) getPendingChange(ctx context.Context, apiGatew
 	})
 
 	for _, change := range changes {
-		if change.Status == string(statusPending) {
+		if change.Status == models.ChangeStatusPending {
 			return &change, nil
 		}
 	}
@@ -179,7 +179,7 @@ func (configurator *Configurator) updateChangeStatus(
 	if encounteredError == nil {
 		statusUpdate = models.ConfigurationChangeStatusUpdate{
 			ID:                change.ID,
-			Status:            string(statusAcknowledged),
+			Status:            models.ChangeStatusAcked,
 			Reason:            "", // TODO
 			AppliedGeneration: cr.Generation,
 			AppliedTimestamp:  time.Now().UTC().Format(time.RFC3339),
@@ -188,7 +188,7 @@ func (configurator *Configurator) updateChangeStatus(
 	} else {
 		statusUpdate = models.ConfigurationChangeStatusUpdate{
 			ID:                change.ID,
-			Status:            string(statusFailed),
+			Status:            models.ChangeStatusFailed,
 			Reason:            encounteredError.Error(), // TODO
 			ClusterIdentifier: configurator.clusterIdentifier,
 		}

@@ -6,6 +6,8 @@ import (
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"github.com/vmware/cbcontainers-operator/remote_configuration"
+	"math/rand"
+	"strconv"
 	"testing"
 )
 
@@ -241,4 +243,54 @@ func prettyPrintBoolPtr(v *bool) string {
 		return "<nil>"
 	}
 	return fmt.Sprintf("%t", *v)
+}
+
+// randomPendingConfigChange creates a non-empty configuration change with randomly populated fields in pending state
+// the change is not guaranteed to be 100% valid
+func randomPendingConfigChange() models.ConfigurationChange {
+	var versions = []string{"2.12.1", "2.10.0", "2.12.0", "2.11.0", "3.0.0"}
+
+	csRand, runtimeRand, cndrRand, versionRand := rand.Int(), rand.Int(), rand.Int(), rand.Intn(len(versions))
+
+	changeVersion := &versions[versionRand]
+
+	var changeClusterScanning *bool
+	var changeRuntime *bool
+	var changeCNDR *bool
+
+	switch csRand % 5 {
+	case 1, 3:
+		changeClusterScanning = truePtr
+	case 2, 4:
+		changeClusterScanning = falsePtr
+	default:
+		changeClusterScanning = nil
+	}
+
+	switch runtimeRand % 5 {
+	case 1, 3:
+		changeRuntime = truePtr
+	case 2, 4:
+		changeRuntime = falsePtr
+	default:
+		changeRuntime = nil
+	}
+
+	switch cndrRand % 5 {
+	case 1, 3:
+		changeCNDR = truePtr
+	case 2, 4:
+		changeCNDR = falsePtr
+	default:
+		changeCNDR = nil
+	}
+
+	return models.ConfigurationChange{
+		ID:                    strconv.Itoa(rand.Int()),
+		AgentVersion:          changeVersion,
+		EnableClusterScanning: changeClusterScanning,
+		EnableRuntime:         changeRuntime,
+		EnableCNDR:            changeCNDR,
+		Status:                models.ChangeStatusPending,
+	}
 }

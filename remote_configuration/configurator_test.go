@@ -82,7 +82,7 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 	var initialGeneration, finalGeneration int64 = 1, 2
 	expectedAgentVersion := "3.0.0"
 	cr := &cbcontainersv1.CBContainersAgent{ObjectMeta: metav1.ObjectMeta{Generation: initialGeneration}}
-	configChange := remote_configuration.RandomNonNilChange()
+	configChange := randomPendingConfigChange()
 	configChange.AgentVersion = &expectedAgentVersion
 
 	setupCRInK8S(mocks.k8sClient, cr)
@@ -93,7 +93,7 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 	mocks.apiGateway.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, update models.ConfigurationChangeStatusUpdate) error {
 		assert.Equal(t, configChange.ID, update.ID)
 		assert.Equal(t, finalGeneration, update.AppliedGeneration)
-		assert.Equal(t, "ACKNOWLEDGED", update.Status)
+		assert.Equal(t, models.ChangeStatusAcked, update.Status)
 		assert.NotEmpty(t, update.AppliedTimestamp, "applied timestamp should be populated")
 		assert.Equal(t, mocks.stubClusterID, update.ClusterIdentifier)
 
@@ -121,7 +121,7 @@ func TestWhenChangeIsNotApplicableShouldReturnError(t *testing.T) {
 	cr := &cbcontainersv1.CBContainersAgent{}
 	maxAgentVersionForOperator := "4.0.0"
 	agentVersion := "5.0.0"
-	configChange := remote_configuration.RandomNonNilChange()
+	configChange := randomPendingConfigChange()
 	configChange.AgentVersion = &agentVersion
 
 	setupCRInK8S(mocks.k8sClient, cr)
@@ -139,7 +139,7 @@ func TestWhenChangeIsNotApplicableShouldReturnError(t *testing.T) {
 	mocks.apiGateway.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, update models.ConfigurationChangeStatusUpdate) error {
 			assert.Equal(t, configChange.ID, update.ID)
-			assert.Equal(t, "FAILED", update.Status)
+			assert.Equal(t, models.ChangeStatusFailed, update.Status)
 			assert.NotEmpty(t, update.Reason)
 			assert.Equal(t, int64(0), update.AppliedGeneration)
 			assert.Empty(t, update.AppliedTimestamp)
@@ -195,8 +195,8 @@ func TestWhenThereAreMultiplePendingChangesTheOldestIsSelected(t *testing.T) {
 
 	configurator, mocks := setupConfigurator(ctrl)
 
-	olderChange := remote_configuration.RandomNonNilChange()
-	newerChange := remote_configuration.RandomNonNilChange()
+	olderChange := randomPendingConfigChange()
+	newerChange := randomPendingConfigChange()
 
 	expectedVersion := "version-for-older-change"
 	versionThatShouldNotBe := "version-for-newer-change"
@@ -260,7 +260,7 @@ func TestWhenUpdatingCRFailsChangeIsUpdatedAsFailed(t *testing.T) {
 
 	configurator, mocks := setupConfigurator(ctrl)
 
-	configChange := remote_configuration.RandomNonNilChange()
+	configChange := randomPendingConfigChange()
 
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{configChange}, nil)
 	setupCRInK8S(mocks.k8sClient, nil)
@@ -272,7 +272,7 @@ func TestWhenUpdatingCRFailsChangeIsUpdatedAsFailed(t *testing.T) {
 	mocks.apiGateway.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, update models.ConfigurationChangeStatusUpdate) error {
 			assert.Equal(t, configChange.ID, update.ID)
-			assert.Equal(t, "FAILED", update.Status)
+			assert.Equal(t, models.ChangeStatusFailed, update.Status)
 			assert.NotEmpty(t, update.Reason)
 			assert.Equal(t, int64(0), update.AppliedGeneration)
 			assert.Empty(t, update.AppliedTimestamp)
@@ -292,7 +292,7 @@ func TestWhenUpdatingStatusToBackendFailsShouldReturnError(t *testing.T) {
 
 	configurator, mocks := setupConfigurator(ctrl)
 
-	configChange := remote_configuration.RandomNonNilChange()
+	configChange := randomPendingConfigChange()
 
 	setupCRInK8S(mocks.k8sClient, nil)
 	setupValidCompatibilityData(mocks.apiGateway, *configChange.AgentVersion, mocks.stubOperatorVersion)
