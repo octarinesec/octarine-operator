@@ -21,13 +21,15 @@ func NewConfigurationChangeValidator(operatorVersion string, api ApiGateway) (*C
 	if err != nil {
 		return nil, err
 	}
+	if compatibilityMatrix == nil {
+		return nil, fmt.Errorf("compatibility matrix API returned no data but no error as well, cannot continue")
+	}
 
 	sensors, err := api.GetSensorMetadata()
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Dereference
 	return &ConfigurationChangeValidator{
 		SensorData:                sensors,
 		OperatorCompatibilityData: *compatibilityMatrix,

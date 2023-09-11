@@ -1,11 +1,14 @@
 package remote_configuration_test
 
 import (
+	"errors"
 	"fmt"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"github.com/vmware/cbcontainers-operator/remote_configuration"
+	"github.com/vmware/cbcontainers-operator/remote_configuration/mocks"
 	"testing"
 )
 
@@ -15,6 +18,52 @@ var (
 	falseV   = false
 	falsePtr = &falseV
 )
+
+func TestValidatorConstructorReturnsErrOnFailures(t *testing.T) {
+	expectedOperatorVersion := "5.0.0"
+
+	testCases := []struct {
+		name             string
+		setupGatewayMock func(gateway *mocks.MockApiGateway)
+	}{
+		{
+			name: "get compatibility returns err",
+			setupGatewayMock: func(gateway *mocks.MockApiGateway) {
+				gateway.EXPECT().GetCompatibilityMatrixEntryFor(expectedOperatorVersion).Return(nil, errors.New("some error")).AnyTimes()
+				gateway.EXPECT().GetSensorMetadata().Return([]models.SensorMetadata{}, nil).AnyTimes()
+			},
+		},
+		{
+			name: "get sensor metadata returns err",
+			setupGatewayMock: func(gateway *mocks.MockApiGateway) {
+				gateway.EXPECT().GetCompatibilityMatrixEntryFor(expectedOperatorVersion).Return(&models.OperatorCompatibility{}, nil).AnyTimes()
+				gateway.EXPECT().GetSensorMetadata().Return(nil, errors.New("some error")).AnyTimes()
+			},
+		},
+		{
+			name: "get compatibility returns nil",
+			setupGatewayMock: func(gateway *mocks.MockApiGateway) {
+				gateway.EXPECT().GetCompatibilityMatrixEntryFor(expectedOperatorVersion).Return(nil, nil).AnyTimes()
+				gateway.EXPECT().GetSensorMetadata().Return([]models.SensorMetadata{}, nil).AnyTimes()
+			},
+		},
+	}
+
+	for _, tC := range testCases {
+		t.Run(tC.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockGateway := mocks.NewMockApiGateway(ctrl)
+			tC.setupGatewayMock(mockGateway)
+
+			validator, err := remote_configuration.NewConfigurationChangeValidator(expectedOperatorVersion, mockGateway)
+
+			assert.Nil(t, validator)
+			assert.Error(t, err)
+		})
+	}
+}
 
 func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
 	testCases := []struct {
@@ -85,6 +134,34 @@ func TestValidateFailsIfSensorDoesNotSupportRequestedFeature(t *testing.T) {
 			assert.Error(t, err)
 		})
 	}
+}
+
+func TestValidateFailsIfSensorIsNotInList(t *testing.T) {
+	sensorMetaWithoutTargetSensor := []models.SensorMetadata{{
+		Version:                        "1.0.0",
+		IsLatest:                       false,
+		SupportsRuntime:                true,
+		SupportsClusterScanning:        true,
+		SupportsClusterScanningSecrets: true,
+		SupportsCndr:                   true,
+	}}
+	operatorSupportsAll := models.OperatorCompatibility{
+		MinAgent: models.AgentMinVersionNone,
+		MaxAgent: models.AgentMaxVersionLatest,
+	}
+	unknownVersion := "1.2.3"
+
+	validator := remote_configuration.ConfigurationChangeValidator{
+		SensorData:                sensorMetaWithoutTargetSensor,
+		OperatorCompatibilityData: operatorSupportsAll,
+	}
+
+	change := models.ConfigurationChange{
+		AgentVersion: &unknownVersion,
+	}
+	cr := &cbcontainersv1.CBContainersAgent{}
+
+	assert.Error(t, validator.ValidateChange(change, cr))
 }
 
 func TestValidateSucceedsIfSensorSupportsRequestedFeature(t *testing.T) {
