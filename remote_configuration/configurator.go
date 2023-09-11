@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
-	"github.com/vmware/cbcontainers-operator/cbcontainers/communication/gateway"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sort"
@@ -29,12 +28,6 @@ type ApiGateway interface {
 
 type AccessTokenProvider interface {
 	GetCBAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, deployedNamespace string) (string, error)
-}
-
-// CBGatewayCreator creates an implementation of ApiGateway that talks to the real backend
-func CBGatewayCreator(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (ApiGateway, error) {
-	creator := gateway.DefaultGatewayCreator{}
-	return creator.CreateGateway(cbContainersCluster, accessToken)
 }
 
 type ApiCreator func(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (ApiGateway, error)

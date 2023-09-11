@@ -147,13 +147,11 @@ func main() {
 
 	clusterIdentifier, k8sVersion := extractConfigurationVariables(mgr)
 	operatorVersionProvider := operator.NewEnvVersionProvider()
-
-	// TODO: improve
 	var processorGatewayCreator processors.APIGatewayCreator = func(cbContainersCluster *operatorcontainerscarbonblackiov1.CBContainersAgent, accessToken string) (processors.APIGateway, error) {
 		return gateway.NewDefaultGatewayCreator().CreateGateway(cbContainersCluster, accessToken)
 	}
-
 	cbContainersAgentLogger := ctrl.Log.WithName("controllers").WithName("CBContainersAgent")
+
 	if err = (&controllers.CBContainersAgentController{
 		Client:              mgr.GetClient(),
 		Log:                 cbContainersAgentLogger,
@@ -179,9 +177,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: Prettify
-
-	signalsContext := ctrl.SetupSignalHandler()
 	k8sClient := mgr.GetClient()
 	log := ctrl.Log.WithName("configurator")
 	operatorVersion, err := operatorVersionProvider.GetOperatorVersion()
@@ -189,10 +184,13 @@ func main() {
 		setupLog.Error(err, "unable to read the running operator's version from environment variable")
 		os.Exit(1)
 	}
+	var configuratorGatewayCreator remote_configuration.ApiCreator = func(cbContainersCluster *operatorcontainerscarbonblackiov1.CBContainersAgent, accessToken string) (remote_configuration.ApiGateway, error) {
+		return gateway.NewDefaultGatewayCreator().CreateGateway(cbContainersCluster, accessToken)
+	}
 
 	applier := remote_configuration.NewConfigurator(
 		k8sClient,
-		remote_configuration.CBGatewayCreator,
+		configuratorGatewayCreator,
 		log,
 		operator.NewSecretAccessTokenProvider(k8sClient),
 		operatorVersion,
@@ -204,6 +202,7 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
+	signalsContext := ctrl.SetupSignalHandler()
 	go func() {
 		defer wg.Done()
 		setupLog.Info("starting manager")
