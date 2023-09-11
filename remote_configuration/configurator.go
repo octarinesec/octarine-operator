@@ -13,7 +13,7 @@ import (
 )
 
 // TODO: Split errors into visible and not visible
-// TODO: timeout setup
+// TODO: Check which type sshould be exposed
 
 const (
 	timeoutSingleIteration = time.Second * 60
@@ -86,7 +86,8 @@ func (configurator *Configurator) RunIteration(ctx context.Context) error {
 
 	apiGateway, err := configurator.createAPIGateway(ctx, cr)
 	if err != nil {
-		return err // TODO: !
+		configurator.logger.Error(err, "Failed to create a valid CB API Gateway, cannot continue")
+		return err
 	}
 
 	configurator.logger.Info("Checking for pending remote configuration changes...")
@@ -105,7 +106,8 @@ func (configurator *Configurator) RunIteration(ctx context.Context) error {
 	configurator.logger.Info("Applying remote configuration change to CBContainerAgent resource", "change", change)
 	validator, err := NewConfigurationChangeValidator(configurator.operatorVersion, apiGateway)
 	if err != nil {
-		return err // TODO
+		configurator.logger.Error(err, "Failed to create a configuration change validator")
+		return err
 	}
 
 	errApplyingCR := configurator.applyChangeToCR(ctx, apiGateway, *change, cr, validator)

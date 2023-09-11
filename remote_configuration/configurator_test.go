@@ -19,11 +19,6 @@ import (
 
 // TODO: What error data to show and what not?
 
-// TODO: Reads cluster, etc from CR correctly?
-// TODO: Review gomock.any usages here
-
-// TODO: error on compatiblity calls
-
 type configuratorMocks struct {
 	k8sClient           *k8sMocks.MockClient
 	apiGateway          *mocksConfigurator.MockApiGateway
@@ -35,7 +30,7 @@ type configuratorMocks struct {
 	stubClusterID       string
 }
 
-// setupConfigurator TODO
+// setupConfigurator sets up mocks and creates a Configurator instance with those mocks and some dummy data
 func setupConfigurator(ctrl *gomock.Controller) (*remote_configuration.Configurator, configuratorMocks) {
 	k8sClient := k8sMocks.NewMockClient(ctrl)
 	apiGateway := mocksConfigurator.NewMockApiGateway(ctrl)
