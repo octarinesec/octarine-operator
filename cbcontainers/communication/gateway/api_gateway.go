@@ -170,14 +170,41 @@ func (gateway *ApiGateway) GetCompatibilityMatrixEntryFor(operatorVersion string
 }
 
 func (gateway *ApiGateway) GetSensorMetadata() ([]models.SensorMetadata, error) {
-	// TODO
-	return nil, nil
+	type getSensorsResponse struct {
+		Sensors []models.SensorMetadata `json:"sensors"`
+	}
+
+	url := gateway.baseUrl("/setup/sensors")
+	resp, err := gateway.baseRequest().
+		SetResult(getSensorsResponse{}).
+		Get(url)
+
+	if err != nil {
+		return nil, err
+	}
+	if !resp.IsSuccess() {
+		return nil, fmt.Errorf("failed to get sensor metadata with status code (%d)", resp.StatusCode())
+	}
+
+	r, ok := resp.Result().(getSensorsResponse)
+	if !ok {
+		return nil, fmt.Errorf("malformed sensor metadata response")
+	}
+	return r.Sensors, nil
 }
 
 func (gateway *ApiGateway) GetConfigurationChanges(ctx context.Context, clusterIdentifier string) ([]models.ConfigurationChange, error) {
+	// TODO: Real implementation with CNS-2790
+	c := randomRemoteConfigChange()
+	if c != nil {
+		return []models.ConfigurationChange{*c}, nil
+
+	}
 	return nil, nil
 }
 
 func (gateway *ApiGateway) UpdateConfigurationChangeStatus(context.Context, models.ConfigurationChangeStatusUpdate) error {
+	// TODO: Real implementation with CNS-2790
+
 	return nil
 }
