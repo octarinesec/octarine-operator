@@ -102,23 +102,21 @@ func (configurator *Configurator) RunIteration(ctx context.Context) error {
 		return nil
 	}
 
-	// TODO: This is ugly...
 	configurator.logger.Info("Applying remote configuration change to CBContainerAgent resource", "change", change)
-	validator, err := NewConfigurationChangeValidator(configurator.operatorVersion, apiGateway)
-	if err != nil {
-		configurator.logger.Error(err, "Failed to create a configuration change validator")
-		return err
+	errApplyingCR := configurator.applyChangeToCR(ctx, apiGateway, *change, cr)
+	if errApplyingCR != nil {
+		configurator.logger.Error(errApplyingCR, "Failed to apply configuration changes to CBContainerAGent resource")
+		// Intentional fallthrough as we want to report the change application as failed to the backend
+	} else {
+		configurator.logger.Info("Successfully applied configuration changes to CBContainerAgent resource")
 	}
-
-	errApplyingCR := configurator.applyChangeToCR(ctx, apiGateway, *change, cr, validator)
-	// TODO: Explain
 
 	if err := configurator.updateChangeStatus(ctx, apiGateway, *change, cr, errApplyingCR); err != nil {
 		configurator.logger.Error(err, "Failed to update the status of a configuration change; it might be re-applied again in the future")
 		return err
 	}
 
-	// If we failed to apply the CR, we still report this to the backend but want to return the apply error here to propagate properly
+	// If we failed to apply the CR, we report this to the backend but want to return the apply error here to indicate a failure
 	return errApplyingCR
 }
 
@@ -159,7 +157,11 @@ func (configurator *Configurator) getPendingChange(ctx context.Context, apiGatew
 	return nil, nil
 }
 
-func (configurator *Configurator) applyChangeToCR(ctx context.Context, apiGateway ApiGateway, change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent, validator *ConfigurationChangeValidator) error {
+func (configurator *Configurator) applyChangeToCR(ctx context.Context, apiGateway ApiGateway, change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
+	validator, err := NewConfigurationChangeValidator(configurator.operatorVersion, apiGateway)
+	if err != nil {
+		return fmt.Errorf("failed to create configuration change validator")
+	}
 	if err := validator.ValidateChange(change, cr); err != nil {
 		return err
 	}
