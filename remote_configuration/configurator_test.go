@@ -17,8 +17,6 @@ import (
 	"time"
 )
 
-// TODO: What error data to show and what not?
-
 type configuratorMocks struct {
 	k8sClient           *k8sMocks.MockClient
 	apiGateway          *mocksConfigurator.MockApiGateway
@@ -140,7 +138,8 @@ func TestWhenChangeIsNotApplicableShouldReturnError(t *testing.T) {
 		DoAndReturn(func(_ context.Context, update models.ConfigurationChangeStatusUpdate) error {
 			assert.Equal(t, configChange.ID, update.ID)
 			assert.Equal(t, models.ChangeStatusFailed, update.Status)
-			assert.NotEmpty(t, update.Reason)
+			assert.NotEmpty(t, update.Error)
+			assert.NotEmpty(t, update.ErrorReason)
 			assert.Equal(t, int64(0), update.AppliedGeneration)
 			assert.Empty(t, update.AppliedTimestamp)
 			assert.Equal(t, mocks.stubClusterID, update.ClusterIdentifier)
@@ -273,7 +272,8 @@ func TestWhenUpdatingCRFailsChangeIsUpdatedAsFailed(t *testing.T) {
 		DoAndReturn(func(_ context.Context, update models.ConfigurationChangeStatusUpdate) error {
 			assert.Equal(t, configChange.ID, update.ID)
 			assert.Equal(t, models.ChangeStatusFailed, update.Status)
-			assert.NotEmpty(t, update.Reason)
+			assert.NotEmpty(t, update.Error)
+			assert.Empty(t, update.ErrorReason)
 			assert.Equal(t, int64(0), update.AppliedGeneration)
 			assert.Empty(t, update.AppliedTimestamp)
 			assert.Equal(t, mocks.stubClusterID, update.ClusterIdentifier)

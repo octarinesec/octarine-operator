@@ -2,6 +2,7 @@ package remote_configuration
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/go-logr/logr"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
@@ -11,7 +12,6 @@ import (
 	"time"
 )
 
-// TODO: Split errors into visible and not visible
 // TODO: Check which type sshould be exposed
 
 const (
@@ -175,22 +175,21 @@ func (configurator *Configurator) updateChangeStatus(
 	cr *cbcontainersv1.CBContainersAgent,
 	encounteredError error,
 ) error {
-	var statusUpdate models.ConfigurationChangeStatusUpdate
+	statusUpdate := models.ConfigurationChangeStatusUpdate{
+		ID:                change.ID,
+		ClusterIdentifier: configurator.clusterIdentifier,
+	}
+
 	if encounteredError == nil {
-		statusUpdate = models.ConfigurationChangeStatusUpdate{
-			ID:                change.ID,
-			Status:            models.ChangeStatusAcked,
-			Reason:            "", // TODO
-			AppliedGeneration: cr.Generation,
-			AppliedTimestamp:  time.Now().UTC().Format(time.RFC3339),
-			ClusterIdentifier: configurator.clusterIdentifier,
-		}
+		statusUpdate.Status = models.ChangeStatusAcked
+		statusUpdate.AppliedGeneration = cr.Generation
+		statusUpdate.AppliedTimestamp = time.Now().UTC().Format(time.RFC3339)
 	} else {
-		statusUpdate = models.ConfigurationChangeStatusUpdate{
-			ID:                change.ID,
-			Status:            models.ChangeStatusFailed,
-			Reason:            encounteredError.Error(), // TODO
-			ClusterIdentifier: configurator.clusterIdentifier,
+		statusUpdate.Status = models.ChangeStatusFailed
+		statusUpdate.Error = encounteredError.Error()
+		// Validation change is the only thing we can safely give information to the user about
+		if errors.As(encounteredError, &invalidChangeError{}) {
+			statusUpdate.ErrorReason = encounteredError.Error()
 		}
 	}
 

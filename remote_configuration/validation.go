@@ -6,8 +6,6 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 )
 
-// TODO: Move
-
 type invalidChangeError struct {
 	msg string
 }
