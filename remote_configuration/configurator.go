@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	timeoutSingleIteration = time.Second * 60
+	timeoutSingleIteration = time.Second * 120
 )
 
 type ApiGateway interface {
