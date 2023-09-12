@@ -174,7 +174,7 @@ func (gateway *ApiGateway) GetSensorMetadata() ([]models.SensorMetadata, error) 
 		Sensors []models.SensorMetadata `json:"sensors"`
 	}
 
-	url := gateway.baseUrl("/setup/sensors")
+	url := gateway.baseUrl("setup/sensors")
 	resp, err := gateway.baseRequest().
 		SetResult(getSensorsResponse{}).
 		Get(url)
@@ -186,8 +186,8 @@ func (gateway *ApiGateway) GetSensorMetadata() ([]models.SensorMetadata, error) 
 		return nil, fmt.Errorf("failed to get sensor metadata with status code (%d)", resp.StatusCode())
 	}
 
-	r, ok := resp.Result().(getSensorsResponse)
-	if !ok {
+	r, ok := resp.Result().(*getSensorsResponse)
+	if !ok || r == nil {
 		return nil, fmt.Errorf("malformed sensor metadata response")
 	}
 	return r.Sensors, nil
