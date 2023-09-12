@@ -60,12 +60,11 @@ var (
 )
 
 const (
-	NamespaceIdentifier         = "default"
-	httpProxyEnv                = "HTTP_PROXY"
-	httpsProxyEnv               = "HTTPS_PROXY"
-	noProxyEnv                  = "NO_PROXY"
-	namespaceEnv                = "OPERATOR_NAMESPACE"
-	enableRemoteConfiguratorEnv = "ENABLE_REMOTE_CONFIGURATOR"
+	NamespaceIdentifier = "default"
+	httpProxyEnv        = "HTTP_PROXY"
+	httpsProxyEnv       = "HTTPS_PROXY"
+	noProxyEnv          = "NO_PROXY"
+	namespaceEnv        = "OPERATOR_NAMESPACE"
 )
 
 func init() {
@@ -205,6 +204,7 @@ func main() {
 	signalsContext := ctrl.SetupSignalHandler()
 	go func() {
 		defer wg.Done()
+
 		setupLog.Info("starting manager")
 		if err := mgr.Start(signalsContext); err != nil {
 			setupLog.Error(err, "problem running manager")
@@ -214,13 +214,8 @@ func main() {
 	go func() {
 		defer wg.Done()
 
-		enableConfigurator := os.Getenv(enableRemoteConfiguratorEnv)
-		if enableConfigurator == "true" {
-			setupLog.Info("Starting remote configurator")
-			applierController.RunLoop(signalsContext)
-		} else {
-			setupLog.Info(fmt.Sprintf("Environment variable %s is not set to true, remote configuration feature will be disabled", enableRemoteConfiguratorEnv))
-		}
+		setupLog.Info("Starting remote configurator")
+		applierController.RunLoop(signalsContext)
 	}()
 
 	wg.Wait()

@@ -318,6 +318,29 @@ func TestWhenThereIsNoCRInstalledNothingHappens(t *testing.T) {
 			list.Items = []cbcontainersv1.CBContainersAgent{}
 		})
 
+	// No other mock calls should happen without a CR
+	assert.NoError(t, configurator.RunIteration(context.Background()))
+}
+
+func TestWhenFeatureIsDisabledInCRNothingHappens(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	configurator, mocks := setupConfigurator(ctrl)
+
+	cr := &cbcontainersv1.CBContainersAgent{
+		Spec: cbcontainersv1.CBContainersAgentSpec{
+			Components: cbcontainersv1.CBContainersComponentsSpec{
+				Settings: cbcontainersv1.CBContainersComponentsSettings{
+					RemoteConfiguration: &cbcontainersv1.CBContainersRemoteConfigurationSettings{
+						EnabledForAgent: falsePtr,
+					},
+				}},
+		},
+	}
+	setupCRInK8S(mocks.k8sClient, cr)
+
+	// No other mock calls should happen once we know the feature is disabled
 	assert.NoError(t, configurator.RunIteration(context.Background()))
 }
 

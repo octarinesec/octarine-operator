@@ -77,6 +77,13 @@ func (configurator *Configurator) RunIteration(ctx context.Context) error {
 		return nil
 	}
 
+	if remoteConfigSettings := cr.Spec.Components.Settings.RemoteConfiguration; remoteConfigSettings != nil &&
+		remoteConfigSettings.EnabledForAgent != nil &&
+		*remoteConfigSettings.EnabledForAgent == false {
+		configurator.logger.Info("Remote configuration feature is disabled, no changes will be made")
+		return nil
+
+	}
 	apiGateway, err := configurator.createAPIGateway(ctx, cr)
 	if err != nil {
 		configurator.logger.Error(err, "Failed to create a valid CB API Gateway, cannot continue")
