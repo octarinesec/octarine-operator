@@ -16,7 +16,7 @@ The Carbon Black Cloud Container Operator utilizes the operator-framework to cre
 
 | Operator version | Kubernetes Sensor Component Version | Minimum Kubernetes Version |
 |------------------|-------------------------------------|----------------------------|
-| v6.0.x           | 2.10.0, 2.11.0, 2.12.0, 3.0.0       | 1.18                       |
+| v6.0.x           | 2.10.0, 2.11.0, 2.12.0, 3.0.X       | 1.18                       |
 | v5.6.x           | 2.10.0, 2.11.0, 2.12.0              | 1.16                       |
 | v5.5.x           | 2.10.0, 2.11.0                      | 1.16                       |
 
@@ -27,7 +27,7 @@ Kubernetes 1.18+ is supported.
 
 ### From script:
 ```
-export OPERATOR_VERSION=v6.0.1
+export OPERATOR_VERSION=v6.0.2
 export OPERATOR_SCRIPT_URL=https://setup.containers.carbonblack.io/$OPERATOR_VERSION/operator-apply.sh
 curl -s $OPERATOR_SCRIPT_URL | bash
 ```
