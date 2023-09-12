@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	sleepDuration = 20 * time.Second // TODO: Increase
-	maxRetries    = 10               // 1024s or ~17 minutes at peak
+	sleepDuration = 2 * time.Minute
+	maxRetries    = 10 // 1024s or ~17 minutes at peak
 )
 
 type configurationApplier interface {
