@@ -158,7 +158,7 @@ func (configurator *Configurator) getPendingChange(ctx context.Context, apiGatew
 func (configurator *Configurator) applyChangeToCR(ctx context.Context, apiGateway ApiGateway, change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
 	validator, err := NewConfigurationChangeValidator(configurator.operatorVersion, apiGateway)
 	if err != nil {
-		return fmt.Errorf("failed to create configuration change validator")
+		return fmt.Errorf("failed to create configuration change validator; %w", err)
 	}
 	if err := validator.ValidateChange(change, cr); err != nil {
 		return err
