@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-// TODO: Check which type sshould be exposed
-
 const (
 	timeoutSingleIteration = time.Second * 60
 )
@@ -165,8 +163,7 @@ func (configurator *Configurator) applyChangeToCR(ctx context.Context, apiGatewa
 	if err := validator.ValidateChange(change, cr); err != nil {
 		return err
 	}
-	c := ChangeApplier{}
-	c.ApplyConfigChangeToCR(change, cr)
+	ApplyConfigChangeToCR(change, cr)
 	return configurator.k8sClient.Update(ctx, cr)
 }
 

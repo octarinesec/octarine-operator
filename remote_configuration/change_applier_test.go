@@ -123,17 +123,10 @@ func TestFeatureTogglesAreAppliedCorrectly(t *testing.T) {
 	testCases = append(testCases, runtimeToggleTestCases...)
 	testCases = append(testCases, cndrToggleTestCases...)
 
-	t1 := testCases[0]
-	t2 := testCases[1]
-	t3 := testCases[2]
 	for _, testCase := range testCases {
 		testCase := testCase
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Log(t1, t2, t3)
-
-			target := remote_configuration.ChangeApplier{}
-
-			target.ApplyConfigChangeToCR(testCase.change, &testCase.initialCR)
+			remote_configuration.ApplyConfigChangeToCR(testCase.change, &testCase.initialCR)
 			testCase.assertFinalCR(t, testCase.initialCR)
 		})
 	}
@@ -145,9 +138,7 @@ func TestVersionIsAppliedCorrectly(t *testing.T) {
 	cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: originalVersion}}
 	change := models.ConfigurationChange{AgentVersion: &newVersion}
 
-	target := remote_configuration.ChangeApplier{}
-
-	target.ApplyConfigChangeToCR(change, &cr)
+	remote_configuration.ApplyConfigChangeToCR(change, &cr)
 	assert.Equal(t, newVersion, cr.Spec.Version)
 }
 
@@ -156,8 +147,7 @@ func TestMissingVersionDoesNotModifyCR(t *testing.T) {
 	cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: originalVersion}}
 	change := models.ConfigurationChange{AgentVersion: nil, EnableRuntime: truePtr}
 
-	target := remote_configuration.ChangeApplier{}
-	target.ApplyConfigChangeToCR(change, &cr)
+	remote_configuration.ApplyConfigChangeToCR(change, &cr)
 	assert.Equal(t, originalVersion, cr.Spec.Version)
 
 }
@@ -222,9 +212,7 @@ func TestVersionOverwritesCustomTagsByRemovingThem(t *testing.T) {
 	newVersion := "new-version"
 	change := models.ConfigurationChange{AgentVersion: &newVersion}
 
-	target := remote_configuration.ChangeApplier{}
-
-	target.ApplyConfigChangeToCR(change, &cr)
+	remote_configuration.ApplyConfigChangeToCR(change, &cr)
 	assert.Equal(t, newVersion, cr.Spec.Version)
 	// To avoid keeping "custom" tags forever, the apply change should instead reset all such fields
 	// => the operator will use the common version instead

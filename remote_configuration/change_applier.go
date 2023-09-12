@@ -5,9 +5,8 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 )
 
-type ChangeApplier struct{}
-
-func (applier ChangeApplier) ApplyConfigChangeToCR(change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) {
+// ApplyConfigChangeToCR will modify CR according to the values in the configuration change provided
+func ApplyConfigChangeToCR(change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) {
 	resetVersion := func(ptrToField *string) {
 		if ptrToField != nil && *ptrToField != "" {
 			*ptrToField = ""
