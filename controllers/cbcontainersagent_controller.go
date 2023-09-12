@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"time"
 
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/adapters"
@@ -46,6 +45,7 @@ const (
 
 type StateApplier interface {
 	ApplyDesiredState(ctx context.Context, agentSpec *cbcontainersv1.CBContainersAgentSpec, secret *models.RegistrySecretValues, setOwner applymentOptions.OwnerSetter) (bool, error)
+	ShouldProcessEvent(client.Object) bool
 }
 
 type AgentProcessor interface {
@@ -185,7 +185,7 @@ func (r *CBContainersAgentController) updateCRStatus(ctx context.Context, cbCont
 func (r *CBContainersAgentController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&cbcontainersv1.CBContainersAgent{}).
-		WithEventFilter(predicate.GenerationChangedPredicate{}).
+		WithEventFilter(NewCBContainersGenerationChangedPredicate(r.StateApplier)).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Secret{}).
 		Owns(adapters.EmptyPriorityClassForVersion(r.K8sVersion)).

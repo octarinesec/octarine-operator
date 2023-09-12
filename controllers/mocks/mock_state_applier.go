@@ -12,6 +12,7 @@ import (
 	v1 "github.com/vmware/cbcontainers-operator/api/v1"
 	models "github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	options "github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment/options"
+	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // MockStateApplier is a mock of StateApplier interface.
@@ -50,4 +51,18 @@ func (m *MockStateApplier) ApplyDesiredState(arg0 context.Context, arg1 *v1.CBCo
 func (mr *MockStateApplierMockRecorder) ApplyDesiredState(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyDesiredState", reflect.TypeOf((*MockStateApplier)(nil).ApplyDesiredState), arg0, arg1, arg2, arg3)
+}
+
+// ShouldProcessEvent mocks base method.
+func (m *MockStateApplier) ShouldProcessEvent(arg0 client.Object) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ShouldProcessEvent", arg0)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// ShouldProcessEvent indicates an expected call of ShouldProcessEvent.
+func (mr *MockStateApplierMockRecorder) ShouldProcessEvent(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShouldProcessEvent", reflect.TypeOf((*MockStateApplier)(nil).ShouldProcessEvent), arg0)
 }
