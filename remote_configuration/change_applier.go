@@ -7,24 +7,26 @@ import (
 
 // ApplyConfigChangeToCR will modify CR according to the values in the configuration change provided
 func ApplyConfigChangeToCR(change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) {
-	resetVersion := func(ptrToField *string) {
-		if ptrToField != nil && *ptrToField != "" {
-			*ptrToField = ""
-		}
-	}
-
 	if change.AgentVersion != nil {
 		cr.Spec.Version = *change.AgentVersion
 
-		resetVersion(&cr.Spec.Components.Basic.Monitor.Image.Tag)
-		resetVersion(&cr.Spec.Components.Basic.Enforcer.Image.Tag)
-		resetVersion(&cr.Spec.Components.Basic.StateReporter.Image.Tag)
-		resetVersion(&cr.Spec.Components.ClusterScanning.ImageScanningReporter.Image.Tag)
-		resetVersion(&cr.Spec.Components.ClusterScanning.ClusterScannerAgent.Image.Tag)
-		resetVersion(&cr.Spec.Components.RuntimeProtection.Sensor.Image.Tag)
-		resetVersion(&cr.Spec.Components.RuntimeProtection.Resolver.Image.Tag)
+		// We do not set the tag to the version as that would make it harder to upgrade manually
+		// Instead, we reset any "custom" tags, which will fall back to the default (spec.Version)
+		images := []*cbcontainersv1.CBContainersImageSpec{
+			&cr.Spec.Components.Basic.Monitor.Image,
+			&cr.Spec.Components.Basic.Enforcer.Image,
+			&cr.Spec.Components.Basic.StateReporter.Image,
+			&cr.Spec.Components.ClusterScanning.ImageScanningReporter.Image,
+			&cr.Spec.Components.ClusterScanning.ClusterScannerAgent.Image,
+			&cr.Spec.Components.RuntimeProtection.Sensor.Image,
+			&cr.Spec.Components.RuntimeProtection.Resolver.Image,
+		}
 		if cr.Spec.Components.Cndr != nil {
-			resetVersion(&cr.Spec.Components.Cndr.Sensor.Image.Tag)
+			images = append(images, &cr.Spec.Components.Cndr.Sensor.Image)
+		}
+
+		for _, i := range images {
+			i.Tag = ""
 		}
 	}
 	if change.EnableClusterScanning != nil {
