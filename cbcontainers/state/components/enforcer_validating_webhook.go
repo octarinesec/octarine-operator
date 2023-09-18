@@ -135,12 +135,6 @@ func (obj *EnforcerValidatingWebhookK8sObject) mutateResourcesWebhook(resourcesW
 }
 
 func (obj *EnforcerValidatingWebhookK8sObject) getResourcesNamespaceSelector(selector *metav1.LabelSelector) *metav1.LabelSelector {
-	octarineIgnore := metav1.LabelSelectorRequirement{
-		Key:      "octarine",
-		Operator: metav1.LabelSelectorOpNotIn,
-		Values:   []string{"ignore"},
-	}
-
 	agentNamespace := metav1.LabelSelectorRequirement{
 		// See https://kubernetes.io/docs/reference/labels-annotations-taints/#kubernetes-io-metadata-name
 		// This is the label that always matches the namespace name
@@ -154,22 +148,18 @@ func (obj *EnforcerValidatingWebhookK8sObject) getResourcesNamespaceSelector(sel
 	if selector == nil || selector.MatchExpressions == nil || len(selector.MatchExpressions) != 2 {
 		initializeLabelSelector = true
 	} else {
-		octarineIgnoreFound := false
 		cbContainersNamespaceFound := false
 		for _, requirement := range selector.MatchExpressions {
-			if reflect.DeepEqual(requirement, octarineIgnore) {
-				octarineIgnoreFound = true
-			}
 			if reflect.DeepEqual(requirement, agentNamespace) {
 				cbContainersNamespaceFound = true
 			}
 		}
-		initializeLabelSelector = !octarineIgnoreFound || !cbContainersNamespaceFound
+		initializeLabelSelector = !cbContainersNamespaceFound
 	}
 
 	if initializeLabelSelector {
 		return &metav1.LabelSelector{
-			MatchExpressions: []metav1.LabelSelectorRequirement{octarineIgnore, agentNamespace},
+			MatchExpressions: []metav1.LabelSelectorRequirement{agentNamespace},
 		}
 	}
 
