@@ -83,6 +83,9 @@ type CBContainersComponentsSettings struct {
 	// care of determining the necessary `NO_PROXY` settings.
 	//
 	Proxy *CBContainersProxySettings `json:"proxy,omitempty"`
+
+	// RemoteConfiguration holds settings for the operator/agent's feature to apply configuration changes via the Carbon black console
+	RemoteConfiguration *CBContainersRemoteConfigurationSettings `json:"remoteConfiguration,omitempty"`
 }
 
 func (s CBContainersComponentsSettings) ShouldCreateDefaultImagePullSecrets() bool {
@@ -124,6 +127,14 @@ type CBContainersProxySettings struct {
 	// cbcontainers-dataplane.svc.cluster.local). It's exposed more as a means by which to control
 	// the defaults.
 	NoProxySuffix *string `json:"noProxySuffix,omitempty"`
+}
+
+// CBContainersRemoteConfigurationSettings holds settings for the operator/agent's feature to apply configuration changes via the Carbon black console
+type CBContainersRemoteConfigurationSettings struct {
+	// EnabledForAgent turns the feature to change agent configuration remotely (as opposed to operator configuration)
+	//
+	// +kubebuilder:default:=true
+	EnabledForAgent *bool `json:"enabledForAgent,omitempty"`
 }
 
 // CBContainersAgentStatus defines the observed state of CBContainersAgent

@@ -9,30 +9,28 @@ import (
 	"testing"
 	"time"
 
-	logrTesting "github.com/go-logr/logr/testing"
+	logrTesting "github.com/go-logr/logr/testr"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
-	commonState "github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/test_utils"
 	testUtilsMocks "github.com/vmware/cbcontainers-operator/cbcontainers/test_utils/mocks"
 	"github.com/vmware/cbcontainers-operator/controllers"
 	"github.com/vmware/cbcontainers-operator/controllers/mocks"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrlRuntime "sigs.k8s.io/controller-runtime"
 )
 
 type SetupClusterControllerTest func(*ClusterControllerTestMocks)
 
 type ClusterControllerTestMocks struct {
-	client           *testUtilsMocks.MockClient
-	statusWriter     *testUtilsMocks.MockStatusWriter
-	clusterProcessor *mocks.MockClusterProcessor
-	stateApplier     *mocks.MockStateApplier
-	ctx              context.Context
+	client              *testUtilsMocks.MockClient
+	statusWriter        *testUtilsMocks.MockStatusWriter
+	accessTokenProvider *mocks.MockAccessTokenProvider
+	mockAgentProcessor  *mocks.MockAgentProcessor
+	stateApplier        *mocks.MockStateApplier
+	ctx                 context.Context
 }
 
 const (
@@ -70,11 +68,12 @@ func testCBContainersClusterController(t *testing.T, setups ...SetupClusterContr
 	mockK8SClient.EXPECT().Status().Return(mockStatusWriter).AnyTimes()
 
 	mocksObjects := &ClusterControllerTestMocks{
-		ctx:              context.TODO(),
-		client:           mockK8SClient,
-		statusWriter:     mockStatusWriter,
-		clusterProcessor: mocks.NewMockClusterProcessor(ctrl),
-		stateApplier:     mocks.NewMockStateApplier(ctrl),
+		ctx:                 context.TODO(),
+		client:              mockK8SClient,
+		statusWriter:        mockStatusWriter,
+		accessTokenProvider: mocks.NewMockAccessTokenProvider(ctrl),
+		mockAgentProcessor:  mocks.NewMockAgentProcessor(ctrl),
+		stateApplier:        mocks.NewMockStateApplier(ctrl),
 	}
 
 	for _, setup := range setups {
@@ -83,12 +82,13 @@ func testCBContainersClusterController(t *testing.T, setups ...SetupClusterContr
 
 	controller := &controllers.CBContainersAgentController{
 		Client:    mocksObjects.client,
-		Log:       logrTesting.NewTestLogger(t),
+		Log:       logrTesting.New(t),
 		Scheme:    &runtime.Scheme{},
 		Namespace: agentNamespace,
 
-		ClusterProcessor: mocksObjects.clusterProcessor,
-		StateApplier:     mocksObjects.stateApplier,
+		AccessTokenProvider: mocksObjects.accessTokenProvider,
+		ClusterProcessor:    mocksObjects.mockAgentProcessor,
+		StateApplier:        mocksObjects.stateApplier,
 	}
 
 	return controller.Reconcile(mocksObjects.ctx, ctrlRuntime.Request{})
@@ -109,15 +109,11 @@ func setupClusterCustomResource(items ...cbcontainersv1.CBContainersAgent) Setup
 	}
 }
 
-func setUpTokenSecretValues(testMocks *ClusterControllerTestMocks) {
-	accessTokenSecretNamespacedName := types.NamespacedName{Name: ClusterAccessTokenSecretName, Namespace: agentNamespace}
-	testMocks.client.EXPECT().Get(testMocks.ctx, accessTokenSecretNamespacedName, &corev1.Secret{}).
-		Do(func(ctx context.Context, namespacedName types.NamespacedName, secret *corev1.Secret, _ ...interface{}) {
-			secret.Data = map[string][]byte{
-				commonState.AccessTokenSecretKeyName: []byte(MyClusterTokenValue),
-			}
-		}).
-		Return(nil)
+func setUpAccessToken(testMocks *ClusterControllerTestMocks) {
+	testMocks.accessTokenProvider.
+		EXPECT().
+		GetCBAccessToken(testMocks.ctx, gomock.AssignableToTypeOf(&cbcontainersv1.CBContainersAgent{}), agentNamespace).
+		Return(MyClusterTokenValue, nil)
 }
 
 func TestListClusterResourcesErrorShouldReturnError(t *testing.T) {
@@ -152,8 +148,10 @@ func TestFindingMoreThanOneClusterResourceShouldReturnError(t *testing.T) {
 
 func TestGetTokenSecretErrorShouldReturnError(t *testing.T) {
 	_, err := testCBContainersClusterController(t, setupClusterCustomResource(), func(testMocks *ClusterControllerTestMocks) {
-		accessTokenSecretNamespacedName := types.NamespacedName{Name: ClusterAccessTokenSecretName, Namespace: agentNamespace}
-		testMocks.client.EXPECT().Get(testMocks.ctx, accessTokenSecretNamespacedName, &corev1.Secret{}).Return(fmt.Errorf(""))
+		testMocks.accessTokenProvider.
+			EXPECT().
+			GetCBAccessToken(testMocks.ctx, gomock.AssignableToTypeOf(&cbcontainersv1.CBContainersAgent{}), agentNamespace).
+			Return("", fmt.Errorf("some error"))
 	})
 
 	require.Error(t, err)
@@ -161,8 +159,10 @@ func TestGetTokenSecretErrorShouldReturnError(t *testing.T) {
 
 func TestTokenSecretWithoutTokenValueShouldReturnError(t *testing.T) {
 	_, err := testCBContainersClusterController(t, setupClusterCustomResource(), func(testMocks *ClusterControllerTestMocks) {
-		accessTokenSecretNamespacedName := types.NamespacedName{Name: ClusterAccessTokenSecretName, Namespace: agentNamespace}
-		testMocks.client.EXPECT().Get(testMocks.ctx, accessTokenSecretNamespacedName, &corev1.Secret{}).Return(nil)
+		testMocks.accessTokenProvider.
+			EXPECT().
+			GetCBAccessToken(testMocks.ctx, gomock.AssignableToTypeOf(&cbcontainersv1.CBContainersAgent{}), agentNamespace).
+			Return("", nil)
 	})
 
 	require.Error(t, err)
@@ -172,16 +172,16 @@ func TestClusterReconcile(t *testing.T) {
 	secretValues := &models.RegistrySecretValues{Data: map[string][]byte{test_utils.RandomString(): {}}}
 
 	t.Run("When processor returns error, reconcile should return error", func(t *testing.T) {
-		_, err := testCBContainersClusterController(t, setupClusterCustomResource(), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
-			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&ClusterCustomResourceItems[0]), MyClusterTokenValue).Return(nil, fmt.Errorf(""))
+		_, err := testCBContainersClusterController(t, setupClusterCustomResource(), setUpAccessToken, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.mockAgentProcessor.EXPECT().Process(MatchAgentResource(&ClusterCustomResourceItems[0]), MyClusterTokenValue).Return(nil, fmt.Errorf(""))
 		})
 
 		require.Error(t, err)
 	})
 
 	t.Run("When state applier returns error, reconcile should return error", func(t *testing.T) {
-		_, err := testCBContainersClusterController(t, setupClusterCustomResource(), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
-			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&ClusterCustomResourceItems[0]), MyClusterTokenValue).Return(secretValues, nil)
+		_, err := testCBContainersClusterController(t, setupClusterCustomResource(), setUpAccessToken, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.mockAgentProcessor.EXPECT().Process(MatchAgentResource(&ClusterCustomResourceItems[0]), MyClusterTokenValue).Return(secretValues, nil)
 			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&ClusterCustomResourceItems[0].Spec), secretValues, gomock.Any()).Return(false, fmt.Errorf(""))
 		})
 
@@ -189,8 +189,8 @@ func TestClusterReconcile(t *testing.T) {
 	})
 
 	t.Run("When state applier returns state was changed, reconcile should return Requeue true", func(t *testing.T) {
-		result, err := testCBContainersClusterController(t, setupClusterCustomResource(), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
-			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&ClusterCustomResourceItems[0]), MyClusterTokenValue).Return(secretValues, nil)
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(), setUpAccessToken, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.mockAgentProcessor.EXPECT().Process(MatchAgentResource(&ClusterCustomResourceItems[0]), MyClusterTokenValue).Return(secretValues, nil)
 			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&ClusterCustomResourceItems[0].Spec), secretValues, gomock.Any()).Return(true, nil)
 		})
 
@@ -199,8 +199,8 @@ func TestClusterReconcile(t *testing.T) {
 	})
 
 	t.Run("When state applier returns state was not changed, reconcile should return default Requeue", func(t *testing.T) {
-		result, err := testCBContainersClusterController(t, setupClusterCustomResource(), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
-			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&ClusterCustomResourceItems[0]), MyClusterTokenValue).Return(secretValues, nil)
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(), setUpAccessToken, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.mockAgentProcessor.EXPECT().Process(MatchAgentResource(&ClusterCustomResourceItems[0]), MyClusterTokenValue).Return(secretValues, nil)
 			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&ClusterCustomResourceItems[0].Spec), secretValues, gomock.Any()).Return(false, nil)
 		})
 
@@ -217,8 +217,8 @@ func TestStatusUpdates(t *testing.T) {
 		resourceWithStatus.ObjectMeta.Generation = 2
 		resourceWithStatus.Status.ObservedGeneration = 1
 
-		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceWithStatus), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
-			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&resourceWithStatus), MyClusterTokenValue).Return(secretValues, nil)
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceWithStatus), setUpAccessToken, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.mockAgentProcessor.EXPECT().Process(MatchAgentResource(&resourceWithStatus), MyClusterTokenValue).Return(secretValues, nil)
 			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&resourceWithStatus.Spec), secretValues, gomock.Any()).Return(true, nil)
 			testMocks.statusWriter.EXPECT().Update(gomock.Any(), gomock.Any()).MaxTimes(0)
 		})
@@ -232,8 +232,8 @@ func TestStatusUpdates(t *testing.T) {
 		resourceWithStatus.ObjectMeta.Generation = 1
 		resourceWithStatus.Status.ObservedGeneration = 1
 
-		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceWithStatus), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
-			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&resourceWithStatus), MyClusterTokenValue).Return(secretValues, nil)
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceWithStatus), setUpAccessToken, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.mockAgentProcessor.EXPECT().Process(MatchAgentResource(&resourceWithStatus), MyClusterTokenValue).Return(secretValues, nil)
 			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&resourceWithStatus.Spec), secretValues, gomock.Any()).Return(false, nil)
 			testMocks.statusWriter.EXPECT().Update(gomock.Any(), gomock.Any()).MaxTimes(0)
 		})
@@ -250,8 +250,8 @@ func TestStatusUpdates(t *testing.T) {
 		expectedResourceWithUpdatedStatus := resourceBeforeReconcile
 		expectedResourceWithUpdatedStatus.Status.ObservedGeneration = expectedResourceWithUpdatedStatus.Generation
 
-		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceBeforeReconcile), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
-			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&resourceBeforeReconcile), MyClusterTokenValue).Return(secretValues, nil)
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceBeforeReconcile), setUpAccessToken, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.mockAgentProcessor.EXPECT().Process(MatchAgentResource(&resourceBeforeReconcile), MyClusterTokenValue).Return(secretValues, nil)
 			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&resourceBeforeReconcile.Spec), secretValues, gomock.Any()).Return(false, nil)
 			testMocks.statusWriter.EXPECT().Update(testMocks.ctx, MatchAgentResource(&expectedResourceWithUpdatedStatus), gomock.Any()).Times(1).Return(nil)
 		})
@@ -268,8 +268,8 @@ func TestStatusUpdates(t *testing.T) {
 		expectedResourceWithUpdatedStatus := resourceBeforeReconcile
 		expectedResourceWithUpdatedStatus.Status.ObservedGeneration = expectedResourceWithUpdatedStatus.Generation
 
-		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceBeforeReconcile), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
-			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&resourceBeforeReconcile), MyClusterTokenValue).Return(secretValues, nil)
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceBeforeReconcile), setUpAccessToken, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.mockAgentProcessor.EXPECT().Process(MatchAgentResource(&resourceBeforeReconcile), MyClusterTokenValue).Return(secretValues, nil)
 			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&resourceBeforeReconcile.Spec), secretValues, gomock.Any()).Return(false, nil)
 			testMocks.statusWriter.EXPECT().Update(testMocks.ctx, MatchAgentResource(&expectedResourceWithUpdatedStatus), gomock.Any()).Return(k8sErrors.NewConflict(schema.GroupResource{}, "conflict", nil))
 		})
@@ -286,8 +286,8 @@ func TestStatusUpdates(t *testing.T) {
 		expectedResourceWithUpdatedStatus := resourceBeforeReconcile
 		expectedResourceWithUpdatedStatus.Status.ObservedGeneration = expectedResourceWithUpdatedStatus.Generation
 
-		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceBeforeReconcile), setUpTokenSecretValues, func(testMocks *ClusterControllerTestMocks) {
-			testMocks.clusterProcessor.EXPECT().Process(MatchAgentResource(&resourceBeforeReconcile), MyClusterTokenValue).Return(secretValues, nil)
+		result, err := testCBContainersClusterController(t, setupClusterCustomResource(resourceBeforeReconcile), setUpAccessToken, func(testMocks *ClusterControllerTestMocks) {
+			testMocks.mockAgentProcessor.EXPECT().Process(MatchAgentResource(&resourceBeforeReconcile), MyClusterTokenValue).Return(secretValues, nil)
 			testMocks.stateApplier.EXPECT().ApplyDesiredState(testMocks.ctx, MatchAgentSpec(&resourceBeforeReconcile.Spec), secretValues, gomock.Any()).Return(false, nil)
 			testMocks.statusWriter.EXPECT().Update(testMocks.ctx, MatchAgentResource(&expectedResourceWithUpdatedStatus), gomock.Any()).Return(fmt.Errorf("some error"))
 		})

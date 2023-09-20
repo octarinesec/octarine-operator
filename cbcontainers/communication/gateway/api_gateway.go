@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -15,6 +16,8 @@ import (
 var (
 	ErrGettingOperatorCompatibility = errors.New("error while getting the operator compatibility")
 )
+
+// TODO: Extract the cluster group + name + ID as separate struct identifying a cluster and used together
 
 type ApiGateway struct {
 	account         string
@@ -164,4 +167,46 @@ func (gateway *ApiGateway) GetCompatibilityMatrixEntryFor(operatorVersion string
 	}
 
 	return r, nil
+}
+
+func (gateway *ApiGateway) GetSensorMetadata() ([]models.SensorMetadata, error) {
+	type getSensorsResponse struct {
+		Sensors []models.SensorMetadata `json:"sensors"`
+	}
+
+	url := gateway.baseUrl("setup/sensors")
+	resp, err := gateway.baseRequest().
+		SetResult(getSensorsResponse{}).
+		Get(url)
+
+	if err != nil {
+		return nil, err
+	}
+	if !resp.IsSuccess() {
+		return nil, fmt.Errorf("failed to get sensor metadata with status code (%d)", resp.StatusCode())
+	}
+
+	r, ok := resp.Result().(*getSensorsResponse)
+	if !ok || r == nil {
+		return nil, fmt.Errorf("malformed sensor metadata response")
+	}
+	return r.Sensors, nil
+}
+
+// GetConfigurationChanges returns a list of configuration changes for the cluster
+func (gateway *ApiGateway) GetConfigurationChanges(ctx context.Context, clusterIdentifier string) ([]models.ConfigurationChange, error) {
+	// TODO: Real implementation with CNS-2790
+	c := randomRemoteConfigChange()
+	if c != nil {
+		return []models.ConfigurationChange{*c}, nil
+
+	}
+	return nil, nil
+}
+
+// UpdateConfigurationChangeStatus either acknowledges a remote configuration change applied to the cluster or marks the attempt as a failure
+func (gateway *ApiGateway) UpdateConfigurationChangeStatus(context.Context, models.ConfigurationChangeStatusUpdate) error {
+	// TODO: Real implementation with CNS-2790
+
+	return nil
 }
