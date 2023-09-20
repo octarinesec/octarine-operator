@@ -21,6 +21,6 @@ func (c OperatorCompatibility) CheckCompatibility(agentVersion string) error {
 		return fmt.Errorf("agent version too low, downgrade the operator to use that agent version: min is [%s], desired is [%s]", c.MinAgent, agentVersion)
 	}
 
-	// if we are here it means the operator and the agent version are compatibile
+	// if we are here it means the operator and the agent version are compatible
 	return nil
 }
