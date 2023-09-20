@@ -193,6 +193,7 @@ func (gateway *ApiGateway) GetSensorMetadata() ([]models.SensorMetadata, error) 
 	return r.Sensors, nil
 }
 
+// GetConfigurationChanges returns a list of configuration changes for the cluster
 func (gateway *ApiGateway) GetConfigurationChanges(ctx context.Context, clusterIdentifier string) ([]models.ConfigurationChange, error) {
 	// TODO: Real implementation with CNS-2790
 	c := randomRemoteConfigChange()
@@ -203,6 +204,7 @@ func (gateway *ApiGateway) GetConfigurationChanges(ctx context.Context, clusterI
 	return nil, nil
 }
 
+// UpdateConfigurationChangeStatus either acknowledges a remote configuration change applied to the cluster or marks the attempt as a failure
 func (gateway *ApiGateway) UpdateConfigurationChangeStatus(context.Context, models.ConfigurationChangeStatusUpdate) error {
 	// TODO: Real implementation with CNS-2790
 
