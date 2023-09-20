@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/remote_configuration"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/remote_configuration/mocks"
 	k8sMocks "github.com/vmware/cbcontainers-operator/cbcontainers/test_utils/mocks"
-	"github.com/vmware/cbcontainers-operator/remote_configuration"
-	mocksConfigurator "github.com/vmware/cbcontainers-operator/remote_configuration/mocks"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 	"time"
@@ -19,8 +19,8 @@ import (
 
 type configuratorMocks struct {
 	k8sClient           *k8sMocks.MockClient
-	apiGateway          *mocksConfigurator.MockApiGateway
-	accessTokenProvider *mocksConfigurator.MockAccessTokenProvider
+	apiGateway          *mocks.MockApiGateway
+	accessTokenProvider *mocks.MockAccessTokenProvider
 
 	stubAccessToken     string
 	stubOperatorVersion string
@@ -31,8 +31,8 @@ type configuratorMocks struct {
 // setupConfigurator sets up mocks and creates a Configurator instance with those mocks and some dummy data
 func setupConfigurator(ctrl *gomock.Controller) (*remote_configuration.Configurator, configuratorMocks) {
 	k8sClient := k8sMocks.NewMockClient(ctrl)
-	apiGateway := mocksConfigurator.NewMockApiGateway(ctrl)
-	accessTokenProvider := mocksConfigurator.NewMockAccessTokenProvider(ctrl)
+	apiGateway := mocks.NewMockApiGateway(ctrl)
+	accessTokenProvider := mocks.NewMockAccessTokenProvider(ctrl)
 
 	var mockAPIProvider remote_configuration.ApiCreator = func(
 		cbContainersCluster *cbcontainersv1.CBContainersAgent,
@@ -373,7 +373,7 @@ func setupUpdateCRMock(t *testing.T, mock *k8sMocks.MockClient, assert func(*cbc
 		})
 }
 
-func setupValidCompatibilityData(mockGateway *mocksConfigurator.MockApiGateway, sensorVersion, operatorVersion string) {
+func setupValidCompatibilityData(mockGateway *mocks.MockApiGateway, sensorVersion, operatorVersion string) {
 	mockGateway.EXPECT().GetSensorMetadata().Return([]models.SensorMetadata{{
 		Version:                 sensorVersion,
 		SupportsRuntime:         true,

@@ -1,4 +1,4 @@
-package remote_configuration
+package controllers
 
 import (
 	"context"

@@ -22,12 +22,12 @@ import (
 	"flag"
 	"fmt"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/communication/gateway"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/remote_configuration"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/operator"
-	"github.com/vmware/cbcontainers-operator/remote_configuration"
 	"go.uber.org/zap/zapcore"
 	coreV1 "k8s.io/api/core/v1"
 	"os"
@@ -196,7 +196,7 @@ func main() {
 		operatorNamespace,
 		clusterIdentifier,
 	)
-	applierController := remote_configuration.NewRemoteConfigurationController(applier, log)
+	applierController := controllers.NewRemoteConfigurationController(applier, log)
 
 	var wg sync.WaitGroup
 	wg.Add(2)

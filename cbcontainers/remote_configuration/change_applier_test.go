@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
-	"github.com/vmware/cbcontainers-operator/remote_configuration"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/remote_configuration"
 	"math/rand"
 	"strconv"
 	"testing"
