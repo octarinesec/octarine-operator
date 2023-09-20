@@ -504,6 +504,9 @@ users:
 
 ### Uninstalling on Openshift
 
+Add this SecurityContextConstraints
+before running the operator uninstall command
+
 ```yaml
 kind: SecurityContextConstraints
 apiVersion: security.openshift.io/v1
