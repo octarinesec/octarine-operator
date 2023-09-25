@@ -84,7 +84,7 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 	configChange.AgentVersion = &expectedAgentVersion
 
 	setupCRInK8S(mocks.k8sClient, cr)
-	setupValidCompatibilityData(mocks.apiGateway, expectedAgentVersion, mocks.stubOperatorVersion)
+	setupValidCompatibilityData(mocks.apiGateway, mocks.stubOperatorVersion)
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{configChange}, nil)
 
 	// Setup mock assertions
@@ -127,7 +127,6 @@ func TestWhenChangeIsNotApplicableShouldReturnError(t *testing.T) {
 
 	// Setup invalid compatibility; no need to do full verification here - this is what the validator tests are for
 	// We just want to check that _some_ validation happens
-	mocks.apiGateway.EXPECT().GetSensorMetadata().Return([]models.SensorMetadata{{Version: agentVersion}}, nil)
 	mocks.apiGateway.EXPECT().GetCompatibilityMatrixEntryFor(mocks.stubOperatorVersion).Return(&models.OperatorCompatibility{
 		MinAgent: models.AgentMinVersionNone,
 		MaxAgent: models.AgentVersion(maxAgentVersionForOperator),
@@ -206,7 +205,7 @@ func TestWhenThereAreMultiplePendingChangesTheOldestIsSelected(t *testing.T) {
 
 	setupCRInK8S(mocks.k8sClient, nil)
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{newerChange, olderChange}, nil)
-	setupValidCompatibilityData(mocks.apiGateway, expectedVersion, mocks.stubOperatorVersion)
+	setupValidCompatibilityData(mocks.apiGateway, mocks.stubOperatorVersion)
 
 	setupUpdateCRMock(t, mocks.k8sClient, func(agent *cbcontainersv1.CBContainersAgent) {
 		assert.Equal(t, expectedVersion, agent.Spec.Version)
@@ -263,7 +262,7 @@ func TestWhenUpdatingCRFailsChangeIsUpdatedAsFailed(t *testing.T) {
 
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{configChange}, nil)
 	setupCRInK8S(mocks.k8sClient, nil)
-	setupValidCompatibilityData(mocks.apiGateway, *configChange.AgentVersion, mocks.stubOperatorVersion)
+	setupValidCompatibilityData(mocks.apiGateway, mocks.stubOperatorVersion)
 
 	errFromService := errors.New("some error")
 	mocks.k8sClient.EXPECT().Update(gomock.Any(), gomock.Any()).Return(errFromService)
@@ -295,7 +294,7 @@ func TestWhenUpdatingStatusToBackendFailsShouldReturnError(t *testing.T) {
 	configChange := randomPendingConfigChange()
 
 	setupCRInK8S(mocks.k8sClient, nil)
-	setupValidCompatibilityData(mocks.apiGateway, *configChange.AgentVersion, mocks.stubOperatorVersion)
+	setupValidCompatibilityData(mocks.apiGateway, mocks.stubOperatorVersion)
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{configChange}, nil)
 	mocks.k8sClient.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
@@ -328,12 +327,13 @@ func TestWhenFeatureIsDisabledInCRNothingHappens(t *testing.T) {
 
 	configurator, mocks := setupConfigurator(ctrl)
 
+	fal := false
 	cr := &cbcontainersv1.CBContainersAgent{
 		Spec: cbcontainersv1.CBContainersAgentSpec{
 			Components: cbcontainersv1.CBContainersComponentsSpec{
 				Settings: cbcontainersv1.CBContainersComponentsSettings{
 					RemoteConfiguration: &cbcontainersv1.CBContainersRemoteConfigurationSettings{
-						EnabledForAgent: falsePtr,
+						EnabledForAgent: &fal,
 					},
 				}},
 		},
@@ -373,17 +373,9 @@ func setupUpdateCRMock(t *testing.T, mock *k8sMocks.MockClient, assert func(*cbc
 		})
 }
 
-func setupValidCompatibilityData(mockGateway *mocks.MockApiGateway, sensorVersion, operatorVersion string) {
-	mockGateway.EXPECT().GetSensorMetadata().Return([]models.SensorMetadata{{
-		Version:                 sensorVersion,
-		SupportsRuntime:         true,
-		SupportsClusterScanning: true,
-		SupportsCndr:            true,
-	}}, nil)
-
+func setupValidCompatibilityData(mockGateway *mocks.MockApiGateway, operatorVersion string) {
 	mockGateway.EXPECT().GetCompatibilityMatrixEntryFor(operatorVersion).Return(&models.OperatorCompatibility{
 		MinAgent: models.AgentMinVersionNone,
 		MaxAgent: models.AgentMaxVersionLatest,
 	}, nil)
-
 }
