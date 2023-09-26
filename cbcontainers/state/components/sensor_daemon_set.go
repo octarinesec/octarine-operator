@@ -78,6 +78,8 @@ var (
 	hostPathFile              = coreV1.HostPathFile
 	cndrHostPaths             = map[string]*coreV1.HostPathVolumeSource{
 		"boot":        {Path: "/boot", Type: &hostPathDirectory},
+		"modules":     {Path: "/lib/modules", Type: &hostPathDirectory},
+		"src":         {Path: "/usr/src", Type: &hostPathDirectory},
 		"cb-data-dir": {Path: "/var/opt/carbonblack", Type: &hostPathDirectoryOrCreate},
 		"os-release":  {Path: "/etc/os-release", Type: &hostPathFile},
 		"root":        {Path: "/", Type: &hostPathDirectory},
@@ -90,6 +92,8 @@ var (
 	cndrReadOnlyMounts = map[string]struct{}{
 		"root":       {},
 		"boot":       {},
+		"modules":    {},
+		"src":        {},
 		"os-release": {},
 	}
 )
@@ -123,7 +127,7 @@ func (obj *SensorDaemonSetK8sObject) MutateK8sObject(k8sObject client.Object, ag
 
 	obj.initiateDaemonSet(daemonSet, agentSpec)
 
-	if commonState.IsEnabled(runtimeProtection.Enabled) || isCndrEnbaled(agentSpec.Components.Cndr) {
+	if commonState.IsEnabled(runtimeProtection.Enabled) || isCndrEnabled(agentSpec.Components.Cndr) {
 		daemonSet.Spec.Template.Spec.DNSPolicy = runtimeSensorDNSPolicy
 		daemonSet.Spec.Template.Spec.HostNetwork = runtimeSensorHostNetwork
 		daemonSet.Spec.Template.Spec.HostPID = runtimeSensorHostPID
@@ -211,14 +215,14 @@ func (obj *SensorDaemonSetK8sObject) mutateAnnotations(daemonSet *appsV1.DaemonS
 	}
 }
 
-func isCndrEnbaled(cndrSpec *cbContainersV1.CBContainersCndrSpec) bool {
+func isCndrEnabled(cndrSpec *cbContainersV1.CBContainersCndrSpec) bool {
 	return cndrSpec != nil && commonState.IsEnabled(cndrSpec.Enabled)
 }
 
 func (obj *SensorDaemonSetK8sObject) getExpectedVolumeCount(agentSpec *cbContainersV1.CBContainersAgentSpec) int {
 	expectedVolumesCount := 0
 
-	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) || isCndrEnbaled(agentSpec.Components.Cndr) {
+	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) || isCndrEnabled(agentSpec.Components.Cndr) {
 		expectedVolumesCount += len(supportedContainerRuntimes)
 	}
 
@@ -233,7 +237,7 @@ func (obj *SensorDaemonSetK8sObject) getExpectedVolumeCount(agentSpec *cbContain
 		expectedVolumesCount += 3
 	}
 
-	if isCndrEnbaled(agentSpec.Components.Cndr) {
+	if isCndrEnabled(agentSpec.Components.Cndr) {
 		expectedVolumesCount += len(cndrHostPaths)
 	}
 
@@ -251,7 +255,7 @@ func (obj *SensorDaemonSetK8sObject) mutateVolumes(daemonSet *appsV1.DaemonSet, 
 		templatePodSpec.Volumes = make([]coreV1.Volume, 0, expectedVolumeCount)
 	}
 
-	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) || isCndrEnbaled(agentSpec.Components.Cndr) {
+	if commonState.IsEnabled(agentSpec.Components.ClusterScanning.Enabled) || isCndrEnabled(agentSpec.Components.Cndr) {
 		obj.mutateContainerRuntimesVolumes(&daemonSet.Spec.Template.Spec)
 	}
 
@@ -259,7 +263,7 @@ func (obj *SensorDaemonSetK8sObject) mutateVolumes(daemonSet *appsV1.DaemonSet, 
 		obj.mutateClusterScannerVolumes(&daemonSet.Spec.Template.Spec, &agentSpec.Components.ClusterScanning.ClusterScannerAgent)
 	}
 
-	if isCndrEnbaled(agentSpec.Components.Cndr) {
+	if isCndrEnabled(agentSpec.Components.Cndr) {
 		obj.mutateCndrVolumes(&daemonSet.Spec.Template.Spec, &agentSpec.Components.Cndr.Sensor)
 	}
 
@@ -311,7 +315,7 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(daemonSet *appsV1.Daem
 		desiredContainers = append(desiredContainers, clusterScannerContainer)
 	}
 
-	if isCndrEnbaled(agentSpec.Components.Cndr) {
+	if isCndrEnabled(agentSpec.Components.Cndr) {
 		cndrEnabled = true
 		if cndrContainerLocation := obj.findContainerLocationByName(templatePodSpec.Containers, CndrContainerName); cndrContainerLocation == -1 {
 			cndrMissing = true
@@ -339,7 +343,7 @@ func (obj *SensorDaemonSetK8sObject) mutateContainersList(daemonSet *appsV1.Daem
 			agentSpec)
 	}
 
-	if isCndrEnbaled(agentSpec.Components.Cndr) {
+	if isCndrEnabled(agentSpec.Components.Cndr) {
 		obj.mutateCndrContainer(
 			&templatePodSpec.Containers[obj.findContainerLocationByName(templatePodSpec.Containers, CndrContainerName)],
 			agentSpec)
