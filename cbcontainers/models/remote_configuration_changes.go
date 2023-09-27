@@ -9,14 +9,10 @@ var (
 )
 
 type ConfigurationChange struct {
-	ID                                   string             `json:"id"`
-	Status                               RemoteChangeStatus `json:"status"`
-	AgentVersion                         *string            `json:"agent_version"`
-	EnableClusterScanning                *bool              `json:"enable_cluster_scanning"`
-	EnableRuntime                        *bool              `json:"enable_runtime"`
-	EnableCNDR                           *bool              `json:"enable_cndr"`
-	EnableClusterScanningSecretDetection *bool              `json:"enable_cluster_scanning_secret_detection"`
-	Timestamp                            string             `json:"timestamp"`
+	ID           string             `json:"id"`
+	Status       RemoteChangeStatus `json:"status"`
+	AgentVersion *string            `json:"agent_version"`
+	Timestamp    string             `json:"timestamp"`
 }
 
 type ConfigurationChangeStatusUpdate struct {
