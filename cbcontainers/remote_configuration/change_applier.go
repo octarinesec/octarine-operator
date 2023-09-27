@@ -29,22 +29,4 @@ func ApplyConfigChangeToCR(change models.ConfigurationChange, cr *cbcontainersv1
 			i.Tag = ""
 		}
 	}
-	if change.EnableClusterScanning != nil {
-		cr.Spec.Components.ClusterScanning.Enabled = change.EnableClusterScanning
-	}
-
-	if change.EnableClusterScanningSecretDetection != nil {
-		cr.Spec.Components.ClusterScanning.ClusterScannerAgent.CLIFlags.EnableSecretDetection = *change.EnableClusterScanningSecretDetection
-	}
-
-	if change.EnableRuntime != nil {
-		cr.Spec.Components.RuntimeProtection.Enabled = change.EnableRuntime
-	}
-
-	if change.EnableCNDR != nil {
-		if cr.Spec.Components.Cndr == nil {
-			cr.Spec.Components.Cndr = &cbcontainersv1.CBContainersCndrSpec{}
-		}
-		cr.Spec.Components.Cndr.Enabled = change.EnableCNDR
-	}
 }
