@@ -21,11 +21,11 @@ type configuratorMocks struct {
 	k8sClient           *k8sMocks.MockClient
 	apiGateway          *mocks.MockApiGateway
 	accessTokenProvider *mocks.MockAccessTokenProvider
+	validator           *mocks.MockChangeValidator
 
-	stubAccessToken     string
-	stubOperatorVersion string
-	stubNamespace       string
-	stubClusterID       string
+	stubAccessToken string
+	stubNamespace   string
+	stubClusterID   string
 }
 
 // setupConfigurator sets up mocks and creates a Configurator instance with those mocks and some dummy data
@@ -33,6 +33,7 @@ func setupConfigurator(ctrl *gomock.Controller) (*remote_configuration.Configura
 	k8sClient := k8sMocks.NewMockClient(ctrl)
 	apiGateway := mocks.NewMockApiGateway(ctrl)
 	accessTokenProvider := mocks.NewMockAccessTokenProvider(ctrl)
+	validator := mocks.NewMockChangeValidator(ctrl)
 
 	var mockAPIProvider remote_configuration.ApiCreator = func(
 		cbContainersCluster *cbcontainersv1.CBContainersAgent,
@@ -40,10 +41,12 @@ func setupConfigurator(ctrl *gomock.Controller) (*remote_configuration.Configura
 	) (remote_configuration.ApiGateway, error) {
 		return apiGateway, nil
 	}
+	var mockValidatorProvider remote_configuration.ValidatorCreator = func(gateway remote_configuration.ApiGateway) (remote_configuration.ChangeValidator, error) {
+		return validator, nil
+	}
 
 	namespace := "namespace-name"
 	accessToken := "access-token"
-	operatorVersion := "1.2.3"
 	clusterID := "1234567"
 	accessTokenProvider.EXPECT().GetCBAccessToken(gomock.Any(), gomock.Any(), namespace).Return(accessToken, nil).AnyTimes()
 
@@ -52,7 +55,7 @@ func setupConfigurator(ctrl *gomock.Controller) (*remote_configuration.Configura
 		mockAPIProvider,
 		logr.Discard(),
 		accessTokenProvider,
-		operatorVersion,
+		mockValidatorProvider,
 		namespace,
 		clusterID,
 	)
@@ -61,8 +64,8 @@ func setupConfigurator(ctrl *gomock.Controller) (*remote_configuration.Configura
 		k8sClient:           k8sClient,
 		apiGateway:          apiGateway,
 		accessTokenProvider: accessTokenProvider,
+		validator:           validator,
 		stubAccessToken:     accessToken,
-		stubOperatorVersion: operatorVersion,
 		stubNamespace:       namespace,
 		stubClusterID:       clusterID,
 	}
@@ -84,7 +87,7 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 	configChange.AgentVersion = &expectedAgentVersion
 
 	setupCRInK8S(mocks.k8sClient, cr)
-	setupValidCompatibilityData(mocks.apiGateway, mocks.stubOperatorVersion)
+	mocks.validator.EXPECT().ValidateChange(configChange, cr).Return(nil)
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{configChange}, nil)
 
 	// Setup mock assertions
@@ -117,7 +120,6 @@ func TestWhenChangeIsNotApplicableShouldReturnError(t *testing.T) {
 	configurator, mocks := setupConfigurator(ctrl)
 
 	cr := &cbcontainersv1.CBContainersAgent{}
-	maxAgentVersionForOperator := "4.0.0"
 	agentVersion := "5.0.0"
 	configChange := randomPendingConfigChange()
 	configChange.AgentVersion = &agentVersion
@@ -125,12 +127,7 @@ func TestWhenChangeIsNotApplicableShouldReturnError(t *testing.T) {
 	setupCRInK8S(mocks.k8sClient, cr)
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{configChange}, nil)
 
-	// Setup invalid compatibility; no need to do full verification here - this is what the validator tests are for
-	// We just want to check that _some_ validation happens
-	mocks.apiGateway.EXPECT().GetCompatibilityMatrixEntryFor(mocks.stubOperatorVersion).Return(&models.OperatorCompatibility{
-		MinAgent: models.AgentMinVersionNone,
-		MaxAgent: models.AgentVersion(maxAgentVersionForOperator),
-	}, nil)
+	mocks.validator.EXPECT().ValidateChange(configChange, cr).Return(errors.New("some error"))
 
 	// Setup mock assertions
 	mocks.apiGateway.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).
@@ -138,7 +135,7 @@ func TestWhenChangeIsNotApplicableShouldReturnError(t *testing.T) {
 			assert.Equal(t, configChange.ID, update.ID)
 			assert.Equal(t, models.ChangeStatusFailed, update.Status)
 			assert.NotEmpty(t, update.Error)
-			assert.NotEmpty(t, update.ErrorReason)
+			assert.NotEmpty(t, update.ErrorReason) // Should be populated for validation errors
 			assert.Equal(t, int64(0), update.AppliedGeneration)
 			assert.Empty(t, update.AppliedTimestamp)
 			assert.Equal(t, mocks.stubClusterID, update.ClusterIdentifier)
@@ -204,8 +201,8 @@ func TestWhenThereAreMultiplePendingChangesTheOldestIsSelected(t *testing.T) {
 	newerChange.Timestamp = time.Now().UTC().Add(-1 * time.Hour).Format(time.RFC3339)
 
 	setupCRInK8S(mocks.k8sClient, nil)
+	setupValidatorAcceptAll(mocks.validator)
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{newerChange, olderChange}, nil)
-	setupValidCompatibilityData(mocks.apiGateway, mocks.stubOperatorVersion)
 
 	setupUpdateCRMock(t, mocks.k8sClient, func(agent *cbcontainersv1.CBContainersAgent) {
 		assert.Equal(t, expectedVersion, agent.Spec.Version)
@@ -260,9 +257,9 @@ func TestWhenUpdatingCRFailsChangeIsUpdatedAsFailed(t *testing.T) {
 
 	configChange := randomPendingConfigChange()
 
-	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{configChange}, nil)
 	setupCRInK8S(mocks.k8sClient, nil)
-	setupValidCompatibilityData(mocks.apiGateway, mocks.stubOperatorVersion)
+	setupValidatorAcceptAll(mocks.validator)
+	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{configChange}, nil)
 
 	errFromService := errors.New("some error")
 	mocks.k8sClient.EXPECT().Update(gomock.Any(), gomock.Any()).Return(errFromService)
@@ -294,7 +291,7 @@ func TestWhenUpdatingStatusToBackendFailsShouldReturnError(t *testing.T) {
 	configChange := randomPendingConfigChange()
 
 	setupCRInK8S(mocks.k8sClient, nil)
-	setupValidCompatibilityData(mocks.apiGateway, mocks.stubOperatorVersion)
+	setupValidatorAcceptAll(mocks.validator)
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{configChange}, nil)
 	mocks.k8sClient.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
@@ -373,9 +370,6 @@ func setupUpdateCRMock(t *testing.T, mock *k8sMocks.MockClient, assert func(*cbc
 		})
 }
 
-func setupValidCompatibilityData(mockGateway *mocks.MockApiGateway, operatorVersion string) {
-	mockGateway.EXPECT().GetCompatibilityMatrixEntryFor(operatorVersion).Return(&models.OperatorCompatibility{
-		MinAgent: models.AgentMinVersionNone,
-		MaxAgent: models.AgentMaxVersionLatest,
-	}, nil)
+func setupValidatorAcceptAll(validator *mocks.MockChangeValidator) {
+	validator.EXPECT().ValidateChange(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 }

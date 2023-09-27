@@ -14,6 +14,18 @@ func (i invalidChangeError) Error() string {
 	return i.msg
 }
 
+// EmptyConfigurationChangeValidator can be used when no validation should occur
+type EmptyConfigurationChangeValidator struct {
+}
+
+func (emptyValidator *EmptyConfigurationChangeValidator) ValidateChange(change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
+	return nil
+}
+
+type ConfigurationChangeValidator struct {
+	OperatorCompatibilityData models.OperatorCompatibility
+}
+
 func NewConfigurationChangeValidator(operatorVersion string, api ApiGateway) (*ConfigurationChangeValidator, error) {
 	compatibilityMatrix, err := api.GetCompatibilityMatrixEntryFor(operatorVersion)
 	if err != nil {
@@ -28,10 +40,6 @@ func NewConfigurationChangeValidator(operatorVersion string, api ApiGateway) (*C
 	}, nil
 }
 
-type ConfigurationChangeValidator struct {
-	OperatorCompatibilityData models.OperatorCompatibility
-}
-
 func (validator *ConfigurationChangeValidator) ValidateChange(change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
 	var versionToValidate string
 
@@ -43,12 +51,5 @@ func (validator *ConfigurationChangeValidator) ValidateChange(change models.Conf
 		versionToValidate = cr.Spec.Version
 	}
 
-	return validator.validateOperatorAndSensorVersionCompatibility(versionToValidate)
-}
-
-func (validator *ConfigurationChangeValidator) validateOperatorAndSensorVersionCompatibility(sensorVersion string) error {
-	if err := validator.OperatorCompatibilityData.CheckCompatibility(sensorVersion); err != nil {
-		return invalidChangeError{msg: err.Error()}
-	}
-	return nil
+	return validator.OperatorCompatibilityData.CheckCompatibility(versionToValidate)
 }

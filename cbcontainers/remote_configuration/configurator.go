@@ -29,6 +29,12 @@ type AccessTokenProvider interface {
 	GetCBAccessToken(ctx context.Context, cbContainersCluster *cbcontainersv1.CBContainersAgent, deployedNamespace string) (string, error)
 }
 
+type ChangeValidator interface {
+	ValidateChange(change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error
+}
+
+type ValidatorCreator func(gateway ApiGateway) (ChangeValidator, error)
+
 type ApiCreator func(cbContainersCluster *cbcontainersv1.CBContainersAgent, accessToken string) (ApiGateway, error)
 
 type Configurator struct {
@@ -36,10 +42,12 @@ type Configurator struct {
 	logger              logr.Logger
 	accessTokenProvider AccessTokenProvider
 	apiCreator          ApiCreator
-	operatorVersion     string
 	deployedNamespace   string
 	clusterIdentifier   string
-	mux                 sync.Mutex
+
+	validatorCreator ValidatorCreator
+
+	mux sync.Mutex
 }
 
 func NewConfigurator(
@@ -47,7 +55,7 @@ func NewConfigurator(
 	gatewayCreator ApiCreator,
 	logger logr.Logger,
 	accessTokenProvider AccessTokenProvider,
-	operatorVersion string,
+	validatorCreator ValidatorCreator,
 	deployedNamespace string,
 	clusterIdentifier string,
 ) *Configurator {
@@ -56,7 +64,7 @@ func NewConfigurator(
 		logger:              logger,
 		apiCreator:          gatewayCreator,
 		accessTokenProvider: accessTokenProvider,
-		operatorVersion:     operatorVersion,
+		validatorCreator:    validatorCreator,
 		deployedNamespace:   deployedNamespace,
 		clusterIdentifier:   clusterIdentifier,
 		mux:                 sync.Mutex{},
@@ -161,12 +169,12 @@ func (configurator *Configurator) getPendingChange(ctx context.Context, apiGatew
 }
 
 func (configurator *Configurator) applyChangeToCR(ctx context.Context, apiGateway ApiGateway, change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
-	validator, err := NewConfigurationChangeValidator(configurator.operatorVersion, apiGateway)
+	validator, err := configurator.validatorCreator(apiGateway)
 	if err != nil {
 		return fmt.Errorf("failed to create configuration change validator; %w", err)
 	}
 	if err := validator.ValidateChange(change, cr); err != nil {
-		return err
+		return invalidChangeError{msg: err.Error()}
 	}
 	ApplyConfigChangeToCR(change, cr)
 	return configurator.k8sClient.Update(ctx, cr)
