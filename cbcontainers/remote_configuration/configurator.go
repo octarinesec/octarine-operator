@@ -9,6 +9,7 @@ import (
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sort"
+	"sync"
 	"time"
 )
 
@@ -38,6 +39,7 @@ type Configurator struct {
 	operatorVersion     string
 	deployedNamespace   string
 	clusterIdentifier   string
+	mux                 sync.Mutex
 }
 
 func NewConfigurator(
@@ -57,12 +59,15 @@ func NewConfigurator(
 		operatorVersion:     operatorVersion,
 		deployedNamespace:   deployedNamespace,
 		clusterIdentifier:   clusterIdentifier,
+		mux:                 sync.Mutex{},
 	}
 }
 
 func (configurator *Configurator) RunIteration(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, timeoutSingleIteration)
 	defer cancel()
+	configurator.mux.Lock()
+	defer configurator.mux.Unlock()
 
 	configurator.logger.Info("Checking for installed agent...")
 	cr, err := configurator.getCR(ctx)
