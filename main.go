@@ -183,6 +183,19 @@ func main() {
 		setupLog.Error(err, "unable to read the running operator's version from environment variable")
 		os.Exit(1)
 	}
+
+	var validatorCreator remote_configuration.ValidatorCreator
+	if err != nil && errors.Is(err, operator.ErrNotSemVer) {
+		setupLog.Info(fmt.Sprintf("Detected operator version (%s) is not a semantic version. Compatibility checks for remote configuration will be disabled", operatorVersion))
+		validatorCreator = func(_ remote_configuration.ApiGateway) (remote_configuration.ChangeValidator, error) {
+			return &remote_configuration.EmptyConfigurationChangeValidator{}, nil
+		}
+	} else {
+		validatorCreator = func(gateway remote_configuration.ApiGateway) (remote_configuration.ChangeValidator, error) {
+			return remote_configuration.NewConfigurationChangeValidator(operatorVersion, gateway)
+		}
+	}
+
 	var configuratorGatewayCreator remote_configuration.ApiCreator = func(cbContainersCluster *operatorcontainerscarbonblackiov1.CBContainersAgent, accessToken string) (remote_configuration.ApiGateway, error) {
 		return gateway.NewDefaultGatewayCreator().CreateGateway(cbContainersCluster, accessToken)
 	}
@@ -192,7 +205,7 @@ func main() {
 		configuratorGatewayCreator,
 		log,
 		operator.NewSecretAccessTokenProvider(k8sClient),
-		operatorVersion,
+		validatorCreator,
 		operatorNamespace,
 		clusterIdentifier,
 	)
