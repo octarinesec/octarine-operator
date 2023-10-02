@@ -38,6 +38,7 @@ const (
 	dockerSock                        = "/var/run/docker.sock"
 	crioRuntimeEndpoint               = "/var/run/crio/crio.sock"
 	hostRootPath                      = "/var/opt/root"
+	bootPath                          = "/opt/boot"
 
 	// configuredContainerRuntimeVolumeName is used when the customer has specified a non-standard runtime endpoint in the CRD
 	// as this means we need a special volume+mount for this endpoint
@@ -84,6 +85,7 @@ var (
 	// Optional to have a different mount volume that the host path. If not exits the host path will be used.
 	cndrVolumeMounts = map[string]string{
 		"root": hostRootPath,
+		"boot": bootPath,
 	}
 	cndrReadOnlyMounts = map[string]struct{}{
 		"root":       {},
