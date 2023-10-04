@@ -159,7 +159,7 @@ func main() {
 		Namespace:           operatorNamespace,
 		AccessTokenProvider: operator.NewSecretAccessTokenProvider(mgr.GetClient()),
 		ClusterProcessor:    processors.NewAgentProcessor(cbContainersAgentLogger, processorGatewayCreator, operatorVersionProvider, clusterIdentifier),
-		StateApplier:        state.NewStateApplier(mgr.GetAPIReader(), agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, operatorNamespace, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
+		StateApplier:        state.NewStateApplier(mgr.GetAPIReader(), agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, operatorNamespace, clusterIdentifier, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")
 		os.Exit(1)
