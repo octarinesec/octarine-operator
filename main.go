@@ -227,12 +227,8 @@ func main() {
 	go func() {
 		defer wg.Done()
 
-		// TODO: Remove once the feature is ready for go-live
-		enableConfigurator := os.Getenv("ENABLE_REMOTE_CONFIGURATOR")
-		if enableConfigurator == "true" {
-			setupLog.Info("Starting remote configurator")
-			applierController.RunLoop(signalsContext)
-		}
+		setupLog.Info("Starting remote configurator")
+		applierController.RunLoop(signalsContext)
 	}()
 
 	wg.Wait()
