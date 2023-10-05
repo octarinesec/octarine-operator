@@ -42,9 +42,15 @@ type StateApplier struct {
 	log                             logr.Logger
 }
 
-func NewStateApplier(apiReader client.Reader, agentComponentApplier AgentComponentApplier, k8sVersion, agentNamespace string, tlsSecretsValuesCreator components.TlsSecretsValuesCreator, log logr.Logger) *StateApplier {
+func NewStateApplier(
+	apiReader client.Reader,
+	agentComponentApplier AgentComponentApplier,
+	k8sVersion, agentNamespace, clusterID string,
+	tlsSecretsValuesCreator components.TlsSecretsValuesCreator,
+	log logr.Logger,
+) *StateApplier {
 	return &StateApplier{
-		desiredConfigMap:                components.NewConfigurationK8sObject(agentNamespace),
+		desiredConfigMap:                components.NewConfigurationK8sObject(agentNamespace, clusterID),
 		desiredRegistrySecret:           components.NewRegistrySecretK8sObject(agentNamespace),
 		desiredPriorityClass:            components.NewPriorityClassK8sObject(k8sVersion),
 		desiredMonitorDeployment:        components.NewMonitorDeploymentK8sObject(agentNamespace),
