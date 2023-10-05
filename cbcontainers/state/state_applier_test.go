@@ -141,7 +141,7 @@ type K8sObjectDetails struct {
 	ObjectType reflect.Type
 }
 
-func testStateApplier(t *testing.T, setup StateApplierTestSetup, k8sVersion, namespace string) (bool, error) {
+func testStateApplier(t *testing.T, setup StateApplierTestSetup, k8sVersion, namespace, clusterID string) (bool, error) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -189,7 +189,7 @@ func testStateApplier(t *testing.T, setup StateApplierTestSetup, k8sVersion, nam
 
 	setup(mockObjects)
 
-	stateApplier := state.NewStateApplier(testUtilsMocks.NewMockReader(ctrl), mockObjects.componentApplier, k8sVersion, namespace, mockObjects.secretValuesCreator, logrTesting.NewTestLogger(t))
+	stateApplier := state.NewStateApplier(testUtilsMocks.NewMockReader(ctrl), mockObjects.componentApplier, k8sVersion, namespace, clusterID, mockObjects.secretValuesCreator, logrTesting.NewTestLogger(t))
 	return stateApplier.ApplyDesiredState(context.Background(), agentSpec, &models.RegistrySecretValues{}, nil)
 }
 
@@ -224,7 +224,7 @@ func getAppliedAndDeletedObjects(t *testing.T, k8sVersion, namespace string, set
 				deletedObjects = append(deletedObjects, K8sObjectDetails{Namespace: namespacedName.Namespace, Name: namespacedName.Name, ObjectType: objType})
 				return true, nil
 			}).AnyTimes()
-	}, k8sVersion, namespace)
+	}, k8sVersion, namespace, "")
 
 	return appliedObjects, deletedObjects, err
 }
