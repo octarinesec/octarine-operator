@@ -88,6 +88,7 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 
 	setupCRInK8S(mocks.k8sClient, cr)
 	mocks.validator.EXPECT().ValidateChange(configChange, cr).Return(nil)
+	mocks.apiGateway.EXPECT().GetSensorMetadata().Return([]models.SensorMetadata{{Version: expectedAgentVersion}}, nil)
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{configChange}, nil)
 
 	// Setup mock assertions
@@ -111,6 +112,46 @@ func TestConfigChangeIsAppliedAndAcknowledgedCorrectly(t *testing.T) {
 
 	err := configurator.RunIteration(context.Background())
 	assert.NoError(t, err)
+}
+
+func TestWhenSensorMetadataIsAvailableItIsUsed(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	configurator, mocks := setupConfigurator(ctrl)
+
+	expectedAgentVersion := "3.0.0"
+	cr := &cbcontainersv1.CBContainersAgent{}
+	configChange := randomPendingConfigChange()
+	configChange.AgentVersion = &expectedAgentVersion
+
+	setupCRInK8S(mocks.k8sClient, cr)
+	setupValidatorAcceptAll(mocks.validator)
+	mocks.apiGateway.EXPECT().GetSensorMetadata().Return([]models.SensorMetadata{{
+		Version:                        expectedAgentVersion,
+		SupportsRuntime:                true,
+		SupportsClusterScanning:        true,
+		SupportsClusterScanningSecrets: true,
+		SupportsCndr:                   true,
+	}}, nil)
+	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{configChange}, nil)
+
+	// Setup mock assertions
+	mocks.apiGateway.EXPECT().UpdateConfigurationChangeStatus(gomock.Any(), gomock.Any()).Return(nil)
+
+	setupUpdateCRMock(t, mocks.k8sClient, func(agent *cbcontainersv1.CBContainersAgent) {
+		assert.True(t, *agent.Spec.Components.ClusterScanning.Enabled)
+		assert.True(t, agent.Spec.Components.ClusterScanning.ClusterScannerAgent.CLIFlags.EnableSecretDetection)
+		assert.True(t, *agent.Spec.Components.RuntimeProtection.Enabled)
+		assert.True(t, *agent.Spec.Components.Cndr.Enabled)
+	})
+
+	err := configurator.RunIteration(context.Background())
+	assert.NoError(t, err)
+}
+
+func TestWhenSensorMetadataFailsShouldPropagateErr(t *testing.T) {
+
 }
 
 func TestWhenChangeIsNotApplicableShouldReturnError(t *testing.T) {
@@ -202,6 +243,7 @@ func TestWhenThereAreMultiplePendingChangesTheOldestIsSelected(t *testing.T) {
 
 	setupCRInK8S(mocks.k8sClient, nil)
 	setupValidatorAcceptAll(mocks.validator)
+	setupEmptySensorMetadata(mocks.apiGateway)
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{newerChange, olderChange}, nil)
 
 	setupUpdateCRMock(t, mocks.k8sClient, func(agent *cbcontainersv1.CBContainersAgent) {
@@ -259,6 +301,7 @@ func TestWhenUpdatingCRFailsChangeIsUpdatedAsFailed(t *testing.T) {
 
 	setupCRInK8S(mocks.k8sClient, nil)
 	setupValidatorAcceptAll(mocks.validator)
+	setupEmptySensorMetadata(mocks.apiGateway)
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{configChange}, nil)
 
 	errFromService := errors.New("some error")
@@ -292,6 +335,7 @@ func TestWhenUpdatingStatusToBackendFailsShouldReturnError(t *testing.T) {
 
 	setupCRInK8S(mocks.k8sClient, nil)
 	setupValidatorAcceptAll(mocks.validator)
+	setupEmptySensorMetadata(mocks.apiGateway)
 	mocks.apiGateway.EXPECT().GetConfigurationChanges(gomock.Any(), mocks.stubClusterID).Return([]models.ConfigurationChange{configChange}, nil)
 	mocks.k8sClient.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
@@ -372,4 +416,9 @@ func setupUpdateCRMock(t *testing.T, mock *k8sMocks.MockClient, assert func(*cbc
 
 func setupValidatorAcceptAll(validator *mocks.MockChangeValidator) {
 	validator.EXPECT().ValidateChange(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+}
+
+// setupEmptySensorMetadata simulates the case where no sensor metadata is available; hence no feature toggles are enabled
+func setupEmptySensorMetadata(api *mocks.MockApiGateway) {
+	api.EXPECT().GetSensorMetadata().Return([]models.SensorMetadata{}, nil)
 }
