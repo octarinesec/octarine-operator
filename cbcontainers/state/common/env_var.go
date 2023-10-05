@@ -15,6 +15,7 @@ const (
 	eventGatewayPortVarName = "OCTARINE_MESSAGEPROXY_PORT"
 	accountVarName          = "OCTARINE_ACCOUNT"
 	clusterVarName          = "OCTARINE_DOMAIN"
+	clusterIDVarName        = "OCTARINE_CLUSTER_ID"
 	accessTokenVarName      = "OCTARINE_ACCESS_TOKEN"
 	apiSchemeVarName        = "OCTARINE_API_SCHEME"
 	apiHostVarName          = "OCTARINE_API_HOST"
@@ -168,6 +169,7 @@ func (b *EnvVarBuilder) WithCommonDataPlane(accessKeySecretName string) *EnvVarB
 	return b.WithEnvVarFromSecret(accessTokenVarName, accessKeySecretName, AccessTokenSecretKeyName).
 		WithEnvVarFromConfigmap(accountVarName, DataPlaneConfigmapAccountKey).
 		WithEnvVarFromConfigmap(clusterVarName, DataPlaneConfigmapClusterKey).
+		WithEnvVarFromConfigmap(clusterIDVarName, DataPlaneConfigmapClusterIDKey).
 		WithEnvVarFromConfigmap(apiSchemeVarName, DataPlaneConfigmapApiSchemeKey).
 		WithEnvVarFromConfigmap(apiHostVarName, DataPlaneConfigmapApiHostKey).
 		WithEnvVarFromConfigmap(apiPortVarName, DataPlaneConfigmapApiPortKey).

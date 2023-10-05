@@ -23,6 +23,7 @@ const (
 
 	DataPlaneConfigmapAccountKey        = "Account"
 	DataPlaneConfigmapClusterKey        = "Cluster"
+	DataPlaneConfigmapClusterIDKey      = "ClusterID"
 	DataPlaneConfigmapAgentVersionKey   = "AgentVersion"
 	DataPlaneConfigmapApiSchemeKey      = "ApiScheme"
 	DataPlaneConfigmapApiHostKey        = "ApiHost"
