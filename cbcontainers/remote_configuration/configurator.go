@@ -176,7 +176,13 @@ func (configurator *Configurator) applyChangeToCR(ctx context.Context, apiGatewa
 	if err := validator.ValidateChange(change, cr); err != nil {
 		return invalidChangeError{msg: err.Error()}
 	}
-	ApplyConfigChangeToCR(change, cr)
+
+	sensorMeta, err := apiGateway.GetSensorMetadata()
+	if err != nil {
+		return fmt.Errorf("failed to load sensor metadata from backend; %w", err)
+	}
+
+	ApplyConfigChangeToCR(change, cr, sensorMeta)
 	return configurator.k8sClient.Update(ctx, cr)
 }
 
