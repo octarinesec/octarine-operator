@@ -34,6 +34,13 @@ spec:
 Change {MY-ADAPTER-NAME} to your control plane adapter name.
 The default value is `containers`
 
+### Uninstalling the Carbon Black Cloud Container Operator
+
+```sh
+make undeploy
+```
+* note that this does not clean-up the Carbon Black directory from the data-plane nodes
+
 ### Changing the security context settings
 
 #### Hardening enforcer/state_reporter security context settings
