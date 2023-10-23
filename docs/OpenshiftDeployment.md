@@ -84,3 +84,39 @@ volumes:
 users:
 - system:serviceaccount:cbcontainers-dataplane:cbcontainers-agent-node
 ```
+### Uninstalling on Openshift
+
+Add this SecurityContextConstraints
+before running the operator uninstall command
+
+```yaml
+kind: SecurityContextConstraints
+apiVersion: security.openshift.io/v1
+metadata:
+  name: scc-edr-cleaner
+runAsUser:
+  type: RunAsAny
+allowHostPID: true
+allowHostPorts: false
+allowHostNetwork: true
+allowHostDirVolumePlugin: true
+allowHostIPC: false
+allowPrivilegedContainer: true
+readOnlyRootFilesystem: false
+seLinuxContext:
+  type: RunAsAny
+fsGroup:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+volumes:
+- configMap
+- downwardAPI
+- emptyDir
+- hostPath
+- persistentVolumeClaim
+- projected
+- secret
+users:
+- system:serviceaccount:cbcontainers-edr-sensor-cleaners:cbcontainers-edr-sensor-cleaner
+```

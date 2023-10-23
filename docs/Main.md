@@ -34,7 +34,7 @@ Then you need to deploy the CBC Agent on top of the operator:
 
 For OpenShift clusters, follow the OpenShift Deployment instructions:
 
-[OpenShift Deployment](OpenshiftDeployment.md)
+[OpenShift Deployment and Uninstall](OpenshiftDeployment.md)
 
 
 ## Full Uninstall
@@ -42,7 +42,9 @@ For OpenShift clusters, follow the OpenShift Deployment instructions:
 ### Uninstalling the Carbon Black Cloud Container Operator
 
 ```sh
-make undeploy
+export OPERATOR_VERSION=v6.0.2
+export OPERATOR_SCRIPT_URL=https://setup.containers.carbonblack.io/$OPERATOR_VERSION/operator-apply.sh
+curl -s $OPERATOR_SCRIPT_URL | bash -s -- -u 
 ```
 
 * Notice that the above command will delete the Carbon Black Container custom resources definitions and instances.
@@ -54,7 +56,6 @@ make undeploy
 4. [Using HTTP proxy](Proxy.md)
 5. [Configuring image sources](ImageSources.md)
 6. [RBAC Configuration](rbac.md)
-7. [Using legacy v1beta1.CustomResourceDefinition](LegacyCRD.md)
 
 ## Developers Guide
 A developers guide for building and configuring the operator:
