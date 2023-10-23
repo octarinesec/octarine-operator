@@ -39,7 +39,7 @@ Versions list: [Releases](https://github.com/octarinesec/octarine-operator/relea
 ### OpenShift Deployment:
 For OpenShift clusters, follow the OpenShift Deployment instructions:
 
-[OpenShift Deployment](docs/OpenshiftDeployment.md)
+[OpenShift Deployment and Uninstall](docs/OpenshiftDeployment.md)
 
 
 * For deploying from the source code, follow the instructions in the [Operator Deployment](docs/OperatorDeployment.md) documentation
@@ -92,7 +92,9 @@ spec:
 ### Uninstalling the Carbon Black Cloud Container Operator
 
 ```sh
-make undeploy
+export OPERATOR_VERSION=v6.0.2
+export OPERATOR_SCRIPT_URL=https://setup.containers.carbonblack.io/$OPERATOR_VERSION/operator-apply.sh
+curl -s $OPERATOR_SCRIPT_URL | bash -s -- -u 
 ```
 
 * Notice that the above command will delete the Carbon Black Container custom resources definitions and instances.
