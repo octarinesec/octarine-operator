@@ -62,6 +62,10 @@ spec:
         - /manager
         image: "{{ .Values.operator.image.repository | default "cbartifactory/octarine-operator" }}:{{ .Values.operator.image.version | default .Chart.AppVersion }}"
         env:
+        - name: OPERATOR_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         {{/* If you want to enable HTTP Proxy you need to set all 3 of the values - operator.proxy.http, operator.proxy.https and operator.proxy.noProxy */}}
         {{- if .Values.operator.proxy -}}
         - name: HTTP_PROXY
@@ -101,10 +105,5 @@ spec:
           readOnlyRootFilesystem: true
           runAsNonRoot: true
           runAsUser: 65532
-        env:
-          - name: OPERATOR_NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
       serviceAccountName: cbcontainers-operator
       terminationGracePeriodSeconds: 10
