@@ -3440,7 +3440,7 @@ spec:
                             default: {}
                             properties:
                               enableSecretDetection:
-                                default: false
+                                default: true
                                 type: boolean
                               ignoreBuildInRegex:
                                 default: false
