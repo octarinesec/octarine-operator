@@ -51,7 +51,7 @@ type CBContainersClusterScannerAgentSpec struct {
 }
 
 type CLIFlags struct {
-	// +kubebuilder:default:=false
+	// +kubebuilder:default:=true
 	EnableSecretDetection bool `json:"enableSecretDetection,omitempty"`
 	// +kubebuilder:default:={}
 	SkipDirsOrFiles []string `json:"skipDirsOrFiles,omitempty"`
