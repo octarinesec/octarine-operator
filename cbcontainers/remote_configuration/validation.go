@@ -51,5 +51,5 @@ func (validator *ConfigurationChangeValidator) ValidateChange(change models.Conf
 		versionToValidate = cr.Spec.Version
 	}
 
-	return validator.OperatorCompatibilityData.CheckCompatibility(versionToValidate)
+	return validator.OperatorCompatibilityData.CheckCompatibility(models.Version(versionToValidate))
 }

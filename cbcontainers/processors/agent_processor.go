@@ -130,5 +130,5 @@ func (processor *AgentProcessor) checkCompatibility(cbContainersAgent *cbcontain
 	}
 
 	// if there is no error check the compatibility and return the result
-	return m.CheckCompatibility(cbContainersAgent.Spec.Version)
+	return m.CheckCompatibility(models.Version(cbContainersAgent.Spec.Version))
 }
