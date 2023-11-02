@@ -58,7 +58,7 @@ func TestValidateFailsIfSensorAndOperatorAreNotCompatible(t *testing.T) {
 			name:           "sensor version is too high",
 			versionToApply: "5.0.0",
 			operatorCompatibility: models.OperatorCompatibility{
-				MinAgent: models.AgentMinVersionNone,
+				MinAgent: models.MinVersionNone,
 				MaxAgent: "4.0.0",
 			},
 		},
@@ -67,7 +67,7 @@ func TestValidateFailsIfSensorAndOperatorAreNotCompatible(t *testing.T) {
 			versionToApply: "0.9",
 			operatorCompatibility: models.OperatorCompatibility{
 				MinAgent: "1.0.0",
-				MaxAgent: models.AgentMaxVersionLatest,
+				MaxAgent: models.MaxVersionLatest,
 			},
 		},
 	}
@@ -121,8 +121,8 @@ func TestValidateSucceedsIfSensorAndOperatorAreCompatible(t *testing.T) {
 			name:           "operator supports 'infinite' versions",
 			versionToApply: "5.0.0",
 			operatorCompatibility: models.OperatorCompatibility{
-				MinAgent: models.AgentMinVersionNone,
-				MaxAgent: models.AgentMaxVersionLatest,
+				MinAgent: models.MinVersionNone,
+				MaxAgent: models.MaxVersionLatest,
 			},
 		},
 	}
