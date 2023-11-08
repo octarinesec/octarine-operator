@@ -31,6 +31,7 @@ func TestCheckCompatibilityCompatible(t *testing.T) {
 		{min: models.AgentVersion("0.0"), max: models.AgentVersion("2.8"), agent: "0.0"},
 		{min: models.AgentVersion("0.0"), max: models.AgentVersion("2.8"), agent: "1.0"},
 		{min: models.AgentVersion("0.0"), max: models.AgentVersion("2.8"), agent: "2.0"},
+		{min: models.AgentVersion("2.2.7"), max: models.AgentVersion("3.0"), agent: "2.10"},
 	}
 
 	testCheckCompatibility(t, testCases, true)
@@ -44,6 +45,7 @@ func TestCheckCompatibilityIncompatible(t *testing.T) {
 		{min: models.AgentVersion("2.7"), max: models.AgentVersion("2.8"), agent: "2.6.9"},
 		{min: models.AgentMinVersionNone, max: models.AgentVersion("2.8"), agent: "2.9"},
 		{min: models.AgentVersion("2.7"), max: models.AgentMaxVersionLatest, agent: "2.6"},
+		{min: models.AgentVersion("2.10"), max: models.AgentMaxVersionLatest, agent: "2.6"},
 	}
 
 	testCheckCompatibility(t, testCases, false)
