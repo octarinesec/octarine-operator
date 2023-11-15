@@ -14,12 +14,8 @@ The Carbon Black Cloud Container Operator utilizes the operator-framework to cre
 
 ## Compatibility Matrix
 
-| Operator version | Kubernetes Sensor Component Version  | Minimum Kubernetes Version |
-|------------------|--------------------------------------|----------------------------|
-| v6.1.x           | 2.10.0, 2.11.0, 2.12.0, 3.0.X, 3.1.X | 1.18                       |
-| v6.0.x           | 2.10.0, 2.11.0, 2.12.0, 3.0.X, 3.1.X | 1.18                       |
-| v5.6.x           | 2.10.0, 2.11.0, 2.12.0               | 1.16                       |
-| v5.5.x           | 2.10.0, 2.11.0                       | 1.16                       |
+The updated compatability matrix can be found here:
+[Kubernetes Sensor Operator Compatability Matrix on VMware Docs](https://docs.vmware.com/en/VMware-Carbon-Black-Cloud/services/cbc-k8-sensor-oer/GUID-69F632A4-289F-44C9-9847-25E5A9493BE9.html)
 
 ## Install
 

@@ -44,7 +44,7 @@ To customize that namespace, see [operator-chart](../cbcontainers-operator).
 The actual namespace where helm tracks the release (see [--namespace flag](https://helm.sh/docs/helm/helm_install/)) is not important to the agent chart, 
 but the recommended approach is to also use the same namespace as the operator chart.
 
-The `agentNamespace` value is only required if the agent chart is responsible for deploying the agent's secret as well. See [secret detection](#secret-creation) for details.
+The `agentNamespace` value is only required if the agent chart is responsible for deploying the agent's secret as well. See [secret creation](#secret-creation) for details.
 If the secret is pre-created before deploying the agent, then `agentNamespace` has no effect.  
 
 ### Secret creation
