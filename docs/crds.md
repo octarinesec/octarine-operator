@@ -110,6 +110,7 @@ This is the CR you'll need to deploy in order to trigger the operator to deploy 
 
 ### Other Components Optional parameters
 
-| Parameter                                        | Description                                  | Default     |
-|--------------------------------------------------|----------------------------------------------|-------------|
-| `spec.components.settings.daemonSetsTolerations` | Carbon Black DaemonSet Component Tolerations | Empty array |
+| Parameter                                                      | Description                                                                    | Default     |
+|----------------------------------------------------------------|--------------------------------------------------------------------------------|-------------|
+| `spec.components.settings.daemonSetsTolerations`               | Carbon Black DaemonSet Component Tolerations                                   | Empty array |
+| `spec.components.settings.remoteConfiguration.enabledForAgent` | Enables applying custom resource changes remotely via the Carbon Black Console | True        |

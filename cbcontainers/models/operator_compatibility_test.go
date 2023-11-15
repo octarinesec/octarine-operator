@@ -9,28 +9,31 @@ import (
 )
 
 type testCase struct {
-	min   models.AgentVersion
-	max   models.AgentVersion
-	agent string
+	min   models.Version
+	max   models.Version
+	agent models.Version
 }
 
 func TestCheckCompatibilityCompatible(t *testing.T) {
 	testCases := []testCase{
-		{min: models.AgentVersion("2.7"), max: models.AgentVersion("2.8"), agent: "2.7"},
-		{min: models.AgentVersion("2.7"), max: models.AgentVersion("2.8"), agent: "2.8"},
-		{min: models.AgentVersion("2.7"), max: models.AgentVersion("2.8"), agent: "2.7.1"},
-		{min: models.AgentVersion("2.7"), max: models.AgentVersion("2.8"), agent: "2.7.5"},
-		{min: models.AgentVersion("2.7"), max: models.AgentVersion("2.8.1"), agent: "2.8.1"},
-		{min: models.AgentVersion("2.7"), max: models.AgentVersion("2.8.1"), agent: "2.7.1-alpha"},
-		{min: models.AgentVersion("2.7"), max: models.AgentVersion("2.8.1"), agent: "2.7.1-beta"},
-		{min: models.AgentMinVersionNone, max: models.AgentVersion("2.8.1"), agent: "0.0.1"},
-		{min: models.AgentVersion("2.7"), max: models.AgentMaxVersionLatest, agent: "3.0.0"},
-		{min: models.AgentVersion("2.7"), max: models.AgentMaxVersionLatest, agent: "50.0.0"},
-		{min: models.AgentVersion("1.0"), max: models.AgentVersion("2.8"), agent: "1.5"},
-		{min: models.AgentVersion("1.0"), max: models.AgentVersion("2.8"), agent: "2.0"},
-		{min: models.AgentVersion("0.0"), max: models.AgentVersion("2.8"), agent: "0.0"},
-		{min: models.AgentVersion("0.0"), max: models.AgentVersion("2.8"), agent: "1.0"},
-		{min: models.AgentVersion("0.0"), max: models.AgentVersion("2.8"), agent: "2.0"},
+		{min: models.Version("2.7"), max: models.Version("2.8"), agent: "2.7"},
+		{min: models.Version("2.7"), max: models.Version("2.8"), agent: "2.8"},
+		{min: models.Version("2.7"), max: models.Version("2.8"), agent: "2.7.1"},
+		{min: models.Version("2.7"), max: models.Version("2.8"), agent: "2.7.5"},
+		{min: models.Version("2.7"), max: models.Version("2.8.1"), agent: "2.8.1"},
+		{min: models.Version("2.7"), max: models.Version("2.8.1"), agent: "2.7.1-alpha"},
+		{min: models.Version("2.7"), max: models.Version("2.8.1"), agent: "2.7.1-beta"},
+		{min: models.MinVersionNone, max: models.Version("2.8.1"), agent: "0.0.1"},
+		{min: models.Version("2.7"), max: models.MaxVersionLatest, agent: "3.0.0"},
+		{min: models.Version("2.7"), max: models.MaxVersionLatest, agent: "50.0.0"},
+		{min: models.Version("1.0"), max: models.Version("2.8"), agent: "1.5"},
+		{min: models.Version("1.0"), max: models.Version("2.8"), agent: "2.0"},
+		{min: models.Version("0.0"), max: models.Version("2.8"), agent: "0.0"},
+		{min: models.Version("0.0"), max: models.Version("2.8"), agent: "1.0"},
+		{min: models.Version("0.0"), max: models.Version("2.8"), agent: "2.0"},
+		{min: models.Version("1.2"), max: models.Version("1.30"), agent: "1.10"},
+		{min: models.Version("1.1.2"), max: models.Version("1.1.30"), agent: "1.1.10"},
+		{min: models.Version("1.2.105"), max: models.Version("1.30.0"), agent: "1.10.40"},
 	}
 
 	testCheckCompatibility(t, testCases, true)
@@ -38,12 +41,13 @@ func TestCheckCompatibilityCompatible(t *testing.T) {
 
 func TestCheckCompatibilityIncompatible(t *testing.T) {
 	testCases := []testCase{
-		{min: models.AgentVersion("2.7"), max: models.AgentVersion("2.8"), agent: "2.8.1"},
-		{min: models.AgentVersion("2.7"), max: models.AgentVersion("2.8"), agent: "3"},
-		{min: models.AgentVersion("2.7"), max: models.AgentVersion("2.8"), agent: "2.6"},
-		{min: models.AgentVersion("2.7"), max: models.AgentVersion("2.8"), agent: "2.6.9"},
-		{min: models.AgentMinVersionNone, max: models.AgentVersion("2.8"), agent: "2.9"},
-		{min: models.AgentVersion("2.7"), max: models.AgentMaxVersionLatest, agent: "2.6"},
+		{min: models.Version("2.7"), max: models.Version("2.8"), agent: "2.8.1"},
+		{min: models.Version("2.7"), max: models.Version("2.8"), agent: "3"},
+		{min: models.Version("2.7"), max: models.Version("2.8"), agent: "2.6"},
+		{min: models.Version("2.7"), max: models.Version("2.8"), agent: "2.6.9"},
+		{min: models.MinVersionNone, max: models.Version("2.8"), agent: "2.9"},
+		{min: models.Version("2.7"), max: models.MaxVersionLatest, agent: "2.6"},
+		{min: models.Version("1.10"), max: models.Version("1.30"), agent: "1.2"},
 	}
 
 	testCheckCompatibility(t, testCases, false)

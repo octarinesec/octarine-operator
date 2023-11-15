@@ -26,6 +26,8 @@ const (
 )
 
 func compareEnvVars(t *testing.T, expected map[string]coreV1.EnvVar, actual []coreV1.EnvVar) {
+	require.Equal(t, len(expected), len(actual), "expected and actual env vars should have equal length")
+
 	for _, envVar := range actual {
 		expectedEnvVar, ok := expected[envVar.Name]
 		require.True(t, ok)
@@ -86,6 +88,15 @@ func TestWithDataPlaneCommonConfig(t *testing.T) {
 				ConfigMapKeyRef: &coreV1.ConfigMapKeySelector{
 					LocalObjectReference: coreV1.LocalObjectReference{Name: DataPlaneConfigmapName},
 					Key:                  DataPlaneConfigmapClusterKey,
+				},
+			},
+		},
+		clusterIDVarName: {
+			Name: clusterIDVarName,
+			ValueFrom: &coreV1.EnvVarSource{
+				ConfigMapKeyRef: &coreV1.ConfigMapKeySelector{
+					LocalObjectReference: coreV1.LocalObjectReference{Name: DataPlaneConfigmapName},
+					Key:                  DataPlaneConfigmapClusterIDKey,
 				},
 			},
 		},

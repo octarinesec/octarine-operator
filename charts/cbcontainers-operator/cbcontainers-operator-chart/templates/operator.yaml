@@ -3450,7 +3450,7 @@ spec:
                               default: {}
                               properties:
                                 enableSecretDetection:
-                                  default: false
+                                  default: true
                                   type: boolean
                                 ignoreBuildInRegex:
                                   default: false
@@ -6322,6 +6322,18 @@ spec:
                                 defaults.
                               type: string
                           type: object
+                        remoteConfiguration:
+                          description: RemoteConfiguration holds settings for the operator/agent's
+                            feature to apply configuration changes via the Carbon black
+                            console
+                          properties:
+                            enabledForAgent:
+                              default: true
+                              description: EnabledForAgent turns the feature to change
+                                agent configuration remotely (as opposed to operator
+                                configuration)
+                              type: boolean
+                          type: object
                       type: object
                   type: object
                 gateways:
@@ -6404,6 +6416,12 @@ spec:
               type: object
             status:
               description: CBContainersAgentStatus defines the observed state of CBContainersAgent
+              properties:
+                observedGeneration:
+                  description: ObservedGeneration is the last Custom resource generation
+                    that was fully reconciled.
+                  format: int64
+                  type: integer
               type: object
           type: object
       served: true

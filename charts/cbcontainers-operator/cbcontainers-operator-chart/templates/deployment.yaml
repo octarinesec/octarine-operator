@@ -37,6 +37,7 @@ spec:
         - --secure-listen-address=0.0.0.0:8443
         - --upstream=http://127.0.0.1:8080/
         - --logtostderr=true
+        - --http2-disable
         - --v=0
         image: "{{ .Values.rbacProxy.image.repository }}:{{.Values.rbacProxy.image.version }}"
         name: kube-rbac-proxy

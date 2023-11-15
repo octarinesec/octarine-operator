@@ -39,7 +39,7 @@ For OpenShift clusters, follow the OpenShift Deployment instructions:
 ### Uninstalling the Carbon Black Cloud Container Operator
 
 ```sh
-export OPERATOR_VERSION=v6.0.2
+export OPERATOR_VERSION=v6.1.0
 export OPERATOR_SCRIPT_URL=https://setup.containers.carbonblack.io/$OPERATOR_VERSION/operator-apply.sh
 curl -s $OPERATOR_SCRIPT_URL | bash -s -- -u 
 ```

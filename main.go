@@ -18,21 +18,24 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/communication/gateway"
+	"github.com/vmware/cbcontainers-operator/cbcontainers/remote_configuration"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/agent_applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/applyment"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/common"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/state/operator"
 	"go.uber.org/zap/zapcore"
+	coreV1 "k8s.io/api/core/v1"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"strings"
-
-	coreV1 "k8s.io/api/core/v1"
+	"sync"
 
 	"github.com/vmware/cbcontainers-operator/cbcontainers/processors"
 
@@ -61,6 +64,7 @@ const (
 	httpProxyEnv        = "HTTP_PROXY"
 	httpsProxyEnv       = "HTTPS_PROXY"
 	noProxyEnv          = "NO_PROXY"
+	namespaceEnv        = "OPERATOR_NAMESPACE"
 )
 
 func init() {
@@ -113,7 +117,7 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	setupLog.Info("Getting the namespace where operator is running and which should host the agent")
-	operatorNamespace := os.Getenv("OPERATOR_NAMESPACE")
+	operatorNamespace := os.Getenv(namespaceEnv)
 	if operatorNamespace == "" {
 		setupLog.Info(fmt.Sprintf("Operator namespace variable was not found. Falling back to default %s", common.DataPlaneNamespaceName))
 		operatorNamespace = common.DataPlaneNamespaceName
@@ -141,16 +145,21 @@ func main() {
 	}
 
 	clusterIdentifier, k8sVersion := extractConfigurationVariables(mgr)
-
+	operatorVersionProvider := operator.NewEnvVersionProvider()
+	var processorGatewayCreator processors.APIGatewayCreator = func(cbContainersCluster *operatorcontainerscarbonblackiov1.CBContainersAgent, accessToken string) (processors.APIGateway, error) {
+		return gateway.NewDefaultGatewayCreator().CreateGateway(cbContainersCluster, accessToken)
+	}
 	cbContainersAgentLogger := ctrl.Log.WithName("controllers").WithName("CBContainersAgent")
+
 	if err = (&controllers.CBContainersAgentController{
-		Client:           mgr.GetClient(),
-		Log:              cbContainersAgentLogger,
-		Scheme:           mgr.GetScheme(),
-		K8sVersion:       k8sVersion,
-		Namespace:        operatorNamespace,
-		ClusterProcessor: processors.NewAgentProcessor(cbContainersAgentLogger, processors.NewDefaultGatewayCreator(), operator.NewEnvVersionProvider(), clusterIdentifier),
-		StateApplier:     state.NewStateApplier(mgr.GetAPIReader(), agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, operatorNamespace, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
+		Client:              mgr.GetClient(),
+		Log:                 cbContainersAgentLogger,
+		Scheme:              mgr.GetScheme(),
+		K8sVersion:          k8sVersion,
+		Namespace:           operatorNamespace,
+		AccessTokenProvider: operator.NewSecretAccessTokenProvider(mgr.GetClient()),
+		ClusterProcessor:    processors.NewAgentProcessor(cbContainersAgentLogger, processorGatewayCreator, operatorVersionProvider, clusterIdentifier),
+		StateApplier:        state.NewStateApplier(mgr.GetAPIReader(), agent_applyment.NewAgentComponent(applyment.NewComponentApplier(mgr.GetClient())), k8sVersion, operatorNamespace, clusterIdentifier, certificatesUtils.NewCertificateCreator(), cbContainersAgentLogger),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CBContainersAgent")
 		os.Exit(1)
@@ -167,11 +176,62 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
+	k8sClient := mgr.GetClient()
+	log := ctrl.Log.WithName("configurator")
+	operatorVersion, err := operatorVersionProvider.GetOperatorVersion()
+	if err != nil && !errors.Is(err, operator.ErrNotSemVer) {
+		setupLog.Error(err, "unable to read the running operator's version from environment variable")
 		os.Exit(1)
 	}
+
+	var validatorCreator remote_configuration.ValidatorCreator
+	if err != nil && errors.Is(err, operator.ErrNotSemVer) {
+		setupLog.Info(fmt.Sprintf("Detected operator version (%s) is not a semantic version. Compatibility checks for remote configuration will be disabled", operatorVersion))
+		validatorCreator = func(_ remote_configuration.ApiGateway) (remote_configuration.ChangeValidator, error) {
+			return &remote_configuration.EmptyConfigurationChangeValidator{}, nil
+		}
+	} else {
+		validatorCreator = func(gateway remote_configuration.ApiGateway) (remote_configuration.ChangeValidator, error) {
+			return remote_configuration.NewConfigurationChangeValidator(operatorVersion, gateway)
+		}
+	}
+
+	var configuratorGatewayCreator remote_configuration.ApiCreator = func(cbContainersCluster *operatorcontainerscarbonblackiov1.CBContainersAgent, accessToken string) (remote_configuration.ApiGateway, error) {
+		return gateway.NewDefaultGatewayCreator().CreateGateway(cbContainersCluster, accessToken)
+	}
+
+	applier := remote_configuration.NewConfigurator(
+		k8sClient,
+		configuratorGatewayCreator,
+		log,
+		operator.NewSecretAccessTokenProvider(k8sClient),
+		validatorCreator,
+		operatorNamespace,
+		clusterIdentifier,
+	)
+	applierController := controllers.NewRemoteConfigurationController(applier, log)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	signalsContext := ctrl.SetupSignalHandler()
+	go func() {
+		defer wg.Done()
+
+		setupLog.Info("starting manager")
+		if err := mgr.Start(signalsContext); err != nil {
+			setupLog.Error(err, "problem running manager")
+			os.Exit(1)
+		}
+	}()
+	go func() {
+		defer wg.Done()
+
+		setupLog.Info("Starting remote configurator")
+		applierController.RunLoop(signalsContext)
+	}()
+
+	wg.Wait()
 }
 
 func extractConfigurationVariables(mgr manager.Manager) (clusterIdentifier string, k8sVersion string) {

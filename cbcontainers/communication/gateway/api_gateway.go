@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -15,6 +16,8 @@ import (
 var (
 	ErrGettingOperatorCompatibility = errors.New("error while getting the operator compatibility")
 )
+
+// TODO: Extract the cluster group + name + ID as separate struct identifying a cluster and used together
 
 type ApiGateway struct {
 	account         string
@@ -164,4 +167,88 @@ func (gateway *ApiGateway) GetCompatibilityMatrixEntryFor(operatorVersion string
 	}
 
 	return r, nil
+}
+
+func (gateway *ApiGateway) GetSensorMetadata() ([]models.SensorMetadata, error) {
+	type getSensorsResponse struct {
+		Sensors []models.SensorMetadata `json:"sensors"`
+	}
+
+	url := gateway.baseUrl("setup/sensors")
+	resp, err := gateway.baseRequest().
+		SetResult(getSensorsResponse{}).
+		Get(url)
+
+	if err != nil {
+		return nil, err
+	}
+	if !resp.IsSuccess() {
+		return nil, fmt.Errorf("failed to get sensor metadata with status code (%d)", resp.StatusCode())
+	}
+
+	r, ok := resp.Result().(*getSensorsResponse)
+	if !ok || r == nil {
+		return nil, fmt.Errorf("malformed sensor metadata response")
+	}
+	return r.Sensors, nil
+}
+
+// GetConfigurationChanges returns a list of configuration changes for the cluster
+func (gateway *ApiGateway) GetConfigurationChanges(ctx context.Context, clusterIdentifier string) ([]models.ConfigurationChange, error) {
+	type getChangesResponse struct {
+		Changes []models.ConfigurationChange `json:"configuration_changes"`
+	}
+
+	group, name, err := gateway.SplitToGroupAndMember()
+	if err != nil {
+		return nil, err
+	}
+	url := gateway.baseUrl("management/configuration_changes/clusters/{clusterID}")
+	resp, err := gateway.baseRequest().
+		SetResult(getChangesResponse{}).
+		SetPathParam("clusterID", clusterIdentifier).
+		SetQueryParam("cluster_group", group).
+		SetQueryParam("cluster_name", name).
+		SetContext(ctx).
+		Get(url)
+
+	if err != nil {
+		return nil, err
+	}
+	if !resp.IsSuccess() {
+		return nil, fmt.Errorf("failed to get pending configuration changes with status code (%d)", resp.StatusCode())
+	}
+
+	r, ok := resp.Result().(*getChangesResponse)
+	if !ok || r == nil {
+		return nil, fmt.Errorf("malformed configuration changes response")
+	}
+
+	return r.Changes, nil
+}
+
+// UpdateConfigurationChangeStatus either acknowledges a remote configuration change applied to the cluster or marks the attempt as a failure
+// The cluster group and name are filled by the gateway
+func (gateway *ApiGateway) UpdateConfigurationChangeStatus(ctx context.Context, changeStatus models.ConfigurationChangeStatusUpdate) error {
+	group, name, err := gateway.SplitToGroupAndMember()
+	if err != nil {
+		return err
+	}
+	changeStatus.ClusterGroup = group
+	changeStatus.ClusterName = name
+
+	url := gateway.baseUrl("management/configuration_changes/{changeID}/status")
+	resp, err := gateway.baseRequest().
+		SetPathParam("changeID", changeStatus.ID).
+		SetBody(changeStatus).
+		Post(url)
+
+	if err != nil {
+		return err
+	}
+	if !resp.IsSuccess() {
+		return fmt.Errorf("call to update configuration change status failed with status code (%d)", resp.StatusCode())
+	}
+
+	return nil
 }

@@ -3440,7 +3440,7 @@ spec:
                             default: {}
                             properties:
                               enableSecretDetection:
-                                default: false
+                                default: true
                                 type: boolean
                               ignoreBuildInRegex:
                                 default: false
@@ -6311,6 +6311,18 @@ spec:
                               It's exposed more as a means by which to control the
                               defaults.
                             type: string
+                        type: object
+                      remoteConfiguration:
+                        description: RemoteConfiguration holds settings for the operator/agent's
+                          feature to apply configuration changes via the Carbon black
+                          console
+                        properties:
+                          enabledForAgent:
+                            default: true
+                            description: EnabledForAgent turns the feature to change
+                              agent configuration remotely (as opposed to operator
+                              configuration)
+                            type: boolean
                         type: object
                     type: object
                 type: object
