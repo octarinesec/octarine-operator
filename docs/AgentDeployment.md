@@ -6,8 +6,8 @@
 kubectl create secret generic cbcontainers-access-token \
 --namespace cbcontainers-dataplane --from-literal=accessToken=\
 {API_Secret_Key}/{API_ID}
+kubectl create secret generic cbcontainers-company-code --namespace cbcontainers-dataplane --from-literal=companyCode=RXXXXXXXXXXG\!XXXX
 ```
-### TODO: extra secret
 ### 2. Apply the Carbon Black Container Agent Custom Resource
 
 The operator implements controllers for the Carbon Black Container custom resources definitions
