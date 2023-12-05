@@ -14,6 +14,7 @@ jobs:
   helm:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Push Helm chart to OCI compatible registry (DockerHub)
         uses: bsord/helm-push@v4.1.0
         with:
