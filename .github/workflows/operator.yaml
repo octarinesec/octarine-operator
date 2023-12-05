@@ -22,6 +22,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER }}
           access-token: ${{ secrets.DOCKERHUB_PASSWORD }}
           force: true
+          chart-folder: ../
   build:
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
