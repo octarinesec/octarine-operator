@@ -6432,7 +6432,7 @@ spec:
 ---
 apiVersion: v1
 imagePullSecrets:
-- name: cbcontainers-operator-public-registry-secret
+- name: {{ default "cbcontainers-operator-public-registry-secret" .Values.imagesPullSecret }}
 kind: ServiceAccount
 metadata:
   name: cbcontainers-operator
