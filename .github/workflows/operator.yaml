@@ -18,7 +18,7 @@ jobs:
         uses: bsord/helm-push@v4.1.0
         with:
           useOCIRegistry: true
-          registry-url: oci://ghcr.io/${{ github.repository }}
+          registry-url: oci://registry-1.docker.io/cbartifactory
           username: ${{ secrets.DOCKERHUB_USER }}
           access-token: ${{ secrets.DOCKERHUB_PASSWORD }}
           force: true
