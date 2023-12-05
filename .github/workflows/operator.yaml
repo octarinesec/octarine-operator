@@ -16,10 +16,13 @@ jobs:
     steps:
       - name: Install Helm
         uses: azure/setup-helm@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Check
         run: |
           pwd
           ls
+          helm version
   build:
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
