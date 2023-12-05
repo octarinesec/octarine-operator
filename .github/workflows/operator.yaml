@@ -22,8 +22,10 @@ jobs:
           registry-url: oci://registry-1.docker.io/cbartifactory
           username: ${{ secrets.DOCKERHUB_USER }}
           access-token: ${{ secrets.DOCKERHUB_PASSWORD }}
+          version: ${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+          appVersion: ${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
           force: true
-          chart-folder: octarine-operator/charts/cbcontainers-operator/cbcontainers-operator-chart
+          chart-folder: charts/cbcontainers-operator/cbcontainers-operator-chart
   build:
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
