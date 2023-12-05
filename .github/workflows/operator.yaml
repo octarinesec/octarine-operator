@@ -11,7 +11,20 @@ on:
       - "*"
 
 jobs:
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Push Helm chart to OCI compatible registry (DockerHub)
+        uses: bsord/helm-push@4.2.0
+        with:
+          useOCIRegistry: true
+          registry-url: oci://ghcr.io/${{ github.repository }}
+          username: ${{ secrets.DOCKERHUB_USER }}
+          access-token: ${{ secrets.DOCKERHUB_PASSWORD }}
+          force: true
+          chart-folder: chart/cbcontainers-operator
   build:
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx
