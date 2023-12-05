@@ -39,7 +39,7 @@ spec:
         - --logtostderr=true
         - --http2-disable
         - --v=0
-        image: "{{ .Values.rbacProxy.image.repository }}:{{.Values.rbacProxy.image.version }}"
+        image: "{{ .Values.imagesRegistry | default "" }}{{ .Values.rbacProxy.image.repository }}:{{.Values.rbacProxy.image.version }}"
         name: kube-rbac-proxy
         ports:
         - containerPort: 8443
@@ -61,7 +61,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: "{{ .Values.operator.image.repository | default "cbartifactory/octarine-operator" }}:{{ .Values.operator.image.version | default .Chart.AppVersion }}"
+        image: "{{ .Values.imagesRegistry | default "" }}{{ .Values.operator.image.repository | default "cbartifactory/octarine-operator" }}:{{ .Values.operator.image.version | default .Chart.AppVersion }}"
         env:
         - name: OPERATOR_NAMESPACE
           valueFrom:
