@@ -53,7 +53,10 @@ jobs:
         run: make docker-build docker-push IMG=cbartifactory/${{ steps.meta.outputs.tags }} VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
       - name: Create and push chart
         run: |
-          VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+          VERSION='1.2.3'
           cd ${{ github.workspace }}/charts/cbcontainers-operator/cbcontainers-operator-chart
+          helm package . --version $VERSION --app-version $VERSION
+          helm push *.tgz oci://registry-1.docker.io/cbartifactory
+          cd ${{ github.workspace }}/charts/cbcontainers-agent/cbcontainers-agent-chart
           helm package . --version $VERSION --app-version $VERSION
           helm push *.tgz oci://registry-1.docker.io/cbartifactory
