@@ -49,7 +49,6 @@ jobs:
       - run: make manifests
       - run: make test
       - name: Build and push
-        if: github.ref == 'refs/heads/master'
         run: make docker-build docker-push IMG=cbartifactory/${{ steps.meta.outputs.tags }} VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
       - name: Create and push chart
         run: |
