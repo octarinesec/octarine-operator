@@ -67,7 +67,7 @@ jobs:
             type=semver,pattern={{version}},value=5.8.13
       - name: Create and push chart
         run: |
-          VERSION=${{ steps.meta.outputs.tags }}
+          VERSION=${{ steps.meta1.outputs.tags }}
           cd ${{ github.workspace }}/charts/cbcontainers-operator/cbcontainers-operator-chart
           helm package . --version $VERSION --app-version $VERSION
           helm push *.tgz oci://registry-1.docker.io/cbartifactory
