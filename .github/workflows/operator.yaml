@@ -28,6 +28,8 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
+          flavor: |
+            latest=false
           tags: |
             type=semver,pattern={{version}}
       - name: Create and push chart
