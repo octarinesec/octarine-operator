@@ -26,16 +26,15 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      - name: Docker meta
+      - name: Docker meta1
         id: meta
+        if: ${{ contains(github.event.head_commit.message, 'smoke_test') }}
         uses: docker/metadata-action@v5
         with:
           images: |
             octarine-operator
           flavor: |
             latest=false
-          tags: |
-            type=semver,pattern={{version}},value=5.8.13
       - uses: actions/checkout@v4
       - name: Set up Go
         if: ${{ contains(github.event.head_commit.message, 'smoke_test') }}
@@ -64,7 +63,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           tags: |
-            type=semver,pattern={{version}},value=5.8.13
+            type=semver,pattern={{version}}
       - name: Create and push chart
         run: |
           VERSION=${{ steps.meta1.outputs.tags }}
