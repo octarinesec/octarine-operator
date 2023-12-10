@@ -43,7 +43,6 @@ jobs:
           helm package . --version $VERSION --app-version $VERSION
           helm push *.tgz oci://registry-1.docker.io/cbartifactory
   build:
-    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx
