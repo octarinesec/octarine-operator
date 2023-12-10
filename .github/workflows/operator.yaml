@@ -27,6 +27,9 @@ jobs:
       - name: Meta
         id: meta
         uses: docker/metadata-action@v5
+        with:
+          tags: |
+            type=semver,pattern={{version}}
       - name: Create and push chart
         run: |
           VERSION=${{ steps.meta.outputs.tags }}
