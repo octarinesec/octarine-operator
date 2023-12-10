@@ -27,12 +27,14 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v4.1.1
+        uses: docker/metadata-action@v5
         with:
           images: |
             octarine-operator
           flavor: |
             latest=false
+          tags: |
+            type=semver,pattern={{version}},value=v2.0.0
       - uses: actions/checkout@v4
       - name: Set up Go
         uses: actions/setup-go@v2
@@ -52,7 +54,7 @@ jobs:
         run: make docker-build docker-push IMG=cbartifactory/${{ steps.meta.outputs.tags }} VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
       - name: Create and push chart
         run: |
-          VERSION='1.2.3'
+          VERSION=${{ steps.meta.outputs.tags }}
           cd ${{ github.workspace }}/charts/cbcontainers-operator/cbcontainers-operator-chart
           helm package . --version $VERSION --app-version $VERSION
           helm push *.tgz oci://registry-1.docker.io/cbartifactory
