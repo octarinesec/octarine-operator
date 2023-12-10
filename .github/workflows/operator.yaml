@@ -51,11 +51,20 @@ jobs:
           make install
           cd -
       - run: make generate
+        if: ${{ contains(github.event.head_commit.message, 'smoke_test') }}
       - run: make manifests
+        if: ${{ contains(github.event.head_commit.message, 'smoke_test') }}
       - run: make test
+        if: ${{ contains(github.event.head_commit.message, 'smoke_test') }}
       - name: Build and push
         if: ${{ contains(github.event.head_commit.message, 'smoke_test') }}
         run: make docker-build docker-push IMG=cbartifactory/${{ steps.meta.outputs.tags }} VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+      - name: Docker meta
+        id: meta1
+        uses: docker/metadata-action@v5
+        with:
+          tags: |
+            type=semver,pattern={{version}},value=5.8.13
       - name: Create and push chart
         run: |
           VERSION=${{ steps.meta.outputs.tags }}
