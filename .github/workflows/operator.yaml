@@ -36,12 +36,13 @@ jobs:
       - name: Create and push chart
         run: |
           VERSION=${{ steps.meta.outputs.tags }}
+          REPO=octarinesec
           cd ${{ github.workspace }}/charts/cbcontainers-operator/cbcontainers-operator-chart
           helm package . --version $VERSION --app-version $VERSION
-          helm push *.tgz oci://registry-1.docker.io/cbartifactory
+          helm push *.tgz oci://registry-1.docker.io/$REPO
           cd ${{ github.workspace }}/charts/cbcontainers-agent/cbcontainers-agent-chart
           helm package . --version $VERSION --app-version $VERSION
-          helm push *.tgz oci://registry-1.docker.io/cbartifactory
+          helm push *.tgz oci://registry-1.docker.io/$REPO
   build:
     runs-on: ubuntu-latest
     steps:
