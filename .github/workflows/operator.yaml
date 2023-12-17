@@ -12,7 +12,7 @@ on:
 
 jobs:
   helm:
-    if: github.ref_type == 'tag' || github.ref == 'refs/heads/CNS-3159-1'
+    if: github.ref_type == 'tag' || github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,7 +45,7 @@ jobs:
           helm package . --version $VERSION --app-version $VERSION
           helm push *.tgz oci://registry-1.docker.io/$REPO
       - name: Develop branch create and push chart
-        if: github.ref == 'refs/heads/CNS-3159-1'
+        if: github.ref == 'refs/heads/develop'
         run: |
           VERSION=1.99.99
           REPO=octarinesec
