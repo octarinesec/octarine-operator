@@ -17,6 +17,8 @@ type CBContainersCndrSensorSpec struct {
 	Image CBContainersImageSpec `json:"image,omitempty"`
 	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "1024Mi", cpu: "500m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
+	// +kubebuilder:default:={initialDelaySeconds: 45, timeoutSeconds: 5, periodSeconds: 30, successThreshold: 1, failureThreshold: 3, readinessPath: "/tmp/ready", livenessPath:  "/tmp/alive" }
+	Probes CBContainersFileProbesSpec `json:"probes,omitempty"`
 	// +kubebuilder:default:={port: 7071}
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 	// +kubebuilder:default:=2
