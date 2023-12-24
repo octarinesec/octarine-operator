@@ -4838,14 +4838,21 @@ spec:
                               default: {}
                               type: object
                             probes:
-                              default: {}
+                              default:
+                                failureThreshold: 5
+                                initialDelaySeconds: 240
+                                livenessPath: /tmp/alive
+                                periodSeconds: 30
+                                readinessPath: /tmp/ready
+                                successThreshold: 1
+                                timeoutSeconds: 1
                               properties:
                                 failureThreshold:
-                                  default: 5
+                                  default: 3
                                   format: int32
                                   type: integer
                                 initialDelaySeconds:
-                                  default: 240
+                                  default: 3
                                   format: int32
                                   type: integer
                                 livenessPath:
