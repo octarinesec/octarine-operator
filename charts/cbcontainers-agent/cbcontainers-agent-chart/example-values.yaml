@@ -205,5 +205,6 @@ components:
         enabled: false
   cndr:
     enabled: true
+    probes: {}
     # accessTokenSecretName is the name of the Kubernetes object of type Secret that holds the values of the Company Code
     companyCodeSecretName: "my-company-code-secret-name"
