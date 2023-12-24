@@ -457,7 +457,7 @@ func (obj *SensorDaemonSetK8sObject) mutateCndrContainer(container *coreV1.Conta
 	container.Name = CndrContainerName
 	container.Resources = cndrSpec.Resources
 	commonState.MutateImage(container, cndrSpec.Image, agentSpec.Version, agentSpec.Components.Settings.DefaultImagesRegistry)
-	commonState.MutateContainerFileProbes(container, cndrSpec.Probes)
+	//commonState.MutateContainerFileProbes(container, cndrSpec.Probes)
 	if commonState.IsEnabled(cndrSpec.Prometheus.Enabled) {
 		container.Ports = []coreV1.ContainerPort{{Name: "metrics", ContainerPort: int32(cndrSpec.Prometheus.Port)}}
 	}
