@@ -39,7 +39,7 @@ spec:
         - --logtostderr=true
         - --http2-disable
         - --v=0
-        image: "{{ .Values.rbacProxy.image.repository }}:{{.Values.rbacProxy.image.version }}"
+        image: "{{ .Values.imagesRegistry | default "" }}{{ .Values.rbacProxy.image.repository }}:{{.Values.rbacProxy.image.version }}"
         name: kube-rbac-proxy
         ports:
         - containerPort: 8443
@@ -61,7 +61,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: "{{ .Values.operator.image.repository | default "cbartifactory/octarine-operator" }}:{{ .Values.operator.image.version | default .Chart.AppVersion }}"
+        image: "{{ .Values.imagesRegistry | default "" }}{{ .Values.operator.image.repository | default "cbartifactory/octarine-operator" }}:{{ .Values.operator.image.version | default .Chart.AppVersion }}"
         env:
         - name: OPERATOR_NAMESPACE
           valueFrom:
@@ -70,11 +70,11 @@ spec:
         {{/* If you want to enable HTTP Proxy you need to set all 3 of the values - operator.proxy.http, operator.proxy.https and operator.proxy.noProxy */}}
         {{- if .Values.operator.proxy -}}
         - name: HTTP_PROXY
-          value: {{ required "all values under spec.operator.proxy are required if even one is set" .Values.operator.proxy.http }}
+          value: {{ .Values.operator.proxy.http }}
         - name: HTTPS_PROXY
-          value: {{ required "all values under spec.operator.proxy are required if even one is set" .Values.operator.proxy.https }}
+          value: {{ .Values.operator.proxy.https }}
         - name: NO_PROXY
-          value: {{ required "all values under spec.operator.proxy are required if even one is set" .Values.operator.proxy.noProxy }}
+          value: {{ .Values.operator.proxy.noProxy }}
         {{- end -}}
         {{- if .Values.operator.environment -}}
           {{- with .Values.operator.environment -}}

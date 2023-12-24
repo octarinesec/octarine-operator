@@ -4837,6 +4837,36 @@ spec:
                                 type: string
                               default: {}
                               type: object
+                            probes:
+                              default: {}
+                              properties:
+                                failureThreshold:
+                                  default: 5
+                                  format: int32
+                                  type: integer
+                                initialDelaySeconds:
+                                  default: 240
+                                  format: int32
+                                  type: integer
+                                livenessPath:
+                                  default: /tmp/alive
+                                  type: string
+                                periodSeconds:
+                                  default: 30
+                                  format: int32
+                                  type: integer
+                                readinessPath:
+                                  default: /tmp/ready
+                                  type: string
+                                successThreshold:
+                                  default: 1
+                                  format: int32
+                                  type: integer
+                                timeoutSeconds:
+                                  default: 1
+                                  format: int32
+                                  type: integer
+                              type: object
                             prometheus:
                               default:
                                 port: 7071
@@ -6432,7 +6462,7 @@ spec:
 ---
 apiVersion: v1
 imagePullSecrets:
-- name: cbcontainers-operator-public-registry-secret
+- name: {{ default "cbcontainers-operator-public-registry-secret" .Values.imagesPullSecret }}
 kind: ServiceAccount
 metadata:
   name: cbcontainers-operator

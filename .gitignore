@@ -85,3 +85,5 @@ testbin
 
 /operator.yaml
 /cbcontainers-operator
+
+*.bak
