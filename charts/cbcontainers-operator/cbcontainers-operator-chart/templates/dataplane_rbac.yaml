@@ -49,6 +49,20 @@ rules:
       - validatingwebhookconfigurations
     verbs:
       - list
+  - apiGroups:
+        - operator.containers.carbonblack.io
+    resources:
+      - cbcontainersagents
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - operator.containers.carbonblack.io
+    resources:
+      - cbcontainersagents/status
+    verbs:
+      - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
