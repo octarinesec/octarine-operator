@@ -177,6 +177,7 @@ func main() {
 	}
 
 	k8sClient := mgr.GetClient()
+	k8sRestConfig := mgr.GetConfig()
 	log := ctrl.Log.WithName("configurator")
 	operatorVersion, err := operatorVersionProvider.GetOperatorVersion()
 	if err != nil && !errors.Is(err, operator.ErrNotSemVer) {
@@ -202,6 +203,7 @@ func main() {
 
 	applier := remote_configuration.NewConfigurator(
 		k8sClient,
+		k8sRestConfig,
 		configuratorGatewayCreator,
 		log,
 		operator.NewSecretAccessTokenProvider(k8sClient),

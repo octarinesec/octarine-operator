@@ -52,6 +52,7 @@ func setupConfigurator(ctrl *gomock.Controller) (*remote_configuration.Configura
 
 	configurator := remote_configuration.NewConfigurator(
 		k8sClient,
+		nil,
 		mockAPIProvider,
 		logr.Discard(),
 		accessTokenProvider,

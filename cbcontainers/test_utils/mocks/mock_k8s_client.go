@@ -33,6 +33,13 @@ func NewMockClient(ctrl *gomock.Controller) *MockClient {
 	return mock
 }
 
+//// NewMocRestConfig creates a new mock instance.
+//func NewMocRestConfig(ctrl *gomock.Controller) *MockClient {
+//	mock := &MockConfig{ctrl: ctrl}
+//	mock.recorder = &MockClientMockRecorder{mock}
+//	return mock
+//}
+
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder

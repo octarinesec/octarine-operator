@@ -5,8 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-logr/logr"
+	helm "github.com/mittwald/go-helm-client"
+	"github.com/mittwald/go-helm-client/values"
 	cbcontainersv1 "github.com/vmware/cbcontainers-operator/api/v1"
 	"github.com/vmware/cbcontainers-operator/cbcontainers/models"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sort"
 	"sync"
@@ -39,6 +42,7 @@ type ApiCreator func(cbContainersCluster *cbcontainersv1.CBContainersAgent, acce
 
 type Configurator struct {
 	k8sClient           client.Client
+	k8sRestConfig       *rest.Config
 	logger              logr.Logger
 	accessTokenProvider AccessTokenProvider
 	apiCreator          ApiCreator
@@ -52,6 +56,7 @@ type Configurator struct {
 
 func NewConfigurator(
 	k8sClient client.Client,
+	k8sRestConfig *rest.Config,
 	gatewayCreator ApiCreator,
 	logger logr.Logger,
 	accessTokenProvider AccessTokenProvider,
@@ -59,8 +64,10 @@ func NewConfigurator(
 	deployedNamespace string,
 	clusterIdentifier string,
 ) *Configurator {
+
 	return &Configurator{
 		k8sClient:           k8sClient,
+		k8sRestConfig:       k8sRestConfig,
 		logger:              logger,
 		apiCreator:          gatewayCreator,
 		accessTokenProvider: accessTokenProvider,
@@ -114,7 +121,7 @@ func (configurator *Configurator) RunIteration(ctx context.Context) error {
 	}
 
 	configurator.logger.Info("Applying remote configuration change to CBContainerAgent resource", "change", change)
-	errApplyingCR := configurator.applyChangeToCR(ctx, apiGateway, *change, cr)
+	errApplyingCR := configurator.applyChangeToCluster(ctx, apiGateway, *change, cr)
 	if errApplyingCR != nil {
 		configurator.logger.Error(errApplyingCR, "Failed to apply configuration changes to CBContainerAGent resource")
 		// Intentional fallthrough as we want to report the change application as failed to the backend
@@ -168,6 +175,41 @@ func (configurator *Configurator) getPendingChange(ctx context.Context, apiGatew
 	return nil, nil
 }
 
+func (configurator *Configurator) applyChangeToHelm(ctx context.Context, apiGateway ApiGateway, change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
+	opts := helm.RestConfClientOptions{
+		Options: &helm.Options{
+			Debug:   true,
+			Linting: true,
+		},
+		RestConfig: configurator.k8sRestConfig,
+	}
+	configurator.logger.Info("Update conf though helm")
+	helmClient, err := helm.NewClientFromRestConf(&opts)
+	if err != nil {
+		return err
+	}
+
+	spec := helm.ChartSpec{
+		ReleaseName: "cbcontainers-operator",
+		ValuesOptions: values.Options{
+			Values: []string{fmt.Sprintf("version=%s", *change.AgentVersion)},
+		},
+		ReuseValues: true,
+	}
+	_, err = helmClient.UpgradeChart(ctx, &spec, nil)
+
+	return err
+}
+
+func (configurator *Configurator) applyChangeToCluster(ctx context.Context, apiGateway ApiGateway, change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
+
+	if val, ok := cr.Labels["app.kubernetes.io/managed-by"]; ok && val == "Helm" {
+		return configurator.applyChangeToHelm(ctx, apiGateway, change, cr)
+	}
+
+	return configurator.applyChangeToCR(ctx, apiGateway, change, cr)
+}
+
 func (configurator *Configurator) applyChangeToCR(ctx context.Context, apiGateway ApiGateway, change models.ConfigurationChange, cr *cbcontainersv1.CBContainersAgent) error {
 	validator, err := configurator.validatorCreator(apiGateway)
 	if err != nil {
@@ -183,6 +225,7 @@ func (configurator *Configurator) applyChangeToCR(ctx context.Context, apiGatewa
 	}
 
 	ApplyConfigChangeToCR(change, cr, sensorMeta)
+
 	return configurator.k8sClient.Update(ctx, cr)
 }
 
