@@ -8,11 +8,17 @@ var (
 	ChangeStatusFailed  RemoteChangeStatus = "FAILED"
 )
 
+type AdvancedSettings struct {
+	ProxyVersion   *string `json:"proxy_version,omitempty"`
+	RegistryServer *string `json:"registry_server,omitempty"`
+}
+
 type ConfigurationChange struct {
-	ID           string             `json:"id"`
-	Status       RemoteChangeStatus `json:"status"`
-	AgentVersion *string            `json:"agent_version"`
-	Timestamp    string             `json:"timestamp"`
+	ID               string             `json:"id"`
+	Status           RemoteChangeStatus `json:"status"`
+	AgentVersion     *string            `json:"agent_version"`
+	AdvancedSettings *AdvancedSettings  `json:"advancedSettings,omitempty"`
+	Timestamp        string             `json:"timestamp"`
 }
 
 type ConfigurationChangeStatusUpdate struct {
