@@ -88,8 +88,8 @@ func applyAdvancedSettings(settings *models.AdvancedSettings, cr *cbcontainersv1
 	if settings.RegistryServer != nil {
 		cr.Spec.Components.Settings.DefaultImagesRegistry = *settings.RegistryServer
 	}
-	if settings.ProxyVersion != nil {
-		cr.Spec.Components.Settings.Proxy.HttpsProxy = settings.ProxyVersion
-		cr.Spec.Components.Settings.Proxy.HttpProxy = settings.ProxyVersion
+	if settings.ProxyServer != nil {
+		cr.Spec.Components.Settings.Proxy.HttpsProxy = settings.ProxyServer
+		cr.Spec.Components.Settings.Proxy.HttpProxy = settings.ProxyServer
 	}
 }

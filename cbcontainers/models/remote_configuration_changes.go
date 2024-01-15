@@ -9,7 +9,7 @@ var (
 )
 
 type AdvancedSettings struct {
-	ProxyVersion   *string `json:"proxy_version,omitempty"`
+	ProxyServer    *string `json:"proxy_server,omitempty"`
 	RegistryServer *string `json:"registry_server,omitempty"`
 }
 
@@ -17,7 +17,7 @@ type ConfigurationChange struct {
 	ID               string             `json:"id"`
 	Status           RemoteChangeStatus `json:"status"`
 	AgentVersion     *string            `json:"agent_version"`
-	AdvancedSettings *AdvancedSettings  `json:"advancedSettings,omitempty"`
+	AdvancedSettings *AdvancedSettings  `json:"advanced_settings,omitempty"`
 	Timestamp        string             `json:"timestamp"`
 }
 
