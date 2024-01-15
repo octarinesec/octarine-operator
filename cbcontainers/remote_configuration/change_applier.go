@@ -11,7 +11,7 @@ func ApplyConfigChangeToCR(change models.ConfigurationChange, cr *cbcontainersv1
 	if change.AgentVersion != nil {
 		cr.Spec.Version = *change.AgentVersion
 
-		applyAdvancedSettings(change.AdvancedSettings, cr)
+		applyAdvancedSettings(cr, change.AdvancedSettings)
 		resetImageTagsInCR(cr)
 		toggleFeaturesBasedOnCompatibility(cr, *change.AgentVersion, sensorMetadata)
 	}
@@ -80,7 +80,7 @@ func toggleFeaturesBasedOnCompatibility(cr *cbcontainersv1.CBContainersAgent, ve
 	}
 }
 
-func applyAdvancedSettings(settings *models.AdvancedSettings, cr *cbcontainersv1.CBContainersAgent) {
+func applyAdvancedSettings(cr *cbcontainersv1.CBContainersAgent, settings *models.AdvancedSettings) {
 	if settings == nil {
 		return
 	}
@@ -89,7 +89,10 @@ func applyAdvancedSettings(settings *models.AdvancedSettings, cr *cbcontainersv1
 		cr.Spec.Components.Settings.DefaultImagesRegistry = *settings.RegistryServer
 	}
 	if settings.ProxyServer != nil {
-		cr.Spec.Components.Settings.Proxy.HttpsProxy = settings.ProxyServer
+		if cr.Spec.Components.Settings.Proxy == nil {
+			cr.Spec.Components.Settings.Proxy = &cbcontainersv1.CBContainersProxySettings{}
+		}
 		cr.Spec.Components.Settings.Proxy.HttpProxy = settings.ProxyServer
+		cr.Spec.Components.Settings.Proxy.HttpsProxy = settings.ProxyServer
 	}
 }
