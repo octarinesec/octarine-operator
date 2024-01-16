@@ -38,8 +38,8 @@ func (r *CBContainersAgentController) setProxySettingsComponentsDefaults(proxy *
 	}
 
 	httpsProxyLen := 0
-	if proxy.HttpProxy != nil {
-		httpProxyLen = len(strings.TrimSpace(*(proxy.HttpsProxy)))
+	if proxy.HttpsProxy != nil {
+		httpsProxyLen = len(strings.TrimSpace(*(proxy.HttpsProxy)))
 	}
 
 	// Don't set NoProxySuffix default value if we don't have any proxies defined
