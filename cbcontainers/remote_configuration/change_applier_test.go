@@ -15,7 +15,7 @@ func TestVersionIsAppliedCorrectly(t *testing.T) {
 	originalVersion := "my-version-42"
 	newVersion := "new-version"
 	cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: originalVersion}}
-	change := models.ConfigurationChange{AgentVersion: &newVersion}
+	change := models.ConfigurationChange{AgentVersion: &newVersion, AdvancedSettings: nil}
 
 	remote_configuration.ApplyConfigChangeToCR(change, &cr, nil)
 	assert.Equal(t, newVersion, cr.Spec.Version)
@@ -28,7 +28,65 @@ func TestMissingVersionDoesNotModifyCR(t *testing.T) {
 
 	remote_configuration.ApplyConfigChangeToCR(change, &cr, nil)
 	assert.Equal(t, originalVersion, cr.Spec.Version)
+}
 
+func TestAdvancedSettingsAppliedCorrectly(t *testing.T) {
+	proxy := "https://proxy.com"
+	reg := "dockerhub.com"
+	version := "3.0.0"
+
+	advancedSettings := &models.AdvancedSettings{
+		ProxyServer:    &proxy,
+		RegistryServer: &reg,
+	}
+	cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: version}}
+	change := models.ConfigurationChange{AgentVersion: &version, AdvancedSettings: advancedSettings}
+
+	remote_configuration.ApplyConfigChangeToCR(change, &cr, nil)
+	assert.Equal(t, version, cr.Spec.Version)
+	assert.Equal(t, reg, cr.Spec.Components.Settings.DefaultImagesRegistry)
+	assert.Equal(t, proxy, *cr.Spec.Components.Settings.Proxy.HttpsProxy)
+	assert.Equal(t, proxy, *cr.Spec.Components.Settings.Proxy.HttpProxy)
+}
+
+func TestAdvancedSettingsNoChange(t *testing.T) {
+	proxy := "https://proxy.com"
+	reg := "dockerhub.com"
+	version := "3.0.0"
+
+	cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: version}}
+	cr.Spec.Components.Settings.DefaultImagesRegistry = reg
+	cr.Spec.Components.Settings.Proxy = &cbcontainersv1.CBContainersProxySettings{
+		HttpProxy: &proxy, HttpsProxy: &proxy,
+	}
+	change := models.ConfigurationChange{AgentVersion: &version, AdvancedSettings: nil}
+
+	remote_configuration.ApplyConfigChangeToCR(change, &cr, nil)
+	assert.Equal(t, version, cr.Spec.Version)
+	assert.Equal(t, reg, cr.Spec.Components.Settings.DefaultImagesRegistry)
+	assert.Equal(t, proxy, *cr.Spec.Components.Settings.Proxy.HttpsProxy)
+	assert.Equal(t, proxy, *cr.Spec.Components.Settings.Proxy.HttpProxy)
+}
+
+func TestAdvancedSettingsOnlyReg(t *testing.T) {
+	proxy := "https://proxy.com"
+	reg := "dockerhub.com"
+	version := "3.0.0"
+
+	cr := cbcontainersv1.CBContainersAgent{Spec: cbcontainersv1.CBContainersAgentSpec{Version: version}}
+	cr.Spec.Components.Settings.Proxy = &cbcontainersv1.CBContainersProxySettings{
+		HttpProxy: &proxy, HttpsProxy: &proxy,
+	}
+	change := models.ConfigurationChange{AgentVersion: &version, AdvancedSettings: &models.AdvancedSettings{
+		ProxyServer:    nil,
+		RegistryServer: &reg,
+	}}
+
+	remote_configuration.ApplyConfigChangeToCR(change, &cr, nil)
+	assert.Equal(t, version, cr.Spec.Version)
+	assert.Equal(t, reg, cr.Spec.Components.Settings.DefaultImagesRegistry)
+	assert.Equal(t, proxy, *cr.Spec.Components.Settings.Proxy.HttpsProxy)
+	assert.Equal(t, proxy, *cr.Spec.Components.Settings.Proxy.HttpProxy)
 }
 
 func TestVersionOverwritesCustomTagsByRemovingThem(t *testing.T) {
