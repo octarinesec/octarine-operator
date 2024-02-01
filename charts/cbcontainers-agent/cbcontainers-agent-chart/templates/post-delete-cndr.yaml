@@ -1,0 +1,32 @@
+{{- range $i, $node := (lookup "v1" "Node" "" "").items }}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cbcontainers-edr-sensor-cleaner
+  annotations:
+    "helm.sh/hook": "post-delete"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+spec:
+  template:
+    spec:
+      volumes:
+        - hostPath:
+            path: /var
+            type: Directory
+          name: var-dir
+      containers:
+        - name: edr-sensor-cleaner
+          image: photon:4.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          volumeMounts:
+            - mountPath: /var
+              name: var-dir
+          command: ["/usr/bin/rm", "-rf", "/var/opt/carbonblack"]
+      restartPolicy: Never
+      nodeName: "{{ $node.metadata.name }}"
+---
+{{- end }}
