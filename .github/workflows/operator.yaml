@@ -82,7 +82,9 @@ jobs:
         run: |
           echo "??"
           which go
-          echo "##"
+          echo "##1"
+          echo $GOPATH
+          echo "##2"
           echo $GOBIN
           echo "**"
           mkdir /tmp/operator-sdk
