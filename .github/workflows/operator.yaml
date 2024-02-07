@@ -83,7 +83,7 @@ jobs:
           export GOBIN=$(which go)
           echo $GOBIN
           mkdir /tmp/operator-sdk
-          git clone -b v1.33.0 https://github.com/operator-framework/operator-sdk /tmp/operator-sdk
+          git clone -b v1.32.0 https://github.com/operator-framework/operator-sdk /tmp/operator-sdk
           cd /tmp/operator-sdk
           make install
           cd -
