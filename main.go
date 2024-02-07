@@ -34,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"strings"
 	"sync"
 
@@ -52,6 +53,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	// +kubebuilder:scaffold:imports
+
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 )
 
 var (
@@ -132,12 +135,14 @@ func main() {
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
+		WebhookServer:          webhook.NewServer(webhook.Options{Port: 9443}),
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "d27fd235.operator.containers.carbonblack.io",
 		Logger:                 ctrl.Log,
-		Namespace:              operatorNamespace,
+		Cache: cache.Options{
+			Namespaces: []string{operatorNamespace},
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
