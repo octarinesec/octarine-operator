@@ -36,10 +36,11 @@ jobs:
       - name: Create and push chart
         if: github.ref_type == 'tag'
         run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
           VERSION=${{ steps.meta.outputs.tags }}
           REPO=cbartifactory
           cd ${{ github.workspace }}/charts/cbcontainers-operator/cbcontainers-operator-chart
-          helm package . --version $VERSION --app-version $VERSION
+          helm package . --version $VERSION --app-version $TAG_NAME
           helm push *.tgz oci://registry-1.docker.io/$REPO
           cd ${{ github.workspace }}/charts/cbcontainers-agent/cbcontainers-agent-chart
           helm package . --version $VERSION --app-version $VERSION
