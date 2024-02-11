@@ -36,6 +36,7 @@ jobs:
       - name: Create and push chart
         if: github.ref_type == 'tag'
         run: |
+          echo $GITHUB_REF
           TAG_NAME=${GITHUB_REF#refs/tags/}
           VERSION=${{ steps.meta.outputs.tags }}
           REPO=cbartifactory
