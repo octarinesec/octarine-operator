@@ -36,11 +36,8 @@ jobs:
       - name: Create and push chart
         if: github.ref_type == 'tag'
         run: |
-          echo "how "$GITHUB_REF
           TAG_NAME=${GITHUB_REF#refs/tags/}
-          echo "what "$TAG_NAME
           VERSION=${{ steps.meta.outputs.tags }}
-          echo "and "$VERSION
           REPO=cbartifactory
           cd ${{ github.workspace }}/charts/cbcontainers-operator/cbcontainers-operator-chart
           helm package . --version $VERSION --app-version $TAG_NAME
