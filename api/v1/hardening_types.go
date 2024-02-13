@@ -15,7 +15,7 @@ type CBContainersStateReporterSpec struct {
 	Env map[string]string `json:"env,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/guardrails-state-reporter"}
 	Image CBContainersImageSpec `json:"image,omitempty"`
-	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}
+	// +kubebuilder:default:={requests: {memory: "256Mi", cpu: "200m"}, limits: {memory: "512Mi", cpu: "400m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
@@ -40,7 +40,7 @@ type CBContainersEnforcerSpec struct {
 	Prometheus CBContainersPrometheusSpec `json:"prometheus,omitempty"`
 	// +kubebuilder:default:={repository:"cbartifactory/guardrails-enforcer"}
 	Image CBContainersImageSpec `json:"image,omitempty"`
-	// +kubebuilder:default:={requests: {memory: "64Mi", cpu: "30m"}, limits: {memory: "256Mi", cpu: "200m"}}
+	// +kubebuilder:default:={requests: {memory: "256Mi", cpu: "100m"}, limits: {memory: "512Mi", cpu: "200m"}}
 	Resources coreV1.ResourceRequirements `json:"resources,omitempty"`
 	// +kubebuilder:default:=<>
 	Probes CBContainersHTTPProbesSpec `json:"probes,omitempty"`
