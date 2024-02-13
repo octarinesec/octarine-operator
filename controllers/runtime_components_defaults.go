@@ -53,7 +53,7 @@ func (r *CBContainersAgentController) setRuntimeResolverDefaults(runtimeResolver
 
 	setDefaultImage(&runtimeResolver.Image, "cbartifactory/runtime-kubernetes-resolver")
 
-	if err := setDefaultResourceRequirements(&runtimeResolver.Resources, "64Mi", "200m", "1024Mi", "900m"); err != nil {
+	if err := setDefaultResourceRequirements(&runtimeResolver.Resources, "512Mi", "200m", "2Gi", "900m"); err != nil {
 		return err
 	}
 
