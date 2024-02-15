@@ -254,6 +254,7 @@ func (in *CBContainersCndrSensorSpec) DeepCopyInto(out *CBContainersCndrSensorSp
 	}
 	in.Image.DeepCopyInto(&out.Image)
 	in.Resources.DeepCopyInto(&out.Resources)
+	out.Probes = in.Probes
 	in.Prometheus.DeepCopyInto(&out.Prometheus)
 	if in.VerbosityLevel != nil {
 		in, out := &in.VerbosityLevel, &out.VerbosityLevel

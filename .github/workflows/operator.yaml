@@ -11,6 +11,51 @@ on:
       - "*"
 
 jobs:
+  helm:
+    if: github.ref_type == 'tag' || github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: Meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          flavor: |
+            latest=false
+          tags: |
+            type=semver,pattern={{version}}
+      - name: Create and push chart
+        if: github.ref_type == 'tag'
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${{ steps.meta.outputs.tags }}
+          REPO=cbartifactory
+          cd ${{ github.workspace }}/charts/cbcontainers-operator/cbcontainers-operator-chart
+          helm package . --version $VERSION --app-version $TAG_NAME
+          helm push *.tgz oci://registry-1.docker.io/$REPO
+          cd ${{ github.workspace }}/charts/cbcontainers-agent/cbcontainers-agent-chart
+          helm package . --version $VERSION --app-version $VERSION
+          helm push *.tgz oci://registry-1.docker.io/$REPO
+      - name: Develop branch create and push chart
+        if: github.ref == 'refs/heads/develop'
+        run: |
+          VERSION=1.99.99
+          REPO=cbartifactory
+          cd ${{ github.workspace }}/charts/cbcontainers-operator/cbcontainers-operator-chart
+          helm package . --version $VERSION --app-version develop
+          helm push *.tgz oci://registry-1.docker.io/$REPO
+          cd ${{ github.workspace }}/charts/cbcontainers-agent/cbcontainers-agent-chart
+          helm package . --version $VERSION --app-version main
+          helm push *.tgz oci://registry-1.docker.io/$REPO
   build:
     runs-on: ubuntu-latest
     steps:
@@ -33,7 +78,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.21.4
+          go-version: 1.21.6
       - name: Setup Operator SDK
         run: |
           mkdir /tmp/operator-sdk

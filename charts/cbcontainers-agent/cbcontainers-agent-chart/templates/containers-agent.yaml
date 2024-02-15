@@ -15,6 +15,7 @@ spec:
   gateways:
     apiGateway:
       host: {{ required "gateways.apiGatewayHost is required" .Values.gateways.apiGatewayHost }}
+      adapter: {{ default "containers" .Values.gateways.adapter }}
     coreEventsGateway:
       host: {{ required "gateways.coreEventsGatewayHost is required" .Values.gateways.coreEventsGatewayHost }}
     hardeningEventsGateway:
