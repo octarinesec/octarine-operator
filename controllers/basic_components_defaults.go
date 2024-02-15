@@ -72,7 +72,7 @@ func (r *CBContainersAgentController) setEnforcerDefaults(enforcer *cbcontainers
 
 	setDefaultImage(&enforcer.Image, "cbartifactory/guardrails-enforcer")
 
-	if err := setDefaultResourceRequirements(&enforcer.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
+	if err := setDefaultResourceRequirements(&enforcer.Resources, "256Mi", "100m", "512Mi", "200m"); err != nil {
 		return err
 	}
 
@@ -112,7 +112,7 @@ func (r *CBContainersAgentController) setStateReporterDefaults(stateReporter *cb
 
 	setDefaultImage(&stateReporter.Image, "cbartifactory/guardrails-state-reporter")
 
-	if err := setDefaultResourceRequirements(&stateReporter.Resources, "64Mi", "30m", "256Mi", "200m"); err != nil {
+	if err := setDefaultResourceRequirements(&stateReporter.Resources, "256Mi", "200m", "512Mi", "400m"); err != nil {
 		return err
 	}
 
