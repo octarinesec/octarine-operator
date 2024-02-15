@@ -1348,10 +1348,10 @@ spec:
                               default:
                                 limits:
                                   cpu: 200m
-                                  memory: 256Mi
+                                  memory: 512Mi
                                 requests:
-                                  cpu: 30m
-                                  memory: 64Mi
+                                  cpu: 100m
+                                  memory: 256Mi
                               description: ResourceRequirements describes the compute
                                 resource requirements.
                               properties:
@@ -3967,11 +3967,11 @@ spec:
                             resources:
                               default:
                                 limits:
+                                  cpu: 400m
+                                  memory: 512Mi
+                                requests:
                                   cpu: 200m
                                   memory: 256Mi
-                                requests:
-                                  cpu: 30m
-                                  memory: 64Mi
                               description: ResourceRequirements describes the compute
                                 resource requirements.
                               properties:
@@ -7018,10 +7018,10 @@ spec:
                               default:
                                 limits:
                                   cpu: 900m
-                                  memory: 1024Mi
+                                  memory: 2Gi
                                 requests:
                                   cpu: 200m
-                                  memory: 64Mi
+                                  memory: 512Mi
                               description: ResourceRequirements describes the compute
                                 resource requirements.
                               properties:
